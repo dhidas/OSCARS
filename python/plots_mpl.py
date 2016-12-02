@@ -4,53 +4,6 @@ import matplotlib.pyplot as plt
 from math import sqrt
 
 
-def write_power_density_csv (P, fileName) :
-
-    x = []
-    y = []
-    z = []
-
-    x = [item[0][0] for item in P]
-    y = [item[0][1] for item in P]
-    z = [item[1]    for item in P]
-
-    x2 = list(set(x))
-    y2 = list(set(y))
-
-    nx = len(x2)
-    ny = len(y2)
-
-    x2.sort()
-    y2.sort()
-
-    with open(fileName, 'w') as f:
-
-        f.write(' ,' + ', '.join(map(str, x2)) + '\n')
-        for i in xrange(ny):
-            f.write(str(y2[i]) + ', ')
-            for j in xrange(nx):
-                if j < nx - 1:
-                    f.write(str(z[i * nx + j]) + ', ')
-                else:
-                    f.write(str(z[i * nx + j]) + '\n')
-
-    return
-
-
-
-
-def add_power_densities(A, B):
-    """Add two power density lists assuming same mesh order"""
-    
-    new_list = []
-    
-    for i in range(len(A)):
-        new_list.append([A[i][0], A[i][1]+B[i][1]])
-        
-    return new_list
-
-
-
 def plot_trajectory_position(trajectory, show=True, ofile='', axis='Z', figsize=[18, 4.5], ret=False):
     """Plot the trajectory"""
 
