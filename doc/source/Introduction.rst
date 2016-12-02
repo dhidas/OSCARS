@@ -10,7 +10,6 @@ Advantages of OSCARS
 --------------------
 
 * 100% Open source
-* Valid in the *near-field* regime
 * Valid for ultra-relativistic and non-relativistic particles/beams
 * Import arbitrary field data in several formats
 * Use built-in fields

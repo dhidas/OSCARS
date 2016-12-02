@@ -14,7 +14,6 @@ TFieldPythonFunction::TFieldPythonFunction (PyObject* Function)
 
   // Check to see the function is callable
   if (!PyCallable_Check(fPythonFunction)) {
-    std::cout << "PyCallable_Check fail" << std::endl;
     throw std::invalid_argument("python function not callable");
   }
 }
@@ -39,7 +38,6 @@ TVector3D TFieldPythonFunction::GetF (TVector3D const& X) const
 
   // Check to see the function is callable
   if (!PyCallable_Check(fPythonFunction)) {
-    std::cout << "PyCallable_Check fail" << std::endl;
     throw;
   }
 
@@ -55,14 +53,12 @@ TVector3D TFieldPythonFunction::GetF (TVector3D const& X) const
 
   // If the output is null we didn't get anything
   if (OutputTuple == NULL) {
-    std::cout << "No object" << std::endl;
     throw;
   }
 
   // Get a python list from output tuple
   PyObject* OutputList;
   if (!PyArg_Parse(OutputTuple, "O!", &PyList_Type, &OutputList)) {
-    std::cout << "Didnt make it" << std::endl;
     throw;
   }
 

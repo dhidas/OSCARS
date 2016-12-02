@@ -241,7 +241,6 @@ void TFieldContainer::WriteToFile (std::string const& OutFileName, std::string c
 
     // Look at all input
     while (s >> c) {
-      std::cout << "i " << index << std::endl;
 
       if (index > 3) {
         std::cerr << "ERROR: spatial or B-field dimensions are too large(index>3)" << std::endl;

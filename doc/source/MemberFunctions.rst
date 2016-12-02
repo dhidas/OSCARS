@@ -23,6 +23,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 .. automodule:: oscars.sr
 
 .. autoclass:: oscars.sr
+   :members:
 
 
 
@@ -126,17 +127,6 @@ All examples here assume that you have the OSCARS SR module in your path and hav
    :type time_stop: float
    :returns: None
 
-
-
-
-
-.. py:method:: set_precision(precision)
-
-   Sets the precision for the calculation.  The default is 1.  If precision is not high enough try 0.1, 0.01, 0.001, etc.  With lower precision number computations will take longer.
-
-   :param precision: precision for calculations
-   :type  precision: float
-   :returns: None
 
 
 
@@ -629,7 +619,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
    :type  rotations: list[3]
    :param translation: A list representing the translation of the x0 of this object
    :type  translation: list[3]
-   :param horizontal_direction: A list representing the *horizontal* beam direction.  This must be perpendicular to the beam *direction*.  The vertical direction is defined internally as :math:`[direction] \cross [horizontal_direction]`.
+   :param horizontal_direction: A list representing the *horizontal* beam direction.  This must be perpendicular to the beam *direction*.  The vertical direction is defined internally as :math:`[direction] \times [horizontal\_direction]`.
    :type  horizontal_direction: list[3]
    :param beta: values of the horizontal and vertical beta funtion at the point *lattice_center* [beta_x, beta_y]
    :type  beat: [float, float]
@@ -684,7 +674,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
    :param beam: The name of the beam from which to get a particle from
    :type  beam: str
    :param particle: 'ideal' or 'random', for random, you may omit this.
-   :type  : str
+   :type  particle: str
    :returns: None
 
 
@@ -905,7 +895,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-.. py:method:: oscars.sr.calculate_flux_rectangle(energy_eV, npoints, [[plane, width], x0x1x2], [rotations, translation, polarization, ofile, normal, dim, nthreads, gpu])
+.. py:method:: oscars.sr.calculate_flux_rectangle(energy_eV, npoints, [[plane, width], x0x1x2], [rotations, translation, ofile, normal, dim, nthreads, gpu])
 
    Calculate the flux density in a rectangle either defined by three points, or by defining the plane the rectangle is in and the width, and then rotating and translating it to where it needs be.  The simplest is outlined in the first example below.  By default (dim=2) this returns a list whose position coordinates are in the local coordinate space x1 and x2 (*ie* they do not include the rotations and translation).  if dim=3 the coordinates in the return list are in absolute 3D space.
 
@@ -928,8 +918,6 @@ All examples here assume that you have the OSCARS SR module in your path and hav
    :type  rotations: list[3]
    :param translation: A list representing the translation of the x0 of this object
    :type  translation: list[3]
-   :param polarization: A list representing the polarization direction of interest
-   :type  polarization: list[3]
    :param ofile: Output file name
    :type  ofile: str
    :param normal: -1 if you wish to reverse the normal vector, 0 if you wish to ignore the +/- direction in computations, 1 if you with to use the direction of the normal vector as given. 
