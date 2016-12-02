@@ -8,3 +8,7 @@ dependencies:
   - jupyter
   - gcc
   - mpi4py
+  - sphinx
+  - pip:
+    - recommonmark
+    - sphinx_rtd_theme

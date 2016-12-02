@@ -16,13 +16,17 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-.. py:module:: OSCARS.SR
-
-.. py:class:: OSCARS.SR
 
 
 
-.. py:method:: OSCARS.pi()
+
+.. automodule:: oscars.sr
+
+.. autoclass:: oscars.sr
+
+
+
+.. py:method:: oscars.sr.pi()
 
    Get the value of pi: 3.14159265358979323846
 
@@ -31,7 +35,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-.. py:method:: OSCARS.qe()
+.. py:method:: oscars.sr.qe()
 
    Get the value of elementary charge: +1.602176462e-19 [C]
 
@@ -40,7 +44,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-.. py:method:: OSCARS.rand()
+.. py:method:: oscars.sr.rand()
 
    Random float between 0 and 1
 
@@ -49,7 +53,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-.. py:method:: OSCARS.norm()
+.. py:method:: oscars.sr.norm()
 
    Random float from the normal distribution
 
@@ -58,7 +62,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-.. py:method:: OSCARS.set_seed(seed)
+.. py:method:: oscars.sr.set_seed(seed)
 
    Set the internal random seed
 
@@ -67,7 +71,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-.. py:method:: OSCARS.set_gpu_global(gpu)
+.. py:method:: oscars.sr.set_gpu_global(gpu)
 
    If set to 1, OSCARS will try to use the GPU for all calculations
 
@@ -76,14 +80,14 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-.. py:method:: OSCARS.check_gpu()
+.. py:method:: oscars.sr.check_gpu()
 
    Will return the number of GPUs available, or a negative number for any other error, for instance if your distribution was not compiled with GPU support.
 
    :return: integer
 
 
-.. py:method:: OSCARS.set_nthreads_global(nthreads)
+.. py:method:: oscars.sr.set_nthreads_global(nthreads)
 
    Set the number of threads you wish to use for all calculations.  If the GPU is requested it will take precedence over multi-threading.
 
@@ -93,7 +97,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-.. py:method:: OSCARS.get_ctstart()
+.. py:method:: oscars.sr.get_ctstart()
 
    Gets the start time for particle propogation.  The *time* is in units of [m].
 
@@ -103,7 +107,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-.. py:method:: OSCARS.get_ctstop()
+.. py:method:: oscars.sr.get_ctstop()
 
    Gets the stop time for particle propogation.  The *time* is in units of [m].
 
@@ -112,7 +116,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-.. py:method:: OSCARS.set_ctstartstop(time_start, time_stop)
+.. py:method:: oscars.sr.set_ctstartstop(time_start, time_stop)
 
    Set the start and stop times for the trajectory calculation.  Start time must be less than or equal to the T0 defined in the initial conditions for the particle beam.  Similarly, stop time must be greater than that T0.  This also sets a default value for the number of points used in the trajectory calculation.
 
@@ -149,16 +153,16 @@ All examples here assume that you have the OSCARS SR module in your path and hav
    .. code-block:: py
 
       # First set the start and stop times
-      osc.set_ctstartstop(0, 2)
+      osr.set_ctstartstop(0, 2)
 
       # Use 12345 points in the trajectory calculations
-      osc.set_npoints_trajectory(12345)
+      osr.set_npoints_trajectory(12345)
 
 
 
 
 
-.. py:method:: OSCARS.get_npoints_trajectory
+.. py:method:: oscars.sr.get_npoints_trajectory
 
    Gets the number of points to be used in the trajectory calculation
 
@@ -168,7 +172,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-.. py:method:: OSCARS.add_bfield_file(ifile, iformat, [rotation, translation, scaling])
+.. py:method:: oscars.sr.add_bfield_file(ifile, iformat, [rotation, translation, scaling])
 
    Add a magnetic field from a text file *ifile* according to the format *iformat*.
    
@@ -202,7 +206,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
    .. code-block:: py
 
       # Add a magnetic field from a file where the columns are in the order Z, Bx, By, Bz where Z is in [m] and Bx, By, Bz are in [T].
-      osc.add_bfield(ifile='file.txt', iformat='Z Bx By Bz')
+      osr.add_bfield_file(ifile='file.txt', iformat='OSCARS1D Z Bx By Bz')
 
 
 
@@ -210,7 +214,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-.. py:method:: OSCARS.add_bfield_function(function)
+.. py:method:: oscars.sr.add_bfield_function(function)
 
    Adds a magnetic field in the form of a user defined python function.  The input for this function must be (x, y, z, t).
 
@@ -230,14 +234,14 @@ All examples here assume that you have the OSCARS SR module in your path and hav
             return 1
           return 0
 
-      osc.add_bfield_function(myfunc)
+      osr.add_bfield_function(myfunc)
 
 
 
 
 
 
-.. py:method:: OSCARS.add_bfield_gaussian(bfield, sigma, [rotations, translation])
+.. py:method:: oscars.sr.add_bfield_gaussian(bfield, sigma, [rotations, translation])
 
    Add a gaussian magnetic field in 3D with the peak field magnitude and direction given by *bfield*, centered about a point with a given sigma in each coordinate.  If any component of *sigma* is less than or equal to zero it is ignored (ie. spatial extent is infinite).
 
@@ -259,7 +263,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
       # Will add a magnetic field of 1 Tesla in the Y-direction centered
       # at X=0, Y=0, Z=0 [in meters], with a sigma of 0.1 in the Z-direction
-      osc.add_bfield_gaussian(bfield=[1, 0, 0], sigma=[0, 0, 0.10])
+      osr.add_bfield_gaussian(bfield=[1, 0, 0], sigma=[0, 0, 0.10])
 
    :Example: Add a magnetic field of 1 Tesla in the Y-direction centered at X=1, Y=1, Z=1 [in meters], with a sigma of 0.05 in the Z-direction
 
@@ -267,14 +271,14 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
       # Will add a magnetic field of 1 Tesla in the Y-direction centered
       # at X=1, Y=1, Z=1 [in meters], with a sigma of 0.05 in the Z-direction
-      osc.add_bfield_gaussian(bfield=[0, 1, 0], sigma=[0, 0, 0.05], translation=[1, 1, 1])
+      osr.add_bfield_gaussian(bfield=[0, 1, 0], sigma=[0, 0, 0.05], translation=[1, 1, 1])
 
 
 
 
 
 
-.. py:method:: OSCARS.add_bfield_uniform(bfield, [width, rotations, translation])
+.. py:method:: oscars.sr.add_bfield_uniform(bfield, [width, rotations, translation])
 
    Add a uniform magnetic field in a given range or for all space.  The *bfield* is given as a 3D vector representing the field magnitude and direction.  *width* is an optional parameters, if not present the field permeates all space.  If a component of the 3D list *width* is less than or equal to zero, that coordinate will be ignored when calculating the field.
 
@@ -294,7 +298,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
    .. code-block:: py
 
       # Will add a magnetic field of 0.0001 [T] in the X-direction over all space
-      osc.add_bfield_uniform(bfield=[0.0001, 0, 0])
+      osr.add_bfield_uniform(bfield=[0.0001, 0, 0])
 
    :Example: Add a magnetic field of 0.0005 [T] in the Y-direction with a width in the Z-direction of 1.5 [m] (the other directions are ignored) centered at X=0, Y=0, Z=0.75 [m].
 
@@ -302,14 +306,14 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
       # Will add a magnetic field of 1 Tesla in the Y-direction centered
       # at X=0, Y=0, Z=0.75 [in meters], extending in Z a width of 1.5 [m]
-      osc.add_bfield_uniform(bfield=[0, 1, 0], width=[0, 0, 1.5], translation=[0, 0, 0.75])
+      osr.add_bfield_uniform(bfield=[0, 1, 0], width=[0, 0, 1.5], translation=[0, 0, 0.75])
 
 
 
 
 
 
-.. py:method:: OSCARS.add_bfield_undulator(bfield, period, nperiods, [phase, rotations, translation])
+.. py:method:: oscars.sr.add_bfield_undulator(bfield, period, nperiods, [phase, rotations, translation])
 
    Adds an ideal sinusoidal undulator field with a given maximum b-field amplitude, period, and number of periods.  Optionally one can specify the phase offset (in [rad]), rotations and translation.
 
@@ -333,12 +337,12 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
       # Will add magnetic field 3 [m] undulaotor having 1.1 [T] peak field
       # in the Y-direction with a period of 0.050 [m]
-      osc.add_bfield_undulator(bfield=[0, 1.1, 0], period=0.050, nperiods=60)
+      osr.add_bfield_undulator(bfield=[0, 1.1, 0], period=0.050, nperiods=60)
 
 
 
 
-.. py:method:: OSCARS.get_bfield(X)
+.. py:method:: oscars.sr.get_bfield(X)
 
    Get the 3D field at any point in space.  This is the sum of all fields added to this OSCARS object.
 
@@ -351,7 +355,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-.. py:method:: OSCARS.clear_bfields()
+.. py:method:: oscars.sr.clear_bfields()
 
    Remove all of the existing magnetic fields.
 
@@ -369,7 +373,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-.. py:method:: OSCARS.add_efield_file(ifile, iformat, [rotation, translation, scaling])
+.. py:method:: oscars.sr.add_efield_file(ifile, iformat, [rotation, translation, scaling])
 
    Add an electric field from a text file *ifile* according to the format *iformat*.
    
@@ -403,7 +407,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
    .. code-block:: py
 
       # Add electric field from a file where the columns are in the order Z, Bx, By, Bz where Z is in [m] and Bx, By, Bz are in [T].
-      osc.add_efield(ifile='file.txt', iformat='Z Bx By Bz')
+      osr.add_efield_file(ifile='file.txt', iformat='OSCARS1D Z Bx By Bz')
 
 
 
@@ -411,7 +415,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-.. py:method:: OSCARS.add_efield_function(function)
+.. py:method:: oscars.sr.add_efield_function(function)
 
    Adds electric field in the form of a user defined python function.  The input for this function must be (x, y, z, t).
 
@@ -431,14 +435,14 @@ All examples here assume that you have the OSCARS SR module in your path and hav
             return 1
           return 0
 
-      osc.add_efield_function(myfunc)
+      osr.add_efield_function(myfunc)
 
 
 
 
 
 
-.. py:method:: OSCARS.add_efield_gaussian(efield, sigma, [rotations, translation])
+.. py:method:: oscars.sr.add_efield_gaussian(efield, sigma, [rotations, translation])
 
    Add a gaussian electric field in 3D with the peak field magnitude and direction given by *efield*, centered about a point with a given sigma in each coordinate.  If any component of *sigma* is less than or equal to zero it is ignored (ie. spatial extent is infinite).
 
@@ -460,7 +464,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
       # Will add a electric field of 1 Tesla in the Y-direction centered
       # at X=0, Y=0, Z=0 [in meters], with a sigma of 0.1 in the Z-direction
-      osc.add_efield_gaussian(efield=[1, 0, 0], sigma=[0, 0, 0.10])
+      osr.add_efield_gaussian(efield=[1, 0, 0], sigma=[0, 0, 0.10])
 
    :Example: Add a electric field of 1 Tesla in the Y-direction centered at X=1, Y=1, Z=1 [in meters], with a sigma of 0.05 in the Z-direction
 
@@ -468,14 +472,14 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
       # Will add a electric field of 1 Tesla in the Y-direction centered
       # at X=1, Y=1, Z=1 [in meters], with a sigma of 0.05 in the Z-direction
-      osc.add_efield_gaussian(efield=[0, 1, 0], sigma=[0, 0, 0.05], translation=[1, 1, 1])
+      osr.add_efield_gaussian(efield=[0, 1, 0], sigma=[0, 0, 0.05], translation=[1, 1, 1])
 
 
 
 
 
 
-.. py:method:: OSCARS.add_efield_uniform(efield, [width, rotations, translation])
+.. py:method:: oscars.sr.add_efield_uniform(efield, [width, rotations, translation])
 
    Add a uniform electric field in a given range or for all space.  The *efield* is given as a 3D vector representing the field magnitude and direction.  *width* is an optional parameters, if not present the field permeates all space.  If a component of the 3D list *width* is less than or equal to zero, that coordinate will be ignored when calculating the field.
 
@@ -495,7 +499,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
    .. code-block:: py
 
       # Will add a electric field of 0.0001 [T] in the X-direction over all space
-      osc.add_efield_uniform(efield=[0.0001, 0, 0])
+      osr.add_efield_uniform(efield=[0.0001, 0, 0])
 
    :Example: Add a electric field of 0.0005 [T] in the Y-direction with a width in the Z-direction of 1.5 [m] (the other directions are ignored) centered at X=0, Y=0, Z=0.75 [m].
 
@@ -503,14 +507,14 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
       # Will add a electric field of 1 Tesla in the Y-direction centered
       # at X=0, Y=0, Z=0.75 [in meters], extending in Z a width of 1.5 [m]
-      osc.add_efield_uniform(efield=[0, 1, 0], width=[0, 0, 1.5], translation=[0, 0, 0.75])
+      osr.add_efield_uniform(efield=[0, 1, 0], width=[0, 0, 1.5], translation=[0, 0, 0.75])
 
 
 
 
 
 
-.. py:method:: OSCARS.add_efield_undulator(efield, period, nperiods, [phase, rotations, translation])
+.. py:method:: oscars.sr.add_efield_undulator(efield, period, nperiods, [phase, rotations, translation])
 
    Adds an ideal sinusoidal undulator field with a given maximum b-field amplitude, period, and number of periods.  Optionally one can specify the phase offset (in [rad]), rotations and translation.
 
@@ -534,12 +538,12 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
       # Will add electric field 3 [m] undulaotor having 1.1 [T] peak field
       # in the Y-direction with a period of 0.050 [m]
-      osc.add_efield_undulator(efield=[0, 1.1, 0], period=0.050, nperiods=60)
+      osr.add_efield_undulator(efield=[0, 1.1, 0], period=0.050, nperiods=60)
 
 
 
 
-.. py:method:: OSCARS.get_efield(X)
+.. py:method:: oscars.sr.get_efield(X)
 
    Get the 3D field at any point in space.  This is the sum of all fields added to this OSCARS object.
 
@@ -552,7 +556,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-.. py:method:: OSCARS.clear_efields()
+.. py:method:: oscars.sr.clear_efields()
 
    Remove all of the existing electric fields.
 
@@ -582,16 +586,16 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-.. py:method:: OSCARS.set_particle_beam(type, name, energy_GeV, d0, x0, [sigma_energy_GeV, t0, current, weight, rotations, translation, horizontal_direction, beta, emittance, lattice_center, mass, charge])
+.. py:method:: oscars.sr.set_particle_beam(type, name, energy_GeV, d0, x0, [sigma_energy_GeV, t0, current, weight, rotations, translation, horizontal_direction, beta, emittance, lattice_center, mass, charge])
 
-   This function is the same as OSCARS.add_particle_beam(), but it clears all particle beams before the 'add'.
-
-
+   This function is the same as oscars.sr.add_particle_beam(), but it clears all particle beams before the 'add'.
 
 
-.. py:method:: OSCARS.add_particle_beam(type, name, energy_GeV, x0, d0, [sigma_energy_GeV, t0, current, weight, rotations, translation, horizontal_direction, beta, emittance, lattice_reference, mass, charge])
 
-   Add a particle beam to the OSCARS object with a name given by *name*.  There is no limit to the number of different particle beams one can add.  They are added with a *weight* which is by default 1.  The weight is used in random sampling when asking for a new particle, for example in OSCARS.set_new_particle().
+
+.. py:method:: oscars.sr.add_particle_beam(type, name, energy_GeV, x0, d0, [sigma_energy_GeV, t0, current, weight, rotations, translation, horizontal_direction, beta, emittance, lattice_reference, mass, charge])
+
+   Add a particle beam to the OSCARS object with a name given by *name*.  There is no limit to the number of different particle beams one can add.  They are added with a *weight* which is by default 1.  The weight is used in random sampling when asking for a new particle, for example in oscars.sr.set_new_particle().
 
    Supported particle types for *type* are:
       * electron
@@ -646,7 +650,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
       # Will add an electron beam called beam_0 starting at [0, 0, 0] headed in the
       # direction of +Y [0, 1, 0], with an energy of 3 [GeV] at time T0 = 0 [m] having a
       # current of 0.500 [A] and a weight 1
-      osc.add_particle_beam(type='electron', name='beam_0', x0=[0, 0, 0], d0=[0, 1, 0], energy_GeV=3, current=0.500)
+      osr.add_particle_beam(type='electron', name='beam_0', x0=[0, 0, 0], d0=[0, 1, 0], energy_GeV=3, current=0.500)
 
    :Example: Add a positron beam with 0.500 [A] current at an initial position of [-2, 0, 0] in the direction given by theta in the X-Y plane with energy of 3 [GeV]
 
@@ -654,15 +658,15 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
       # Create a positron beam in the X-Y plane at an angle theta
       from math import sin, cos
-      theta = 0.25 * osc.pi()
-      osc.add_particle_beam(type='positron', name='beam_0', x0=[-2, 0, 0], d0=[sin(theta), cos(theta), 0], energy_GeV=3, current=0.500)
+      theta = 0.25 * osr.pi()
+      osr.add_particle_beam(type='positron', name='beam_0', x0=[-2, 0, 0], d0=[sin(theta), cos(theta), 0], energy_GeV=3, current=0.500)
 
 
 
 
 
 
-.. py:method:: OSCARS.clear_particle_beams()
+.. py:method:: oscars.sr.clear_particle_beams()
 
    Remove all of the existing particle beams
 
@@ -673,7 +677,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-.. py:method:: OSCARS.set_new_particle(,[beam, particle])
+.. py:method:: oscars.sr.set_new_particle(,[beam, particle])
 
    If no arguments are given sets the current internal particle to a random new particle.  The randomization is based on the weights given for each beam.  This also sets the initial conditions for the particle used in trajectory calculations based on the beam parameters within the randomly sepected beam.  You can specify which beam you want a random particle from using the *beam* parameter.  The *particle* parameter can be 'ideal' if you want the ideal initial conditions for a particle without randomization.
 
@@ -686,7 +690,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-.. py:method:: OSCARS.get_particle_x0()
+.. py:method:: oscars.sr.get_particle_x0()
 
    Get the initial position for the current particle in [m]
 
@@ -697,7 +701,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-.. py:method:: OSCARS.get_particle_beta0()
+.. py:method:: oscars.sr.get_particle_beta0()
 
    Get the initial :math:`\vec \beta` for the current particle
 
@@ -708,7 +712,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-.. py:method:: OSCARS.get_particle_e0()
+.. py:method:: oscars.sr.get_particle_e0()
 
    Get the initial energy for the current particle in [GeV]
 
@@ -719,9 +723,9 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-.. py:method:: OSCARS.calculate_trajectory()
+.. py:method:: oscars.sr.calculate_trajectory()
 
-   Calculates the trajectory for the current internal particle.  This calculates the trajectory in 3D from the time set by OSCARS.set_ctstart() to the time set by OSCARS.set_ctstop() beginning at the *t0* given by the particle beam from which this particle comes from.  It first does a forward propogation to the stop time, then a backward propogation to the start time.
+   Calculates the trajectory for the current internal particle.  This calculates the trajectory in 3D from the time set by oscars.sr.set_ctstart() to the time set by oscars.sr.set_ctstop() beginning at the *t0* given by the particle beam from which this particle comes from.  It first does a forward propogation to the stop time, then a backward propogation to the start time.
 
    It is not necessary to call this method before other calculations such as spectrum, power density, or flux calculation methods.
 
@@ -732,7 +736,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-.. py:method:: OSCARS.get_trajectory()
+.. py:method:: oscars.sr.get_trajectory()
 
    Get the current trajectory.  If the trajectory has not been calculated this will return an empty list.  The format of the returned list consists of a list of lists giving you the position and beta (v/c) of the particle at each position.  For a trajectory returnned is of the form: [[[x, y, z], [Beta_x, Beta_y, Beta_z]], ...]
 
@@ -742,7 +746,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-.. py:method:: OSCARS.calculate_spectrum(obs, [[npoints, energy_range_eV], points_eV], [nparticles, ofile, nthreads, gpu])
+.. py:method:: oscars.sr.calculate_spectrum(obs, [[npoints, energy_range_eV], points_eV], [nparticles, ofile, nthreads, gpu])
 
    Calculate the spectrum given a point in space, the range in energy, and the number of points.  The calculation uses the current particle and its initial conditions.  If the trajectory has not been calculated it is calculated first.  The units of this calculation are [:math:`photons / mm^2 / 0.1% bw / s`]
 
@@ -773,21 +777,21 @@ All examples here assume that you have the OSCARS SR module in your path and hav
    .. code-block:: py
 
       # 0.4 [T] 2 [m] long dipole centered at Z=0 [m]
-      osc.add_bfield_uniform(bfield=[0, 0.4, 0], width=[0, 0, 2])
+      osr.add_bfield_uniform(bfield=[0, 0.4, 0], width=[0, 0, 2])
 
       # NSLS2 electron beam
-      osc.add_particle_beam(type='electron', name='beam_0', x0=[0, 0, 0], direction=[0, 0, 1], t0=0, energy_GeV=3, current=0.500)
+      osr.add_particle_beam(type='electron', name='beam_0', x0=[0, 0, 0], direction=[0, 0, 1], t0=0, energy_GeV=3, current=0.500)
 
       # Set start and stop time for calculation
-      osc.set_ctstartstop(-0.5, 0.5)
+      osr.set_ctstartstop(-0.5, 0.5)
 
 
       # Set number of points for trajectory calculation (hight for dipole)
-      osc.set_npoints_trajectory(20000)
+      osr.set_npoints_trajectory(20000)
 
       # Calculate spectrum zt Z=30 [m] in the energy range of 100 to
       # 1000 [eV] at 900 equally spaced points
-      osc.calculate_spectrum(obs=[0, 0, 30], energy_range_eV=[100, 1000], npoints=900)
+      osr.calculate_spectrum(obs=[0, 0, 30], energy_range_eV=[100, 1000], npoints=900)
 
 
 
@@ -797,7 +801,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-.. py:method:: OSCARS.calculate_total_power()
+.. py:method:: oscars.sr.calculate_total_power()
 
    Calculate the total radiated power based on the current particle and that particle's beam current.
 
@@ -813,7 +817,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-.. py:method:: OSCARS.calculate_power_density_rectangle(npoints, [[plane, width], x0x1x2], [rotations, translation, ofile, normal, dim, nthreads, gpu])
+.. py:method:: oscars.sr.calculate_power_density_rectangle(npoints, [[plane, width], x0x1x2], [rotations, translation, ofile, normal, dim, nthreads, gpu])
 
    Calculate the power density in a rectangle either defined by three points, or by defining the plane the rectangle is in and the width, and then rotating and translating it to where it needs be.  The simplest is outlined in the first example below.  By default (dim=2) this returns a list whose position coordinates are in the local coordinate space x1 and x2 (*ie* they do not include the rotations and translation).  if dim=3 the coordinates in the return list are in absolute 3D space.
 
@@ -851,7 +855,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
       # Calculate power density in rectangle in the XY plane 30 [m] downstream
       # from a photon beam in the +Z direction
-      power_density = osc.calculate_power_density(plane='XY', width=[0.01, 0.01], npoints=[51, 51], translation=[0, 0, 30])
+      power_density = osr.calculate_power_density(plane='XY', width=[0.01, 0.01], npoints=[51, 51], translation=[0, 0, 30])
 
 
    :Example: Calculate the power density within a simple rectangle 1 [cm] x 1 [cm], 30 [m] downstream defined using the three-point method
@@ -860,7 +864,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
       # Calculate power density in rectangle in the XY plane 30 [m] downstream
       # from a photon beam in the +Z direction
-      power_density = osc.calculate_power_density(x0x1x2=[[-0.005, -0.005, 30], [+0.005, -0.005, 30], [-0.005, +0.005, 30]], npoints=[51, 51])
+      power_density = osr.calculate_power_density(x0x1x2=[[-0.005, -0.005, 30], [+0.005, -0.005, 30], [-0.005, +0.005, 30]], npoints=[51, 51])
 
 
    :Example: Calculate the power density on a flat surface close to and parallel to the beam direction
@@ -869,14 +873,14 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
       # Calculate power density in rectangle on the upper flat portion of a beampipe in the middle
       # of an undulator.  Here the 'normal' is reversed to get the correct sign
-      osc.add_undulator(bfield=[0, 1, 0], period=0.050, nperiods=40)
-      power_density = osc.calculate_power_density(plane='XZ', width=[0.008, 2], npoints=[51, 101], normal=-1)
+      osr.add_undulator(bfield=[0, 1, 0], period=0.050, nperiods=40)
+      power_density = osr.calculate_power_density(plane='XZ', width=[0.008, 2], npoints=[51, 101], normal=-1)
 
 
 
 
 
-.. py:method:: OSCARS.calculate_power_density(points, [normal, rotations, translation, ofile, nthreads, gpu])
+.. py:method:: oscars.sr.calculate_power_density(points, [normal, rotations, translation, ofile, nthreads, gpu])
 
    Calculate the power density for each point in the list *points*.
 
@@ -901,7 +905,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-.. py:method:: OSCARS.calculate_flux_rectangle(energy_eV, npoints, [[plane, width], x0x1x2], [rotations, translation, polarization, ofile, normal, dim, nthreads, gpu])
+.. py:method:: oscars.sr.calculate_flux_rectangle(energy_eV, npoints, [[plane, width], x0x1x2], [rotations, translation, polarization, ofile, normal, dim, nthreads, gpu])
 
    Calculate the flux density in a rectangle either defined by three points, or by defining the plane the rectangle is in and the width, and then rotating and translating it to where it needs be.  The simplest is outlined in the first example below.  By default (dim=2) this returns a list whose position coordinates are in the local coordinate space x1 and x2 (*ie* they do not include the rotations and translation).  if dim=3 the coordinates in the return list are in absolute 3D space.
 
@@ -945,7 +949,7 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-.. py:method:: OSCARS.calculate_efield_vs_time(obs, [ofile])
+.. py:method:: oscars.sr.calculate_efield_vs_time(obs, [ofile])
 
    Calculate the electric field in the time domain for a single particle
 
