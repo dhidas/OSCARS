@@ -19,12 +19,8 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-
-.. automodule:: oscars.sr
-
-.. autoclass:: oscars.sr
-   :members:
-
+oscars.sr
+---------
 
 
 .. py:method:: oscars.sr.pi()
@@ -948,4 +944,42 @@ All examples here assume that you have the OSCARS SR module in your path and hav
    :param ofile: Output file name
    :type  ofile: str
    :returns: A list, each element of which has a time (in [s]) and a 3-dimensional list representing the x, y, and z componemts of the electric field at that time: [[t, [Ex, Ey, Ez]], ...]
+
+
+
+
+
+
+
+
+
+oscars.plots_mpl
+----------------
+
+.. automodule:: oscars.plots_mpl
+   :members:
+
+
+
+
+
+
+
+oscars.plots3d_mpl
+------------------
+
+.. automodule:: oscars.plots3d_mpl
+   :members:
+
+
+
+
+
+
+
+oscars.parametric_surfaces
+----------------
+
+.. automodule:: oscars.parametric_surfaces
+   :members:
 
