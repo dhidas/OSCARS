@@ -15,6 +15,10 @@ The best way to install OSCARS is using a conda environment, so first
 # Install git in your root conda environment (if you don't already have it).
 conda install -n root git
 
+# Fix for temporary conda bug for some distributions
+conda install -n root pyyaml
+
+
 # Download the materials.
 git clone https://github.com/dhidas/OSCARS
 
