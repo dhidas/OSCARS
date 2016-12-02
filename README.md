@@ -33,7 +33,7 @@ At this point you should be able to run jupyter notebook (not necessairy, but ni
 ```
 jupyter notebook
 ```
-and point your browser to <http://localhost:8888/> if it hasn't taken you there already.  Next, you are likely ready to try some of the examples on <http://oscars.bnl.gov/examples>
+and point your browser to <http://localhost:8888/> if it hasn't taken you there already.  Next, you are likely ready to try some of the examples on <http://oscars.bnl.gov/examples.php>
 
 
 ## Advanced Installation - GPU Utilities
