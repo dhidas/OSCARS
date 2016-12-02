@@ -1,0 +1,425 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Examples &mdash; OSCARS 1 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="OSCARS 1 documentation" href="index.html"/>
+        <link rel="next" title="Member Functions" href="MemberFunctions.html"/>
+        <link rel="prev" title="Introduction" href="Introduction.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> OSCARS
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="Introduction.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#common-keyword-arguments">Common Keyword Arguments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example-calculations">Example Calculations</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#spectrum-calculation">Spectrum Calculation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#power-density-calculation">Power Density Calculation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#flux-density-calculation">Flux Density Calculation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#on-plotting-results">On Plotting Results</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="MemberFunctions.html">Member Functions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="CodingConventions.html">Coding Conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MathematicalNotes.html">Mathematical Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Units.html">Units</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Contribute.html">Contribute</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">OSCARS</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Examples</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/Examples.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="examples">
+<h1>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h1>
+<p>Only the most basic examples are given here.  An extensive set of examples can be found on the OSCARS website at <a class="reference external" href="http://oscars.bnl.gov/examples.php">http://oscars.bnl.gov/examples.php</a></p>
+<p>Please note that there is no preferred direction in OSCARS.  Any object (points, surfaces, beams, etc) can easily be rotated and translated in space.</p>
+<div class="section" id="common-keyword-arguments">
+<h2>Common Keyword Arguments<a class="headerlink" href="#common-keyword-arguments" title="Permalink to this headline">¶</a></h2>
+<p>An attempt has been made to use common keyword arguments wherever possible to simplify the interaction with OSCARS.  A list of common keyword arguments to functions is given below.</p>
+<table border="1" class="docutils" id="id1">
+<caption><span class="caption-text">Common Keywords</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
+<colgroup>
+<col width="12%" />
+<col width="29%" />
+<col width="59%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Keyword</th>
+<th class="head">Format</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>ifile</td>
+<td>string</td>
+<td>Full or relative path to the input file.  Text format.</td>
+</tr>
+<tr class="row-odd"><td>ofile</td>
+<td>string</td>
+<td>Full or relative path to the output file.  Text format.  If outputting to a file the function will not return data (will return an empty list or None).  This is to allow you access to very large scale processing processing where memory may otherwise be an issue.</td>
+</tr>
+<tr class="row-even"><td>iformat</td>
+<td>string</td>
+<td>Format of the input text file.  e.g. &#8216;iformat=[X Y Z Bx]&#8217;</td>
+</tr>
+<tr class="row-odd"><td>oformat</td>
+<td>string</td>
+<td>Format of the output text file.</td>
+</tr>
+<tr class="row-even"><td>rotations</td>
+<td>List <span class="math">\([\theta_X, \theta_Y, \theta_Z]\)</span></td>
+<td>A list of angles in [rad] used to perform a rotation on an object or field.  These rotations are performed in the order rotate about X, Y, and finally the Z axis.</td>
+</tr>
+<tr class="row-odd"><td>translation</td>
+<td>List [X, Y, Z]</td>
+<td>An object is translated in space by the given amount in X, Y, and Z.</td>
+</tr>
+<tr class="row-even"><td>bfield</td>
+<td>List <span class="math">\([B_X, B_Y, B_Z]\)</span></td>
+<td>The direction and magnitude of a magnetic field given in [T].  This is the <em>peak</em> field if used in a distribution.</td>
+</tr>
+<tr class="row-odd"><td>efield</td>
+<td>List <span class="math">\([E_X, E_Y, E_Z]\)</span></td>
+<td>The direction and magnitude of a electric field given in [V/m].  This is the <em>peak</em> field if used in a distribution.</td>
+</tr>
+<tr class="row-even"><td>name</td>
+<td>string</td>
+<td>The internal name which you give to an element.  Do not give the same name twice unless the previous object with this name has already been removed.</td>
+</tr>
+<tr class="row-odd"><td>current</td>
+<td>float</td>
+<td>Beam current given in [A].</td>
+</tr>
+<tr class="row-even"><td>mass</td>
+<td>float</td>
+<td>Mass given in [kg]</td>
+</tr>
+<tr class="row-odd"><td>charge</td>
+<td>float</td>
+<td>Charge given in [C]</td>
+</tr>
+<tr class="row-even"><td>normal</td>
+<td>int</td>
+<td>Allowed values are -1, 0, 1.  -1 is for reversing the direction of the normal vertor of a surfafe internally to a calculation.  0 is for disregarding the sign of the scalar product of the surface with regard to the direction of radiation.  The default is always 0.  Setting this to 1 will allow you to see the direction with respect to the surface.</td>
+</tr>
+<tr class="row-odd"><td>dim</td>
+<td>int</td>
+<td>Number of dimensions you want in the return data (either 2, or 3).  The default is 2 which gives you coordinates in the local surface defined by that surface.  dim=3 will return the 3D coordinates in the lab frame.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="example-calculations">
+<h2>Example Calculations<a class="headerlink" href="#example-calculations" title="Permalink to this headline">¶</a></h2>
+<p>The example calculations include non-zero emittance beams, multi-particle simulation, multi-threaded operation, and use of the GPU.  They are in order of increasing complexity, although any of the calculations can be run in this way.</p>
+<div class="section" id="spectrum-calculation">
+<h3>Spectrum Calculation<a class="headerlink" href="#spectrum-calculation" title="Permalink to this headline">¶</a></h3>
+<p>Assume we have an NSLS2-like beam (3 GeV electron beam) and an undulator with a peak field of 1 [T], period of 49 [mm], with 31 periods.  We wish to calculate the on-axis spectrum 30 [m] downstream from the center of the undulator.</p>
+<div class="highlight-py"><div class="highlight"><pre><span></span><span class="c1"># Import the OSARS SR module</span>
+<span class="kn">import</span> <span class="nn">oscars.sr</span>
+
+<span class="c1"># Create an OSCARS SR object</span>
+<span class="n">osr</span> <span class="o">=</span> <span class="n">oscars</span><span class="o">.</span><span class="n">sr</span><span class="o">.</span><span class="n">sr</span><span class="p">()</span>
+
+<span class="c1"># Add an undulator with peak field of 1 [T], period of 49 [mm], nperiods of 31</span>
+<span class="n">osr</span><span class="o">.</span><span class="n">add_bfield_undulator</span><span class="p">(</span><span class="n">bfield</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">period</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.049</span><span class="p">],</span> <span class="n">nperiods</span><span class="o">=</span><span class="mi">31</span><span class="p">)</span>
+
+<span class="c1"># Add an electron beam with initial position X=Y=Z=0, and initially in the Z direction.</span>
+<span class="n">osr</span><span class="o">.</span><span class="n">set_particle_beam</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;electron&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;beam_0&#39;</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">d0</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">energy_GeV</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">current</span><span class="o">=</span><span class="mf">0.500</span><span class="p">)</span>
+
+<span class="c1"># Set the initial and final times for trajectory calculation</span>
+<span class="n">osr</span><span class="o">.</span><span class="n">set_ctstartstop</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Calculate the spectrum</span>
+<span class="n">spectrum</span> <span class="o">=</span> <span class="n">osr</span><span class="o">.</span><span class="n">calculate_spectrum</span><span class="p">(</span><span class="n">obs</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">30</span><span class="p">],</span> <span class="n">energy_range_eV</span><span class="o">=</span><span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mi">2000</span><span class="p">],</span> <span class="n">npoints</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="power-density-calculation">
+<h3>Power Density Calculation<a class="headerlink" href="#power-density-calculation" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Multi-threaded</li>
+</ul>
+<p>Assume we have an NSLS2-like beam (3 GeV electron beam) and an undulator with a peak field of 1 [T], period of 49 [mm], with 31 periods.  We wish to calculate the power density on two different surfaces, one flat surface downstream from the device which is almost perpendicular to the photon beam, and another which models the top inner surface of the beampipe passing through the undulator.  Here nthreads=8 is added to speed up the calculation.</p>
+<div class="highlight-py"><div class="highlight"><pre><span></span><span class="c1"># Import the OSARS SR module</span>
+<span class="kn">import</span> <span class="nn">oscars.sr</span>
+
+<span class="c1"># Create an OSCARS SR object</span>
+<span class="n">osr</span> <span class="o">=</span> <span class="n">oscars</span><span class="o">.</span><span class="n">sr</span><span class="o">.</span><span class="n">sr</span><span class="p">()</span>
+
+<span class="c1"># Add an undulator with peak field of 1 [T], period of 49 [mm], nperiods of 31</span>
+<span class="n">osr</span><span class="o">.</span><span class="n">add_bfield_undulator</span><span class="p">(</span><span class="n">bfield</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">period</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.049</span><span class="p">],</span> <span class="n">nperiods</span><span class="o">=</span><span class="mi">31</span><span class="p">)</span>
+
+<span class="c1"># Add an electron beam with initial position X=Y=Z=0, and initially in the Z direction.</span>
+<span class="n">osr</span><span class="o">.</span><span class="n">set_particle_beam</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;electron&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;beam_0&#39;</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">d0</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">energy_GeV</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">current</span><span class="o">=</span><span class="mf">0.500</span><span class="p">)</span>
+
+<span class="c1"># Set the initial and final times for trajectory calculation</span>
+<span class="n">osr</span><span class="o">.</span><span class="n">set_ctstartstop</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Calculate the power density in a simple XY plane rotated 15 degrees at 30 [m] downstream.</span>
+<span class="n">power_density_0</span> <span class="o">=</span> <span class="n">osr</span><span class="o">.</span><span class="n">calculate_power_density_rectangle</span><span class="p">(</span><span class="n">plane</span><span class="o">=</span><span class="s1">&#39;XY&#39;</span><span class="p">,</span>
+                                                        <span class="n">width</span><span class="o">=</span><span class="p">[</span><span class="mf">0.06</span><span class="p">,</span> <span class="mf">0.06</span><span class="p">],</span>
+                                                        <span class="n">npoints</span><span class="o">=</span><span class="p">[</span><span class="mi">101</span><span class="p">,</span> <span class="mi">101</span><span class="p">],</span>
+                                                        <span class="n">rotations</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">15.</span> <span class="o">*</span> <span class="n">osr</span><span class="o">.</span><span class="n">pi</span><span class="p">()</span> <span class="o">/</span> <span class="mf">180.</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                                                        <span class="n">translation</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">30</span><span class="p">],</span>
+                                                        <span class="n">nthreads</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+
+<span class="c1"># Calculate the power density on the top surface of beampipe inside of undulator</span>
+<span class="n">power_density_1</span> <span class="o">=</span> <span class="n">osr</span><span class="o">.</span><span class="n">calculate_power_density_rectangle</span><span class="p">(</span><span class="n">plane</span><span class="o">=</span><span class="s1">&#39;XZ&#39;</span><span class="p">,</span>
+                                                        <span class="n">width</span><span class="o">=</span><span class="p">[</span><span class="mf">0.02</span><span class="p">,</span> <span class="mf">2.00</span><span class="p">],</span>
+                                                        <span class="n">npoints</span><span class="o">=</span><span class="p">[</span><span class="mi">31</span><span class="p">,</span> <span class="mi">201</span><span class="p">],</span>
+                                                        <span class="n">translation</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.005</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                                                        <span class="n">nthreads</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="flux-density-calculation">
+<h3>Flux Density Calculation<a class="headerlink" href="#flux-density-calculation" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Multi-particle</li>
+<li>Non-zero emittance</li>
+<li>Use of GPU</li>
+</ul>
+<p>Assume we have an NSLS2-like beam (3 GeV electron beam) and an undulator with a peak field of 1 [T], period of 49 [mm], with 31 periods.  We wish to calculate the flux density on a plane 30 [m] downstream from the undulator.  Here we check for a GPU and if you have one, we use it.  The GPU takes priority, but if it doesn&#8217;t exist the global nthreads will be used.</p>
+<div class="highlight-py"><div class="highlight"><pre><span></span><span class="c1"># Import the OSARS SR module</span>
+<span class="kn">import</span> <span class="nn">oscars.sr</span>
+
+<span class="c1"># Create an OSCARS SR object</span>
+<span class="n">osr</span> <span class="o">=</span> <span class="n">oscars</span><span class="o">.</span><span class="n">sr</span><span class="o">.</span><span class="n">sr</span><span class="p">()</span>
+
+<span class="c1"># Set the global number of threads to use</span>
+<span class="n">osr</span><span class="o">.</span><span class="n">set_nthreads_global</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span>
+
+<span class="c1"># If we have a GPU, use it!</span>
+<span class="k">if</span> <span class="n">osr</span><span class="o">.</span><span class="n">check_gpu</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+    <span class="n">osr</span><span class="o">.</span><span class="n">set_gpu_global</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Add an undulator with peak field of 1 [T], period of 49 [mm], nperiods of 31</span>
+<span class="n">osr</span><span class="o">.</span><span class="n">add_bfield_undulator</span><span class="p">(</span><span class="n">bfield</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">period</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.049</span><span class="p">],</span> <span class="n">nperiods</span><span class="o">=</span><span class="mi">31</span><span class="p">)</span>
+
+<span class="c1"># Add an electron beam with non-zero emittance</span>
+<span class="n">osr</span><span class="o">.</span><span class="n">add_particle_beam</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;electron&#39;</span><span class="p">,</span>
+                      <span class="n">name</span><span class="o">=</span><span class="s1">&#39;beam_0&#39;</span><span class="p">,</span>
+                      <span class="n">energy_GeV</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+                      <span class="n">x0</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                      <span class="n">d0</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                      <span class="n">current</span><span class="o">=</span><span class="mf">0.500</span><span class="p">,</span>
+                      <span class="n">sigma_energy_GeV</span><span class="o">=</span><span class="mf">0.001</span><span class="o">*</span><span class="mi">3</span><span class="p">,</span>
+                      <span class="n">beta</span><span class="o">=</span><span class="p">[</span><span class="mf">1.5</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">],</span>
+                      <span class="n">emittance</span><span class="o">=</span><span class="p">[</span><span class="mf">0.9e-9</span><span class="p">,</span> <span class="mf">0.008e-9</span><span class="p">],</span>
+                      <span class="n">horizontal_direction</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+                      <span class="n">lattice_reference</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+
+<span class="c1"># Set the initial and final times for trajectory calculation</span>
+<span class="n">osr</span><span class="o">.</span><span class="n">set_ctstartstop</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Calculate the flux in a simple XY plane for a multi-particle non-zero emittance beam</span>
+<span class="n">flux</span> <span class="o">=</span> <span class="n">osr</span><span class="o">.</span><span class="n">calculate_flux_rectangle</span><span class="p">(</span><span class="n">plane</span><span class="o">=</span><span class="s1">&#39;XY&#39;</span><span class="p">,</span>
+                                    <span class="n">energy_eV</span><span class="o">=</span><span class="mi">455</span><span class="p">,</span>
+                                    <span class="n">width</span><span class="o">=</span><span class="p">[</span><span class="mf">0.06</span><span class="p">,</span> <span class="mf">0.06</span><span class="p">],</span>
+                                    <span class="n">npoints</span><span class="o">=</span><span class="p">[</span><span class="mi">101</span><span class="p">,</span> <span class="mi">101</span><span class="p">],</span>
+                                    <span class="n">translation</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">30</span><span class="p">],</span>
+                                    <span class="n">nparticles</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="on-plotting-results">
+<h2>On Plotting Results<a class="headerlink" href="#on-plotting-results" title="Permalink to this headline">¶</a></h2>
+<p>OSCARS comes with additional plotting tools which use matplotlib.  We are also considering implementing the ROOT framework for plotting.  Currently one can plot results from the above examples simply as follows.</p>
+<div class="highlight-py"><div class="highlight"><pre><span></span><span class="c1"># Import the OSCARS MLP tools</span>
+<span class="kn">from</span> <span class="nn">oscars.plots_mpl</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">plot_spectrum</span><span class="p">(</span><span class="n">spectrum</span><span class="p">)</span>
+<span class="n">plot_power_density</span><span class="p">(</span><span class="n">power_density_0</span><span class="p">)</span>
+<span class="n">plot_power_density</span><span class="p">(</span><span class="n">power_density_1</span><span class="p">)</span>
+<span class="n">plot_flux</span><span class="p">(</span><span class="n">flux</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="MemberFunctions.html" class="btn btn-neutral float-right" title="Member Functions" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="Introduction.html" class="btn btn-neutral" title="Introduction" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Brookhaven Science Associates, LLC Brookhaven National Laboratory.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

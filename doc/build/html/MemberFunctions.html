@@ -1,0 +1,1284 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Member Functions &mdash; OSCARS 1 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="OSCARS 1 documentation" href="index.html"/>
+        <link rel="next" title="Coding Conventions" href="CodingConventions.html"/>
+        <link rel="prev" title="Examples" href="Examples.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> OSCARS
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="Introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Examples.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Member Functions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#primer-for-the-examples">Primer for the Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="CodingConventions.html">Coding Conventions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MathematicalNotes.html">Mathematical Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Units.html">Units</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Contribute.html">Contribute</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">OSCARS</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+    <li>Member Functions</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/MemberFunctions.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="member-functions">
+<h1>Member Functions<a class="headerlink" href="#member-functions" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="primer-for-the-examples">
+<h2>Primer for the Examples<a class="headerlink" href="#primer-for-the-examples" title="Permalink to this headline">¶</a></h2>
+<p>All examples here assume that you have the OSCARS SR module in your path and have an OSCARS SR object called osr, perhaps as in the following example</p>
+<div class="highlight-py"><div class="highlight"><pre><span></span><span class="c1"># Import the OSCARS SR module</span>
+<span class="kn">import</span> <span class="nn">oscars.sr</span>
+
+<span class="c1"># Creat an OSCARS SR object</span>
+<span class="n">osr</span> <span class="o">=</span> <span class="n">oscars</span><span class="o">.</span><span class="n">sr</span><span class="o">.</span><span class="n">sr</span><span class="p">()</span>
+</pre></div>
+</div>
+<span class="target" id="module-OSCARS.SR"></span><dl class="class">
+<dt id="OSCARS.SR.OSCARS.SR">
+<em class="property">class </em><code class="descclassname">OSCARS.</code><code class="descname">SR</code><a class="headerlink" href="#OSCARS.SR.OSCARS.SR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.pi">
+<code class="descclassname">OSCARS.</code><code class="descname">pi</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.pi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the value of pi: 3.14159265358979323846</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">float</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.qe">
+<code class="descclassname">OSCARS.</code><code class="descname">qe</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.qe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the value of elementary charge: +1.602176462e-19 [C]</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">float</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.rand">
+<code class="descclassname">OSCARS.</code><code class="descname">rand</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.rand" title="Permalink to this definition">¶</a></dt>
+<dd><p>Random float between 0 and 1</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">float</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.norm">
+<code class="descclassname">OSCARS.</code><code class="descname">norm</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.norm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Random float from the normal distribution</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">float</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.set_seed">
+<code class="descclassname">OSCARS.</code><code class="descname">set_seed</code><span class="sig-paren">(</span><em>seed</em><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.set_seed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the internal random seed</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>seed</strong> (<em>int</em>) &#8211; Random seed</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.set_gpu_global">
+<code class="descclassname">OSCARS.</code><code class="descname">set_gpu_global</code><span class="sig-paren">(</span><em>gpu</em><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.set_gpu_global" title="Permalink to this definition">¶</a></dt>
+<dd><p>If set to 1, OSCARS will try to use the GPU for all calculations</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>gpu</strong> (<em>int</em>) &#8211; 1 or 0</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.check_gpu">
+<code class="descclassname">OSCARS.</code><code class="descname">check_gpu</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.check_gpu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Will return the number of GPUs available, or a negative number for any other error, for instance if your distribution was not compiled with GPU support.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">integer</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.set_nthreads_global">
+<code class="descclassname">OSCARS.</code><code class="descname">set_nthreads_global</code><span class="sig-paren">(</span><em>nthreads</em><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.set_nthreads_global" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the number of threads you wish to use for all calculations.  If the GPU is requested it will take precedence over multi-threading.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.get_ctstart">
+<code class="descclassname">OSCARS.</code><code class="descname">get_ctstart</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.get_ctstart" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the start time for particle propogation.  The <em>time</em> is in units of [m].</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">float</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.get_ctstop">
+<code class="descclassname">OSCARS.</code><code class="descname">get_ctstop</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.get_ctstop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the stop time for particle propogation.  The <em>time</em> is in units of [m].</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">float</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.set_ctstartstop">
+<code class="descclassname">OSCARS.</code><code class="descname">set_ctstartstop</code><span class="sig-paren">(</span><em>time_start</em>, <em>time_stop</em><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.set_ctstartstop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the start and stop times for the trajectory calculation.  Start time must be less than or equal to the T0 defined in the initial conditions for the particle beam.  Similarly, stop time must be greater than that T0.  This also sets a default value for the number of points used in the trajectory calculation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>time_start</strong> (<em>float</em>) &#8211; Start time</li>
+<li><strong>time_stop</strong> (<em>float</em>) &#8211; Stop time</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">None</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.set_precision">
+<code class="descclassname">OSCARS.SR.</code><code class="descname">set_precision</code><span class="sig-paren">(</span><em>precision</em><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.set_precision" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the precision for the calculation.  The default is 1.  If precision is not high enough try 0.1, 0.01, 0.001, etc.  With lower precision number computations will take longer.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>precision</strong> (<em>float</em>) &#8211; precision for calculations</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.set_npoints_trajectory">
+<code class="descclassname">OSCARS.SR.</code><code class="descname">set_npoints_trajectory</code><span class="sig-paren">(</span><em>npoints</em><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.set_npoints_trajectory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the number of points to be used in the trajectory calculation.  Only call this function <strong>after</strong> set_ctstartstop().</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>npoints</strong> (<em>int</em>) &#8211; Number of points</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-py"><div class="highlight"><pre><span></span><span class="c1"># First set the start and stop times</span>
+<span class="n">osc</span><span class="o">.</span><span class="n">set_ctstartstop</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Use 12345 points in the trajectory calculations</span>
+<span class="n">osc</span><span class="o">.</span><span class="n">set_npoints_trajectory</span><span class="p">(</span><span class="mi">12345</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.get_npoints_trajectory">
+<code class="descclassname">OSCARS.</code><code class="descname">get_npoints_trajectory</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.get_npoints_trajectory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets the number of points to be used in the trajectory calculation</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">int - Number of points</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.add_bfield_file">
+<code class="descclassname">OSCARS.</code><code class="descname">add_bfield_file</code><span class="sig-paren">(</span><em>ifile</em>, <em>iformat</em><span class="optional">[</span>, <em>rotation</em>, <em>translation</em>, <em>scaling</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.add_bfield_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a magnetic field from a text file <em>ifile</em> according to the format <em>iformat</em>.</p>
+<dl class="docutils">
+<dt>Currently OSCARS accepts the following file formats for iformat</dt>
+<dd><ul class="first last simple">
+<li>&#8216;OSCARS&#8217;</li>
+<li>&#8216;OSCARS1D [plus format string]&#8217;</li>
+<li>&#8216;SPECTRA&#8217;</li>
+<li>&#8216;SRW&#8217;</li>
+</ul>
+</dd>
+</dl>
+<p>For the OSCARS1D format you must also include the order of the data columns, which would typically look something like: &#8216;OSCARS1D Z Bx By Bz&#8217;.  You may use X or Y instead of Z and the order and number of B[xyz] does not matter.  This mode also accepts non-uniformly distributed data.</p>
+<p>Optionally you can rotate and translate the field in space.  You can use an input <em>scaling</em> list to scale the input (which must be in SI units of [m] for distances/positions and [T] for magnetic field values.</p>
+<p>The rotation is performed first in the order: <span class="math">\(\theta_x, \theta_y, \theta_z\)</span></p>
+<p><em>scaling</em> is a list of less than or equal length to the number of elements in <em>iformat</em> when OSCARS1D is selected.  This will scale the input values of the i-th column before any rotation or translation.  This is useful if your data file is not in [T] and [m]</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>ifile</strong> (<em>str</em>) &#8211; Name of input file</li>
+<li><strong>iformat</strong> (<em>str</em>) &#8211; Format of the input file</li>
+<li><strong>rotation</strong> (<em>list[3]</em>) &#8211; [<span class="math">\(\theta_x, \theta_y, \theta_z\)</span>]</li>
+<li><strong>translation</strong> &#8211; Translation in space [x, y, z]</li>
+<li><strong>scaling</strong> &#8211; Scaling of input parameters</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">None</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-py"><div class="highlight"><pre><span></span><span class="c1"># Add a magnetic field from a file where the columns are in the order Z, Bx, By, Bz where Z is in [m] and Bx, By, Bz are in [T].</span>
+<span class="n">osc</span><span class="o">.</span><span class="n">add_bfield</span><span class="p">(</span><span class="n">ifile</span><span class="o">=</span><span class="s1">&#39;file.txt&#39;</span><span class="p">,</span> <span class="n">iformat</span><span class="o">=</span><span class="s1">&#39;Z Bx By Bz&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.add_bfield_function">
+<code class="descclassname">OSCARS.</code><code class="descname">add_bfield_function</code><span class="sig-paren">(</span><em>function</em><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.add_bfield_function" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a magnetic field in the form of a user defined python function.  The input for this function must be (x, y, z, t).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>function</strong> (<em>func</em>) &#8211; Python function</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-py"><div class="highlight"><pre><span></span><span class="c1"># Create a function in python and use it as a magnetic field in OSCARS</span>
+
+<span class="k">def</span> <span class="nf">myfunc</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="s2">&quot;Do not forget to write a docstring&quot;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">z</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+      <span class="k">return</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="mi">0</span>
+
+<span class="n">osc</span><span class="o">.</span><span class="n">add_bfield_function</span><span class="p">(</span><span class="n">myfunc</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.add_bfield_gaussian">
+<code class="descclassname">OSCARS.</code><code class="descname">add_bfield_gaussian</code><span class="sig-paren">(</span><em>bfield</em>, <em>sigma</em><span class="optional">[</span>, <em>rotations</em>, <em>translation</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.add_bfield_gaussian" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a gaussian magnetic field in 3D with the peak field magnitude and direction given by <em>bfield</em>, centered about a point with a given sigma in each coordinate.  If any component of <em>sigma</em> is less than or equal to zero it is ignored (ie. spatial extent is infinite).</p>
+<p>The functional form for this is the following:
+<span class="math">\(\\exp(-(x - x_0)^2 / \\sigma_x^2)\)</span></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>bfield</strong> (<em>list[3]</em>) &#8211; A list representing the peak field [Bx, By, Bz]</li>
+<li><strong>center</strong> (<em>list[3]</em>) &#8211; A list representing the coordinates of the center point [X0, Y0, Z0]</li>
+<li><strong>sigma</strong> (<em>list[3]</em>) &#8211; A list representing the sigma in each coordinate [S0, S0, S0]</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">None</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"><p class="first last">Add a magnetic field of 0.5 [T] in the X-direction centered at X=0, Y=0, Z=0 [in meters], with a sigma of 0.1 [m] in the Z-direction</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-py"><div class="highlight"><pre><span></span><span class="c1"># Will add a magnetic field of 1 Tesla in the Y-direction centered</span>
+<span class="c1"># at X=0, Y=0, Z=0 [in meters], with a sigma of 0.1 in the Z-direction</span>
+<span class="n">osc</span><span class="o">.</span><span class="n">add_bfield_gaussian</span><span class="p">(</span><span class="n">bfield</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">sigma</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.10</span><span class="p">])</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body">Add a magnetic field of 1 Tesla in the Y-direction centered at X=1, Y=1, Z=1 [in meters], with a sigma of 0.05 in the Z-direction</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-py"><div class="highlight"><pre><span></span><span class="c1"># Will add a magnetic field of 1 Tesla in the Y-direction centered</span>
+<span class="c1"># at X=1, Y=1, Z=1 [in meters], with a sigma of 0.05 in the Z-direction</span>
+<span class="n">osc</span><span class="o">.</span><span class="n">add_bfield_gaussian</span><span class="p">(</span><span class="n">bfield</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">sigma</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">],</span> <span class="n">translation</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.add_bfield_uniform">
+<code class="descclassname">OSCARS.</code><code class="descname">add_bfield_uniform</code><span class="sig-paren">(</span><em>bfield</em><span class="optional">[</span>, <em>width</em>, <em>rotations</em>, <em>translation</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.add_bfield_uniform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a uniform magnetic field in a given range or for all space.  The <em>bfield</em> is given as a 3D vector representing the field magnitude and direction.  <em>width</em> is an optional parameters, if not present the field permeates all space.  If a component of the 3D list <em>width</em> is less than or equal to zero, that coordinate will be ignored when calculating the field.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>bfield</strong> (<em>list[3]</em>) &#8211; A list representing the magnetic field [Bx, By, Bz]</li>
+<li><strong>width</strong> (<em>list[3]</em>) &#8211; A list representing the spetial extent of the field [Wx, Wy, Wz]</li>
+<li><strong>rotations</strong> (<em>list[3]</em>) &#8211; A list representing the rotations of this object about the X, Y amd Z axis (in that order)</li>
+<li><strong>translation</strong> (<em>list[3]</em>) &#8211; A list representing the translation of the center of this object</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">None</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"><p class="first last">Add a magnetic field of 0.0001 [T] in the X-direction for all space</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-py"><div class="highlight"><pre><span></span><span class="c1"># Will add a magnetic field of 0.0001 [T] in the X-direction over all space</span>
+<span class="n">osc</span><span class="o">.</span><span class="n">add_bfield_uniform</span><span class="p">(</span><span class="n">bfield</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0001</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body">Add a magnetic field of 0.0005 [T] in the Y-direction with a width in the Z-direction of 1.5 [m] (the other directions are ignored) centered at X=0, Y=0, Z=0.75 [m].</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-py"><div class="highlight"><pre><span></span><span class="c1"># Will add a magnetic field of 1 Tesla in the Y-direction centered</span>
+<span class="c1"># at X=0, Y=0, Z=0.75 [in meters], extending in Z a width of 1.5 [m]</span>
+<span class="n">osc</span><span class="o">.</span><span class="n">add_bfield_uniform</span><span class="p">(</span><span class="n">bfield</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">width</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">],</span> <span class="n">translation</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.add_bfield_undulator">
+<code class="descclassname">OSCARS.</code><code class="descname">add_bfield_undulator</code><span class="sig-paren">(</span><em>bfield</em>, <em>period</em>, <em>nperiods</em><span class="optional">[</span>, <em>phase</em>, <em>rotations</em>, <em>translation</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.add_bfield_undulator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds an ideal sinusoidal undulator field with a given maximum b-field amplitude, period, and number of periods.  Optionally one can specify the phase offset (in [rad]), rotations and translation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>bfield</strong> (<em>list[3]</em>) &#8211; A list representing the peak field [Bx, By, Bz] in [T]</li>
+<li><strong>period</strong> (<em>float</em>) &#8211; Length of one period</li>
+<li><strong>nperiods</strong> (<em>int</em>) &#8211; Number of periods</li>
+<li><strong>phase</strong> (<em>float</em>) &#8211; Phase offset in [rad].</li>
+<li><strong>rotations</strong> (<em>list[3]</em>) &#8211; A list representing the rotations of this object about the X, Y amd Z axis (in that order)</li>
+<li><strong>translation</strong> (<em>list[3]</em>) &#8211; A list representing the translation of the center of this object</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">None</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"><p class="first last">Add the magnetic field for an undulator of length 3 [m] with a period of 0.050 [m] (60 periods) having a peak magnetic field in the Y direction of 1.1 [T]</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-py"><div class="highlight"><pre><span></span><span class="c1"># Will add magnetic field 3 [m] undulaotor having 1.1 [T] peak field</span>
+<span class="c1"># in the Y-direction with a period of 0.050 [m]</span>
+<span class="n">osc</span><span class="o">.</span><span class="n">add_bfield_undulator</span><span class="p">(</span><span class="n">bfield</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">period</span><span class="o">=</span><span class="mf">0.050</span><span class="p">,</span> <span class="n">nperiods</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.get_bfield">
+<code class="descclassname">OSCARS.</code><code class="descname">get_bfield</code><span class="sig-paren">(</span><em>X</em><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.get_bfield" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the 3D field at any point in space.  This is the sum of all fields added to this OSCARS object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>X</strong> (<em>list[3]</em>) &#8211; A 3D list representing a point in space [x, y, z]</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">[float, float, float] - list representing the B-field [Bx, By, Bz]</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.clear_bfields">
+<code class="descclassname">OSCARS.</code><code class="descname">clear_bfields</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.clear_bfields" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove all of the existing magnetic fields.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.add_efield_file">
+<code class="descclassname">OSCARS.</code><code class="descname">add_efield_file</code><span class="sig-paren">(</span><em>ifile</em>, <em>iformat</em><span class="optional">[</span>, <em>rotation</em>, <em>translation</em>, <em>scaling</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.add_efield_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add an electric field from a text file <em>ifile</em> according to the format <em>iformat</em>.</p>
+<dl class="docutils">
+<dt>Currently OSCARS accepts the following file formats for iformat</dt>
+<dd><ul class="first last simple">
+<li>&#8216;OSCARS&#8217;</li>
+<li>&#8216;OSCARS1D [plus format string]&#8217;</li>
+<li>&#8216;SPECTRA&#8217;</li>
+<li>&#8216;SRW&#8217;</li>
+</ul>
+</dd>
+</dl>
+<p>For the OSCARS1D format you must also include the order of the data columns, which would typically look something like: &#8216;OSCARS1D Z Bx By Bz&#8217;.  You may use X or Y instead of Z and the order and number of B[xyz] does not matter.  This mode also accepts non-uniformly distributed data.</p>
+<p>Optionally you can rotate and translate the field in space.  You can use an input <em>scaling</em> list to scale the input (which must be in SI units of [m] for distances/positions and [T] for electric field values.</p>
+<p>The rotation is performed first in the order: <span class="math">\(\theta_x, \theta_y, \theta_z\)</span></p>
+<p><em>scaling</em> is a list of less than or equal length to the number of elements in <em>iformat</em> when OSCARS1D is selected.  This will scale the input values of the i-th column before any rotation or translation.  This is useful if your data file is not in [T] and [m]</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>ifile</strong> (<em>str</em>) &#8211; Name of input file</li>
+<li><strong>iformat</strong> (<em>str</em>) &#8211; Format of the input file</li>
+<li><strong>rotation</strong> (<em>list[3]</em>) &#8211; [<span class="math">\(\theta_x, \theta_y, \theta_z\)</span>]</li>
+<li><strong>translation</strong> &#8211; Translation in space [x, y, z]</li>
+<li><strong>scaling</strong> &#8211; Scaling of input parameters</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">None</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-py"><div class="highlight"><pre><span></span><span class="c1"># Add electric field from a file where the columns are in the order Z, Bx, By, Bz where Z is in [m] and Bx, By, Bz are in [T].</span>
+<span class="n">osc</span><span class="o">.</span><span class="n">add_efield</span><span class="p">(</span><span class="n">ifile</span><span class="o">=</span><span class="s1">&#39;file.txt&#39;</span><span class="p">,</span> <span class="n">iformat</span><span class="o">=</span><span class="s1">&#39;Z Bx By Bz&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.add_efield_function">
+<code class="descclassname">OSCARS.</code><code class="descname">add_efield_function</code><span class="sig-paren">(</span><em>function</em><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.add_efield_function" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds electric field in the form of a user defined python function.  The input for this function must be (x, y, z, t).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>function</strong> (<em>func</em>) &#8211; Python function</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-py"><div class="highlight"><pre><span></span><span class="c1"># Create a function in python and use it as a electric field in OSCARS</span>
+
+<span class="k">def</span> <span class="nf">myfunc</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+    <span class="s2">&quot;Do not forget to write a docstring&quot;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">z</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+      <span class="k">return</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="mi">0</span>
+
+<span class="n">osc</span><span class="o">.</span><span class="n">add_efield_function</span><span class="p">(</span><span class="n">myfunc</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.add_efield_gaussian">
+<code class="descclassname">OSCARS.</code><code class="descname">add_efield_gaussian</code><span class="sig-paren">(</span><em>efield</em>, <em>sigma</em><span class="optional">[</span>, <em>rotations</em>, <em>translation</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.add_efield_gaussian" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a gaussian electric field in 3D with the peak field magnitude and direction given by <em>efield</em>, centered about a point with a given sigma in each coordinate.  If any component of <em>sigma</em> is less than or equal to zero it is ignored (ie. spatial extent is infinite).</p>
+<p>The functional form for this is the following:
+<span class="math">\(\\exp(-(x - x_0)^2 / \\sigma_x^2)\)</span></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>efield</strong> (<em>list[3]</em>) &#8211; A list representing the peak field [Bx, By, Bz]</li>
+<li><strong>center</strong> (<em>list[3]</em>) &#8211; A list representing the coordinates of the center point [X0, Y0, Z0]</li>
+<li><strong>sigma</strong> (<em>list[3]</em>) &#8211; A list representing the sigma in each coordinate [S0, S0, S0]</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">None</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"><p class="first last">Add a electric field of 0.5 [T] in the X-direction centered at X=0, Y=0, Z=0 [in meters], with a sigma of 0.1 [m] in the Z-direction</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-py"><div class="highlight"><pre><span></span><span class="c1"># Will add a electric field of 1 Tesla in the Y-direction centered</span>
+<span class="c1"># at X=0, Y=0, Z=0 [in meters], with a sigma of 0.1 in the Z-direction</span>
+<span class="n">osc</span><span class="o">.</span><span class="n">add_efield_gaussian</span><span class="p">(</span><span class="n">efield</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">sigma</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.10</span><span class="p">])</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body">Add a electric field of 1 Tesla in the Y-direction centered at X=1, Y=1, Z=1 [in meters], with a sigma of 0.05 in the Z-direction</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-py"><div class="highlight"><pre><span></span><span class="c1"># Will add a electric field of 1 Tesla in the Y-direction centered</span>
+<span class="c1"># at X=1, Y=1, Z=1 [in meters], with a sigma of 0.05 in the Z-direction</span>
+<span class="n">osc</span><span class="o">.</span><span class="n">add_efield_gaussian</span><span class="p">(</span><span class="n">efield</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">sigma</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">],</span> <span class="n">translation</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.add_efield_uniform">
+<code class="descclassname">OSCARS.</code><code class="descname">add_efield_uniform</code><span class="sig-paren">(</span><em>efield</em><span class="optional">[</span>, <em>width</em>, <em>rotations</em>, <em>translation</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.add_efield_uniform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a uniform electric field in a given range or for all space.  The <em>efield</em> is given as a 3D vector representing the field magnitude and direction.  <em>width</em> is an optional parameters, if not present the field permeates all space.  If a component of the 3D list <em>width</em> is less than or equal to zero, that coordinate will be ignored when calculating the field.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>efield</strong> (<em>list[3]</em>) &#8211; A list representing the electric field [Bx, By, Bz]</li>
+<li><strong>width</strong> (<em>list[3]</em>) &#8211; A list representing the spetial extent of the field [Wx, Wy, Wz]</li>
+<li><strong>rotations</strong> (<em>list[3]</em>) &#8211; A list representing the rotations of this object about the X, Y amd Z axis (in that order)</li>
+<li><strong>translation</strong> (<em>list[3]</em>) &#8211; A list representing the translation of the center of this object</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">None</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"><p class="first last">Add a electric field of 0.0001 [T] in the X-direction for all space</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-py"><div class="highlight"><pre><span></span><span class="c1"># Will add a electric field of 0.0001 [T] in the X-direction over all space</span>
+<span class="n">osc</span><span class="o">.</span><span class="n">add_efield_uniform</span><span class="p">(</span><span class="n">efield</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0001</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body">Add a electric field of 0.0005 [T] in the Y-direction with a width in the Z-direction of 1.5 [m] (the other directions are ignored) centered at X=0, Y=0, Z=0.75 [m].</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-py"><div class="highlight"><pre><span></span><span class="c1"># Will add a electric field of 1 Tesla in the Y-direction centered</span>
+<span class="c1"># at X=0, Y=0, Z=0.75 [in meters], extending in Z a width of 1.5 [m]</span>
+<span class="n">osc</span><span class="o">.</span><span class="n">add_efield_uniform</span><span class="p">(</span><span class="n">efield</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">width</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">],</span> <span class="n">translation</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.75</span><span class="p">])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.add_efield_undulator">
+<code class="descclassname">OSCARS.</code><code class="descname">add_efield_undulator</code><span class="sig-paren">(</span><em>efield</em>, <em>period</em>, <em>nperiods</em><span class="optional">[</span>, <em>phase</em>, <em>rotations</em>, <em>translation</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.add_efield_undulator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds an ideal sinusoidal undulator field with a given maximum b-field amplitude, period, and number of periods.  Optionally one can specify the phase offset (in [rad]), rotations and translation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>efield</strong> (<em>list[3]</em>) &#8211; A list representing the peak field [Bx, By, Bz] in [T]</li>
+<li><strong>period</strong> (<em>float</em>) &#8211; Length of one period</li>
+<li><strong>nperiods</strong> (<em>int</em>) &#8211; Number of periods</li>
+<li><strong>phase</strong> (<em>float</em>) &#8211; Phase offset in [rad].</li>
+<li><strong>rotations</strong> (<em>list[3]</em>) &#8211; A list representing the rotations of this object about the X, Y amd Z axis (in that order)</li>
+<li><strong>translation</strong> (<em>list[3]</em>) &#8211; A list representing the translation of the center of this object</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">None</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"><p class="first last">Add the electric field for an undulator of length 3 [m] with a period of 0.050 [m] (60 periods) having a peak electric field in the Y direction of 1.1 [T]</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-py"><div class="highlight"><pre><span></span><span class="c1"># Will add electric field 3 [m] undulaotor having 1.1 [T] peak field</span>
+<span class="c1"># in the Y-direction with a period of 0.050 [m]</span>
+<span class="n">osc</span><span class="o">.</span><span class="n">add_efield_undulator</span><span class="p">(</span><span class="n">efield</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">period</span><span class="o">=</span><span class="mf">0.050</span><span class="p">,</span> <span class="n">nperiods</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.get_efield">
+<code class="descclassname">OSCARS.</code><code class="descname">get_efield</code><span class="sig-paren">(</span><em>X</em><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.get_efield" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the 3D field at any point in space.  This is the sum of all fields added to this OSCARS object.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>X</strong> (<em>list[3]</em>) &#8211; A 3D list representing a point in space [x, y, z]</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">[float, float, float] - list representing the B-field [Bx, By, Bz]</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.clear_efields">
+<code class="descclassname">OSCARS.</code><code class="descname">clear_efields</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.clear_efields" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove all of the existing electric fields.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.set_particle_beam">
+<code class="descclassname">OSCARS.</code><code class="descname">set_particle_beam</code><span class="sig-paren">(</span><em>type</em>, <em>name</em>, <em>energy_GeV</em>, <em>d0</em>, <em>x0</em><span class="optional">[</span>, <em>sigma_energy_GeV</em>, <em>t0</em>, <em>current</em>, <em>weight</em>, <em>rotations</em>, <em>translation</em>, <em>horizontal_direction</em>, <em>beta</em>, <em>emittance</em>, <em>lattice_center</em>, <em>mass</em>, <em>charge</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.set_particle_beam" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function is the same as OSCARS.add_particle_beam(), but it clears all particle beams before the &#8216;add&#8217;.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.add_particle_beam">
+<code class="descclassname">OSCARS.</code><code class="descname">add_particle_beam</code><span class="sig-paren">(</span><em>type</em>, <em>name</em>, <em>energy_GeV</em>, <em>x0</em>, <em>d0</em><span class="optional">[</span>, <em>sigma_energy_GeV</em>, <em>t0</em>, <em>current</em>, <em>weight</em>, <em>rotations</em>, <em>translation</em>, <em>horizontal_direction</em>, <em>beta</em>, <em>emittance</em>, <em>lattice_reference</em>, <em>mass</em>, <em>charge</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.add_particle_beam" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a particle beam to the OSCARS object with a name given by <em>name</em>.  There is no limit to the number of different particle beams one can add.  They are added with a <em>weight</em> which is by default 1.  The weight is used in random sampling when asking for a new particle, for example in OSCARS.set_new_particle().</p>
+<dl class="docutils">
+<dt>Supported particle types for <em>type</em> are:</dt>
+<dd><ul class="first last simple">
+<li>electron</li>
+<li>positron</li>
+<li>muon</li>
+<li>anti-muon</li>
+<li>proton</li>
+<li>anti-proton</li>
+<li>pi+</li>
+<li>pi-</li>
+</ul>
+</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>type</strong> (<em>str</em>) &#8211; one of the built-in types of particle beams, or &#8216;custom&#8217;.  If you use custom you must also specify <em>mass</em> and <em>charge</em>.</li>
+<li><strong>name</strong> (<em>str</em>) &#8211; User identified of this beam</li>
+<li><strong>energy_GeV</strong> (<em>float</em>) &#8211; Beam energy in [GeV]</li>
+<li><strong>d0</strong> (<em>[float, float, float]</em>) &#8211; Vector representing the default direction of the beam at the initial position.  The normalization of this vector does not matter.</li>
+<li><strong>x0</strong> (<em>[float, float, float]</em>) &#8211; Coordinates of the initial position in [m]</li>
+<li><strong>sigma_energy_GeV</strong> (<em>float</em>) &#8211; Beam energy in [GeV]</li>
+<li><strong>t0</strong> (<em>float</em>) &#8211; Initial time in [m] at the initial_position.  Time here is in terms of ct.</li>
+<li><strong>current</strong> (<em>float</em>) &#8211; Beam current in [A].  If this parameter is 0, the current defaults to the single particle charge</li>
+<li><strong>weight</strong> (<em>float</em>) &#8211; Weight to give this beam for random sampling when there are multiple beams</li>
+<li><strong>rotations</strong> (<em>list[3]</em>) &#8211; A list representing the rotations of this beam about the X, Y amd Z axis (in that order)</li>
+<li><strong>translation</strong> (<em>list[3]</em>) &#8211; A list representing the translation of the x0 of this object</li>
+<li><strong>horizontal_direction</strong> (<em>list[3]</em>) &#8211; A list representing the <em>horizontal</em> beam direction.  This must be perpendicular to the beam <em>direction</em>.  The vertical direction is defined internally as <span class="math">\([direction] \cross [horizontal_direction]\)</span>.</li>
+<li><strong>beta</strong> &#8211; values of the horizontal and vertical beta funtion at the point <em>lattice_center</em> [beta_x, beta_y]</li>
+<li><strong>emittance</strong> (<em>[float, float]</em>) &#8211; values of the horizontal and vertical emittance [emittance_x, emittance_y]</li>
+<li><strong>lattice_reference</strong> (<em>list[3]</em>) &#8211; Coordinates of the lattice center (must be on-axis with respect to the beam)</li>
+<li><strong>mass</strong> (<em>float</em>) &#8211; mass of a <em>custom</em> particle.  This is only used if <em>type</em> = &#8216;custom&#8217;.  Must be non-zero.</li>
+<li><strong>charge</strong> (<em>float</em>) &#8211; Charge of a <em>custom</em> particle.  This is only used if <em>type</em> = &#8216;custom&#8217;.  Must be non-zero.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">None</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"><p class="first last">Add an electron beam with 0.500 [A] current at an initial position of [0, 0, 0] in the Y direction with energy of 3 [GeV]</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-py"><div class="highlight"><pre><span></span><span class="c1"># Will add an electron beam called beam_0 starting at [0, 0, 0] headed in the</span>
+<span class="c1"># direction of +Y [0, 1, 0], with an energy of 3 [GeV] at time T0 = 0 [m] having a</span>
+<span class="c1"># current of 0.500 [A] and a weight 1</span>
+<span class="n">osc</span><span class="o">.</span><span class="n">add_particle_beam</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;electron&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;beam_0&#39;</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">d0</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">energy_GeV</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">current</span><span class="o">=</span><span class="mf">0.500</span><span class="p">)</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body">Add a positron beam with 0.500 [A] current at an initial position of [-2, 0, 0] in the direction given by theta in the X-Y plane with energy of 3 [GeV]</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-py"><div class="highlight"><pre><span></span><span class="c1"># Create a positron beam in the X-Y plane at an angle theta</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">sin</span><span class="p">,</span> <span class="n">cos</span>
+<span class="n">theta</span> <span class="o">=</span> <span class="mf">0.25</span> <span class="o">*</span> <span class="n">osc</span><span class="o">.</span><span class="n">pi</span><span class="p">()</span>
+<span class="n">osc</span><span class="o">.</span><span class="n">add_particle_beam</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;positron&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;beam_0&#39;</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">d0</span><span class="o">=</span><span class="p">[</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="mi">0</span><span class="p">],</span> <span class="n">energy_GeV</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">current</span><span class="o">=</span><span class="mf">0.500</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.clear_particle_beams">
+<code class="descclassname">OSCARS.</code><code class="descname">clear_particle_beams</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.clear_particle_beams" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove all of the existing particle beams</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.set_new_particle">
+<code class="descclassname">OSCARS.</code><code class="descname">set_new_particle</code><span class="sig-paren">(</span><span class="optional">[</span><em>beam</em>, <em>particle</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.set_new_particle" title="Permalink to this definition">¶</a></dt>
+<dd><p>If no arguments are given sets the current internal particle to a random new particle.  The randomization is based on the weights given for each beam.  This also sets the initial conditions for the particle used in trajectory calculations based on the beam parameters within the randomly sepected beam.  You can specify which beam you want a random particle from using the <em>beam</em> parameter.  The <em>particle</em> parameter can be &#8216;ideal&#8217; if you want the ideal initial conditions for a particle without randomization.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>beam</strong> (<em>str</em>) &#8211; The name of the beam from which to get a particle from</li>
+<li><strong>particle</strong> &#8211; &#8216;ideal&#8217; or &#8216;random&#8217;, for random, you may omit this.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>:type  : str
+:returns: None</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.get_particle_x0">
+<code class="descclassname">OSCARS.</code><code class="descname">get_particle_x0</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.get_particle_x0" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the initial position for the current particle in [m]</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">[float, float, float]</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.get_particle_beta0">
+<code class="descclassname">OSCARS.</code><code class="descname">get_particle_beta0</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.get_particle_beta0" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the initial <span class="math">\(\vec \beta\)</span> for the current particle</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">[float, float, float]</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.get_particle_e0">
+<code class="descclassname">OSCARS.</code><code class="descname">get_particle_e0</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.get_particle_e0" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the initial energy for the current particle in [GeV]</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">float</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.calculate_trajectory">
+<code class="descclassname">OSCARS.</code><code class="descname">calculate_trajectory</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.calculate_trajectory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the trajectory for the current internal particle.  This calculates the trajectory in 3D from the time set by OSCARS.set_ctstart() to the time set by OSCARS.set_ctstop() beginning at the <em>t0</em> given by the particle beam from which this particle comes from.  It first does a forward propogation to the stop time, then a backward propogation to the start time.</p>
+<p>It is not necessary to call this method before other calculations such as spectrum, power density, or flux calculation methods.</p>
+<p>If you have a current particle loaded using <em>SetNewParticle</em> this method will calculate the trajectory for that particle.  If no particle is defined one will be randomly selected based on the beam weights and beam parameters.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A list of points of the form [[[x, y, z], [Beta_x, Beta_y, Beta_z]], ...]</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.get_trajectory">
+<code class="descclassname">OSCARS.</code><code class="descname">get_trajectory</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.get_trajectory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the current trajectory.  If the trajectory has not been calculated this will return an empty list.  The format of the returned list consists of a list of lists giving you the position and beta (v/c) of the particle at each position.  For a trajectory returnned is of the form: [[[x, y, z], [Beta_x, Beta_y, Beta_z]], ...]</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">A list of points of the form [[[x, y, z], [Beta_x, Beta_y, Beta_z]], ...]</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.calculate_spectrum">
+<code class="descclassname">OSCARS.</code><code class="descname">calculate_spectrum</code><span class="sig-paren">(</span><em>obs</em><span class="optional">[</span><span class="optional">[</span>, <em>npoints</em>, <em>energy_range_eV</em><span class="optional">]</span>, <em>points_eV</em><span class="optional">]</span><span class="optional">[</span>, <em>nparticles</em>, <em>ofile</em>, <em>nthreads</em>, <em>gpu</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.calculate_spectrum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the spectrum given a point in space, the range in energy, and the number of points.  The calculation uses the current particle and its initial conditions.  If the trajectory has not been calculated it is calculated first.  The units of this calculation are [<span class="math">\(photons / mm^2 / 0.1% bw / s\)</span>]</p>
+<p>Previously to calling this function you must define a particle beam and define start and stop times at very minimum.</p>
+<p>You <strong>must</strong> provide either (<em>npoints</em> and <em>energy_range_eV</em>) or <em>points_eV</em>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>obs</strong> (<em>[float, float, float]</em>) &#8211; Point where you wish to calculate the spectrum</li>
+<li><strong>npoints</strong> (<em>int</em>) &#8211; Number of points to calculate in the given energy range</li>
+<li><strong>energy_range_eV</strong> (<em>[float, float]</em>) &#8211; energy range in eV as a list of length 2</li>
+<li><strong>points_eV</strong> (<em>[float, ...]</em>) &#8211; A list of points to calculate the flux at</li>
+<li><strong>nparticles</strong> (<em>int</em>) &#8211; The number of particles you wish to run for a multi-particle simulation</li>
+<li><strong>ofile</strong> (<em>str</em>) &#8211; File name you would like to output this data to</li>
+<li><strong>nthreads</strong> (<em>int</em>) &#8211; Number of threads to use</li>
+<li><strong>gpu</strong> (<em>int</em>) &#8211; Use the gpu or not</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A list of 2D lists, each of which is a pair representing the energy [eV] and flux [<span class="math">\(photons / mm^2 / 0.1% bw / s\)</span>] at that energy.  eg [[energy_0, flux_0], [energy_1, flux_1], ...]</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"><p class="first last">Calculate the spectrum at a point 30 [m] downstream (assuming beam direction is in the Z direction) in the energy range 100 to 1000 [eV] with 900 points.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-py"><div class="highlight"><pre><span></span><span class="c1"># 0.4 [T] 2 [m] long dipole centered at Z=0 [m]</span>
+<span class="n">osc</span><span class="o">.</span><span class="n">add_bfield_uniform</span><span class="p">(</span><span class="n">bfield</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">width</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+
+<span class="c1"># NSLS2 electron beam</span>
+<span class="n">osc</span><span class="o">.</span><span class="n">add_particle_beam</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;electron&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;beam_0&#39;</span><span class="p">,</span> <span class="n">x0</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">direction</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">t0</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">energy_GeV</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">current</span><span class="o">=</span><span class="mf">0.500</span><span class="p">)</span>
+
+<span class="c1"># Set start and stop time for calculation</span>
+<span class="n">osc</span><span class="o">.</span><span class="n">set_ctstartstop</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
+
+
+<span class="c1"># Set number of points for trajectory calculation (hight for dipole)</span>
+<span class="n">osc</span><span class="o">.</span><span class="n">set_npoints_trajectory</span><span class="p">(</span><span class="mi">20000</span><span class="p">)</span>
+
+<span class="c1"># Calculate spectrum zt Z=30 [m] in the energy range of 100 to</span>
+<span class="c1"># 1000 [eV] at 900 equally spaced points</span>
+<span class="n">osc</span><span class="o">.</span><span class="n">calculate_spectrum</span><span class="p">(</span><span class="n">obs</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">30</span><span class="p">],</span> <span class="n">energy_range_eV</span><span class="o">=</span><span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mi">1000</span><span class="p">],</span> <span class="n">npoints</span><span class="o">=</span><span class="mi">900</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.calculate_total_power">
+<code class="descclassname">OSCARS.</code><code class="descname">calculate_total_power</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.calculate_total_power" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the total radiated power based on the current particle and that particle&#8217;s beam current.</p>
+<p>See the <a class="reference internal" href="MathematicalNotes.html"><span class="doc">Mathematical Notes</span></a> section for the expression used in this calculation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">float - Total power in [W]</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.calculate_power_density_rectangle">
+<code class="descclassname">OSCARS.</code><code class="descname">calculate_power_density_rectangle</code><span class="sig-paren">(</span><em>npoints</em><span class="optional">[</span><span class="optional">[</span>, <em>plane</em>, <em>width</em><span class="optional">]</span>, <em>x0x1x2</em><span class="optional">]</span><span class="optional">[</span>, <em>rotations</em>, <em>translation</em>, <em>ofile</em>, <em>normal</em>, <em>dim</em>, <em>nthreads</em>, <em>gpu</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.calculate_power_density_rectangle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the power density in a rectangle either defined by three points, or by defining the plane the rectangle is in and the width, and then rotating and translating it to where it needs be.  The simplest is outlined in the first example below.  By default (dim=2) this returns a list whose position coordinates are in the local coordinate space x1 and x2 (<em>ie</em> they do not include the rotations and translation).  if dim=3 the coordinates in the return list are in absolute 3D space.</p>
+<p>See the <a class="reference internal" href="MathematicalNotes.html"><span class="doc">Mathematical Notes</span></a> section for the expression used in this calculation.</p>
+<p>You <strong>must</strong> specify either both (<em>plane</em> and <em>width</em>) or <em>x0x1x2</em></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>npoints</strong> (<em>[int, int]</em>) &#8211; number of in each dimension for surface</li>
+<li><strong>plane</strong> (<em>str</em>) &#8211; The plane to start in (XY, XZ, YZ, YX, ZX, ZY).  The normal to the surface is defined using the right handed cross product (ie the last three have opposite normal vectors from the first three)</li>
+<li><strong>width</strong> (<em>[float, float]</em>) &#8211; Width if rectangle in X1 and X2</li>
+<li><strong>x0x1x2</strong> (<em>[[float, float, float], [float, float, float], [float, float, float]]</em>) &#8211; List of three points [[x0, y0, z0], [x1, y1, z1], [x2, y2, z2]]</li>
+<li><strong>rotations</strong> (<em>list[3]</em>) &#8211; A list representing the rotations of this beam about the X, Y amd Z axis (in that order)</li>
+<li><strong>translation</strong> (<em>list[3]</em>) &#8211; A list representing the translation of the x0 of this object</li>
+<li><strong>ofile</strong> (<em>str</em>) &#8211; Output file name</li>
+<li><strong>normal</strong> (<em>int</em>) &#8211; -1 if you wish to reverse the normal vector, 0 if you wish to ignore the +/- direction in computations, 1 if you with to use the direction of the normal vector as given.</li>
+<li><strong>dim</strong> (<em>int</em>) &#8211; Defaults to 2 where output is in the local plane coordinates X1 and X2.  If you want the return to be given in 3D set dim=3 which will return with X, Y, and Z in absolute coordinates.</li>
+<li><strong>nthreads</strong> (<em>int</em>) &#8211; Number of threads to use</li>
+<li><strong>gpu</strong> (<em>int</em>) &#8211; Use the gpu or not</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">A list, each element of which is a pair representing the position (2D relative or 3D absolute) and power density [<span class="math">\(W / mm^2\)</span>] at that position.  eg [[x1_0, x2_0], pd_0, [x1_1, x2_1], pd_1],  ...]</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body"><p class="first last">Calculate the power density within a simple rectangle 1 [cm] x 1 [cm], 30 [m] downstream</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-py"><div class="highlight"><pre><span></span><span class="c1"># Calculate power density in rectangle in the XY plane 30 [m] downstream</span>
+<span class="c1"># from a photon beam in the +Z direction</span>
+<span class="n">power_density</span> <span class="o">=</span> <span class="n">osc</span><span class="o">.</span><span class="n">calculate_power_density</span><span class="p">(</span><span class="n">plane</span><span class="o">=</span><span class="s1">&#39;XY&#39;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="p">[</span><span class="mf">0.01</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">],</span> <span class="n">npoints</span><span class="o">=</span><span class="p">[</span><span class="mi">51</span><span class="p">,</span> <span class="mi">51</span><span class="p">],</span> <span class="n">translation</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">30</span><span class="p">])</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body">Calculate the power density within a simple rectangle 1 [cm] x 1 [cm], 30 [m] downstream defined using the three-point method</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-py"><div class="highlight"><pre><span></span><span class="c1"># Calculate power density in rectangle in the XY plane 30 [m] downstream</span>
+<span class="c1"># from a photon beam in the +Z direction</span>
+<span class="n">power_density</span> <span class="o">=</span> <span class="n">osc</span><span class="o">.</span><span class="n">calculate_power_density</span><span class="p">(</span><span class="n">x0x1x2</span><span class="o">=</span><span class="p">[[</span><span class="o">-</span><span class="mf">0.005</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.005</span><span class="p">,</span> <span class="mi">30</span><span class="p">],</span> <span class="p">[</span><span class="o">+</span><span class="mf">0.005</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.005</span><span class="p">,</span> <span class="mi">30</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mf">0.005</span><span class="p">,</span> <span class="o">+</span><span class="mf">0.005</span><span class="p">,</span> <span class="mi">30</span><span class="p">]],</span> <span class="n">npoints</span><span class="o">=</span><span class="p">[</span><span class="mi">51</span><span class="p">,</span> <span class="mi">51</span><span class="p">])</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Example:</th><td class="field-body">Calculate the power density on a flat surface close to and parallel to the beam direction</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-py"><div class="highlight"><pre><span></span><span class="c1"># Calculate power density in rectangle on the upper flat portion of a beampipe in the middle</span>
+<span class="c1"># of an undulator.  Here the &#39;normal&#39; is reversed to get the correct sign</span>
+<span class="n">osc</span><span class="o">.</span><span class="n">add_undulator</span><span class="p">(</span><span class="n">bfield</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">period</span><span class="o">=</span><span class="mf">0.050</span><span class="p">,</span> <span class="n">nperiods</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+<span class="n">power_density</span> <span class="o">=</span> <span class="n">osc</span><span class="o">.</span><span class="n">calculate_power_density</span><span class="p">(</span><span class="n">plane</span><span class="o">=</span><span class="s1">&#39;XZ&#39;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="p">[</span><span class="mf">0.008</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">npoints</span><span class="o">=</span><span class="p">[</span><span class="mi">51</span><span class="p">,</span> <span class="mi">101</span><span class="p">],</span> <span class="n">normal</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.calculate_power_density">
+<code class="descclassname">OSCARS.</code><code class="descname">calculate_power_density</code><span class="sig-paren">(</span><em>points</em><span class="optional">[</span>, <em>normal</em>, <em>rotations</em>, <em>translation</em>, <em>ofile</em>, <em>nthreads</em>, <em>gpu</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.calculate_power_density" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the power density for each point in the list <em>points</em>.</p>
+<p>See the <a class="reference internal" href="MathematicalNotes.html"><span class="doc">Mathematical Notes</span></a> section for the expression used in this calculation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>points</strong> (<em>list[ list[list[float, float, float], list[float, float, float]], ...]</em>) &#8211; A list of points, each point containing a position in 3D (as a list) and a normal vector at that position (also as a 3D list).</li>
+<li><strong>normal</strong> (<em>int</em>) &#8211; -1 if you wish to reverse the normal vector, 0 if you wish to ignore the +/- direction in computations, 1 if you with to use the direction of the normal vector as given.</li>
+<li><strong>rotations</strong> (<em>list[3]</em>) &#8211; A list representing the rotations of this beam about the X, Y amd Z axis (in that order)</li>
+<li><strong>translation</strong> (<em>list[3]</em>) &#8211; A list representing the translation of the x0 of this object</li>
+<li><strong>ofile</strong> (<em>str</em>) &#8211; Output file name</li>
+<li><strong>nthreads</strong> (<em>int</em>) &#8211; Number of threads to use</li>
+<li><strong>gpu</strong> (<em>int</em>) &#8211; Use the gpu or not</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A list, each element of which is a pair representing the position (2D relative or 3D absolute) and power density [<span class="math">\(W / mm^2\)</span>] at that position.  eg [[x1_0, x2_0], pd_0, [x1_1, x2_1], pd_1],  ...]</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.calculate_flux_rectangle">
+<code class="descclassname">OSCARS.</code><code class="descname">calculate_flux_rectangle</code><span class="sig-paren">(</span><em>energy_eV</em>, <em>npoints</em><span class="optional">[</span><span class="optional">[</span>, <em>plane</em>, <em>width</em><span class="optional">]</span>, <em>x0x1x2</em><span class="optional">]</span><span class="optional">[</span>, <em>rotations</em>, <em>translation</em>, <em>polarization</em>, <em>ofile</em>, <em>normal</em>, <em>dim</em>, <em>nthreads</em>, <em>gpu</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.calculate_flux_rectangle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the flux density in a rectangle either defined by three points, or by defining the plane the rectangle is in and the width, and then rotating and translating it to where it needs be.  The simplest is outlined in the first example below.  By default (dim=2) this returns a list whose position coordinates are in the local coordinate space x1 and x2 (<em>ie</em> they do not include the rotations and translation).  if dim=3 the coordinates in the return list are in absolute 3D space.</p>
+<p>You <strong>must</strong> specify either both (<em>plane</em> and <em>width</em>) or <em>x0x1x2</em></p>
+<p>See the <a class="reference internal" href="MathematicalNotes.html"><span class="doc">Mathematical Notes</span></a> section for the expression used in this calculation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>energy_eV</strong> (<em>float</em>) &#8211; The photon energy you are interested in</li>
+<li><strong>npoints</strong> (<em>[int, int]</em>) &#8211; number of in each dimension for surface</li>
+<li><strong>plane</strong> (<em>str</em>) &#8211; The plane to start in (XY, XZ, YZ, YX, ZX, ZY).  The normal to the surface is defined using the right handed cross product (ie the last three have opposite normal vectors from the first three)</li>
+<li><strong>width</strong> (<em>[float, float]</em>) &#8211; Width if rectangle in X1 and X2</li>
+<li><strong>x0x1x2</strong> (<em>[[float, float, float], [float, float, float], [float, float, float]]</em>) &#8211; List of three points [[x0, y0, z0], [x1, y1, z1], [x2, y2, z2]]</li>
+<li><strong>rotations</strong> (<em>list[3]</em>) &#8211; A list representing the rotations of this beam about the X, Y amd Z axis (in that order)</li>
+<li><strong>translation</strong> (<em>list[3]</em>) &#8211; A list representing the translation of the x0 of this object</li>
+<li><strong>polarization</strong> (<em>list[3]</em>) &#8211; A list representing the polarization direction of interest</li>
+<li><strong>ofile</strong> (<em>str</em>) &#8211; Output file name</li>
+<li><strong>normal</strong> (<em>int</em>) &#8211; -1 if you wish to reverse the normal vector, 0 if you wish to ignore the +/- direction in computations, 1 if you with to use the direction of the normal vector as given.</li>
+<li><strong>dim</strong> (<em>int</em>) &#8211; Defaults to 2 where output is in the local plane coordinates X1 and X2.  If you want the return to be given in 3D set dim=3 which will return with X, Y, and Z in absolute coordinates.</li>
+<li><strong>nthreads</strong> (<em>int</em>) &#8211; Number of threads to use</li>
+<li><strong>gpu</strong> (<em>int</em>) &#8211; Use the gpu or not</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A list, each element of which is a pair representing the position (2D relative or 3D absolute) and power density [<span class="math">\(W / mm^2\)</span>] at that position.  eg [[x1_0, x2_0], pd_0, [x1_1, x2_1], pd_1],  ...]</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="OSCARS.SR.OSCARS.calculate_efield_vs_time">
+<code class="descclassname">OSCARS.</code><code class="descname">calculate_efield_vs_time</code><span class="sig-paren">(</span><em>obs</em><span class="optional">[</span>, <em>ofile</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#OSCARS.SR.OSCARS.calculate_efield_vs_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the electric field in the time domain for a single particle</p>
+<p>See the <a class="reference internal" href="MathematicalNotes.html"><span class="doc">Mathematical Notes</span></a> section for the expression used in this calculation.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>obs</strong> (<em>[float, float, float]</em>) &#8211; Point where you wish to calculate the electric field</li>
+<li><strong>ofile</strong> (<em>str</em>) &#8211; Output file name</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">A list, each element of which has a time (in [s]) and a 3-dimensional list representing the x, y, and z componemts of the electric field at that time: [[t, [Ex, Ey, Ez]], ...]</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="CodingConventions.html" class="btn btn-neutral float-right" title="Coding Conventions" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="Examples.html" class="btn btn-neutral" title="Examples" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Brookhaven Science Associates, LLC Brookhaven National Laboratory.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
