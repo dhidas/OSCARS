@@ -1,5 +1,6 @@
 # OSCARS - Open Source Code for Advanced Radiation Simulation
 
+This is the OSCARS developer repository.  The main OSCARS website is <http://oscars.bnl.gov>
 
 ## Installation
 
@@ -33,3 +34,8 @@ At this point you should be able to run jupyter notebook (not necessairy, but ni
 jupyter notebook
 ```
 and point your browser to <http://localhost:8888/> if it hasn't taken you there already.  Next, you are likely ready to try some of the examples on <http://oscars.bnl.gov/examples>
+
+
+## Advanced Installation - GPU Utilities
+
+Compiling for the GPU requires a non-standard compiler (free, but not freely redistributable).  We are in the process of coming up with a simple recipe for this for users.  In the meantime we are happy to provide pre-compiled binaries for any distribution upon request.
