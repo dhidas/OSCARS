@@ -1303,107 +1303,6 @@ static PyObject* OSCARSSR_ClearElectricFields (OSCARSSRObject* self)
 
 
 
-static PyObject* OSCARSSR_AddFieldGaussian (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
-{
-  // Add a magnetic field that is a gaussian
-
-  // Lists and variables
-  PyObject* List_BField       = PyList_New(0);
-  PyObject* List_EField       = PyList_New(0);
-  PyObject* List_Translation  = PyList_New(0);
-  PyObject* List_Rotations    = PyList_New(0);
-  PyObject* List_Sigma        = PyList_New(0);
-
-  TVector3D Field(0, 0, 0);
-  TVector3D Sigma(0, 0, 0);
-  TVector3D Rotations(0, 0, 0);
-  TVector3D Translation(0, 0, 0);
-
-
-  // Input variables and parsing
-  static char *kwlist[] = {"sigma", "bfield", "efield", "rotations", "translation", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOOO", kwlist,
-                                                          &List_Sigma,
-                                                          &List_BField,
-                                                          &List_EField,
-                                                          &List_Rotations,
-                                                          &List_Translation)) {
-    return NULL;
-  }
-
-  bool const HasBField = PyList_Size(List_BField) > 0;
-  bool const HasEField = PyList_Size(List_EField) > 0;
-
-  // Check that you don't define an e and a b field
-  if (HasBField && HasEField) {
-    PyErr_SetString(PyExc_ValueError, "You cannot define both 'bfield' and 'efield'");
-    return NULL;
-  }
-
-  // Check Field
-  if (HasBField ) {
-    try {
-      Field = OSCARSSR_ListAsTVector3D(List_BField);
-    } catch (std::length_error e) {
-      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'bfield'");
-      return NULL;
-    }
-  } else if (HasEField) {
-    try {
-      Field = OSCARSSR_ListAsTVector3D(List_EField);
-    } catch (std::length_error e) {
-      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'efield'");
-      return NULL;
-    }
-  } else {
-    PyErr_SetString(PyExc_ValueError, "You must define either 'bfield' or 'efield'");
-    return NULL;
-  }
-
-  // Check Width
-  try {
-    Sigma = OSCARSSR_ListAsTVector3D(List_Sigma);
-  } catch (std::length_error e) {
-    PyErr_SetString(PyExc_ValueError, "Incorrect format in 'sigma'");
-    return NULL;
-  }
-
-  // Check for Rotations in the input
-  if (PyList_Size(List_Rotations) != 0) {
-    try {
-      Rotations = OSCARSSR_ListAsTVector3D(List_Rotations);
-    } catch (std::length_error e) {
-      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
-      return NULL;
-    }
-  }
-
-  // Check for Translation in the input
-  if (PyList_Size(List_Translation) != 0) {
-    try {
-      Translation = OSCARSSR_ListAsTVector3D(List_Translation);
-    } catch (std::length_error e) {
-      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
-      return NULL;
-    }
-  }
-
-  // Add field
-  if (HasBField) {
-    //self->obj->AddMagneticField( (TField*) new TField3D_Gaussian(Field, Translation, Sigma, Rotations));
-  } else {
-    self->obj->AddElectricField( (TField*) new TField3D_Gaussian(Field, Translation, Sigma, Rotations));
-  }
-
-  // Must return python object None in a special way
-  Py_INCREF(Py_None);
-  return Py_None;
-}
-
-
-
-
-
 static PyObject* OSCARSSR_WriteMagneticField (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
 {
   // Add a magnetic field that is a gaussian
@@ -1833,6 +1732,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
 
   // Rotate beam parameters
   Position.RotateSelfXYZ(Rotations);
+  Direction.RotateSelfXYZ(Rotations);
   Position += Translation;
 
   // UPDATE: An idea for later, use new variable "velocity"
@@ -3704,7 +3604,6 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"get_efield",                        (PyCFunction) OSCARSSR_GetEField,                       METH_VARARGS,                 "get the electric field at a given position in space (and someday time?)"},
   {"clear_efields",                     (PyCFunction) OSCARSSR_ClearElectricFields,             METH_NOARGS,                  "clear all internal electric fields"},
  
-  {"add_field_gaussian",                (PyCFunction) OSCARSSR_AddFieldGaussian,                METH_VARARGS | METH_KEYWORDS, "add a magnetic or electric field in form of 3D gaussian"},
 
   {"write_bfield",                      (PyCFunction) OSCARSSR_WriteMagneticField,              METH_VARARGS | METH_KEYWORDS, "write the magnetic field to a file"},
   {"write_efield",                      (PyCFunction) OSCARSSR_WriteElectricField,              METH_VARARGS | METH_KEYWORDS, "write the magnetic field to a file"},
