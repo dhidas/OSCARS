@@ -1833,6 +1833,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
 
   // Rotate beam parameters
   Position.RotateSelfXYZ(Rotations);
+  Direction.RotateSelfXYZ(Rotations);
   Position += Translation;
 
   // UPDATE: An idea for later, use new variable "velocity"
