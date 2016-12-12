@@ -67,6 +67,21 @@ On a surface the power is given as :math:`[W/{mm}^{2}]`.  The value is reported 
 .. [Hoffman] Synchrotron Radiation, 1998
 
 
+
+Total Radiated Power
+--------------------
+
+The total radiated power is calculated as
+
+.. math::
+   P = \frac{q I \gamma^6}{6 \pi \epsilon_0 c} \int_{-\infty}^{+\infty} \frac{|\vec a|^2}{c^2} - | \vec \beta \times \frac{\vec a}{c} | \; \textrm{d}t
+
+
+
+
+
+
+
 Trajectory Calculation
 ----------------------
 

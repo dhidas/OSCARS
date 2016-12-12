@@ -5,7 +5,21 @@ from math import sqrt
 
 
 def plot_trajectory_position(trajectory, show=True, ofile='', axis='Z', figsize=[18, 4.5], ret=False):
-    """Plot the trajectory"""
+    """Plot the trajectory position.  You can optionally change the axis, output to a file, show or not, and return or not
+       
+       :param trajectory: Particle trajectory
+       :type  trajectory: list
+       :param show: to show the plot or not
+       :type  show: bool
+       :param ofile: output file name
+       :type  ofile: str
+       :param axis: which axis to plot trajectory on
+       :type  axis: str
+       :param figsize: dimension of the figure
+       :type  figsize: list
+       :param ret: to return the plot or not
+       :type  ret: bool
+       """
 
     # Get coordinate lists
     X  = [item[0][0] for item in trajectory]
@@ -71,7 +85,22 @@ def plot_trajectory_position(trajectory, show=True, ofile='', axis='Z', figsize=
 
 
 def plot_trajectory_velocity(trajectory, show=True, ofile='', ret=False):
-    """Plot the trajectory"""
+    """Plot the trajectory velocity.  You can optionally change the axis, output to a file, show or not, and return or not
+       
+       :param trajectory: Particle trajectory
+       :type  trajectory: list
+       :param show: to show the plot or not
+       :type  show: bool
+       :param ofile: output file name
+       :type  ofile: str
+       :param axis: which axis to plot trajectory on
+       :type  axis: str
+       :param figsize: dimension of the figure
+       :type  figsize: list
+       :param ret: to return the plot or not
+       :type  ret: bool
+       """
+
 
     # Get coordinate lists
     VX = [item[1][0] for item in trajectory]

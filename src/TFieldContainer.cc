@@ -371,9 +371,9 @@ void TFieldContainer::WriteToFile (std::string const& OutFileName, std::string c
     of << std::scientific;
 
     // Loop over all points and output
-    for (int i = 0; i < NX; ++i) {
+    for (int k = 0; k < NZ; ++k) {
       for (int j = 0; j < NY; ++j) {
-        for (int k = 0; k < NZ; ++k) {
+        for (int i = 0; i < NX; ++i) {
 
           // Set current position
           X.SetXYZ(XLim[0] + XStep * i, YLim[0] + YStep * j, ZLim[0] + ZStep * k);

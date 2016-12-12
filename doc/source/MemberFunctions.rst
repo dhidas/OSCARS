@@ -16,9 +16,6 @@ All examples here assume that you have the OSCARS SR module in your path and hav
 
 
 
-
-
-
 oscars.sr
 ---------
 
@@ -167,6 +164,7 @@ oscars.sr
       * 'OSCARS1D [plus format string]'
       * 'SPECTRA'
       * 'SRW'
+
    For the OSCARS1D format you must also include the order of the data columns, which would typically look something like: 'OSCARS1D Z Bx By Bz'.  You may use X or Y instead of Z and the order and number of B[xyz] does not matter.  This mode also accepts non-uniformly distributed data.
 
    Optionally you can rotate and translate the field in space.  You can use an input *scaling* list to scale the input (which must be in SI units of [m] for distances/positions and [T] for magnetic field values.
@@ -368,6 +366,7 @@ oscars.sr
       * 'OSCARS1D [plus format string]'
       * 'SPECTRA'
       * 'SRW'
+
    For the OSCARS1D format you must also include the order of the data columns, which would typically look something like: 'OSCARS1D Z Bx By Bz'.  You may use X or Y instead of Z and the order and number of B[xyz] does not matter.  This mode also accepts non-uniformly distributed data.
 
    Optionally you can rotate and translate the field in space.  You can use an input *scaling* list to scale the input (which must be in SI units of [m] for distances/positions and [T] for electric field values.
@@ -549,6 +548,48 @@ oscars.sr
    :returns: None
 
 
+
+
+
+
+
+
+.. py:method:: oscars.sr.write_bfield(ofile, oformat [, xlim, nx, ylim, ny, zlim, nz, comment])
+
+   Write the magnetic field to ofile in the format described in oformat.  You must specify at least one limits and one number of points (e.g. zlim and nz).  All output is in SI units.
+
+   The formats (*oformat*) available are:
+   * OSCARS
+   * OSCARS1D
+   * SPECTRA
+   * SRW
+
+   For OSCARS1D you also must specify what you want in the output.  One spatial dimension must be specified along with at least one field dimension (in any order you like).  For examples theses are all valid: 'OSCARS1D Z Bx By Bz', 'OSCARS1D By Bx Z Bz'.
+
+   :param ofile: Name of output file
+   :type  ofile: str
+   :param oformat: format of output file
+   :type  oformat: str
+   :param xlim: min and max for x dimension
+   :type  xlim: list[min, max]
+   :param ylim: min and max for y dimension
+   :type  ylim: list[min, max]
+   :param zlim: min and max for z dimension
+   :type  zlim: list[min, max]
+   :param comment: comment string to be added to file header.  LF and CR are removed.
+   :type  comment: str
+   :returns: None
+
+
+
+
+
+
+
+
+.. py:method:: oscars.sr.write_efield(ofile, oformat [, xlim, nx, ylim, ny, zlim, nz, comment])
+
+   Same as write_bfield, but writes the electric field.
 
 
 
@@ -931,6 +972,151 @@ oscars.sr
 
 
 
+.. py:method:: oscars.sr.average_spectra([, ifiles, bifiles, ofile, bofile])
+
+   Average spectra from different files and output to specified file.  The input files must have the same format.  Binary operation will be supported in a future release.
+
+   You **must** specify an input and an output
+
+   :param ifiles: The input file names
+   :type  ifiles: list
+   :param ofile: The output file name
+   :type  ofile: str
+   :param bifiles: The binary input file names
+   :type  bifiles: list
+   :param bofile: The binary output file name
+   :type  bofile: str
+   :returns: None
+
+
+.. py:method:: oscars.sr.average_flux([, ifiles, bifiles, ofile, bofile, dim])
+
+   Average flux from different files and output to specified file.  The input files must have the same format.  Binary operation will be supported in a future release.
+
+   You **must** specify an input and an output
+
+   :param ifiles: The input file names
+   :type  ifiles: list
+   :param ofile: The output file name
+   :type  ofile: str
+   :param bifiles: The binary input file names
+   :type  bifiles: list
+   :param bofile: The binary output file name
+   :type  bofile: str
+   :param dim: in 2 or 3 dimensions (default is 2)
+   :type  dim: integer
+   :returns: None
+
+
+
+
+.. py:method:: oscars.sr.average_power_density([, ifiles, bifiles, ofile, bofile, dim])
+
+   Average power densities from different files and output to specified file.  The input files must have the same format.  Binary operation will be supported in a future release.
+
+   You **must** specify an input and an output
+
+   :param ifiles: The input file names
+   :type  ifiles: list
+   :param ofile: The output file name
+   :type  ofile: str
+   :param bifiles: The binary input file names
+   :type  bifiles: list
+   :param bofile: The binary output file name
+   :type  bofile: str
+   :param dim: in 2 or 3 dimensions (default is 2)
+   :type  dim: integer
+   :returns: None
+
+
+
+
+.. py:method:: oscars.sr.add_to_spectrum(spectrum [, weight])
+
+   Add a spectrum to the current spectrum with a given weight.
+
+   :param spectrum: a list of pairs of numbers (spectrum format)
+   :type  spectrum: list
+   :param weight: Weight for *this* spectrum
+   :type  weight: float
+   :returns: None
+
+
+.. py:method:: oscars.sr.get_spectrum()
+
+   Get the current spectrum stored in memory
+
+   :returns: list
+
+
+
+
+
+.. py:method:: oscars.sr.add_to_flux(flux [, weight])
+
+   Add a flux to the current flux with a given weight.
+
+   :param spectrum: a list of [[x, y, z], flux] pairs (flux format)
+   :type  spectrum: list
+   :param weight: Weight for *this* flux
+   :type  weight: float
+   :returns: None
+
+
+.. py:method:: oscars.sr.get_flux()
+
+   Get the current flux map stored in memory
+
+   :returns: list of [[x, y, z], flux]
+
+
+
+
+
+
+
+.. py:method:: oscars.sr.add_to_power_density(power_density [, weight])
+
+   Add a power density to the current power density with a given weight.
+
+   :param spectrum: a list of [[x, y, z], power_density] pairs (power density format)
+   :type  spectrum: list
+   :param weight: Weight for *this* power density
+   :type  weight: float
+   :returns: None
+
+
+.. py:method:: oscars.sr.get_power_density()
+
+   Get the current power_density map stored in memory
+
+   :returns: list of [[x, y, z], power_density]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 .. py:method:: oscars.sr.calculate_efield_vs_time(obs, [ofile])
@@ -978,7 +1164,7 @@ oscars.plots3d_mpl
 
 
 oscars.parametric_surfaces
-----------------
+--------------------------
 
 .. automodule:: oscars.parametric_surfaces
    :members:

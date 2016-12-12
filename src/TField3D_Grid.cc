@@ -945,8 +945,9 @@ void TField3D_Grid::ReadFile_SRW (std::string const& InFileName, TVector3D const
     ++fXDIM;
   }
 
-  // Reserve correct number of points in vector (slightly faster)
-  fData.reserve(fNX * fNY * fNZ);
+  // Resize the vector because we will need to insert values non-sequentially
+  // ie can't use push_back
+  fData.resize(fNX * fNY * fNZ);
 
   // Temp variables for field
   double fx;
@@ -955,9 +956,9 @@ void TField3D_Grid::ReadFile_SRW (std::string const& InFileName, TVector3D const
 
 
   // Loop over all points
-  for (int ix = 0; ix != NX; ++ix) {
+  for (int iz = 0; iz != NZ; ++iz) {
     for (int iy = 0; iy != NY; ++iy) {
-      for (int iz = 0; iz != NZ; ++iz) {
+      for (int ix = 0; ix != NX; ++ix) {
 
         // Grab a line from input file
         std::getline(fi, L);
@@ -977,7 +978,12 @@ void TField3D_Grid::ReadFile_SRW (std::string const& InFileName, TVector3D const
         // Push data to storage
         TVector3D F(fx, fy, fz);
         F.RotateSelfXYZ(Rotations);
-        fData.push_back(F);
+
+        size_t const Index = this->GetIndex(ix, iy, iz);
+        if (Index >= fData.size()) {
+          throw;
+        }
+        fData[Index] = F;
       }
     }
   }
