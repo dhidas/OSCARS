@@ -8,7 +8,7 @@
 
 #include "TParticleBeam.h"
 
-#include "TSRS.h"
+#include "TOSCARSSR.h"
 #include "TRandomA.h"
 
 #include <cmath>
@@ -208,7 +208,7 @@ TParticleA TParticleBeam::GetNewParticle (std::string const& IdealOrRandom)
   // The ideal trajectory
   if (idor == "ideal") {
     // Calculate Beta from original beam E0
-    double const Gamma = fE0 / TSRS::kgToGeV(this->GetM());
+    double const Gamma = fE0 / TOSCARSSR::kgToGeV(this->GetM());
     double const Beta = sqrt(1.0 - 1.0 / (Gamma * Gamma));
 
     // Copy this particle and set ideal conditions
@@ -238,7 +238,7 @@ TParticleA TParticleBeam::GetNewParticle ()
 
   double    ENew = fE0 + fSigmaE * gRandomA->Normal(); // correlated with BNew, not sure how to handle this yet
 
-  double const Gamma = ENew / TSRS::kgToGeV(this->GetM());
+  double const Gamma = ENew / TOSCARSSR::kgToGeV(this->GetM());
   double const Beta = sqrt(1.0 - 1.0 / (Gamma * Gamma));
 
   // Distance from t0 location to lattice midpoint

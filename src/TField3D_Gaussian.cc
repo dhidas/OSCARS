@@ -7,7 +7,7 @@
 ////////////////////////////////////////////////////////////////////
 
 #include "TField3D_Gaussian.h"
-#include "TSRS.h"
+#include "TOSCARSSR.h"
 
 #include <cmath>
 

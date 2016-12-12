@@ -9,7 +9,7 @@
 
 #include "TParticleTrajectoryPoints.h"
 
-#include "TSRS.h"
+#include "TOSCARSSR.h"
 
 #include <algorithm>
 #include <fstream>
@@ -64,7 +64,7 @@ TVector3D const& TParticleTrajectoryPoints::GetB (size_t const i) const
 
 TVector3D TParticleTrajectoryPoints::GetV (size_t const i) const
 {
-  return this->GetB(i) * TSRS::C();
+  return this->GetB(i) * TOSCARSSR::C();
 }
 
 
@@ -82,7 +82,7 @@ TVector3D const& TParticleTrajectoryPoints::GetAoverC (size_t const i) const
 
 TVector3D TParticleTrajectoryPoints::GetA (size_t const i) const
 {
-  return this->GetAoverC(i) * TSRS::C();
+  return this->GetAoverC(i) * TOSCARSSR::C();
 }
 
 

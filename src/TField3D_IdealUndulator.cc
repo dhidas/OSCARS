@@ -8,7 +8,7 @@
 
 #include "TField3D_IdealUndulator.h"
 
-#include "TSRS.h"
+#include "TOSCARSSR.h"
 #include <cmath>
 
 
@@ -115,7 +115,7 @@ TVector3D TField3D_IdealUndulator::GetF (TVector3D const& X) const
   double const TaperCorrection = 1 + D * fTaper;
 
   // Phase shift in length
-  double const PhaseShift = fPhase * fPeriod.Mag() / TSRS::TwoPi ();
+  double const PhaseShift = fPhase * fPeriod.Mag() / TOSCARSSR::TwoPi ();
 
   // Vector we will return
   TVector3D F(0, 0, 0);
@@ -129,13 +129,13 @@ TVector3D TField3D_IdealUndulator::GetF (TVector3D const& X) const
   if (D < -fUndulatorLength / 2. + PhaseShift + fPeriodLength || D > fUndulatorLength / 2. + PhaseShift - fPeriodLength) {
     if (D < -fUndulatorLength / 2. + PhaseShift + fPeriodLength / 2. || D > fUndulatorLength / 2. + PhaseShift - fPeriodLength / 2.) {
 
-      return 0.25 * fField * sin(TSRS::TwoPi() * (D - PhaseShift) / fPeriodLength) * TaperCorrection;
+      return 0.25 * fField * sin(TOSCARSSR::TwoPi() * (D - PhaseShift) / fPeriodLength) * TaperCorrection;
     } 
 
-    return 0.75 * fField * sin(TSRS::TwoPi() * (D - PhaseShift) / fPeriodLength) * TaperCorrection;
+    return 0.75 * fField * sin(TOSCARSSR::TwoPi() * (D - PhaseShift) / fPeriodLength) * TaperCorrection;
   } 
 
-  return fField * sin(TSRS::TwoPi() * (D - PhaseShift) / fPeriodLength) * TaperCorrection;
+  return fField * sin(TOSCARSSR::TwoPi() * (D - PhaseShift) / fPeriodLength) * TaperCorrection;
 }
 
 
