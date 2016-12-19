@@ -1986,7 +1986,16 @@ double OSCARSSR::CalculateTotalPower (TParticleA& Particle)
 
 
 
-void OSCARSSR::CalculateFlux2 (TParticleA& Particle, TSurfacePoints const& Surface, double const Energy_eV, T3DScalarContainer& FluxContainer, int const Dimension, double const Weight)
+void OSCARSSR::CalculateFlux2 (TParticleA& Particle,
+                               TSurfacePoints const& Surface,
+                               double const Energy_eV,
+                               T3DScalarContainer& FluxContainer,
+                               std::string const& Polarization,
+                               double const Angle,
+                               TVector3D const& HorizontalDirection,
+                               TVector3D const& PropogationDirection,
+                               int const Dimension,
+                               double const Weight)
 {
   // Calculates the single particle spectrum at a given observation point
   // in units of [photons / second / 0.001% BW / mm^2]
@@ -2030,6 +2039,14 @@ void OSCARSSR::CalculateFlux2 (TParticleA& Particle, TSurfacePoints const& Surfa
   // Imaginary "i" and complxe 1+0i
   std::complex<double> const I(0, 1);
   std::complex<double> const One(1, 0);
+
+  // Photon beam directions
+//  TVector3D const PropogationDirection(0, 0, 1);
+//  TVector3D const HorizontalDirection(1, 0, 0);
+  TVector3D const VerticalDirection = PropogationDirection.Cross(HorizontalDirection).UnitVector();
+
+  TVector3DC const Positive = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) + VerticalDirection * I );
+  TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * I );
 
 
   // Angular frequency
@@ -2079,14 +2096,24 @@ void OSCARSSR::CalculateFlux2 (TParticleA& Particle, TSurfacePoints const& Surfa
     // Multiply field by Constant C1 and time step
     SumE *= C1 * DeltaT;
 
-    //double const EXSquared = (SumE.GetX() * std::conj(SumE.GetX())).real();
-    //double const EYSquared = (SumE.GetY() * std::conj(SumE.GetY())).real();
-    //double const EX2PlusEY2 = EXSquared + EYSquared;
-    //double LinearFraction = EXSquared / EX2PlusEY2;// - EYSquared / EX2PlusEY2;
-
-    // Fraction in direction of Normal
-    //double const NormallyIncidentEFraction = sqrt(std::norm(SumE.UnitVector().Dot(Surface.GetPoint(i).GetNormal())));
-    //std::cout << ObservationPoint << " " << NormallyIncidentEFraction << std::endl;
+    // If a polarization is specified, calculate it
+    if (Polarization == "all") {
+      // Do nothing, it is already ALL
+    } else if (Polarization == "linear-horizontal") {
+      SumE = SumE.Dot(HorizontalDirection) * HorizontalDirection;
+    } else if (Polarization == "linear-vertical") {
+      SumE = SumE.Dot(VerticalDirection) * VerticalDirection;
+    } else if (Polarization == "linear") {
+      TVector3D PolarizationAngle = HorizontalDirection;
+      PolarizationAngle.RotateSelf(Angle, PropogationDirection);
+      SumE = SumE.Dot(PolarizationAngle) * PolarizationAngle;
+    } else if (Polarization == "circular-right") {
+      SumE = SumE.Dot(Positive.CC()) * Positive;
+    } else if (Polarization == "circular-left") {
+      SumE = SumE.Dot(Negative.CC()) * Negative;
+    } else {
+      throw;
+    }
 
     // Set the flux for this frequency / energy point
     double const ThisFlux = C2 *  SumE.Dot( SumE.CC() ).real() * Weight;
@@ -2345,7 +2372,17 @@ void OSCARSSR::CalculateFlux1 (TParticleA& Particle, TSurfacePoints const& Surfa
 
 
 
-void OSCARSSR::CalculateFlux (TParticleA& Particle, TSurfacePoints const& Surface, double const Energy_eV, T3DScalarContainer& FluxContainer, int const Dimension, double const Weight, std::string const& OutFileName)
+void OSCARSSR::CalculateFlux (TParticleA& Particle,
+                              TSurfacePoints const& Surface,
+                              double const Energy_eV,
+                              T3DScalarContainer& FluxContainer,
+                              std::string const& Polarization,
+                              double const Angle,
+                              TVector3D const& HorizontalDirection,
+                              TVector3D const& PropogationDirection,
+                              int const Dimension,
+                              double const Weight,
+                              std::string const& OutFileName)
 {
   // Final stop for entry to calculation
 
@@ -2362,7 +2399,7 @@ void OSCARSSR::CalculateFlux (TParticleA& Particle, TSurfacePoints const& Surfac
     throw;
   }
 
-  this->CalculateFlux2(Particle, Surface, Energy_eV, FluxContainer, Dimension, Weight);
+  this->CalculateFlux2(Particle, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, Dimension, Weight);
 
   if (OutFileName != "") {
     FluxContainer.WriteToFileText(OutFileName, Dimension);
@@ -2378,44 +2415,19 @@ void OSCARSSR::CalculateFlux (TParticleA& Particle, TSurfacePoints const& Surfac
 
 
 
-void OSCARSSR::CalculateFlux (TParticleA& Particle, TSurfacePoints const& Surface, double const Energy_eV, int const Dimension, double const Weight, std::string const& OutFileName)
-{
-  T3DScalarContainer FluxContainer;
 
-  this->CalculateFlux(Particle, Surface, Energy_eV, FluxContainer, Dimension, Weight, OutFileName);
-
-  return;
-}
-
-
-
-
-void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface, double const Energy_eV, T3DScalarContainer& FluxContainer, int const Dimension, double const Weight, std::string const& OutFileName)
-{
-  // Check that particle has been set yet.  If fType is "" it has not been set yet
-  if (fParticle.GetType() == "") {
-    try {
-      this->SetNewParticle();
-    } catch (std::exception e) {
-      throw std::out_of_range("no beam defined");
-    }
-  }
-
-  this->CalculateFlux(fParticle, Surface, Energy_eV, FluxContainer, Dimension, Weight, OutFileName);
-
-
-  return;
-}
-
-
-
-
-
-
-
-
-
-void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface, double const Energy_eV, T3DScalarContainer& FluxContainer, int const NParticles, int const NThreads, int const GPU, int const Dimension, std::string const& OutFileName)
+void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
+                              double const Energy_eV,
+                              T3DScalarContainer& FluxContainer,
+                              std::string const& Polarization,
+                              double const Angle,
+                              TVector3D const& HorizontalDirection,
+                              TVector3D const& PropogationDirection,
+                              int const NParticles,
+                              int const NThreads,
+                              int const GPU,
+                              int const Dimension,
+                              std::string const& OutFileName)
 {
   // UPDATE: inputs
 
@@ -2448,6 +2460,9 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface, double const Energy
     throw;
   }
 
+  std::cout << "p " << Polarization << std::endl;
+  std::cout << "a " << Angle << std::endl;
+
   // Don't write output in individual mode
   std::string const BlankOutFileName = "";
 
@@ -2455,7 +2470,7 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface, double const Energy
   if (NParticles == 0) {
     if (GPU == 0) {
       if (NThreadsToUse == 1) {
-        this->CalculateFlux(fParticle, Surface, Energy_eV, FluxContainer, Dimension, 1, BlankOutFileName);
+        this->CalculateFlux(fParticle, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, Dimension, 1, BlankOutFileName);
       } else {
         this->CalculateFluxThreads(fParticle, Surface, Energy_eV, FluxContainer, NThreadsToUse, Dimension, 1, BlankOutFileName);
       }
@@ -2468,7 +2483,7 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface, double const Energy
       this->SetNewParticle();
       if (GPU == 0) {
         if (NThreadsToUse == 1) {
-          this->CalculateFlux(fParticle, Surface, Energy_eV, FluxContainer, Dimension, Weight, BlankOutFileName);
+          this->CalculateFlux(fParticle, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, Dimension, Weight, BlankOutFileName);
         } else {
           this->CalculateFluxThreads(fParticle, Surface, Energy_eV, FluxContainer, NThreadsToUse, Dimension, Weight, BlankOutFileName);
         }

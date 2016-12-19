@@ -2860,7 +2860,9 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
   T3DScalarContainer FluxContainer;
 
   try {
-    self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, NParticles, NThreads, GPU, Dim, OutFileName);
+    throw;
+    // UPDATE: Must fix single flux to accept polarizaton and angle
+    self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, "all", 0, TVector3D(1, 0, 0), TVector3D(0, 1, 0), NParticles, NThreads, GPU, Dim, OutFileName);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -2924,15 +2926,18 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   int         Dim = 2;
   double      Energy_eV = 0;
   char const* Polarization = "";
+  double      Angle = 0;
+  PyObject*   List_HorizontalDirection = PyList_New(0);
+  PyObject*   List_PropogationDirection = PyList_New(0);
   int         NParticles = 0;
   int         NThreads = 0;
   int         GPU = 0;
   char const* OutFileName = "";
 
 
-  static char *kwlist[] = {"energy_eV", "npoints", "plane", "normal", "dim", "width", "rotations", "translation", "x0x1x2", "nparticles", "polarization", "nthreads", "gpu", "ofile", NULL};
+  static char *kwlist[] = {"energy_eV", "npoints", "plane", "normal", "dim", "width", "rotations", "translation", "x0x1x2", "polarization", "angle", "horizontal_direction", "propogation_direction", "nparticles", "nthreads", "gpu", "ofile", NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dO|siiOOOOisiis", kwlist,
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dO|siiOOOOsdOOiiis", kwlist,
                                                                    &Energy_eV,
                                                                    &List_NPoints,
                                                                    &SurfacePlane,
@@ -2942,8 +2947,11 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
                                                                    &List_Rotations,
                                                                    &List_Translation,
                                                                    &List_X0X1X2,
-                                                                   &NParticles,
                                                                    &Polarization,
+                                                                   &Angle,
+                                                                   &List_HorizontalDirection,
+                                                                   &List_PropogationDirection,
+                                                                   &NParticles,
                                                                    &NThreads,
                                                                    &GPU,
                                                                    &OutFileName)) {
@@ -3058,6 +3066,37 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   }
 
 
+
+  // Check for HorizontalDirection in the input
+  TVector3D HorizontalDirection(0, 0, 0);
+  if (PyList_Size(List_HorizontalDirection) != 0) {
+    try {
+      HorizontalDirection = OSCARSSR_ListAsTVector3D(List_HorizontalDirection);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
+      return NULL;
+    }
+  }
+
+
+  // Check for PropogationDirection in the input
+  TVector3D PropogationDirection(0, 0, 0);
+  if (PyList_Size(List_PropogationDirection) != 0) {
+    try {
+      PropogationDirection = OSCARSSR_ListAsTVector3D(List_PropogationDirection);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
+      return NULL;
+    }
+  }
+
+
+
+
+
+
+
+
   // Check number of particles
   if (NParticles < 0) {
     PyErr_SetString(PyExc_ValueError, "'nparticles' must be >= 1 (sort of)");
@@ -3095,7 +3134,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   //bool const Directional = NormalDirection == 0 ? false : true;
 
   try {
-    self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, NParticles, NThreads, GPU, Dim, OutFileName);
+    self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NParticles, NThreads, GPU, Dim, OutFileName);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;

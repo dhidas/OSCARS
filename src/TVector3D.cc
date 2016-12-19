@@ -209,6 +209,40 @@ void TVector3D::RotateSelfXYZ (TVector3D const& V)
 
 
 
+void TVector3D::RotateSelf (double const A, TVector3D const& VIN) {
+  // Rotate vector by an angle A around the vector V (which is VIN, but normalized)
+
+  // Normalized vector
+  TVector3D const V = VIN.UnitVector();
+
+  // Rotation Matrix
+  double M[3][3];
+
+  M[0][0] = cos(A) + V[0] * V[0] * (1 - cos(A));
+  M[0][1] = V[0] * V[1] * (1 - cos(A)) - V[2] * sin(A);
+  M[0][2] = V[0] * V[2] * (1 - cos(A)) + V[1] * sin(A);
+
+  M[1][0] = V[1] * V[0] * (1 - cos(A)) + V[2] * sin(A);
+  M[1][1] = cos(A) + V[1] * V[1] * (1 - cos(A));
+  M[1][2] = V[1] * V[2] * (1 - cos(A)) - V[0] * sin(A);
+
+  M[2][0] = V[2] * V[0] * (1 - cos(A)) - V[1] * sin(A);
+  M[2][1] = V[2] * V[1] * (1 - cos(A)) + V[0] * sin(A);
+  M[2][2] = cos(A) + V[2] * V[2] * (1 - cos(A));
+
+  // Get original vector and rotate it
+  TVector3D O(fX, fY, fZ);
+
+  this->SetXYZ(M[0][0] * O[0] + M[0][1] * O[1] + M[0][2] * O[2],
+               M[1][0] * O[0] + M[1][1] * O[1] + M[1][2] * O[2],
+               M[2][0] * O[0] + M[2][1] * O[1] + M[2][2] * O[2]);
+
+  return;
+}
+
+
+
+
 
 
 TVector3D TVector3D::operator + (TVector3D const& V) const

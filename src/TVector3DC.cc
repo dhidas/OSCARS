@@ -174,6 +174,26 @@ double TVector3DC::Mag () const
 
 
 
+std::complex<double> TVector3DC::MagC2 () const
+{
+  // Magnitude squared of 3DC vector
+  return this->Dot(this->CC());
+}
+
+
+
+
+std::complex<double> TVector3DC::MagC () const
+{
+  // Magnitude squared of 3DC vector
+  return sqrt(this->Mag2());
+}
+
+
+
+
+
+
 
 
 

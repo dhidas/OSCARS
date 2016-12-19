@@ -45,6 +45,7 @@ class TVector3D
     void RotateSelfY (double const);
     void RotateSelfZ (double const);
     void RotateSelfXYZ (TVector3D const&);
+    void RotateSelf (double const, TVector3D const&);
 
 
     // Operators

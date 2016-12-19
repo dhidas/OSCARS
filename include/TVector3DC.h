@@ -41,6 +41,8 @@ class TVector3DC
     TVector3DC CC () const;
     double Mag2 () const;
     double Mag () const;
+    std::complex<double> MagC2 () const;
+    std::complex<double> MagC () const;
 
 
     // Operators

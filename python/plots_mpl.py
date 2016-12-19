@@ -84,7 +84,7 @@ def plot_trajectory_position(trajectory, show=True, ofile='', axis='Z', figsize=
     return
 
 
-def plot_trajectory_velocity(trajectory, show=True, ofile='', ret=False):
+def plot_trajectory_velocity(trajectory, show=True, ofile='', figsize=[18, 4.5], ret=False):
     """Plot the trajectory velocity.  You can optionally change the axis, output to a file, show or not, and return or not
        
        :param trajectory: Particle trajectory
@@ -109,7 +109,7 @@ def plot_trajectory_velocity(trajectory, show=True, ofile='', ret=False):
     T = range(len(VX))
 
     # Plot VX, VY, VZ vs. T
-    plt.figure(1, figsize=(18, 4.5))
+    plt.figure(1, figsize=figsize)
     plt.subplot(131)
     plt.plot(T, VX)
     plt.xlabel('T [step]')
