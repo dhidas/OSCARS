@@ -196,8 +196,28 @@ class OSCARSSR
                                double const Weight = 1,
                                std::string const& OutFileName = "");
 
-    void CalculateFluxGPU (TParticleA&, TSurfacePoints const&, double const, T3DScalarContainer& FluxContainer, int const Dimension = 3, double const Weight = 1, std::string const& OutFileName = "");
-    void CalculateFluxGPU (TSurfacePoints const&, double const, T3DScalarContainer&, int const Dimension = 3, double const Weight = 1, std::string const& OutFileName = "");
+    void CalculateFluxGPU (TParticleA& Particle,
+                           TSurfacePoints const& Surface,
+                           double const Energy_eV,
+                           T3DScalarContainer& FluxContainer,
+                           std::string const& Polarization = "all",
+                           double const Angle = 0,
+                           TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
+                           TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
+                           int const Dimension = 3,
+                           double const Weight = 1,
+                           std::string const& OutFileName = "");
+
+    void CalculateFluxGPU (TSurfacePoints const&,
+                           double const,
+                           T3DScalarContainer&,
+                           std::string const& Polarization = "all",
+                           double const Angle = 0,
+                           TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
+                           TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
+                           int const Dimension = 3,
+                           double const Weight = 1,
+                           std::string const& OutFileName = "");
 
     // Electric Field Calculations
     void CalculateElectricFieldTimeDomain (TVector3D const& Observer, T3DScalarContainer&);

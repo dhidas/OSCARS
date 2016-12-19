@@ -2500,7 +2500,7 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
         this->CalculateFluxThreads(fParticle, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NThreadsToUse, Dimension, 1, BlankOutFileName);
       }
     } else if (GPU == 1) {
-      this->CalculateFluxGPU(fParticle, Surface, Energy_eV, FluxContainer, Dimension, 1, BlankOutFileName);
+      this->CalculateFluxGPU(fParticle, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, Dimension, 1, BlankOutFileName);
     }
   } else {
     double const Weight = 1.0 / (double) NParticles;
@@ -2513,7 +2513,7 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
           this->CalculateFluxThreads(fParticle, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NThreadsToUse, Dimension, Weight, BlankOutFileName);
         }
       } else if (GPU == 1) {
-        this->CalculateFluxGPU(fParticle, Surface, Energy_eV, FluxContainer, Dimension, Weight, BlankOutFileName);
+        this->CalculateFluxGPU(fParticle, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, Dimension, Weight, BlankOutFileName);
       }
     }
   }
@@ -2613,7 +2613,17 @@ void OSCARSSR::CalculateFluxThreads (TParticleA& Particle,
 
 
 
-void OSCARSSR::CalculateFluxGPU (TParticleA& Particle, TSurfacePoints const& Surface, double const Energy_eV, T3DScalarContainer& FluxContainer, int const Dimension, double const Weight, std::string const& OutFileName)
+void OSCARSSR::CalculateFluxGPU (TParticleA& Particle,
+                                 TSurfacePoints const& Surface,
+                                 double const Energy_eV,
+                                 T3DScalarContainer& FluxContainer,
+                                 std::string const& Polarization,
+                                 double const Angle,
+                                 TVector3D const& HorizontalDirection,
+                                 TVector3D const& PropogationDirection,
+                                 int const Dimension,
+                                 double const Weight,
+                                 std::string const& OutFileName)
 {
   // If you compile for Cuda use the GPU in this function, else throw
 
@@ -2648,7 +2658,16 @@ void OSCARSSR::CalculateFluxGPU (TParticleA& Particle, TSurfacePoints const& Sur
 
 
 
-void OSCARSSR::CalculateFluxGPU (TSurfacePoints const& Surface, double const Energy_eV, T3DScalarContainer& FluxContainer, int const Dimension, double const Weight, std::string const& OutFileName)
+void OSCARSSR::CalculateFluxGPU (TSurfacePoints const& Surface,
+                                 double const Energy_eV,
+                                 T3DScalarContainer& FluxContainer,
+                                 std::string const& Polarization,
+                                 double const Angle,
+                                 TVector3D const& HorizontalDirection,
+                                 TVector3D const& PropogationDirection,
+                                 int const Dimension,
+                                 double const Weight,
+                                 std::string const& OutFileName)
 {
   // Calculates the single particle spectrum at a given observation point
   // in units of [photons / second / 0.001% BW / mm^2]
@@ -2664,7 +2683,7 @@ void OSCARSSR::CalculateFluxGPU (TSurfacePoints const& Surface, double const Ene
     }
   }
 
-  this->CalculateFluxGPU(fParticle, Surface, Energy_eV, FluxContainer, Dimension, Weight, OutFileName);
+  this->CalculateFluxGPU(fParticle, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, Dimension, Weight, OutFileName);
 
   return;
 }
