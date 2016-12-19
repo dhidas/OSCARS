@@ -145,7 +145,17 @@ class OSCARSSR
                            int const Dimension = 3,
                            double const Weight = 1);
 
-    void CalculateFluxPoint (TParticleA&, TSurfacePoints const&, double const, T3DScalarContainer&, size_t const i, int const Dimension = 3, double const Weight = 1);
+    void CalculateFluxPoint (TParticleA& Particle,
+                             TSurfacePoints const& Surface,
+                             double const Energy_eV,
+                             T3DScalarContainer& FluxContainer,
+                             size_t const i,
+                             std::string const& Polarization = "all",
+                             double const Angle = 0,
+                             TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
+                             TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
+                             int const Dimension = 3,
+                             double const Weight = 1);
 
     void CalculateFlux    (TParticleA&,
                            TSurfacePoints const&,
@@ -173,7 +183,19 @@ class OSCARSSR
                            int const Dimension = 3,
                            std::string const& OutFileName = "");
 
-    void CalculateFluxThreads (TParticleA&, TSurfacePoints const&, double const, T3DScalarContainer&, int const NThreads = 0, int const Dimension = 3, double const Weight = 1, std::string const& OutFileName = "");
+    void CalculateFluxThreads (TParticleA& Particle,
+                               TSurfacePoints const& Surface,
+                               double const Energy_eV,
+                               T3DScalarContainer& FluxContainer,
+                               std::string const& Polarization = "all",
+                               double const Angle = 0,
+                               TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
+                               TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
+                               int const NThreads = 0,
+                               int const Dimension = 3,
+                               double const Weight = 1,
+                               std::string const& OutFileName = "");
+
     void CalculateFluxGPU (TParticleA&, TSurfacePoints const&, double const, T3DScalarContainer& FluxContainer, int const Dimension = 3, double const Weight = 1, std::string const& OutFileName = "");
     void CalculateFluxGPU (TSurfacePoints const&, double const, T3DScalarContainer&, int const Dimension = 3, double const Weight = 1, std::string const& OutFileName = "");
 
