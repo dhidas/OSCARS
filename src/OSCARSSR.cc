@@ -2112,7 +2112,7 @@ void OSCARSSR::CalculateFlux2 (TParticleA& Particle,
     } else if (Polarization == "circular-left") {
       SumE = SumE.Dot(Negative.CC()) * Negative;
     } else {
-      throw;
+      throw std::invalid_argument("Polarization requested not recognized");
     }
 
     // Set the flux for this frequency / energy point
