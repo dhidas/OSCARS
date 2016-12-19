@@ -690,6 +690,7 @@ TParticleTrajectoryPoints const& OSCARSSR::GetTrajectory ()
 void OSCARSSR::SetDerivativesFunction ()
 {
   // Set the derivatives function for RK4 depending on what fields exist
+  // I am using a function pointer so that we avoid computations that are not needed (save CPU cycles)
 
   if (fBFieldContainer.GetNFields() == 0 && fEFieldContainer.GetNFields() > 0) {
     fDerivativesFunction = &OSCARSSR::DerivativesE;
