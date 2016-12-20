@@ -2121,6 +2121,10 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
   int NPoints = 0;
   PyObject* List_EnergyRange_eV = PyList_New(0);
   PyObject* List_Points_eV      = PyList_New(0);
+  char const* Polarization = "all";
+  double      Angle = 0;
+  PyObject*   List_HorizontalDirection = PyList_New(0);
+  PyObject*   List_PropogationDirection = PyList_New(0);
   int NParticles = 0;
   int NThreads = 0;
   int GPU = 0;
@@ -2129,13 +2133,17 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
 
 
 
-  static char *kwlist[] = {"obs", "npoints", "energy_range_eV", "points_eV", "nparticles", "nthreads", "gpu", "ofile", "bofile", NULL};
+  static char *kwlist[] = {"obs", "npoints", "energy_range_eV", "points_eV", "polarization", "angle", "horizontal_direction", "propogation_direction", "nparticles", "nthreads", "gpu", "ofile", "bofile", NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|iOOiiiss", kwlist,
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|iOOsdOOiiiss", kwlist,
                                                                &List_Obs,
                                                                &NPoints,
                                                                &List_EnergyRange_eV,
                                                                &List_Points_eV,
+                                                               &Polarization,
+                                                               &Angle,
+                                                               &List_HorizontalDirection,
+                                                               &List_PropogationDirection,
                                                                &NParticles,
                                                                &NThreads,
                                                                &GPU,
@@ -2190,11 +2198,29 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
   }
 
 
-  // Check GPU parameter
-  if (GPU != 0 && GPU != 1) {
-    PyErr_SetString(PyExc_ValueError, "'gpu' must be 0 or 1");
-    return NULL;
+  // Check for HorizontalDirection in the input
+  TVector3D HorizontalDirection(0, 0, 0);
+  if (PyList_Size(List_HorizontalDirection) != 0) {
+    try {
+      HorizontalDirection = OSCARSSR_ListAsTVector3D(List_HorizontalDirection);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
+      return NULL;
+    }
   }
+
+
+  // Check for PropogationDirection in the input
+  TVector3D PropogationDirection(0, 0, 0);
+  if (PyList_Size(List_PropogationDirection) != 0) {
+    try {
+      PropogationDirection = OSCARSSR_ListAsTVector3D(List_PropogationDirection);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
+      return NULL;
+    }
+  }
+
 
 
   // Check NThreads parameter
@@ -2202,6 +2228,14 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
     PyErr_SetString(PyExc_ValueError, "'nthreads' must be > 0");
     return NULL;
   }
+
+
+  // Check GPU parameter
+  if (GPU != 0 && GPU != 1) {
+    PyErr_SetString(PyExc_ValueError, "'gpu' must be 0 or 1");
+    return NULL;
+  }
+
 
   // Check you are not trying to use threads and GPU
   if (NThreads > 0 && GPU == 1) {
@@ -2225,7 +2259,7 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
 
   // Actually calculate the spectrum
   try {
-    self->obj->CalculateSpectrum(Obs, SpectrumContainer, NParticles, NThreads, GPU);
+    self->obj->CalculateSpectrum(Obs, SpectrumContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NParticles, NThreads, GPU);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -2925,7 +2959,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   int         NormalDirection = 0;
   int         Dim = 2;
   double      Energy_eV = 0;
-  char const* Polarization = "";
+  char const* Polarization = "all";
   double      Angle = 0;
   PyObject*   List_HorizontalDirection = PyList_New(0);
   PyObject*   List_PropogationDirection = PyList_New(0);

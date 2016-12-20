@@ -100,15 +100,47 @@ class OSCARSSR
     double GetRandomUniform () const;
 
     void CalculateSpectrumGPU (TParticleA&, TVector3D const& ObservationPoint, TSpectrumContainer& Spectrum, double const Weight = 1, std::string const OutFileName = "");
-    void CalculateSpectrum ();
-    void CalculateSpectrum (TVector3D const&, TSpectrumContainer&, double const Weight = 1);
-    void CalculateSpectrum (TVector3D const&, TSpectrumContainer&, int const, int const, int const);
-    void CalculateSpectrumThreads (TParticleA&, TVector3D const&, TSpectrumContainer&, int const, double const Weight = 1, std::string const& OutFileName = "");
-    void CalculateSpectrumPoint (TParticleA&, TVector3D const&, TSpectrumContainer&, int const i, double const Weight = 1);
-    void CalculateSpectrum (TParticleA&, TVector3D const&, TSpectrumContainer&, double const Weight = 1);
-    void CalculateSpectrum (TParticleA&, TVector3D const&, double const, double const, size_t const, std::string const& OutFileName = "");
-    void CalculateSpectrum (TVector3D const&, double const, double const, size_t const);
-    void CalculateSpectrum (TVector3D const&, std::vector<double> const&);
+
+    void CalculateSpectrum (TVector3D const& ObservationPoint,
+                            TSpectrumContainer& Spectrum,
+                            std::string const& Polarization = "all",
+                            double const Angle = 0,
+                            TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
+                            TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
+                            int const NParticles = 0,
+                            int const NThreads = 0,
+                            int const GPU = 0);
+
+    void CalculateSpectrumThreads (TParticleA& Particle,
+                                   TVector3D const& Obs,
+                                   TSpectrumContainer& Spectrum,
+                                   int const NThreads,
+                                   std::string const& Polarization = "all",
+                                   double const Angle = 0,
+                                   TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
+                                   TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
+                                   double const Weight = 1,
+                                   std::string const& OutFileName = "");
+
+    void CalculateSpectrumPoint (TParticleA& ,
+                                 TVector3D const&,
+                                 TSpectrumContainer&,
+                                 int const i,
+                                 std::string const& Polarization = "all",
+                                 double const Angle = 0,
+                                 TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
+                                 TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
+                                 double const Weight = 1);
+
+    void CalculateSpectrum (TParticleA&,
+                            TVector3D const&,
+                            TSpectrumContainer&,
+                            std::string const& Polarization = "all",
+                            double const Angle = 0,
+                            TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
+                            TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
+                            double const Weight = 1);
+
 
     void AddToSpectrum (TSpectrumContainer const&, double const Weight = 1);
     void AddToFlux (T3DScalarContainer const&, double const Weight = 1);
