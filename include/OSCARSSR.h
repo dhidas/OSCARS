@@ -99,7 +99,15 @@ class OSCARSSR
     double GetRandomNormal () const;
     double GetRandomUniform () const;
 
-    void CalculateSpectrumGPU (TParticleA&, TVector3D const& ObservationPoint, TSpectrumContainer& Spectrum, double const Weight = 1, std::string const OutFileName = "");
+    void CalculateSpectrumGPU (TParticleA&,
+                               TVector3D const& ObservationPoint,
+                               TSpectrumContainer& Spectrum,
+                               std::string const& Polarization = "all",
+                               double const Angle = 0,
+                               TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
+                               TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
+                               double const Weight = 1,
+                               std::string const OutFileName = "");
 
     void CalculateSpectrum (TVector3D const& ObservationPoint,
                             TSpectrumContainer& Spectrum,

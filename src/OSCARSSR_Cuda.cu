@@ -1021,7 +1021,14 @@ __global__ void OSCARSSR_Cuda_SpectrumGPU (double *x, double *y, double *z, doub
 
 
 
-extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (TParticleA& Particle, TVector3D const& ObservationPoint, TSpectrumContainer& Spectrum, double const Weight)
+extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (TParticleA& Particle,
+                                                    TVector3D const& ObservationPoint,
+                                                    TSpectrumContainer& Spectrum,
+                                                    std::string const& Polarization,
+                                                    double const Angle,
+                                                    TVector3D const& HorizontalDirection,
+                                                    TVector3D const& PropogationDirection,
+                                                    double const Weight)
 {
 
   int ngpu = 0;

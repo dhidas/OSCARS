@@ -878,7 +878,15 @@ void OSCARSSR::RK4 (double y[], double dydx[], int n, double x, double h, double
 
 
 
-void OSCARSSR::CalculateSpectrumGPU (TParticleA& Particle, TVector3D const& ObservationPoint, TSpectrumContainer& Spectrum, double const Weight, std::string const OutFileName)
+void OSCARSSR::CalculateSpectrumGPU (TParticleA& Particle,
+                                     TVector3D const& ObservationPoint,
+                                     TSpectrumContainer& Spectrum,
+                                     std::string const& Polarization,
+                                     double const Angle,
+                                     TVector3D const& HorizontalDirection,
+                                     TVector3D const& PropogationDirection,
+                                     double const Weight,
+                                     std::string const OutFileName)
 {
   // Check that particle has been set yet.  If fType is "" it has not been set yet
   if (Particle.GetType() == "") {
@@ -898,7 +906,14 @@ void OSCARSSR::CalculateSpectrumGPU (TParticleA& Particle, TVector3D const& Obse
     throw std::invalid_argument("You are requesting the GPU, but none were found");
   }
 
-  return OSCARSSR_Cuda_CalculateSpectrumGPU (Particle, ObservationPoint, Spectrum, Weight);
+  return OSCARSSR_Cuda_CalculateSpectrumGPU (Particle,
+                                             ObservationPoint,
+                                             Spectrum,
+                                             Polarization,
+                                             Angle,
+                                             HorizontalDirection,
+                                             PropogationDirection,
+                                             Weight);
   #else
   throw std::invalid_argument("GPU functionality not compiled into this binary distribution");
   #endif
@@ -973,7 +988,15 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
         }
       }
     } else if (GPU == 1) {
-      this->CalculateSpectrumGPU(fParticle, ObservationPoint, Spectrum, 1, BlankOutFileName);
+      this->CalculateSpectrumGPU(fParticle,
+                                 ObservationPoint,
+                                 Spectrum,
+                                 Polarization,
+                                 Angle,
+                                 HorizontalDirection,
+                                 PropogationDirection,
+                                 1,
+                                 BlankOutFileName);
     }
   } else {
     double const Weight = 1.0 / (double) NParticles;
@@ -1016,7 +1039,15 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
           }
         }
       } else if (GPU == 1) {
-        this->CalculateSpectrumGPU(fParticle, ObservationPoint, Spectrum, Weight, BlankOutFileName);
+        this->CalculateSpectrumGPU(fParticle,
+                                   ObservationPoint,
+                                   Spectrum,
+                                   Polarization,
+                                   Angle,
+                                   HorizontalDirection,
+                                   PropogationDirection,
+                                   Weight,
+                                   BlankOutFileName);
       }
     }
   }
