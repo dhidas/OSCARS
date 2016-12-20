@@ -693,7 +693,17 @@ __global__ void OSCARSSR_Cuda_FluxGPU (double *x, double *y, double *z, double *
 
 
 
-extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (TParticleA& Particle, TSurfacePoints const& Surface, double const Energy_eV, T3DScalarContainer& FluxContainer, int const Dimension, double const Weight, std::string const& OutFileName)
+extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (TParticleA& Particle,
+                                                TSurfacePoints const& Surface,
+                                                double const Energy_eV,
+                                                T3DScalarContainer& FluxContainer,
+                                                std::string const& Polarization,
+                                                double const Angle,
+                                                TVector3D const& HorizontalDirection,
+                                                TVector3D const& PropogationDirection,
+                                                int const Dimension,
+                                                double const Weight,
+                                                std::string const& OutFileName)
 {
   // Do the setup for and call the GPU calculation of flux.  Your limitation here is only GPU memory.
 
@@ -839,7 +849,6 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (TParticleA& Particle, TSurfacePo
 
   // Add result to power density container
   for (size_t i = 0; i < NSPoints; ++i) {
-    //FluxContainer.AddPoint( TVector3D(sx[i], sy[i], sz[i]), flux[i] * Weight);
     FluxContainer.AddToPoint(i, flux[i] * Weight);
   }
 

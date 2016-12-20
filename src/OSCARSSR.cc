@@ -2646,7 +2646,7 @@ void OSCARSSR::CalculateFluxGPU (TParticleA& Particle,
     throw std::invalid_argument("You are requesting the GPU, but none were found");
   }
 
-  return OSCARSSR_Cuda_CalculateFluxGPU(Particle, Surface, Energy_eV, FluxContainer, Dimension, Weight, OutFileName);
+  return OSCARSSR_Cuda_CalculateFluxGPU(Particle, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, Dimension, Weight, OutFileName);
   #else
   throw std::invalid_argument("GPU functionality not compiled into this binary distribution");
   #endif

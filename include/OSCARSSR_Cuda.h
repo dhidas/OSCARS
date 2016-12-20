@@ -23,9 +23,35 @@
 #include "T3DScalarContainer.h"
 
 extern "C" int  OSCARSSR_Cuda_GetDeviceCount ();
-extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (TParticleA& Particle, TSurfacePoints const& Surface, double const Energy_eV, T3DScalarContainer& FluxContainer, int const Dimension = 3, double const Weight = 1, std::string const& OutFileName = "");
+
+extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (TParticleA& Particle,
+                                                TSurfacePoints const& Surface,
+                                                double const Energy_eV,
+                                                T3DScalarContainer& FluxContainer,
+                                                std::string const& Polarization = "all",
+                                                double const Angle = 0,
+                                                TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
+                                                TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
+                                                int const Dimension = 3,
+                                                double const Weight = 1,
+                                                std::string const& OutFileName = "");
+
 extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (TParticleA& Particle, TVector3D const& ObservationPoint, TSpectrumContainer& Spectrum, double const Weight = 1);
+
 extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (TParticleA& Particle, TSurfacePoints const& Surface, T3DScalarContainer& PowerDensityContainer, int const Dimension, bool const Directional, double const Weight, std::string const& OutFileName = "");
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
