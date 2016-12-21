@@ -1069,6 +1069,57 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (TParticleA& Particle,
   double *sf     = new double[NSPoints];
 
 
+
+  // Imaginary "i" and complxe 1+0i
+  std::complex<double> const I(0, 1);
+  std::complex<double> const One(1, 0);
+
+  // Photon vertical direction and positive and negative helicity
+  TVector3D const VerticalDirection = PropogationDirection.Cross(HorizontalDirection).UnitVector();
+  TVector3DC const Positive = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) + VerticalDirection * I );
+  TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * I );
+
+  // For polarization input to the gpu
+  cuDoubleComplex *pol = new cuDoubleComplex[3];
+
+  // State of polarization: 0 for all, 1 for linear, 2 for circular
+  // (requires different threatment of vector pol interally)
+  int pol_state = 1;
+
+  if (Polarization == "all") {
+    // Do nothing, it is already ALL
+    pol_state = 0;
+  } else if (Polarization == "linear-horizontal") {
+    pol[0] = make_cuDoubleComplex(HorizontalDirection.GetX(), 0);
+    pol[1] = make_cuDoubleComplex(HorizontalDirection.GetY(), 0);
+    pol[2] = make_cuDoubleComplex(HorizontalDirection.GetZ(), 0);
+  } else if (Polarization == "linear-vertical") {
+    pol[0] = make_cuDoubleComplex(VerticalDirection.GetX(), 0);
+    pol[1] = make_cuDoubleComplex(VerticalDirection.GetY(), 0);
+    pol[2] = make_cuDoubleComplex(VerticalDirection.GetZ(), 0);
+  } else if (Polarization == "linear") {
+    TVector3D PolarizationAngle = HorizontalDirection;
+    PolarizationAngle.RotateSelf(Angle, PropogationDirection);
+    pol[0] = make_cuDoubleComplex(PolarizationAngle.GetX(), 0);
+    pol[1] = make_cuDoubleComplex(PolarizationAngle.GetY(), 0);
+    pol[2] = make_cuDoubleComplex(PolarizationAngle.GetZ(), 0);
+  } else if (Polarization == "circular-right") {
+    //SumE = SumE.Dot(Positive.CC()) * Positive;
+    pol_state = 2;
+    pol[0] = make_cuDoubleComplex(Positive.CC().GetX().real(), Positive.CC().GetX().imag());
+    pol[1] = make_cuDoubleComplex(Positive.CC().GetY().real(), Positive.CC().GetY().imag());
+    pol[2] = make_cuDoubleComplex(Positive.CC().GetZ().real(), Positive.CC().GetZ().imag());
+  } else if (Polarization == "circular-left") {
+    //SumE = SumE.Dot(Negative.CC()) * Negative;
+    pol_state = 2;
+    pol[0] = make_cuDoubleComplex(Negative.CC().GetX().real(), Negative.CC().GetX().imag());
+    pol[1] = make_cuDoubleComplex(Negative.CC().GetY().real(), Negative.CC().GetY().imag());
+    pol[2] = make_cuDoubleComplex(Negative.CC().GetZ().real(), Negative.CC().GetZ().imag());
+  } else {
+    // Throw invalid argument if polarization is not recognized
+    //throw std::invalid_argument("Polarization requested not recognized");
+  }
+
   // Set trajectory
   for (size_t i = 0; i < NTPoints; ++i) {
     x[i] = T.GetX(i).GetX();
@@ -1096,6 +1147,11 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (TParticleA& Particle,
   double *d_dt;
   int    *d_nt, *d_ns;
 
+  // For polarization
+  cuDoubleComplex *d_pol;
+  int *d_pol_state;
+
+
   int const size_x = NTPoints * sizeof(double);
   int const size_s = NSPoints * sizeof(double);
 
@@ -1118,6 +1174,10 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (TParticleA& Particle,
   cudaMalloc((void **) &d_se, size_s);
   cudaMalloc((void **) &d_sf, size_s);
 
+  // Polarization
+  cudaMalloc((void **) &d_pol, 3*sizeof(cuDoubleComplex));
+  cudaMalloc((void **) &d_pol_state, sizeof(int));
+
 
   cudaMemcpy(d_x, x, size_x, cudaMemcpyHostToDevice);
   cudaMemcpy(d_y, y, size_x, cudaMemcpyHostToDevice);
@@ -1137,6 +1197,9 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (TParticleA& Particle,
   cudaMemcpy(d_ns, &NSPoints, sizeof(int), cudaMemcpyHostToDevice);
 
   cudaMemcpy(d_se, se, size_s, cudaMemcpyHostToDevice);
+
+  cudaMemcpy(d_pol, pol, 3*sizeof(cuDoubleComplex), cudaMemcpyHostToDevice);
+  cudaMemcpy(d_pol_state, &pol_state, sizeof(int), cudaMemcpyHostToDevice);
 
 
   // Constant C0 for calculation
