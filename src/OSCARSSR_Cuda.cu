@@ -939,7 +939,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (TParticleA& Particle,
 
 
 
-__global__ void OSCARSSR_Cuda_SpectrumGPU (double *x, double *y, double *z, double *bx, double *by, double *bz, double *ox, double *oy, double *oz, double *dt, int *nt, int *ns, double *C0, double *C2, double *EvToOmega, double *C, double *se, double *sf)
+__global__ void OSCARSSR_Cuda_SpectrumGPU (double *x, double *y, double *z, double *bx, double *by, double *bz, double *ox, double *oy, double *oz, double *dt, int *nt, int *ns, double *C0, double *C2, double *EvToOmega, double *C, double *se, double *sf, cuDoubleComplex* pol, int *pol_state)
 {
   // Check that this is within the number of spectrum points requested
   int is = threadIdx.x + blockIdx.x * blockDim.x;
@@ -997,6 +997,25 @@ __global__ void OSCARSSR_Cuda_SpectrumGPU (double *x, double *y, double *z, doub
   SumEX = cuCmul(make_cuDoubleComplex(0, (*C0) * Omega * (*dt)), SumEX);
   SumEY = cuCmul(make_cuDoubleComplex(0, (*C0) * Omega * (*dt)), SumEY);
   SumEZ = cuCmul(make_cuDoubleComplex(0, (*C0) * Omega * (*dt)), SumEZ);
+
+
+  // Check for polarization state
+  if (*pol_state == 0) {
+    // Do nothing
+  } else if (*pol_state == 1) {
+    // Linear, just dot with vector and put in direction of vector
+    cuDoubleComplex Magnitude = cuCadd(cuCadd(cuCmul(SumEX, pol[0]), cuCmul(SumEY, pol[1])),  cuCmul(SumEZ, pol[2]));
+    SumEX = cuCmul(Magnitude, pol[0]);
+    SumEY = cuCmul(Magnitude, pol[1]);
+    SumEZ = cuCmul(Magnitude, pol[2]);
+  } else if (*pol_state == 2) {
+    cuDoubleComplex Magnitude = cuCadd(cuCadd(cuCmul(SumEX, cuConj(pol[0])), cuCmul(SumEY, cuConj(pol[1]))),  cuCmul(SumEZ, cuConj(pol[2])));
+    SumEX = cuCmul(Magnitude, pol[0]);
+    SumEY = cuCmul(Magnitude, pol[1]);
+    SumEZ = cuCmul(Magnitude, pol[2]);
+  } else {
+    // UPDATE: Serious problem
+  }
 
 
   double const EX = SumEX.x * SumEX.x + SumEX.y * SumEX.y;
@@ -1226,7 +1245,7 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (TParticleA& Particle,
 
   // Send computation to gpu
   int const NBlocks = NSPoints / NTHREADS_PER_BLOCK + 1;
-  OSCARSSR_Cuda_SpectrumGPU<<<NBlocks, NTHREADS_PER_BLOCK>>>(d_x, d_y, d_z, d_bx, d_by, d_bz, d_ox, d_oy, d_oz, d_dt, d_nt, d_ns, d_C0, d_C2, d_EvToOmega, d_C, d_se, d_sf);
+  OSCARSSR_Cuda_SpectrumGPU<<<NBlocks, NTHREADS_PER_BLOCK>>>(d_x, d_y, d_z, d_bx, d_by, d_bz, d_ox, d_oy, d_oz, d_dt, d_nt, d_ns, d_C0, d_C2, d_EvToOmega, d_C, d_se, d_sf, d_pol, d_pol_state);
 
   // Copy result back from GPU
   cudaMemcpy(sf, d_sf, size_s, cudaMemcpyDeviceToHost);
@@ -1264,6 +1283,9 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (TParticleA& Particle,
   cudaFree(d_EvToOmega);
   cudaFree(d_C);
 
+  cudaFree(d_pol);
+  cudaFree(d_pol_state);
+
 
   // Free all heap memory
   delete [] x;
@@ -1277,6 +1299,8 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (TParticleA& Particle,
 
   delete [] se;
   delete [] sf;
+
+  delete [] pol;
 
 
   return;
