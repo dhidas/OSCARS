@@ -773,7 +773,7 @@ oscars.sr
 
 
 
-.. py:method:: oscars.sr.calculate_spectrum(obs, [[npoints, energy_range_eV], points_eV], [nparticles, ofile, nthreads, gpu])
+.. py:method:: oscars.sr.calculate_spectrum(obs, [npoints, energy_range_eV, points_eV, polarization, horizontal_direction, propogation_direction, angle, nparticles, ofile, nthreads, gpu])
 
    Calculate the spectrum given a point in space, the range in energy, and the number of points.  The calculation uses the current particle and its initial conditions.  If the trajectory has not been calculated it is calculated first.  The units of this calculation are [:math:`photons / mm^2 / 0.1% bw / s`]
 
@@ -789,6 +789,14 @@ oscars.sr
    :type  energy_range_eV: [float, float]
    :param points_eV: A list of points to calculate the flux at
    :type  points_eV: [float, ...]
+   :param polarization: Which polarization mode to calculate.  Can be 'all', 'linear-horizontal', 'linear-vertical', 'circular-left', 'circular-right', or 'linear' (if linear you must specify the angle parameter)
+   :type  polarization: str
+   :param horizontal_direction: The direction you consider to be horizontal.  Should be perpendicular to the photon beam propogation direction
+   :type  horizontal_direction: [x, y, z]
+   :param vertical_direction: Same as horizontal_direction but the vertical direction
+   :type  verticall_direction: [x, y, z]
+   :param angle: Only used if polarization='linear' is specified.  The 'angle' is that from the horizontal_direction for the polarization directino you are interested in
+   :type  angle: float
    :param nparticles: The number of particles you wish to run for a multi-particle simulation
    :type  nparticles: int
    :param ofile: File name you would like to output this data to
@@ -844,7 +852,7 @@ oscars.sr
 
 
 
-.. py:method:: oscars.sr.calculate_power_density_rectangle(npoints, [[plane, width], x0x1x2], [rotations, translation, ofile, normal, dim, nthreads, gpu])
+.. py:method:: oscars.sr.calculate_power_density_rectangle(npoints, [plane, width, x0x1x2, rotations, translation, ofile, normal, dim, nthreads, gpu])
 
    Calculate the power density in a rectangle either defined by three points, or by defining the plane the rectangle is in and the width, and then rotating and translating it to where it needs be.  The simplest is outlined in the first example below.  By default (dim=2) this returns a list whose position coordinates are in the local coordinate space x1 and x2 (*ie* they do not include the rotations and translation).  if dim=3 the coordinates in the return list are in absolute 3D space.
 
@@ -932,7 +940,7 @@ oscars.sr
 
 
 
-.. py:method:: oscars.sr.calculate_flux_rectangle(energy_eV, npoints, [[plane, width], x0x1x2], [rotations, translation, ofile, normal, dim, nthreads, gpu])
+.. py:method:: oscars.sr.calculate_flux_rectangle(energy_eV, npoints, [plane, width, x0x1x2, rotations, translation, polarization, horizontal_direction, propogation_direction, angle, ofile, normal, dim, nthreads, gpu])
 
    Calculate the flux density in a rectangle either defined by three points, or by defining the plane the rectangle is in and the width, and then rotating and translating it to where it needs be.  The simplest is outlined in the first example below.  By default (dim=2) this returns a list whose position coordinates are in the local coordinate space x1 and x2 (*ie* they do not include the rotations and translation).  if dim=3 the coordinates in the return list are in absolute 3D space.
 
@@ -955,6 +963,14 @@ oscars.sr
    :type  rotations: list[3]
    :param translation: A list representing the translation of the x0 of this object
    :type  translation: list[3]
+   :param polarization: Which polarization mode to calculate.  Can be 'all', 'linear-horizontal', 'linear-vertical', 'circular-left', 'circular-right', or 'linear' (if linear you must specify the angle parameter)
+   :type  polarization: str
+   :param horizontal_direction: The direction you consider to be horizontal.  Should be perpendicular to the photon beam propogation direction
+   :type  horizontal_direction: [x, y, z]
+   :param vertical_direction: Same as horizontal_direction but the vertical direction
+   :type  verticall_direction: [x, y, z]
+   :param angle: Only used if polarization='linear' is specified.  The 'angle' is that from the horizontal_direction for the polarization directino you are interested in
+   :type  angle: float
    :param ofile: Output file name
    :type  ofile: str
    :param normal: -1 if you wish to reverse the normal vector, 0 if you wish to ignore the +/- direction in computations, 1 if you with to use the direction of the normal vector as given. 

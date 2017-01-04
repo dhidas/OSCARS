@@ -13,7 +13,7 @@
 
 #define OSCARSSR_VMAJOR 1
 #define OSCARSSR_VMINOR 33
-#define OSCARSSR_REVISION 1
+#define OSCARSSR_REVISION 2
 
 #include "TOSCARSSR.h"
 
@@ -40,8 +40,18 @@ class OSCARSSR
     static std::string GetVersionString ();
 
     // Functions related to the magnetic field
-    void AddMagneticField (std::string const, std::string const, TVector3D const& R = TVector3D(0, 0, 0), TVector3D const& D = TVector3D(0, 0, 0), std::vector<double> const& S = std::vector<double>());
-    void AddMagneticFieldInterpolated (std::vector<std::pair<double, std::string> > const&, std::string const, double const, TVector3D const& R = TVector3D(0, 0, 0), TVector3D const& D = TVector3D(0, 0, 0), std::vector<double> const& S = std::vector<double>());
+    void AddMagneticField (std::string const FileName,
+                           std::string const Format,
+                           TVector3D const& R = TVector3D(0, 0, 0),
+                           TVector3D const& D = TVector3D(0, 0, 0),
+                           std::vector<double> const& S = std::vector<double>());
+
+    void AddMagneticFieldInterpolated (std::vector<std::pair<double, std::string> > const& Mapping,
+                                       std::string const Format,
+                                       double const Parameter,
+                                       TVector3D const& Rotations = TVector3D(0, 0, 0),
+                                       TVector3D const& Translation = TVector3D(0, 0, 0),
+                                       std::vector<double> const& Scaling = std::vector<double>());
     void AddMagneticField (TField*);
     void ClearMagneticFields ();
 
