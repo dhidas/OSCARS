@@ -1122,13 +1122,13 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (TParticleA& Particle,
     pol[0] = make_cuDoubleComplex(PolarizationAngle.GetX(), 0);
     pol[1] = make_cuDoubleComplex(PolarizationAngle.GetY(), 0);
     pol[2] = make_cuDoubleComplex(PolarizationAngle.GetZ(), 0);
-  } else if (Polarization == "circular-right") {
+  } else if (Polarization == "circular-left") {
     //SumE = SumE.Dot(Positive.CC()) * Positive;
     pol_state = 2;
     pol[0] = make_cuDoubleComplex(Positive.CC().GetX().real(), Positive.CC().GetX().imag());
     pol[1] = make_cuDoubleComplex(Positive.CC().GetY().real(), Positive.CC().GetY().imag());
     pol[2] = make_cuDoubleComplex(Positive.CC().GetZ().real(), Positive.CC().GetZ().imag());
-  } else if (Polarization == "circular-left") {
+  } else if (Polarization == "circular-right") {
     //SumE = SumE.Dot(Negative.CC()) * Negative;
     pol_state = 2;
     pol[0] = make_cuDoubleComplex(Negative.CC().GetX().real(), Negative.CC().GetX().imag());

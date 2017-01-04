@@ -57,6 +57,7 @@ OSCARSSR::~OSCARSSR ()
 
 std::string OSCARSSR::GetVersionString ()
 {
+  // Get the version string based off of the compiler defines
   char ver[200];
   sprintf(ver, "%i.%02i.%02i", OSCARSSR_VMAJOR, OSCARSSR_VMINOR, OSCARSSR_REVISION);
   return std::string(ver);
@@ -65,7 +66,11 @@ std::string OSCARSSR::GetVersionString ()
 
 
 
-void OSCARSSR::AddMagneticField (std::string const FileName, std::string const Format, TVector3D const& Rotations, TVector3D const& Translation, std::vector<double> const& Scaling)
+void OSCARSSR::AddMagneticField (std::string const FileName,
+                                 std::string const Format,
+                                 TVector3D const& Rotations,
+                                 TVector3D const& Translation,
+                                 std::vector<double> const& Scaling)
 {
   // Add a magnetic field from a file to the field container
 
@@ -73,9 +78,9 @@ void OSCARSSR::AddMagneticField (std::string const FileName, std::string const F
   std::string FormatUpperCase = Format;
   std::transform(FormatUpperCase.begin(), FormatUpperCase.end(), FormatUpperCase.begin(), ::toupper);
 
-  if (FormatUpperCase == "OSCARS" || FormatUpperCase == "SRW" || FormatUpperCase == "SPECTRA") {
-    this->fBFieldContainer.AddField( new TField3D_Grid(FileName, Format, Rotations, Translation, Scaling) );
-  } else if (FormatUpperCase.size() > 8 && std::string(FormatUpperCase.begin(), FormatUpperCase.begin() + 8) == std::string("OSCARS1D")) {
+  // Check that the format name is correct
+  if ( (FormatUpperCase == "OSCARS" || FormatUpperCase == "SRW" || FormatUpperCase == "SPECTRA") ||
+       (FormatUpperCase.size() > 8 && std::string(FormatUpperCase.begin(), FormatUpperCase.begin() + 8) == std::string("OSCARS1D"))) {
 
     this->fBFieldContainer.AddField( new TField3D_Grid(FileName, Format, Rotations, Translation, Scaling) );
 
@@ -91,7 +96,12 @@ void OSCARSSR::AddMagneticField (std::string const FileName, std::string const F
 
 
 
-void OSCARSSR::AddMagneticFieldInterpolated (std::vector<std::pair<double, std::string> > const& Mapping, std::string const Format, double const Parameter, TVector3D const& Rotations, TVector3D const& Translation, std::vector<double> const& Scaling)
+void OSCARSSR::AddMagneticFieldInterpolated (std::vector<std::pair<double, std::string> > const& Mapping,
+                                             std::string const Format,
+                                             double const Parameter,
+                                             TVector3D const& Rotations,
+                                             TVector3D const& Translation,
+                                             std::vector<double> const& Scaling)
 {
   // Add a magnetic field from a file to the field container
 
@@ -99,10 +109,12 @@ void OSCARSSR::AddMagneticFieldInterpolated (std::vector<std::pair<double, std::
   std::string FormatUpperCase = Format;
   std::transform(FormatUpperCase.begin(), FormatUpperCase.end(), FormatUpperCase.begin(), ::toupper);
 
-  if (FormatUpperCase == "OSCARS" || FormatUpperCase == "SRW" || FormatUpperCase == "SPECTRA") {
+  // Check that the format name is correct
+  if ( (FormatUpperCase == "OSCARS" || FormatUpperCase == "SRW" || FormatUpperCase == "SPECTRA") ||
+     (FormatUpperCase.size() > 8 && std::string(FormatUpperCase.begin(), FormatUpperCase.begin() + 8) == std::string("OSCARSSR")) ) {
+
     this->fBFieldContainer.AddField( new TField3D_Grid(Mapping, Format, Parameter, Rotations, Translation, Scaling) );
-  } else if (FormatUpperCase.size() > 8 && std::string(FormatUpperCase.begin(), FormatUpperCase.begin() + 8) == std::string("OSCARSSR")) {
-    this->fBFieldContainer.AddField( new TField3D_Grid(Mapping, Format, Parameter, Rotations, Translation, Scaling) );
+
   } else {
     throw std::invalid_argument("Incorrect format in format string");
   }
@@ -1164,9 +1176,9 @@ void OSCARSSR::CalculateSpectrumPoint (TParticleA& Particle,
     TVector3D PolarizationAngle = HorizontalDirection;
     PolarizationAngle.RotateSelf(Angle, PropogationDirection);
     SumE = SumE.Dot(PolarizationAngle) * PolarizationAngle;
-  } else if (Polarization == "circular-right") {
-    SumE = SumE.Dot(Positive.CC()) * Positive;
   } else if (Polarization == "circular-left") {
+    SumE = SumE.Dot(Positive.CC()) * Positive;
+  } else if (Polarization == "circular-right") {
     SumE = SumE.Dot(Negative.CC()) * Negative;
   } else {
     // Throw invalid argument if polarization is not recognized
@@ -1398,9 +1410,9 @@ void OSCARSSR::CalculateSpectrum (TParticleA& Particle,
       TVector3D PolarizationAngle = HorizontalDirection;
       PolarizationAngle.RotateSelf(Angle, PropogationDirection);
       SumE = SumE.Dot(PolarizationAngle) * PolarizationAngle;
-    } else if (Polarization == "circular-right") {
-      SumE = SumE.Dot(Positive.CC()) * Positive;
     } else if (Polarization == "circular-left") {
+      SumE = SumE.Dot(Positive.CC()) * Positive;
+    } else if (Polarization == "circular-right") {
       SumE = SumE.Dot(Negative.CC()) * Negative;
     } else {
       // Throw invalid argument if polarization is not recognized
@@ -2196,9 +2208,9 @@ void OSCARSSR::CalculateFlux2 (TParticleA& Particle,
       TVector3D PolarizationAngle = HorizontalDirection;
       PolarizationAngle.RotateSelf(Angle, PropogationDirection);
       SumE = SumE.Dot(PolarizationAngle) * PolarizationAngle;
-    } else if (Polarization == "circular-right") {
-      SumE = SumE.Dot(Positive.CC()) * Positive;
     } else if (Polarization == "circular-left") {
+      SumE = SumE.Dot(Positive.CC()) * Positive;
+    } else if (Polarization == "circular-right") {
       SumE = SumE.Dot(Negative.CC()) * Negative;
     } else {
       // Throw invalid argument if polarization is not recognized
@@ -2328,9 +2340,9 @@ void OSCARSSR::CalculateFluxPoint (TParticleA& Particle,
     TVector3D PolarizationAngle = HorizontalDirection;
     PolarizationAngle.RotateSelf(Angle, PropogationDirection);
     SumE = SumE.Dot(PolarizationAngle) * PolarizationAngle;
-  } else if (Polarization == "circular-right") {
-    SumE = SumE.Dot(Positive.CC()) * Positive;
   } else if (Polarization == "circular-left") {
+    SumE = SumE.Dot(Positive.CC()) * Positive;
+  } else if (Polarization == "circular-right") {
     SumE = SumE.Dot(Negative.CC()) * Negative;
   } else {
     // Throw invalid argument if polarization is not recognized
