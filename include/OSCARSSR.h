@@ -12,8 +12,8 @@
 ////////////////////////////////////////////////////////////////////
 
 #define OSCARSSR_VMAJOR 1
-#define OSCARSSR_VMINOR 33
-#define OSCARSSR_REVISION 2
+#define OSCARSSR_VMINOR 34
+#define OSCARSSR_REVISION 0
 
 #include "TOSCARSSR.h"
 
