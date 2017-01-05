@@ -693,7 +693,17 @@ __global__ void OSCARSSR_Cuda_FluxGPU (double *x, double *y, double *z, double *
 
 
 
-extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (TParticleA& Particle, TSurfacePoints const& Surface, double const Energy_eV, T3DScalarContainer& FluxContainer, int const Dimension, double const Weight, std::string const& OutFileName)
+extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (TParticleA& Particle,
+                                                TSurfacePoints const& Surface,
+                                                double const Energy_eV,
+                                                T3DScalarContainer& FluxContainer,
+                                                std::string const& Polarization,
+                                                double const Angle,
+                                                TVector3D const& HorizontalDirection,
+                                                TVector3D const& PropogationDirection,
+                                                int const Dimension,
+                                                double const Weight,
+                                                std::string const& OutFileName)
 {
   // Do the setup for and call the GPU calculation of flux.  Your limitation here is only GPU memory.
 
@@ -839,7 +849,6 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (TParticleA& Particle, TSurfacePo
 
   // Add result to power density container
   for (size_t i = 0; i < NSPoints; ++i) {
-    //FluxContainer.AddPoint( TVector3D(sx[i], sy[i], sz[i]), flux[i] * Weight);
     FluxContainer.AddToPoint(i, flux[i] * Weight);
   }
 
@@ -930,7 +939,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (TParticleA& Particle, TSurfacePo
 
 
 
-__global__ void OSCARSSR_Cuda_SpectrumGPU (double *x, double *y, double *z, double *bx, double *by, double *bz, double *ox, double *oy, double *oz, double *dt, int *nt, int *ns, double *C0, double *C2, double *EvToOmega, double *C, double *se, double *sf)
+__global__ void OSCARSSR_Cuda_SpectrumGPU (double *x, double *y, double *z, double *bx, double *by, double *bz, double *ox, double *oy, double *oz, double *dt, int *nt, int *ns, double *C0, double *C2, double *EvToOmega, double *C, double *se, double *sf, cuDoubleComplex* pol, int *pol_state)
 {
   // Check that this is within the number of spectrum points requested
   int is = threadIdx.x + blockIdx.x * blockDim.x;
@@ -990,6 +999,25 @@ __global__ void OSCARSSR_Cuda_SpectrumGPU (double *x, double *y, double *z, doub
   SumEZ = cuCmul(make_cuDoubleComplex(0, (*C0) * Omega * (*dt)), SumEZ);
 
 
+  // Check for polarization state
+  if (*pol_state == 0) {
+    // Do nothing
+  } else if (*pol_state == 1) {
+    // Linear, just dot with vector and put in direction of vector
+    cuDoubleComplex Magnitude = cuCadd(cuCadd(cuCmul(SumEX, pol[0]), cuCmul(SumEY, pol[1])),  cuCmul(SumEZ, pol[2]));
+    SumEX = cuCmul(Magnitude, pol[0]);
+    SumEY = cuCmul(Magnitude, pol[1]);
+    SumEZ = cuCmul(Magnitude, pol[2]);
+  } else if (*pol_state == 2) {
+    cuDoubleComplex Magnitude = cuCadd(cuCadd(cuCmul(SumEX, cuConj(pol[0])), cuCmul(SumEY, cuConj(pol[1]))),  cuCmul(SumEZ, cuConj(pol[2])));
+    SumEX = cuCmul(Magnitude, pol[0]);
+    SumEY = cuCmul(Magnitude, pol[1]);
+    SumEZ = cuCmul(Magnitude, pol[2]);
+  } else {
+    // UPDATE: Serious problem
+  }
+
+
   double const EX = SumEX.x * SumEX.x + SumEX.y * SumEX.y;
   double const EY = SumEY.x * SumEY.x + SumEY.y * SumEY.y;
   double const EZ = SumEZ.x * SumEZ.x + SumEZ.y * SumEZ.y;
@@ -1012,7 +1040,14 @@ __global__ void OSCARSSR_Cuda_SpectrumGPU (double *x, double *y, double *z, doub
 
 
 
-extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (TParticleA& Particle, TVector3D const& ObservationPoint, TSpectrumContainer& Spectrum, double const Weight)
+extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (TParticleA& Particle,
+                                                    TVector3D const& ObservationPoint,
+                                                    TSpectrumContainer& Spectrum,
+                                                    std::string const& Polarization,
+                                                    double const Angle,
+                                                    TVector3D const& HorizontalDirection,
+                                                    TVector3D const& PropogationDirection,
+                                                    double const Weight)
 {
 
   int ngpu = 0;
@@ -1053,6 +1088,57 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (TParticleA& Particle, TVecto
   double *sf     = new double[NSPoints];
 
 
+
+  // Imaginary "i" and complxe 1+0i
+  std::complex<double> const I(0, 1);
+  std::complex<double> const One(1, 0);
+
+  // Photon vertical direction and positive and negative helicity
+  TVector3D const VerticalDirection = PropogationDirection.Cross(HorizontalDirection).UnitVector();
+  TVector3DC const Positive = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) + VerticalDirection * I );
+  TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * I );
+
+  // For polarization input to the gpu
+  cuDoubleComplex *pol = new cuDoubleComplex[3];
+
+  // State of polarization: 0 for all, 1 for linear, 2 for circular
+  // (requires different threatment of vector pol interally)
+  int pol_state = 1;
+
+  if (Polarization == "all") {
+    // Do nothing, it is already ALL
+    pol_state = 0;
+  } else if (Polarization == "linear-horizontal") {
+    pol[0] = make_cuDoubleComplex(HorizontalDirection.GetX(), 0);
+    pol[1] = make_cuDoubleComplex(HorizontalDirection.GetY(), 0);
+    pol[2] = make_cuDoubleComplex(HorizontalDirection.GetZ(), 0);
+  } else if (Polarization == "linear-vertical") {
+    pol[0] = make_cuDoubleComplex(VerticalDirection.GetX(), 0);
+    pol[1] = make_cuDoubleComplex(VerticalDirection.GetY(), 0);
+    pol[2] = make_cuDoubleComplex(VerticalDirection.GetZ(), 0);
+  } else if (Polarization == "linear") {
+    TVector3D PolarizationAngle = HorizontalDirection;
+    PolarizationAngle.RotateSelf(Angle, PropogationDirection);
+    pol[0] = make_cuDoubleComplex(PolarizationAngle.GetX(), 0);
+    pol[1] = make_cuDoubleComplex(PolarizationAngle.GetY(), 0);
+    pol[2] = make_cuDoubleComplex(PolarizationAngle.GetZ(), 0);
+  } else if (Polarization == "circular-left") {
+    //SumE = SumE.Dot(Positive.CC()) * Positive;
+    pol_state = 2;
+    pol[0] = make_cuDoubleComplex(Positive.CC().GetX().real(), Positive.CC().GetX().imag());
+    pol[1] = make_cuDoubleComplex(Positive.CC().GetY().real(), Positive.CC().GetY().imag());
+    pol[2] = make_cuDoubleComplex(Positive.CC().GetZ().real(), Positive.CC().GetZ().imag());
+  } else if (Polarization == "circular-right") {
+    //SumE = SumE.Dot(Negative.CC()) * Negative;
+    pol_state = 2;
+    pol[0] = make_cuDoubleComplex(Negative.CC().GetX().real(), Negative.CC().GetX().imag());
+    pol[1] = make_cuDoubleComplex(Negative.CC().GetY().real(), Negative.CC().GetY().imag());
+    pol[2] = make_cuDoubleComplex(Negative.CC().GetZ().real(), Negative.CC().GetZ().imag());
+  } else {
+    // Throw invalid argument if polarization is not recognized
+    //throw std::invalid_argument("Polarization requested not recognized");
+  }
+
   // Set trajectory
   for (size_t i = 0; i < NTPoints; ++i) {
     x[i] = T.GetX(i).GetX();
@@ -1080,6 +1166,11 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (TParticleA& Particle, TVecto
   double *d_dt;
   int    *d_nt, *d_ns;
 
+  // For polarization
+  cuDoubleComplex *d_pol;
+  int *d_pol_state;
+
+
   int const size_x = NTPoints * sizeof(double);
   int const size_s = NSPoints * sizeof(double);
 
@@ -1102,6 +1193,10 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (TParticleA& Particle, TVecto
   cudaMalloc((void **) &d_se, size_s);
   cudaMalloc((void **) &d_sf, size_s);
 
+  // Polarization
+  cudaMalloc((void **) &d_pol, 3*sizeof(cuDoubleComplex));
+  cudaMalloc((void **) &d_pol_state, sizeof(int));
+
 
   cudaMemcpy(d_x, x, size_x, cudaMemcpyHostToDevice);
   cudaMemcpy(d_y, y, size_x, cudaMemcpyHostToDevice);
@@ -1121,6 +1216,9 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (TParticleA& Particle, TVecto
   cudaMemcpy(d_ns, &NSPoints, sizeof(int), cudaMemcpyHostToDevice);
 
   cudaMemcpy(d_se, se, size_s, cudaMemcpyHostToDevice);
+
+  cudaMemcpy(d_pol, pol, 3*sizeof(cuDoubleComplex), cudaMemcpyHostToDevice);
+  cudaMemcpy(d_pol_state, &pol_state, sizeof(int), cudaMemcpyHostToDevice);
 
 
   // Constant C0 for calculation
@@ -1147,7 +1245,7 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (TParticleA& Particle, TVecto
 
   // Send computation to gpu
   int const NBlocks = NSPoints / NTHREADS_PER_BLOCK + 1;
-  OSCARSSR_Cuda_SpectrumGPU<<<NBlocks, NTHREADS_PER_BLOCK>>>(d_x, d_y, d_z, d_bx, d_by, d_bz, d_ox, d_oy, d_oz, d_dt, d_nt, d_ns, d_C0, d_C2, d_EvToOmega, d_C, d_se, d_sf);
+  OSCARSSR_Cuda_SpectrumGPU<<<NBlocks, NTHREADS_PER_BLOCK>>>(d_x, d_y, d_z, d_bx, d_by, d_bz, d_ox, d_oy, d_oz, d_dt, d_nt, d_ns, d_C0, d_C2, d_EvToOmega, d_C, d_se, d_sf, d_pol, d_pol_state);
 
   // Copy result back from GPU
   cudaMemcpy(sf, d_sf, size_s, cudaMemcpyDeviceToHost);
@@ -1185,6 +1283,9 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (TParticleA& Particle, TVecto
   cudaFree(d_EvToOmega);
   cudaFree(d_C);
 
+  cudaFree(d_pol);
+  cudaFree(d_pol_state);
+
 
   // Free all heap memory
   delete [] x;
@@ -1198,6 +1299,8 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (TParticleA& Particle, TVecto
 
   delete [] se;
   delete [] sf;
+
+  delete [] pol;
 
 
   return;
