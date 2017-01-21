@@ -38,7 +38,7 @@ moduleOSCARSSR = Extension('oscars.sr',
 
 setup(
   name="oscars",
-  version="1.34.00",
+  version="1.34.01",
   description = 'Open Source Code for Advanced Radiation Simulation',
   author = 'Dean Andrew Hidas',
   author_email = 'dhidas@bnl.gov',

@@ -251,4 +251,60 @@ def plot_surface(surface, xlim=None, ylim=None, zlim=None, **kwargs):
 
 
 
+def plot_trajectory3d(trajectory, figsize=None):
+    """Plot the trajectory in 3D"""
+
+    #mpl.rcParams['legend.fontsize'] = 10
+
+    fig = plt.figure(1, figsize=figsize)
+    ax = fig.gca(projection='3d')
+
+    # Get coordinate lists
+    X  = [item[0][0] for item in trajectory]
+    Y  = [item[0][1] for item in trajectory]
+    Z  = [item[0][2] for item in trajectory]
+
+    ax.set_xlabel('X [m]')
+    ax.set_ylabel('Z [m]')
+    ax.set_zlabel('Y [m]')
+
+    plt.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
+    plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+    plt.ticklabel_format(style='sci', axis='z', scilimits=(0,0))
+
+    ax.plot(X, Z, Y, label='Trajectory')
+    ax.invert_xaxis()
+
+    ax.view_init(elev=30, azim=5)              # camera elevation and angle
+
+    plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
