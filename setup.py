@@ -48,6 +48,6 @@ setup(
   ext_modules = [moduleOSCARSSR],
   data_files=[('oscars', ['LICENSE.txt', 'COPYRIGHT.txt'])],
   package_data = {'' : ['LICENSE.txt']},
-  package_dir = {'oscars': 'python'},
+  package_dir = {'oscars': 'oscars'},
   py_modules = ['oscars.plots_mpl', 'oscars.plots3d_mpl', 'oscars.parametric_surfaces']
 )
