@@ -38,7 +38,7 @@ moduleOSCARSSR = Extension('oscars.sr',
 
 setup(
   name="oscars",
-  version="1.34.00",
+  version="1.34.01",
   description = 'Open Source Code for Advanced Radiation Simulation',
   author = 'Dean Andrew Hidas',
   author_email = 'dhidas@bnl.gov',
@@ -48,6 +48,6 @@ setup(
   ext_modules = [moduleOSCARSSR],
   data_files=[('oscars', ['LICENSE.txt', 'COPYRIGHT.txt'])],
   package_data = {'' : ['LICENSE.txt']},
-  package_dir = {'oscars': 'python'},
+  package_dir = {'oscars': 'oscars'},
   py_modules = ['oscars.plots_mpl', 'oscars.plots3d_mpl', 'oscars.parametric_surfaces']
 )
