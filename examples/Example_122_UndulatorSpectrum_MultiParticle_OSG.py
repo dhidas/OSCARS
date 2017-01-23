@@ -10,6 +10,7 @@
 
 # Command line arguments are given by condor at runtime
 import sys
+sys.path.append('.')
 
 Process = sys.argv[1]
 NAME = sys.argv[2]
