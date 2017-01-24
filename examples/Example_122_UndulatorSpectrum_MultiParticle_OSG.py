@@ -59,12 +59,18 @@ npoints = 500
 # Energy range for spectrum
 range_eV = [100, 500]
 
-# If not rank 0, calculate the desired spectrum
-data = osr.calculate_spectrum(obs=observation_point,
-                              energy_range_eV=range_eV,
-                              npoints=npoints,
-                              nparticles=particles_per_node,
-                              ofile=out_file_name)
+if Process == 0:
+  osr.set_new_particle(type='ideal')
+  data = osr.calculate_spectrum(obs=observation_point,
+                                energy_range_eV=range_eV,
+                                npoints=npoints,
+                                ofile=out_file_name)
+else:
+  data = osr.calculate_spectrum(obs=observation_point,
+                                energy_range_eV=range_eV,
+                                npoints=npoints,
+                                nparticles=particles_per_node,
+                                ofile=out_file_name)
 
 
 
