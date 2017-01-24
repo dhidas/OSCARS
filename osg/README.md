@@ -10,5 +10,5 @@ module load gcc/4.9.2
 module load python/3.5.2
 
 # Compile OSCARS locally
-python setup.py build_ext --inplace
+python3 setup.py build_ext --inplace
 ```
