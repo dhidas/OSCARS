@@ -270,29 +270,22 @@ void TSpectrumContainer::WriteToFileBinary (std::string const FileName, std::str
   // FileName - File name to write to
   // Header   - Header to print in file
 
-  throw;
-
   // Open output file
-  std::ofstream f(FileName.c_str());
+  std::cout << "opening " << FileName << std::endl;
+  std::ofstream f(FileName.c_str(), std::ios::binary);
 
   // Check if file is open
   // UPDATE: try a more robust check
   if (!f.is_open()) {
+    std::cout << "ERROR opening file" << std::endl;
     throw;
   }
 
-  // If the header is specified, write one!
-  if (Header != "") {
-    f << Header << std::endl;
-  }
-
-  // Set in scientific mode for printing
-  // UPDATE: Could change this to accept c-stype formatting
-  f << std::scientific;
 
   // Loop over spectrum and print to file
   for (std::vector<std::pair<double, double> >::const_iterator it = fSpectrumPoints.begin(); it != fSpectrumPoints.end(); ++it) {
-    f << it->first << " " << it->second << std::endl;
+    f.write((char*) &(it->first), sizeof(double));
+    f.write((char*) &(it->second), sizeof(double));
   }
 
   // Close file
@@ -425,7 +418,14 @@ void TSpectrumContainer::AverageFromFilesBinary (std::vector<std::string> const&
   // Open all files
   std::vector<std::ifstream> f(Files.size());
   for (size_t i = 0; i != Files.size(); ++i) {
-    f[i].open(Files[i].c_str());
+
+    // Open file
+    f[i].open(Files[i].c_str(), std::ios::binary);
+
+    // Check that file is actually open
+    if (!f[i].is_open()) {
+      throw std::invalid_argument("Cannot open one or more files of input");
+    }
   }
 
   // Variables used for writing to file
