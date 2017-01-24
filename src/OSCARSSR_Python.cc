@@ -29,6 +29,7 @@
 #include <vector>
 #include <algorithm>
 #include <cstring>
+#include <stdexcept>
 
 
 // External global random generator
@@ -3215,7 +3216,14 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
 
 
 
-
+char* GetAsString (PyObject* S)
+{
+  #if PY_MAJOR_VERSION> 3
+  return PyString_AsString(S);
+  #else
+  return PyUnicode_AsUTF8(S);
+  #endif
+}
 
 
 
@@ -3261,10 +3269,10 @@ static PyObject* OSCARSSR_AverageSpectra (OSCARSSRObject* self, PyObject* args, 
   // Add file names to vector
   std::vector<std::string> FileNames;
   for (size_t i = 0; i != NFilesText; ++i) {
-    FileNames.push_back( PyBytes_AS_STRING(PyList_GetItem(List_InFileNamesText, i)) );
+    FileNames.push_back( GetAsString(PyList_GetItem(List_InFileNamesText, i)) );
   }
   for (size_t i = 0; i != NFilesBinary; ++i) {
-    FileNames.push_back( PyBytes_AS_STRING(PyList_GetItem(List_InFileNamesBinary, i)) );
+    //FileNames.push_back( PyString_AsString(PyList_GetItem(List_InFileNamesBinary, i)) );
   }
 
   // Container for flux average
@@ -3272,7 +3280,12 @@ static PyObject* OSCARSSR_AverageSpectra (OSCARSSRObject* self, PyObject* args, 
 
   // Either they are text files or binary files
   if (NFilesText > 0) {
-    Container.AverageFromFilesText(FileNames);
+    try {
+      Container.AverageFromFilesText(FileNames);
+    } catch (std::invalid_argument e) {
+      PyErr_SetString(PyExc_ValueError, e.what());
+      return NULL;
+    }
   } else {
     //Container.AverageFromFilesBinary(FileNames);
   }

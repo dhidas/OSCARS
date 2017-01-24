@@ -11,7 +11,9 @@
 
 #include "TOSCARSSR.h"
 
+#include <iostream>
 #include <fstream>
+#include <stdexcept>
 
 
 
@@ -332,11 +334,20 @@ void TSpectrumContainer::AverageFromFilesText (std::vector<std::string> const& F
   // Double number of files for averaging
   double const N = (double) Files.size();
 
+
   // Open all files
   std::vector<std::ifstream> f(Files.size());
   for (size_t i = 0; i != Files.size(); ++i) {
+
+    // Open file
     f[i].open(Files[i].c_str());
+
+    // Check that file is actually open
+    if (!f[i].is_open()) {
+      throw std::invalid_argument("Cannot open one or more files of input");
+    }
   }
+
 
   // Variables used for writing to file
   double X, V;
@@ -357,7 +368,7 @@ void TSpectrumContainer::AverageFromFilesText (std::vector<std::string> const& F
       f[i] >> X >> V;
 
       // If we hit an eof we are done.
-      if (f[i].eof()) {
+      if (f[i].eof() || f[i].bad()) {
 
         // Change the done state to stop reading files
         NotDone = false;
