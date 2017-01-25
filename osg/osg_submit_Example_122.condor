@@ -4,6 +4,13 @@ NAME = osg_Example_122
 # The UNIVERSE defines an execution environment. You will almost always use VANILLA.
 Universe = vanilla
 
+
+# Input and output files
+transfer_input_files = osg.tgz
+transfer_output_files = $(NAME)_$(Process).dat
+ShouldTransferFiles = YES
+when_to_transfer_output = ON_EXIT
+
 # These are good base requirements for your jobs on OSG. It is specific on OS and
 # OS version, core cound and memory, and wants to use the software modules. 
 Requirements = OSGVO_OS_STRING == "RHEL 6" && Arch == "X86_64" &&  HAS_MODULES == True
