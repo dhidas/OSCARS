@@ -271,7 +271,6 @@ void TSpectrumContainer::WriteToFileBinary (std::string const FileName, std::str
   // Header   - Header to print in file
 
   // Open output file
-  std::cout << "opening " << FileName << std::endl;
   std::ofstream f(FileName.c_str(), std::ios::binary);
 
   // Check if file is open
@@ -361,7 +360,7 @@ void TSpectrumContainer::AverageFromFilesText (std::vector<std::string> const& F
       f[i] >> X >> V;
 
       // If we hit an eof we are done.
-      if (f[i].eof() || f[i].bad()) {
+      if (f[i].fail()) {
 
         // Change the done state to stop reading files
         NotDone = false;
@@ -448,7 +447,7 @@ void TSpectrumContainer::AverageFromFilesBinary (std::vector<std::string> const&
       f[i].read( (char*)  &V, sizeof(double));
 
       // If we hit an eof we are done.
-      if (f[i].eof()) {
+      if (f[i].fail()) {
 
         // Change the done state to stop reading files
         NotDone = false;

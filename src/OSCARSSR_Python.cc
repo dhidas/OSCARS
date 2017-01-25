@@ -78,6 +78,20 @@ static int sr_init(OSCARSSRObject* self, PyObject* args, PyObject* kwds)
 
 
 
+char* GetAsString (PyObject* S)
+{
+  #if PY_MAJOR_VERSION >= 3
+  return PyUnicode_AsUTF8(S);
+  #else
+  return PyString_AsString(S);
+  #endif
+}
+
+
+
+
+
+
 
 
 static TVector2D OSCARSSR_ListAsTVector2D (PyObject* List)
@@ -145,7 +159,7 @@ static PyObject* OSCARSSR_TVector3DAsList (TVector3D const& V)
 
 
 
-const char* asdasd = "blah blah";
+const char* DOC_OSCARSSR_Pi = "Get the value of pi";
 static PyObject* OSCARSSR_Pi (OSCARSSRObject* self, PyObject* arg)
 {
   // Return the internal OSCARSSR number constant pi
@@ -451,7 +465,6 @@ static PyObject* OSCARSSR_AddMagneticFieldInterpolated (OSCARSSRObject* self, Py
 
   // Grab mapping from input
   if (PyList_Size(List_Mapping) != 0) {
-    std::string FileName;
     double ParameterValue;
     for (size_t i = 0; i != PyList_Size(List_Mapping); ++i) {
       PyObject* ThisPair = PyList_GetItem(List_Mapping, i);
@@ -461,7 +474,7 @@ static PyObject* OSCARSSR_AddMagneticFieldInterpolated (OSCARSSRObject* self, Py
       }
 
       ParameterValue = PyFloat_AsDouble(PyList_GetItem(ThisPair, 0));
-      FileName = PyBytes_AS_STRING(PyList_GetItem(ThisPair, 1));
+      std::string const FileName = GetAsString(PyList_GetItem(ThisPair, 1));
 
       Mapping.push_back(std::make_pair(ParameterValue, FileName));
     }
@@ -3216,17 +3229,6 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
 
 
 
-char* GetAsString (PyObject* S)
-{
-  #if PY_MAJOR_VERSION> 3
-  return PyString_AsString(S);
-  #else
-  return PyUnicode_AsUTF8(S);
-  #endif
-}
-
-
-
 
 
 
@@ -3268,15 +3270,22 @@ static PyObject* OSCARSSR_AverageSpectra (OSCARSSRObject* self, PyObject* args, 
 
   // Add file names to vector
   std::vector<std::string> FileNames;
+  std::vector<std::string> FileNamesBinary;
   for (size_t i = 0; i != NFilesText; ++i) {
     FileNames.push_back( GetAsString(PyList_GetItem(List_InFileNamesText, i)) );
   }
   for (size_t i = 0; i != NFilesBinary; ++i) {
-    //FileNames.push_back( PyString_AsString(PyList_GetItem(List_InFileNamesBinary, i)) );
+    FileNamesBinary.push_back( GetAsString(PyList_GetItem(List_InFileNamesBinary, i)) );
   }
 
   // Container for flux average
   TSpectrumContainer Container;
+
+  // Check that only one type is added.  Can update to both if useful later
+  if (NFilesText > 0 && NFilesBinary > 0) {
+    PyErr_SetString(PyExc_ValueError, "Currently adding mixed types of binary and text files is not supported.");
+    return NULL;
+  }
 
   // Either they are text files or binary files
   if (NFilesText > 0) {
@@ -3287,7 +3296,12 @@ static PyObject* OSCARSSR_AverageSpectra (OSCARSSRObject* self, PyObject* args, 
       return NULL;
     }
   } else {
-    //Container.AverageFromFilesBinary(FileNames);
+    try {
+      Container.AverageFromFilesBinary(FileNamesBinary);
+    } catch (std::invalid_argument e) {
+      PyErr_SetString(PyExc_ValueError, e.what());
+      return NULL;
+    }
   }
 
   // Text output
@@ -3496,10 +3510,10 @@ static PyObject* OSCARSSR_AverageT3DScalars (OSCARSSRObject* self, PyObject* arg
   // Add file names to vector
   std::vector<std::string> FileNames;
   for (size_t i = 0; i != NFilesText; ++i) {
-    FileNames.push_back( PyBytes_AS_STRING(PyList_GetItem(List_InFileNamesText, i)) );
+    FileNames.push_back( GetAsString(PyList_GetItem(List_InFileNamesText, i)) );
   }
   for (size_t i = 0; i != NFilesBinary; ++i) {
-    FileNames.push_back( PyBytes_AS_STRING(PyList_GetItem(List_InFileNamesBinary, i)) );
+    FileNames.push_back( GetAsString(PyList_GetItem(List_InFileNamesBinary, i)) );
   }
 
   // Container for flux average
@@ -3657,7 +3671,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   // We must tell python about the function we allow access as well as give them nice
   // python names, and tell python the method of input parameters.
 
-  {"pi",                                (PyCFunction) OSCARSSR_Pi,                              METH_NOARGS,                  asdasd},
+  {"pi",                                (PyCFunction) OSCARSSR_Pi,                              METH_NOARGS,                  DOC_OSCARSSR_Pi},
   {"qe",                                (PyCFunction) OSCARSSR_Qe,                              METH_NOARGS,                  "elementary charge in [C]"},
   {"me",                                (PyCFunction) OSCARSSR_Me,                              METH_NOARGS,                  "electron mass in [kg]"},
   {"rand",                              (PyCFunction) OSCARSSR_Random,                          METH_NOARGS,                  "uniformally distributed random number [0, 1)"},

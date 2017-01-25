@@ -108,7 +108,7 @@ void T3DScalarContainer::AverageFromFilesText (std::vector<std::string> const& F
         f[i] >> X >> Y >> V;
 
         // If we hit an eof we are done.
-        if (f[i].eof()) {
+        if (f[i].fail()) {
 
           // Change the done state to stop reading files
           NotDone = false;
@@ -144,7 +144,7 @@ void T3DScalarContainer::AverageFromFilesText (std::vector<std::string> const& F
         f[i] >> X >> Y >> Z >> V;
 
         // If we hit an eof we are done.
-        if (f[i].eof()) {
+        if (f[i].fail()) {
 
           // Change the done state to stop reading files
           NotDone = false;
@@ -237,7 +237,7 @@ void T3DScalarContainer::AverageFromFilesBinary (std::vector<std::string> const&
         f[i].read( (char*)  &V, sizeof(double));
 
         // If we hit an eof we are done.
-        if (f[i].eof()) {
+        if (f[i].fail()) {
 
           // Change the done state to stop reading files
           NotDone = false;
@@ -276,7 +276,7 @@ void T3DScalarContainer::AverageFromFilesBinary (std::vector<std::string> const&
         f[i].read( (char*)  &V, sizeof(double));
 
         // If we hit an eof we are done.
-        if (f[i].eof()) {
+        if (f[i].fail()) {
 
           // Change the done state to stop reading files
           NotDone = false;
