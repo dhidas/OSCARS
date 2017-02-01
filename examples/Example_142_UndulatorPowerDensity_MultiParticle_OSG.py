@@ -1,0 +1,68 @@
+# Command line arguments are given by condor at runtime
+import sys
+sys.path.append('.')
+
+Process = sys.argv[1]
+NAME = sys.argv[2]
+
+out_file_name = NAME + '_' + Process + '.dat'
+
+# Import the OSCARS SR and helper modules
+import oscars.sr
+
+# Get an OSCARS SR object
+osr = oscars.sr.sr()
+
+# Let's just make sure that each process only uses 1 threads since
+# we assume mpi is handeling this
+osr.set_nthreads_global(1)
+
+# Set a particle beam with non-zero emittance
+osr.set_particle_beam(type='electron',
+                      name='beam_0',
+                      energy_GeV=3,
+                      x0=[0, 0, -1],
+                      d0=[0, 0, 1],
+                      current=0.500,
+                      sigma_energy_GeV=0.001*3,
+                      beta=[1.5, 0.8],
+                      emittance=[0.9e-9, 0.008e-9],
+                      horizontal_direction=[1, 0, 0],
+                      lattice_reference=[0, 0, 0])
+
+# Must set the start and stop time for calculations
+osr.set_ctstartstop(0, 2)
+
+# Add an undulator field
+osr.clear_bfields()
+osr.add_bfield_undulator(bfield=[0, 1, 0], period=[0, 0, 0.049], nperiods=31)
+
+# Number of particles per node of rank > 1
+particles_per_node = 1000
+
+# Observation point for spectrum
+rectangle_center = [0, 0, 30]
+
+width = [0.05, 0.05]
+
+# Number of points in the spectrum
+npoints = [101, 101]
+
+if int(Process) == 0:
+  osr.set_new_particle(particle='ideal')
+  data = osr.calculate_power_density_rectangle(plane='XY',
+                                               width=width,
+                                               npoints=npoints,
+                                               translation=rectangle_center,
+                                               ofile=out_file_name)
+else:
+  data = osr.calculate_spectrum(plane='XY',
+                                width=width,
+                                npoints=npoints,
+                                translation=rectangle_center,
+                                nparticles=particles_per_node,
+                                ofile=out_file_name)
+
+
+
+
