@@ -48,19 +48,19 @@ osr.set_ctstartstop(0, 2)
 osr.add_bfield_undulator(bfield=[0, 1, 0], period=[0, 0, 0.049], nperiods=31)
 
 # Number of particles per node of rank > 1
-particles_per_node = 2
+particles_per_node = 1000
 
 # Observation point for spectrum
 observation_point = [0, 0, 30]
 
 # Number of points in the spectrum
-npoints = 500
+npoints = 1000
 
 # Energy range for spectrum
-range_eV = [100, 500]
+range_eV = [430, 480]
 
-if Process == 0:
-  osr.set_new_particle(type='ideal')
+if int(Process) == 0:
+  osr.set_new_particle(particle='ideal')
   data = osr.calculate_spectrum(obs=observation_point,
                                 energy_range_eV=range_eV,
                                 npoints=npoints,
