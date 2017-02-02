@@ -34,11 +34,12 @@ moduleOSCARSSR = Extension('oscars.sr',
                      )
 
 
-#moduleOSCARSTH = Extension('oscars.th',
-#                      include_dirs = ['include'],
-#                      sources = ['src/OSCARSTH_Python.cc'],
-#                      extra_compile_args=['-std=c++11', '-Wno-write-strings', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread']
-#                     )
+moduleOSCARSTH = Extension('oscars.th',
+                      include_dirs = ['include'],
+                      sources = ['src/OSCARSTH.cc',
+                                 'src/OSCARSTH_Python.cc'],
+                      extra_compile_args=['-std=c++11', '-Wno-write-strings', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread']
+                     )
 
 
 
@@ -52,7 +53,7 @@ setup(
   url = 'http://oscars.bnl.gov/',
   license = 'see http://oscars.bnl.gov/',
   long_description = '''The OSCARS SR Package.''',
-  ext_modules = [moduleOSCARSSR],
+  ext_modules = [moduleOSCARSSR, moduleOSCARSTH],
   data_files=[('oscars', ['LICENSE.txt', 'COPYRIGHT.txt'])],
   package_data = {'' : ['LICENSE.txt']},
   package_dir = {'oscars': 'oscars'},

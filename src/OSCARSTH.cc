@@ -1,0 +1,23 @@
+////////////////////////////////////////////////////////////////////
+//
+// Dean Andrew Hidas <dhidas@bnl.gov>
+//
+// Created on: Thu Feb  2 11:55:24 EST 2017
+//
+////////////////////////////////////////////////////////////////////
+
+#include "OSCARSTH.h"
+
+
+OSCARSTH::OSCARSTH ()
+{
+  // Default constructor
+}
+
+
+
+OSCARSTH::~OSCARSTH ()
+{
+  // Destruction
+}
+
