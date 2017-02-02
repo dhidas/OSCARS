@@ -2588,9 +2588,6 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
     throw;
   }
 
-  std::cout << "p " << Polarization << std::endl;
-  std::cout << "a " << Angle << std::endl;
-
   // Don't write output in individual mode
   std::string const BlankOutFileName = "";
 
