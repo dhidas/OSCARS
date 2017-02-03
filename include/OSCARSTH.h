@@ -16,7 +16,7 @@ class OSCARSTH
     OSCARSTH ();
     ~OSCARSTH ();
 
-    double X;
+    double UndulatorK (double const BFieldMax, double const Period);;
 };
 
 

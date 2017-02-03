@@ -8,6 +8,7 @@
 
 #include "OSCARSTH.h"
 
+#include "TOSCARSSR.h"
 
 OSCARSTH::OSCARSTH ()
 {
@@ -21,3 +22,13 @@ OSCARSTH::~OSCARSTH ()
   // Destruction
 }
 
+
+
+
+
+double OSCARSTH::UndulatorK (double const BFieldMax, double const Period)
+{
+  // Return the 'K' value for an undulator with max bfield [T], Period [m]
+
+  return BFieldMax * Period * TOSCARSSR::Qe() / (TOSCARSSR::TwoPi() * TOSCARSSR::Me() * TOSCARSSR::C());
+}

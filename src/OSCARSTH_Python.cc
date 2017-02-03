@@ -78,11 +78,24 @@ static int th_init(OSCARSTHObject* self, PyObject* args, PyObject* kwds)
 
 
 
-const char* DOC_OSCARSTH_Pi = "Get the value of pi";
-static PyObject* OSCARSTH_Pi (OSCARSTHObject* self, PyObject* arg)
+const char* DOC_OSCARSTH_UndulatorK = "Get the undulator K parameter vaule";
+static PyObject* OSCARSTH_UndulatorK (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {
+  // Return the undulator K parameter given peak bfield and period
+
+  // Require 2 arguments
+  double BFieldMax = 0;
+  double Period = 0;
+
+  // Input variables and parsing
+  static char *kwlist[] = {"bfield", "period", NULL};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dd", kwlist, &BFieldMax, &Period)) {
+    return NULL;
+  }
+
+
   // Return the internal OSCARSTH number constant pi
-  return Py_BuildValue("d", TOSCARSSR::Pi());
+  return Py_BuildValue("d", self->obj->UndulatorK(BFieldMax, Period));
 }
 
 
@@ -121,7 +134,7 @@ static PyMethodDef OSCARSTH_methods[] = {
   // We must tell python about the function we allow access as well as give them nice
   // python names, and tell python the method of input parameters.
 
-  {"pi",                                (PyCFunction) OSCARSTH_Pi,                              METH_NOARGS,                  DOC_OSCARSTH_Pi},
+  {"undulator_K",                                (PyCFunction) OSCARSTH_UndulatorK,                              METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorK},
 
   {NULL}  /* Sentinel */
 };
