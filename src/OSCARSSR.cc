@@ -1868,7 +1868,7 @@ void OSCARSSR::CalculatePowerDensityPoint (TParticleA& Particle, TSurfacePoints 
     Sum /= 1e6;
 
     // Weight this event
-    Sum *= Weight
+    Sum *= Weight;
 
     // If you don't care about the direction of the normal vector
     // UPDATE: Check
