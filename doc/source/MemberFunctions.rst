@@ -63,6 +63,8 @@ oscars.sr
    :param seed: Random seed
    :type  seed: int
 
+   :returns: None
+
 
 
 .. py:method:: oscars.sr.set_gpu_global(gpu)
@@ -71,6 +73,8 @@ oscars.sr
 
    :param gpu: 1 or 0
    :type  gpu: int
+
+   :returns: None
 
 
 
@@ -83,7 +87,9 @@ oscars.sr
 
 .. py:method:: oscars.sr.set_nthreads_global(nthreads)
 
-   Set the number of threads you wish to use for all calculations.  If the GPU is requested it will take precedence over multi-threading.
+   Set the number of threads you wish to use for all calculations.  If the GPU is requested it will take precedence over this multi-threading.
+
+   :returns: None
 
 
 
@@ -299,9 +305,9 @@ oscars.sr
 
 .. py:method:: oscars.sr.add_bfield_undulator(bfield, period, nperiods, [phase, rotations, translation])
 
-   Adds an ideal sinusoidal undulator field with a given maximum b-field amplitude, period, and number of periods.  Optionally one can specify the phase offset (in [rad]), rotations and translation.
+   Adds an ideal sinusoidal undulator field with a given maximum bfield amplitude, period, and number of periods.  Optionally one can specify the phase offset (in [rad]), rotations and translation.
 
-   :param bfield: A list representing the peak field [Bx, By, Bz] in [T]
+   :param bfield: A list representing the peak field [Ex, Ey, Ez] in [V/m]
    :type  bfield: list[3]
    :param period: Length of one period
    :type  period: float
@@ -314,14 +320,6 @@ oscars.sr
    :param translation: A list representing the translation of the center of this object
    :type  translation: list[3]
    :returns: None
-
-   :Example: Add the magnetic field for an undulator of length 3 [m] with a period of 0.050 [m] (60 periods) having a peak magnetic field in the Y direction of 1.1 [T]
-
-   .. code-block:: py
-
-      # Will add magnetic field 3 [m] undulaotor having 1.1 [T] peak field
-      # in the Y-direction with a period of 0.050 [m]
-      osr.add_bfield_undulator(bfield=[0, 1.1, 0], period=0.050, nperiods=60)
 
 
 
@@ -501,7 +499,7 @@ oscars.sr
 
 .. py:method:: oscars.sr.add_efield_undulator(efield, period, nperiods, [phase, rotations, translation])
 
-   Adds an ideal sinusoidal undulator field with a given maximum b-field amplitude, period, and number of periods.  Optionally one can specify the phase offset (in [rad]), rotations and translation.
+   Adds an ideal sinusoidal undulator field with a given maximum efield amplitude, period, and number of periods.  Optionally one can specify the phase offset (in [rad]), rotations and translation.
 
    :param efield: A list representing the peak field [Bx, By, Bz] in [T]
    :type  efield: list[3]
@@ -935,7 +933,7 @@ oscars.sr
    :type  nthreads: int
    :param gpu: Use the gpu or not
    :type  gpu: int
-   :returns: A list, each element of which is a pair representing the position (2D relative or 3D absolute) and power density [:math:`W / mm^2`] at that position.  eg [[x1_0, x2_0], pd_0, [x1_1, x2_1], pd_1],  ...]
+   :returns: A list, each element of which is a pair representing the position (2D relative (default) or 3D absolute) and power density [:math:`W / mm^2`] at that position.  eg [[[x1_0, x2_0, x3_0], pd_0], [[x1_1, x2_1, x3_1], pd_1]],  ...].  The position is always given as a list of length 3.  For the default (dim=2) the third element is always zero.
 
 
 
@@ -981,7 +979,7 @@ oscars.sr
    :type  nthreads: int
    :param gpu: Use the gpu or not
    :type  gpu: int
-   :returns: A list, each element of which is a pair representing the position (2D relative or 3D absolute) and power density [:math:`W / mm^2`] at that position.  eg [[x1_0, x2_0], pd_0, [x1_1, x2_1], pd_1],  ...]
+   :returns: A list, each element of which is a pair representing the position (2D relative (default) or 3D absolute) and flux [:math:`W / mm^2`] at that position.  eg [[[x1_0, x2_0, x3_0], f_0], [[x1_1, x2_1, x3_1], f_1]],  ...].  The position is always given as a list of length 3.  For the default (dim=2) the third element is always zero.
 
 
 
@@ -990,9 +988,8 @@ oscars.sr
 
 .. py:method:: oscars.sr.average_spectra([, ifiles, bifiles, ofile, bofile])
 
-   Average spectra from different files and output to specified file.  The input files must have the same format.  Binary operation will be supported in a future release.
+   Average spectra from different files.  The input files must have the same format.
 
-   You **must** specify an input and an output
 
    :param ifiles: The input file names
    :type  ifiles: list
@@ -1002,14 +999,13 @@ oscars.sr
    :type  bifiles: list
    :param bofile: The binary output file name
    :type  bofile: str
-   :returns: None
+   :returns: A list of 2D lists, each of which is a pair representing the energy and flux at that energy.  eg [[energy_0, flux_0], [energy_1, flux_1], ...]
 
 
 .. py:method:: oscars.sr.average_flux([, ifiles, bifiles, ofile, bofile, dim])
 
-   Average flux from different files and output to specified file.  The input files must have the same format.  Binary operation will be supported in a future release.
+   Average flux from different files and output to specified file.  The input files must have the same format.
 
-   You **must** specify an input and an output
 
    :param ifiles: The input file names
    :type  ifiles: list
@@ -1021,7 +1017,7 @@ oscars.sr
    :type  bofile: str
    :param dim: in 2 or 3 dimensions (default is 2)
    :type  dim: integer
-   :returns: None
+   :returns: A list, each element of which is a pair representing the position and flux at that position.  eg [[[x1_0, x2_0, x3_0], f_0], [[x1_1, x2_1, x3_1], f_1]],  ...].  The position is always given as a list of length 3.
 
 
 
@@ -1042,7 +1038,7 @@ oscars.sr
    :type  bofile: str
    :param dim: in 2 or 3 dimensions (default is 2)
    :type  dim: integer
-   :returns: None
+   :returns: A list, each element of which is a pair representing the position and power density at that position.  eg [[[x1_0, x2_0, x3_0], pd_0], [[x1_1, x2_1, x3_1], pd_1]],  ...].  The position is always given as a list of length 3.
 
 
 
@@ -1062,7 +1058,7 @@ oscars.sr
 
    Get the current spectrum stored in memory
 
-   :returns: list
+   :returns: A list of 2D lists, each of which is a pair representing the energy and flux at that energy.  eg [[energy_0, flux_0], [energy_1, flux_1], ...]
 
 
 
@@ -1083,7 +1079,7 @@ oscars.sr
 
    Get the current flux map stored in memory
 
-   :returns: list of [[x, y, z], flux]
+   :returns: list of [[[x, y, z], flux], ...]
 
 
 
@@ -1106,7 +1102,7 @@ oscars.sr
 
    Get the current power_density map stored in memory
 
-   :returns: list of [[x, y, z], power_density]
+   :returns: list of [[[x, y, z], power_density], ...]
 
 
 
