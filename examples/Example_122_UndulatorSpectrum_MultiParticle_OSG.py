@@ -1,12 +1,11 @@
 # This is meant to be run on OSG or similar condor-type systems
 
-
-# In this example MPI is used to calculate the spectrum in a multi-particle
+# In this example OSG is used to calculate a multi-particle
 # simulation.  The rank 0 process calculates the ideal single-particle
-# spectrum and then waits for the other processes to return their data.
+# data and then waits for the other processes to return their data.
 # When a process returns the results are added to the others.  The results
-# are then plotted together and saved as a png.  If you want the plot to
-# show you can remove the show=False
+# are then outputted as data files, which can be plotted using Jupyter 
+# Notebook or something similar.
 
 # Command line arguments are given by condor at runtime
 import sys
@@ -25,7 +24,7 @@ import oscars.sr
 osr = oscars.sr.sr()
 
 # Let's just make sure that each process only uses 1 threads since
-# we assume mpi is handeling this
+# we assume OSG is handeling this
 osr.set_nthreads_global(1)
 
 # Set a particle beam with non-zero emittance
@@ -59,12 +58,14 @@ npoints = 1000
 # Energy range for spectrum
 range_eV = [430, 480]
 
+# Ideal single-particle data 
 if int(Process) == 0:
   osr.set_new_particle(particle='ideal')
   data = osr.calculate_spectrum(obs=observation_point,
                                 energy_range_eV=range_eV,
                                 npoints=npoints,
                                 ofile=out_file_name)
+# Multi-particle simulation
 else:
   data = osr.calculate_spectrum(obs=observation_point,
                                 energy_range_eV=range_eV,

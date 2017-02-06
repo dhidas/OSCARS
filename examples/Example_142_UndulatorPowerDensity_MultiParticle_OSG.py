@@ -1,3 +1,13 @@
+# This is meant to be run on OSG or similar condor-type systems
+
+
+# In this example OSG is used to calculate a multi-particle
+# simulation.  The rank 0 process calculates the ideal single-particle
+# data and then waits for the other processes to return their data.
+# When a process returns the results are added to the others.  The results
+# are then outputted as data files, which can be plotted using Jupyter
+# Notebook or something similar.
+
 # Command line arguments are given by condor at runtime
 import sys
 sys.path.append('.')
@@ -43,11 +53,13 @@ particles_per_node = 1000
 # Observation point for spectrum
 rectangle_center = [0, 0, 30]
 
+# Width of rectangle
 width = [0.05, 0.05]
 
 # Number of points in the spectrum
 npoints = [101, 101]
 
+# Ideal single_particle data
 if int(Process) == 0:
   osr.set_new_particle(particle='ideal')
   data = osr.calculate_power_density_rectangle(plane='XY',
@@ -55,6 +67,8 @@ if int(Process) == 0:
                                                npoints=npoints,
                                                translation=rectangle_center,
                                                ofile=out_file_name)
+
+# Multi-particle simulation
 else:
   data = osr.calculate_spectrum(plane='XY',
                                 width=width,
