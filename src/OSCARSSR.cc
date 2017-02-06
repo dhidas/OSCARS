@@ -1666,7 +1666,12 @@ void OSCARSSR::CalculatePowerDensity (TParticleA& Particle, TSurfacePoints const
     // Undulators, Wigglers and their applications, p42
     Sum *= fabs(Particle.GetQ() * Particle.GetCurrent()) / (16 * TOSCARSSR::Pi2() * TOSCARSSR::Epsilon0() * TOSCARSSR::C()) * DeltaT;
 
-    Sum /= 1e6; // m^2 to mm^2
+    // m^2 to mm^2
+    Sum /= 1e6;
+
+    // Weighting
+    Sum *= Weight;
+
 
     // If you don't care about the direction of the normal vector
     // UPDATE: Check
@@ -1758,10 +1763,12 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface, T3DScalarCo
     }
   } else {
     double const Weight = 1.0 / (double) NParticles;
+    std::cout << "Weight = " << Weight << std::endl;
     for (int i = 0; i != NParticles; ++i) {
       this->SetNewParticle();
       if (GPU == 0) {
         if (NThreadsToUse == 1) {
+          std::cout << "Passing in to calc" << std::endl;
           this->CalculatePowerDensity(fParticle, Surface, PowerDensityContainer, Dimension, Directional, Weight, BlankOutFileName);
         } else {
           this->CalculatePowerDensityThreads(fParticle, Surface, PowerDensityContainer,  NThreadsToUse, Dimension, Directional, Weight, BlankOutFileName);
