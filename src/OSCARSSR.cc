@@ -1767,7 +1767,6 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface, T3DScalarCo
       this->SetNewParticle();
       if (GPU == 0) {
         if (NThreadsToUse == 1) {
-          std::cout << "Passing in to calc" << std::endl;
           this->CalculatePowerDensity(fParticle, Surface, PowerDensityContainer, Dimension, Directional, Weight, BlankOutFileName);
         } else {
           this->CalculatePowerDensityThreads(fParticle, Surface, PowerDensityContainer,  NThreadsToUse, Dimension, Directional, Weight, BlankOutFileName);
