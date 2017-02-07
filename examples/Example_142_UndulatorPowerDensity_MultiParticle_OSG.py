@@ -24,7 +24,7 @@ import oscars.sr
 osr = oscars.sr.sr()
 
 # Let's just make sure that each process only uses 1 threads since
-# we assume mpi is handeling this
+# we assume OSG is handeling this
 osr.set_nthreads_global(1)
 
 # Set a particle beam with non-zero emittance
@@ -67,15 +67,21 @@ if int(Process) == 0:
                                                npoints=npoints,
                                                translation=rectangle_center,
                                                ofile=out_file_name)
+  weight = 1. /size
+  osr_sum = osr.sr.sr()
+  for i in range(1, size):
+    data = comm.recv(source=ANY_SOURCE)
+    osr_sum.add_to_power_density(power_density=data, weight=weight)
 
 # Multi-particle simulation
 else:
-  data = osr.calculate_spectrum(plane='XY',
-                                width=width,
-                                npoints=npoints,
-                                translation=rectangle_center,
-                                nparticles=particles_per_node,
-                                ofile=out_file_name)
+  data = osr.calculate_power_density_rectangle(plane='XY',
+                                               width=width,
+                                               npoints=npoints,
+                                               translation=rectangle_center,
+                                               nparticles=particles_per_node,
+                                               ofile=out_file_name)
+  comm.send(data, dest=0)
 
 
 
