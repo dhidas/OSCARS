@@ -60,7 +60,6 @@ class TVector2D
   private:
     double fX;
     double fY;
-    double fZ;
 
 };
 
