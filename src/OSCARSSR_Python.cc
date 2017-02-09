@@ -1354,6 +1354,11 @@ static PyObject* OSCARSSR_WriteMagneticField (OSCARSSRObject* self, PyObject* ar
     return NULL;
   }
 
+  // Initial values for limits are all 0
+  XLim.SetXY(0, 0);
+  YLim.SetXY(0, 0);
+  ZLim.SetXY(0, 0);
+
 
   // Check that filename and format exist
   if (std::strlen(OutFileName) == 0 || std::strlen(OutFormat) == 0) {

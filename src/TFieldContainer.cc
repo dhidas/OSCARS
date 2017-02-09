@@ -161,6 +161,9 @@ void TFieldContainer::WriteToFile (std::string const& OutFileName, std::string c
   if (!of.is_open()) {
     throw;
   }
+  std::cout << XLim << std::endl;
+  std::cout << YLim << std::endl;
+  std::cout << ZLim << std::endl;
 
   std::string CommentNoCRLF = Comment;
   std::replace(CommentNoCRLF.begin(), CommentNoCRLF.end(), '\n', ' ');
@@ -185,13 +188,13 @@ void TFieldContainer::WriteToFile (std::string const& OutFileName, std::string c
     double const ZStep = MyNZ == 1 ? 0 : (ZLim[1] - ZLim[0]) / (NZ - 1);
 
     int const Width = 15;
-    of << std::setw(Width) << std::left << XLim.GetX() << "  # X Start position"      << std::endl;
+    of << std::setw(Width) << std::left << XLim[0]     << "  # X Start position"      << std::endl;
     of << std::setw(Width) << std::left << XStep       << "  # Step size in X"        << std::endl;
     of << std::setw(Width) << std::left << MyNX        << "  # Number of points in X" << std::endl;
-    of << std::setw(Width) << std::left << YLim.GetX() << "  # Y Start position"      << std::endl;
+    of << std::setw(Width) << std::left << YLim[0]     << "  # Y Start position"      << std::endl;
     of << std::setw(Width) << std::left << YStep       << "  # Step size in Y"        << std::endl;
     of << std::setw(Width) << std::left << MyNY        << "  # Number of points in Y" << std::endl;
-    of << std::setw(Width) << std::left << ZLim.GetX() << "  # Z Start position"      << std::endl;
+    of << std::setw(Width) << std::left << ZLim[0]     << "  # Z Start position"      << std::endl;
     of << std::setw(Width) << std::left << ZStep       << "  # Step size in Z"        << std::endl;
     of << std::setw(Width) << std::left << MyNZ        << "  # Number of points in Z" << std::endl;
 
@@ -354,27 +357,32 @@ void TFieldContainer::WriteToFile (std::string const& OutFileName, std::string c
       of << "# " << CommentNoCRLF << std::endl;
     }
 
-    double const XStep = (XLim[1] - XLim[0]) / (NX - 1);
-    double const YStep = (YLim[1] - YLim[0]) / (NY - 1);
-    double const ZStep = (ZLim[1] - ZLim[0]) / (NZ - 1);
+    int const MyNX = NX == 0 ? 1 : NX;
+    int const MyNY = NY == 0 ? 1 : NY;
+    int const MyNZ = NZ == 0 ? 1 : NZ;
+
+    double const XStep = MyNX == 1 ? 0 : (XLim[1] - XLim[0]) / (NX - 1);
+    double const YStep = MyNY == 1 ? 0 : (YLim[1] - YLim[0]) / (NY - 1);
+    double const ZStep = MyNZ == 1 ? 0 : (ZLim[1] - ZLim[0]) / (NZ - 1);
+
 
     of << "#\t" << XLim.GetX() << "\t# X Start position" << std::endl;
     of << "#\t" << XStep << std::endl;
-    of << "#\t" << NX << std::endl;
+    of << "#\t" << MyNX << std::endl;
     of << "#\t" << YLim.GetX() << "  #\tY Start position" << std::endl;
     of << "#\t" << YStep << std::endl;
-    of << "#\t" << NY << std::endl;
+    of << "#\t" << MyNY << std::endl;
     of << "#\t" << ZLim.GetX() << "  #\tZ Start position" << std::endl;
     of << "#\t" << ZStep << std::endl;
-    of << "#\t" << NZ << std::endl;
+    of << "#\t" << MyNZ << std::endl;
 
     // Set output format
     of << std::scientific;
 
     // Loop over all points and output
-    for (int k = 0; k < NZ; ++k) {
-      for (int j = 0; j < NY; ++j) {
-        for (int i = 0; i < NX; ++i) {
+    for (int k = 0; k < MyNZ; ++k) {
+      for (int j = 0; j < MyNY; ++j) {
+        for (int i = 0; i < MyNX; ++i) {
 
           // Set current position
           X.SetXYZ(XLim[0] + XStep * i, YLim[0] + YStep * j, ZLim[0] + ZStep * k);
@@ -395,20 +403,25 @@ void TFieldContainer::WriteToFile (std::string const& OutFileName, std::string c
       of << "# " << CommentNoCRLF << std::endl;
     }
 
-    double const XStep = (XLim[1] - XLim[0]) / (NX - 1);
-    double const YStep = (YLim[1] - YLim[0]) / (NY - 1);
-    double const ZStep = (ZLim[1] - ZLim[0]) / (NZ - 1);
+    int const MyNX = NX == 0 ? 1 : NX;
+    int const MyNY = NY == 0 ? 1 : NY;
+    int const MyNZ = NZ == 0 ? 1 : NZ;
+
+    double const XStep = MyNX == 1 ? 0 : (XLim[1] - XLim[0]) / (NX - 1);
+    double const YStep = MyNY == 1 ? 0 : (YLim[1] - YLim[0]) / (NY - 1);
+    double const ZStep = MyNZ == 1 ? 0 : (ZLim[1] - ZLim[0]) / (NZ - 1);
+
 
     // Header information
-    of << XStep*1000. << " " << YStep*1000. << " " << ZStep*1000. << " " << NX << " " << NY << " " << NZ << std::endl;
+    of << XStep*1000. << " " << YStep*1000. << " " << ZStep*1000. << " " << MyNX << " " << MyNY << " " << MyNZ << std::endl;
 
     // Set output format
     of << std::scientific;
 
     // Loop over all points and output
-    for (int i = 0; i < NX; ++i) {
-      for (int j = 0; j < NY; ++j) {
-        for (int k = 0; k < NZ; ++k) {
+    for (int i = 0; i < MyNX; ++i) {
+      for (int j = 0; j < MyNY; ++j) {
+        for (int k = 0; k < MyNZ; ++k) {
 
           // Set current position
           X.SetXYZ(XLim[0] + XStep * i, YLim[0] + YStep * j, ZLim[0] + ZStep * k);
