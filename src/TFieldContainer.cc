@@ -161,9 +161,6 @@ void TFieldContainer::WriteToFile (std::string const& OutFileName, std::string c
   if (!of.is_open()) {
     throw;
   }
-  std::cout << XLim << std::endl;
-  std::cout << YLim << std::endl;
-  std::cout << ZLim << std::endl;
 
   std::string CommentNoCRLF = Comment;
   std::replace(CommentNoCRLF.begin(), CommentNoCRLF.end(), '\n', ' ');
