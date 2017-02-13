@@ -67,11 +67,6 @@ if int(Process) == 0:
                                                npoints=npoints,
                                                translation=rectangle_center,
                                                ofile=out_file_name)
-  weight = 1. /size
-  osr_sum = osr.sr.sr()
-  for i in range(1, size):
-    data = comm.recv(source=ANY_SOURCE)
-    osr_sum.add_to_power_density(power_density=data, weight=weight)
 
 # Multi-particle simulation
 else:
@@ -81,7 +76,6 @@ else:
                                                translation=rectangle_center,
                                                nparticles=particles_per_node,
                                                ofile=out_file_name)
-  comm.send(data, dest=0)
 
 
 
