@@ -1666,7 +1666,12 @@ void OSCARSSR::CalculatePowerDensity (TParticleA& Particle, TSurfacePoints const
     // Undulators, Wigglers and their applications, p42
     Sum *= fabs(Particle.GetQ() * Particle.GetCurrent()) / (16 * TOSCARSSR::Pi2() * TOSCARSSR::Epsilon0() * TOSCARSSR::C()) * DeltaT;
 
-    Sum /= 1e6; // m^2 to mm^2
+    // m^2 to mm^2
+    Sum /= 1e6;
+
+    // Weighting
+    Sum *= Weight;
+
 
     // If you don't care about the direction of the normal vector
     // UPDATE: Check
@@ -1859,7 +1864,11 @@ void OSCARSSR::CalculatePowerDensityPoint (TParticleA& Particle, TSurfacePoints 
     // Undulators, Wigglers and their applications, p42
     Sum *= fabs(Particle.GetQ() * Particle.GetCurrent()) / (16 * TOSCARSSR::Pi2() * TOSCARSSR::Epsilon0() * TOSCARSSR::C()) * DeltaT;
 
-    Sum /= 1e6; // m^2 to mm^2
+    // m^2 to mm^2
+    Sum /= 1e6;
+
+    // Weight this event
+    Sum *= Weight;
 
     // If you don't care about the direction of the normal vector
     // UPDATE: Check
@@ -2587,9 +2596,6 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
     std::cerr << "wROng dimension" << std::endl;
     throw;
   }
-
-  std::cout << "p " << Polarization << std::endl;
-  std::cout << "a " << Angle << std::endl;
 
   // Don't write output in individual mode
   std::string const BlankOutFileName = "";
