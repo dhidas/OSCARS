@@ -1,10 +1,11 @@
 # This is meant to be run on OSG or similar condor-type systems
 
+
 # In this example OSG is used to calculate a multi-particle
 # simulation.  The rank 0 process calculates the ideal single-particle
 # data and then waits for the other processes to return their data.
 # When a process returns the results are added to the others.  The results
-# are then outputted as data files, which can be plotted using Jupyter 
+# are then outputted as data files, which can be plotted using Jupyter
 # Notebook or something similar.
 
 # Command line arguments are given by condor at runtime
@@ -18,7 +19,6 @@ out_file_name = NAME + '_' + Process + '.dat'
 
 # Import the OSCARS SR and helper modules
 import oscars.sr
-
 
 # Get an OSCARS SR object
 osr = oscars.sr.sr()
@@ -44,35 +44,38 @@ osr.set_particle_beam(type='electron',
 osr.set_ctstartstop(0, 2)
 
 # Add an undulator field
+osr.clear_bfields()
 osr.add_bfield_undulator(bfield=[0, 1, 0], period=[0, 0, 0.049], nperiods=31)
 
 # Number of particles per node of rank > 1
 particles_per_node = 1000
 
 # Observation point for spectrum
-observation_point = [0, 0, 30]
+rectangle_center = [0, 0, 30]
+
+# Width of rectangle
+width = [0.05, 0.05]
 
 # Number of points in the spectrum
-npoints = 1000
+npoints = [101, 101]
 
-# Energy range for spectrum
-range_eV = [430, 480]
-
-# Ideal single-particle data 
+# Ideal single_particle data
 if int(Process) == 0:
   osr.set_new_particle(particle='ideal')
-  data = osr.calculate_spectrum(obs=observation_point,
-                                energy_range_eV=range_eV,
-                                npoints=npoints,
-                                ofile=out_file_name)
+  data = osr.calculate_power_density_rectangle(plane='XY',
+                                               width=width,
+                                               npoints=npoints,
+                                               translation=rectangle_center,
+                                               ofile=out_file_name)
+
 # Multi-particle simulation
 else:
-  data = osr.calculate_spectrum(obs=observation_point,
-                                energy_range_eV=range_eV,
-                                npoints=npoints,
-                                nparticles=particles_per_node,
-                                ofile=out_file_name)
-
+  data = osr.calculate_power_density_rectangle(plane='XY',
+                                               width=width,
+                                               npoints=npoints,
+                                               translation=rectangle_center,
+                                               nparticles=particles_per_node,
+                                               ofile=out_file_name)
 
 
 
