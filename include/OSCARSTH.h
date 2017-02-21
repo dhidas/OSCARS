@@ -8,6 +8,7 @@
 //
 ////////////////////////////////////////////////////////////////////
 
+#include "TVector2D.h"
 
 
 class OSCARSTH
@@ -16,7 +17,8 @@ class OSCARSTH
     OSCARSTH ();
     ~OSCARSTH ();
 
-    double UndulatorK (double const BFieldMax, double const Period);;
+    double UndulatorK (double const BFieldMax, double const Period) const;
+    double DipoleSpectrum (double const BField, double const BeamEnergy_GeV, double const Angle, TVector2D const EnergyRange_eV) const;
 };
 
 

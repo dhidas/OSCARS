@@ -17,12 +17,34 @@
 #include "OSCARSTH_Python.h"
 
 #include "TOSCARSSR.h"
+#include "TVector2D.h"
 
 #include <iostream>
 #include <vector>
 #include <algorithm>
 #include <cstring>
 #include <stdexcept>
+
+
+
+
+
+
+static TVector2D OSCARSTH_ListAsTVector2D (PyObject* List)
+{
+  TVector2D V;
+  if (PyList_Size(List) == 2) {
+    Py_INCREF(List);
+    V.SetXY(PyFloat_AsDouble(PyList_GetItem(List, 0)),
+             PyFloat_AsDouble(PyList_GetItem(List, 1)));
+    Py_DECREF(List);
+  } else {
+    throw std::length_error("number of elements not 2");
+  }
+
+  // Return the python list
+  return V;
+}
 
 
 
@@ -102,6 +124,50 @@ static PyObject* OSCARSTH_UndulatorK (OSCARSTHObject* self, PyObject* args, PyOb
 
 
 
+const char* DOC_OSCARSTH_DipoleSpectrum= "Get the spectrum from ideal dipole field";
+static PyObject* OSCARSTH_DipoleSpectrum(OSCARSTHObject* self, PyObject* args, PyObject* keywds)
+{
+  // Return a list of points corresponding to the flux in a given energy range for a given vertical angle.
+  // This approximation assumes that the particle beam is perpendicular to the magnetic field
+
+  // Require 2 arguments
+  double BField = 0;
+  double BeamEnergy = 0;
+  double Angle = 0;
+  PyObject* List_EnergyRange = PyList_New(0);
+
+  // Input variables and parsing
+  static char *kwlist[] = {"bfield", "beam_energy_GeV", "angle", "energy_range_eV", NULL};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dddO", kwlist, &BField, &BeamEnergy, &Angle, &List_EnergyRange)) {
+    return NULL;
+  }
+
+  // Check that beam energy makes sense
+  if (BeamEnergy <= 0) {
+    PyErr_SetString(PyExc_ValueError, "'beam_energy_GeV' must be > 0");
+    return NULL;
+  }
+
+  TVector2D const EnergyRange = OSCARSTH_ListAsTVector2D(List_EnergyRange);
+  if (EnergyRange[0] >= EnergyRange[1] || EnergyRange[0] <= 1 || EnergyRange[1] <= 0) {
+    PyErr_SetString(PyExc_ValueError, "'energy_range_eV' is incorrect");
+    return NULL;
+  }
+
+  // Calculate the spectrum
+  self->obj->DipoleSpectrum(BField, BeamEnergy, Angle, EnergyRange);
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
+
 
 
 
@@ -135,6 +201,8 @@ static PyMethodDef OSCARSTH_methods[] = {
   // python names, and tell python the method of input parameters.
 
   {"undulator_K",                                (PyCFunction) OSCARSTH_UndulatorK,                              METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorK},
+
+  {"dipole_spectrum",                            (PyCFunction) OSCARSTH_DipoleSpectrum,                          METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleSpectrum},
 
   {NULL}  /* Sentinel */
 };
