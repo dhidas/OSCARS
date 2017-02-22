@@ -115,7 +115,7 @@ void T3DScalarContainer::AverageFromFilesText (std::vector<std::string> const& F
 
           // This must be file index 0
           if (i != 0) {
-            throw std::length_error("Inconsistent file formats found");
+            throw std::length_error("Inconsistent file format found in file " + Files[i]);
           }
 
           break;
@@ -151,7 +151,7 @@ void T3DScalarContainer::AverageFromFilesText (std::vector<std::string> const& F
 
           // This must be file index 0
           if (i != 0) {
-            throw std::length_error("Inconsistent file formats found");
+            throw std::length_error("Inconsistent file format found in file " + Files[i]);
           }
 
           break;
