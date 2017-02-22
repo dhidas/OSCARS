@@ -37,7 +37,8 @@ moduleOSCARSSR = Extension('oscars.sr',
 moduleOSCARSTH = Extension('oscars.th',
                       include_dirs = ['include'],
                       sources = ['src/OSCARSTH.cc',
-                                 'src/OSCARSTH_Python.cc'],
+                                 'src/OSCARSTH_Python.cc',
+                                 'src/TVector2D.cc'],
                       extra_compile_args=['-std=c++11', '-Wno-write-strings', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread']
                      )
 
