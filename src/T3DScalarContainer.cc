@@ -74,7 +74,7 @@ void T3DScalarContainer::AverageFromFilesText (std::vector<std::string> const& F
 
   // Check that we have at least one file!
   if (Files.size() < 1) {
-    throw;
+    throw std::length_error("no files specified");
   }
 
   // Double number of files for averaging
@@ -169,7 +169,7 @@ void T3DScalarContainer::AverageFromFilesText (std::vector<std::string> const& F
       ++ip;
     }
   } else {
-    throw;
+    throw std::invalid_argument("'dim' must be 2 or 3");
   }
 
 
