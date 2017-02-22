@@ -3521,14 +3521,20 @@ static PyObject* OSCARSSR_AverageT3DScalars (OSCARSSRObject* self, PyObject* arg
     FileNames.push_back( GetAsString(PyList_GetItem(List_InFileNamesBinary, i)) );
   }
 
+
   // Container for flux average
   T3DScalarContainer Container;
 
   // Either they are text files or binary files
-  if (NFilesText > 0) {
-    Container.AverageFromFilesText(FileNames, Dim);
-  } else {
-    Container.AverageFromFilesBinary(FileNames, Dim);
+  try {
+    if (NFilesText > 0) {
+      Container.AverageFromFilesText(FileNames, Dim);
+    } else {
+      Container.AverageFromFilesBinary(FileNames, Dim);
+    }
+  } catch (std::length_error e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
   }
 
   // Build the output list of: [[[x, y, z], Value], [...]]
