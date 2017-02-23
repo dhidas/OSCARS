@@ -440,7 +440,7 @@ void OSCARSSR::SetNPointsTrajectory (size_t const N)
 
 
 
-void OSCARSSR::SetNPointsPerMeter (size_t const N)
+void OSCARSSR::SetNPointsPerMeterTrajectory (size_t const N)
 {
   // Set this number of points for any trajectory calculations
   fNPointsPerMeter = N;

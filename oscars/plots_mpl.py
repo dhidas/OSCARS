@@ -214,6 +214,8 @@ def plot_flux(V, title='Flux [$\gamma / mm^2 / 0.1\%bw / s]$', xlabel='X1 Axis [
 
     if ret:
         return plt
+
+    plt.clf()
     return
 
 
@@ -242,6 +244,7 @@ def plot_spectrum(S, log=False, show=True, ofile='', title='Spectrum', figsize=N
 
     if ret is True:
         return plt
+
     return
 
 

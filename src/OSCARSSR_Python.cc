@@ -349,6 +349,28 @@ static PyObject* OSCARSSR_SetNPointsTrajectory (OSCARSSRObject* self, PyObject* 
 
 
 
+static PyObject* OSCARSSR_SetNPointsPerMeterTrajectory (OSCARSSRObject* self, PyObject* arg)
+{
+  // Set the number of points for trajectory calculation
+
+  // Grab the value from input
+  size_t N = PyLong_AsSsize_t(arg);
+
+  // Set the object variable
+  self->obj->SetNPointsPerMeterTrajectory(N);
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
+
+
 static PyObject* OSCARSSR_AddMagneticField (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
 {
   // Add a magnetic field from a file.
@@ -3699,6 +3721,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"get_ctstop",                        (PyCFunction) OSCARSSR_GetCTStop,                       METH_NOARGS,                  "get the stop time in [m]"},
   {"set_ctstartstop",                   (PyCFunction) OSCARSSR_SetCTStartStop,                  METH_VARARGS,                 "set the start and stop time in [m]"},
   {"set_npoints_trajectory",            (PyCFunction) OSCARSSR_SetNPointsTrajectory,            METH_O,                       "set the total number of points for the trajectory"},
+  {"set_npoints_per_meter_trajectory",  (PyCFunction) OSCARSSR_SetNPointsPerMeterTrajectory,    METH_O,                       "set the total number of points per meter used for trajectory"},
   {"get_npoints_trajectory",            (PyCFunction) OSCARSSR_GetNPointsTrajectory,            METH_NOARGS,                  "get the total number of points for the trajectory"},
                                                                                           
   {"add_bfield_file",                   (PyCFunction) OSCARSSR_AddMagneticField,                METH_VARARGS | METH_KEYWORDS, "add a magnetic field from a file"},

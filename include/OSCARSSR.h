@@ -13,7 +13,7 @@
 
 #define OSCARSSR_VMAJOR 1
 #define OSCARSSR_VMINOR 34
-#define OSCARSSR_REVISION 5
+#define OSCARSSR_REVISION 7
 
 #include "TOSCARSSR.h"
 
@@ -92,7 +92,7 @@ class OSCARSSR
     TParticleTrajectoryPoints const& GetTrajectory ();
 
     void SetNPointsTrajectory (size_t const);
-    void SetNPointsPerMeter (size_t const);
+    void SetNPointsPerMeterTrajectory (size_t const);
     void SetCTStartStop (double const, double const);
 
     size_t GetNPointsTrajectory () const;
