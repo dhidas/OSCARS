@@ -52,9 +52,9 @@ double const R = BeamEnergy_GeV  * 1e9 / (BField * TOSCARSSR::C());
     
 
     
-double const Qe = TOSCARSSR::Qe();
+double const Q = TOSCARSSR::Qe();
     
-    std::cout << "Qe: " << Qe << std::endl;
+    std::cout << "Q: " << Q << std::endl;
 
-    return Qe;
+  return Q;
 }
