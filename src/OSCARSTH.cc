@@ -43,18 +43,16 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
   std::cout << "Angle:          " << Angle << std::endl;
   std::cout << "EnergyRange_eV: " << EnergyRange_eV << std::endl;
 
+  double const R = BeamEnergy_GeV  * 1e9 / (BField * TOSCARSSR::C());
+    
+  std::cout << "R: " << R << std::endl;
 
-double const R = BeamEnergy_GeV  * 1e9 / (BField * TOSCARSSR::C());
+  // I take out the "return" otherwise what is below it never happens
+  // return R;
     
-    std::cout << "R: " << R << std::endl;
-
-  return R;
+  double const Q = TOSCARSSR::Qe();
     
-
-    
-double const Q = TOSCARSSR::Qe();
-    
-    std::cout << "Q: " << Q << std::endl;
+  std::cout << "Q: " << Q << std::endl;
 
   return Q;
 }
