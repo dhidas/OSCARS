@@ -44,9 +44,17 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
   std::cout << "EnergyRange_eV: " << EnergyRange_eV << std::endl;
 
 
-    double const R = BeamEnergy_GeV  * 1e9 / (BField * TOSCARSSR::C());
+double const R = BeamEnergy_GeV  * 1e9 / (BField * TOSCARSSR::C());
     
     std::cout << "R: " << R << std::endl;
 
   return R;
+    
+
+    
+double const Qe = TOSCARSSR::Qe();
+    
+    std::cout << "Qe: " << Qe << std::endl;
+
+    return Qe;
 }
