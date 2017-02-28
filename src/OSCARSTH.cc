@@ -12,6 +12,8 @@
 
 #include "TOSCARSSR.h"
 
+#include <math.h>
+
 OSCARSTH::OSCARSTH ()
 {
   // Default constructor
@@ -53,8 +55,12 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
   double const Q = TOSCARSSR::Qe();
     
   std::cout << "Q: " << Q << std::endl;
+    
+    double const v1 = ((TOSCARSSR::Me() * TOSCARSSR::Me()) * (TOSCARSSR::C() * TOSCARSSR::C() * TOSCARSSR::C() * TOSCARSSR::C())) / ((BeamEnergy_GeV) * (BeamEnergy_GeV));
+    
+    std::cout << std::endl;
   
-  double const v = TOSCARSSR::C() * sqrt(1 - ((((TOSCARSSR::Me())^2) * ((TOSCARSSR::C())^4)) / ((BeamEnergy_GeV)^2)));
+  double const v = TOSCARSSR::C() * sqrt(1 - v1);
     
     std::cout << "v: " << v << std::endl;
 
