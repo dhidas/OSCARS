@@ -64,5 +64,9 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
     
     std::cout << "v: " << v << std::endl;
 
-  return v;
+  double const w0 = v / R;
+    
+    std::cout << "w0: " << w0 << std::endl;
+
+  return w0;
 }
