@@ -67,6 +67,22 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
   double const w0 = v / R;
     
     std::cout << "w0: " << w0 << std::endl;
+    
+  double const beta_sqr = 1 - v1;
+    
+    std::cout << "beta_sqr: " << beta_sqr << std::endl;
+    
+  double const beta = sqrt(beta_sqr);
+    
+    std::cout << "beta: " << beta << std::endl;
+    
+  double const gamma = 1 / sqrt(1 - beta_sqr);
+    
+    std::cout << "gamma: " << gamma << std::endl;
+    
+  double const w = (3/2) * (gamma * gamma * gamma) * ((beta * TOSCARSSR::C()) / R);
+    
+    std::cout << "w: " << w << std::endl;
 
-  return w0;
+  return w;
 }
