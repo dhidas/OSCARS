@@ -12,7 +12,7 @@
 
 #include "TOSCARSSR.h"
 
-#include <math.h>
+#include <cmath>
 
 OSCARSTH::OSCARSTH ()
 {
@@ -44,7 +44,7 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
   std::cout << "BeamEnergy_GeV: " << BeamEnergy_GeV << std::endl;
   std::cout << "Angle:          " << Angle << std::endl;
   std::cout << "EnergyRange_eV: " << EnergyRange_eV << std::endl;
-
+    
   double const R = BeamEnergy_GeV  * 1e9 / (BField * TOSCARSSR::C());
     
   std::cout << "R: " << R << std::endl;
@@ -56,9 +56,19 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
     
   std::cout << "Q: " << Q << std::endl;
     
-    double const v1 = ((TOSCARSSR::Me() * TOSCARSSR::Me()) * (TOSCARSSR::C() * TOSCARSSR::C() * TOSCARSSR::C() * TOSCARSSR::C())) / ((BeamEnergy_GeV) * (BeamEnergy_GeV));
+  long double const v1 = ((TOSCARSSR::Me() * TOSCARSSR::Me()) * (TOSCARSSR::C() * TOSCARSSR::C() * TOSCARSSR::C() * TOSCARSSR::C())) / ((BeamEnergy_GeV) * (BeamEnergy_GeV));
     
-    std::cout << std::endl;
+    std::cout << sizeof(long double) << std::endl;
+    std::cout << "v1: " << v1 << std::endl;
+
+    double const v2 = v1 * pow(10,28);
+    
+    std::cout << "v2: " << v2 << std::endl;
+    
+    long double const v3 = v2 * pow(10, -28);
+    
+    std::cout << sizeof(long double) << std::endl;
+    std::cout << "v3: " << v3 << std::endl;
   
   double const v = TOSCARSSR::C() * sqrt(1 - v1);
     
@@ -68,20 +78,24 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
     
     std::cout << "w0: " << w0 << std::endl;
     
-  double const beta_sqr = 1 - v1;
+  long double const beta_sqr = 1 - v3;
     
+    std::cout << sizeof(long double) << std::endl;
     std::cout << "beta_sqr: " << beta_sqr << std::endl;
     
-  double const beta = sqrt(beta_sqr);
+    long double const beta = v / TOSCARSSR::C();
     
+    std::cout << sizeof(long double) << std::endl;
     std::cout << "beta: " << beta << std::endl;
     
-  double const gamma = 1 / sqrt(1 - beta_sqr);
+  long double const gamma = 1 / sqrt(1 - beta_sqr);
     
+    std::cout << sizeof(long double) << std::endl;
     std::cout << "gamma: " << gamma << std::endl;
     
-  double const w = (3/2) * (gamma * gamma * gamma) * ((beta * TOSCARSSR::C()) / R);
+  long double const w = (3/2) * (gamma * gamma * gamma) * ((beta * TOSCARSSR::C()) / R);
     
+    std::cout << sizeof(long double) << std::endl;
     std::cout << "w: " << w << std::endl;
 
   return w;
