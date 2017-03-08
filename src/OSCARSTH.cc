@@ -14,6 +14,8 @@
 
 #include <cmath>
 
+#include <iomanip>
+
 OSCARSTH::OSCARSTH ()
 {
   // Default constructor
@@ -58,6 +60,7 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
     
   long double const v1 = ((TOSCARSSR::Me() * TOSCARSSR::Me()) * (TOSCARSSR::C() * TOSCARSSR::C() * TOSCARSSR::C() * TOSCARSSR::C())) / ((BeamEnergy_GeV) * (BeamEnergy_GeV));
     
+    std::setprecision(40);
     std::cout << sizeof(long double) << std::endl;
     std::cout << "v1: " << v1 << std::endl;
 
@@ -78,13 +81,15 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
     
     std::cout << "w0: " << w0 << std::endl;
     
-  long double const beta_sqr = 1 - v3;
+  long double const beta_sqr = 1 - v1;
     
+    std::setprecision(29);
     std::cout << sizeof(long double) << std::endl;
     std::cout << "beta_sqr: " << beta_sqr << std::endl;
     
-    long double const beta = v / TOSCARSSR::C();
+  long double const beta = v / TOSCARSSR::C();
     
+    std::setprecision(40);
     std::cout << sizeof(long double) << std::endl;
     std::cout << "beta: " << beta << std::endl;
     
