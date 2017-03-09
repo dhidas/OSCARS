@@ -59,14 +59,32 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
   double const Q = TOSCARSSR::Qe();
     
   std::cout << "Q: " << Q << std::endl;
+   
+    double const Me = 0.511e6;
     
-  long double const v1 = ((TOSCARSSR::Me() * TOSCARSSR::Me()) * (TOSCARSSR::C() * TOSCARSSR::C() * TOSCARSSR::C() * TOSCARSSR::C())) / ((BeamEnergy_GeV * TOSCARSSR::Qe() * (1e-9)) * (BeamEnergy_GeV * TOSCARSSR::Qe() * (1e-9)));
+    std::cout << "Me: " << Me << std::endl;
+    
+  long double const v5 = Me * Me;
     
     std::setprecision(40);
-    std::cout << sizeof(long double) << std::endl;
+    std::cout << "v5: " << v5 << std::endl;
+    
+    double const v6 = (BeamEnergy_GeV * 1e9) * (BeamEnergy_GeV * 1e9);
+    
+    std::setprecision(40);
+    std::cout << "v6: " << v6 << std::endl;
+    
+    double const v7 = v5 / v6;
+    
+    std::setprecision(40);
+    std::cout << "v7: " << v7 << std::endl;
+    
+    long double const v1 = ((TOSCARSSR::Me() * TOSCARSSR::Me()) * (TOSCARSSR::C() * TOSCARSSR::C() * TOSCARSSR::C() * TOSCARSSR::C())) / ((BeamEnergy_GeV * TOSCARSSR::Qe() * (1e-9)) * (BeamEnergy_GeV * TOSCARSSR::Qe() * (1e-9)));
+    
+    std::setprecision(40);
     std::cout << "v1: " << v1 << std::endl;
     
-    double const v2 = 1 - v1;
+    double const v2 = 1 - v7;
     
     std::cout << std::setprecision(40) << std::endl;
     std::cout << "v2: " << v2 << std::endl;
@@ -84,7 +102,6 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
     
   long double const gamma = BeamEnergy_GeV / TOSCARSSR::kgToGeV( TOSCARSSR::Me());
     
-    std::cout << sizeof(long double) << std::endl;
     std::cout << "gamma: " << gamma << std::endl;
     
   long double const beta_sqr = 1 - (1 / (gamma * gamma));
@@ -94,7 +111,7 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
     
   long double const beta = sqrt(beta_sqr);
     
-    std::cout << std::setprecision(40) << sizeof(long double) << std::endl;
+    std::cout << std::setprecision(40) << std::endl;
     std::cout << "beta: " << beta << std::endl;
     
     double const v4 = beta * TOSCARSSR::C() * 1e-8;
@@ -102,13 +119,13 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
     std::cout << std::setprecision(40) << std::endl;
     std::cout << "v4: " << v4 << std::endl;
     
-    double const w0 = v4 / R;
+    double const w0 = v / R;
     
     std::cout << "w0: " << w0 << std::endl;
     
     long double const wc = (3/2) * (gamma * gamma * gamma) * ((beta * TOSCARSSR::C()) / R);
     
-    std::cout << sizeof(long double) << std::endl;
+    std::cout << std::setprecision(40) << std::endl;
     std::cout << "wc: " << wc << std::endl;
 
     double const psi = Angle;
@@ -116,7 +133,7 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
     std::cout << std::setprecision(40) << std::endl;
     std::cout << "psi: " << psi << std::endl;
     
-    double const xi = (1/2) * (w / wc) * sqrt(1 + (gamma*gamma) * (psi*psi)) * sqrt(1 + (gamma*gamma) * (psi*psi)) * sqrt(1 + (gamma*gamma) * (psi*psi));
+    double const xi = (1/2) * (wc / wc) * sqrt(1 + (gamma*gamma) * (psi*psi)) * sqrt(1 + (gamma*gamma) * (psi*psi)) * sqrt(1 + (gamma*gamma) * (psi*psi));
     
     std::cout << std::setprecision(40) << std::endl;
     std::cout << "xi: " << xi << std::endl;
