@@ -123,11 +123,16 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
     
     std::cout << "w0: " << w0 << std::endl;
     
-    long double const wc = (3/2) * (gamma * gamma * gamma) * ((beta * TOSCARSSR::C()) / R);
+    long double const wc = (3/2) * (gamma * gamma * gamma) * (w0);
     
     std::cout << std::setprecision(40) << std::endl;
     std::cout << "wc: " << wc << std::endl;
 
+    double const wc1 = TOSCARSSR::AngularFrequencyToEv( wc);
+    
+    std::cout << std::setprecision(40) << std::endl;
+    std::cout << "wc1: " << wc1 << std::endl;
+    
     double const psi = Angle;
     
     std::cout << std::setprecision(40) << std::endl;
@@ -138,7 +143,12 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
     std::cout << std::setprecision(40) << std::endl;
     std::cout << "xi: " << xi << std::endl;
     
-    double const myK = TOMATH::BesselK( 2/3, xi);
+    double const K = TOMATH::BesselK( 2/3, xi);
+    
+    std::cout << std::setprecision(40) << std::endl;
+    std::cout << "K: " << K << std::endl;
+    
+    double const myK = K * K;
     
     std::cout << std::setprecision(40) << std::endl;
     std::cout << "myK: " << myK << std::endl;
