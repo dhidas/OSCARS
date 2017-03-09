@@ -16,6 +16,8 @@
 #include "OSCARSTH.h"
 #include "OSCARSTH_Python.h"
 
+#include "TOMATH.h"
+
 #include "TOSCARSSR.h"
 #include "TVector2D.h"
 
@@ -166,6 +168,30 @@ static PyObject* OSCARSTH_DipoleSpectrum(OSCARSTHObject* self, PyObject* args, P
 
 
 
+const char* DOC_OSCARSTH_BesselK = "Get the value of the modified bessel function K_nu";
+static PyObject* OSCARSTH_BesselK (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
+{
+  // Return Bessel K_nu(x)
+
+  // Require 2 arguments
+  double Nu = 0;
+  double X = 0;
+
+  // Input variables and parsing
+  static char *kwlist[] = {"nu", "x", NULL};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dd", kwlist, &Nu, &X)) {
+    return NULL;
+  }
+
+
+  // Return the internal OSCARSTH number constant pi
+  return Py_BuildValue("d", TOMATH::BesselK(Nu, X));
+}
+
+
+
+
+
 
 
 
@@ -203,6 +229,7 @@ static PyMethodDef OSCARSTH_methods[] = {
   {"undulator_K",                                (PyCFunction) OSCARSTH_UndulatorK,                              METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorK},
 
   {"dipole_spectrum",                            (PyCFunction) OSCARSTH_DipoleSpectrum,                          METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleSpectrum},
+  {"bessel_k",                                   (PyCFunction) OSCARSTH_BesselK,                                 METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_BesselK},
 
   {NULL}  /* Sentinel */
 };
