@@ -16,6 +16,8 @@
 
 #include <iomanip>
 
+#include "TOMATH.h"
+
 OSCARSTH::OSCARSTH ()
 {
   // Default constructor
@@ -58,28 +60,27 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
     
   std::cout << "Q: " << Q << std::endl;
     
-    long double const v1 = ((TOSCARSSR::Me() * TOSCARSSR::Me()) * (TOSCARSSR::C() * TOSCARSSR::C() * TOSCARSSR::C() * TOSCARSSR::C())) / ((BeamEnergy_GeV * TOSCARSSR::Qe() * (1e-9)) * (BeamEnergy_GeV * TOSCARSSR::Qe() * (1e-9)));
+  long double const v1 = ((TOSCARSSR::Me() * TOSCARSSR::Me()) * (TOSCARSSR::C() * TOSCARSSR::C() * TOSCARSSR::C() * TOSCARSSR::C())) / ((BeamEnergy_GeV * TOSCARSSR::Qe() * (1e-9)) * (BeamEnergy_GeV * TOSCARSSR::Qe() * (1e-9)));
     
     std::setprecision(40);
     std::cout << sizeof(long double) << std::endl;
     std::cout << "v1: " << v1 << std::endl;
-
-    double const v2 = v1 * pow(10,28);
     
+    double const v2 = 1 - v1;
+    
+    std::cout << std::setprecision(40) << std::endl;
     std::cout << "v2: " << v2 << std::endl;
     
-    long double const v3 = v2 * pow(10, -28);
+    double const v3 = sqrt(v2);
     
-    std::cout << sizeof(long double) << std::endl;
+    std::cout << std::setprecision(40) << std::endl;
     std::cout << "v3: " << v3 << std::endl;
   
-  double const v = TOSCARSSR::C() * sqrt(1 - v1);
+    double const v = TOSCARSSR::C() * v3;
     
+    std::cout << std::setprecision(40) << std::endl;
     std::cout << "v: " << v << std::endl;
 
-  double const w0 = v / R;
-    
-    std::cout << "w0: " << w0 << std::endl;
     
   long double const gamma = BeamEnergy_GeV / TOSCARSSR::kgToGeV( TOSCARSSR::Me());
     
@@ -96,11 +97,34 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
     std::cout << std::setprecision(40) << sizeof(long double) << std::endl;
     std::cout << "beta: " << beta << std::endl;
     
-  long double const w = (3/2) * (gamma * gamma * gamma) * ((beta * TOSCARSSR::C()) / R);
+    double const v4 = beta * TOSCARSSR::C() * 1e-8;
+    
+    std::cout << std::setprecision(40) << std::endl;
+    std::cout << "v4: " << v4 << std::endl;
+    
+    double const w0 = v4 / R;
+    
+    std::cout << "w0: " << w0 << std::endl;
+    
+    long double const wc = (3/2) * (gamma * gamma * gamma) * ((beta * TOSCARSSR::C()) / R);
     
     std::cout << sizeof(long double) << std::endl;
-    std::cout << "w: " << w << std::endl;
+    std::cout << "wc: " << wc << std::endl;
 
+    double const psi = Angle;
     
-  return w;
+    std::cout << std::setprecision(40) << std::endl;
+    std::cout << "psi: " << psi << std::endl;
+    
+    double const xi = (1/2) * (w / wc) * sqrt(1 + (gamma*gamma) * (psi*psi)) * sqrt(1 + (gamma*gamma) * (psi*psi)) * sqrt(1 + (gamma*gamma) * (psi*psi));
+    
+    std::cout << std::setprecision(40) << std::endl;
+    std::cout << "xi: " << xi << std::endl;
+    
+    double const myK = TOMATH::BesselK( 2/3, xi);
+    
+    std::cout << std::setprecision(40) << std::endl;
+    std::cout << "myK: " << myK << std::endl;
+    
+  return myK;
 }
