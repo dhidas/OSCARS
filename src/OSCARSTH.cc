@@ -123,22 +123,30 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
     
     std::cout << "w0: " << w0 << std::endl;
     
-    long double const wc = (3/2) * (gamma * gamma * gamma) * (w0);
+    double const w01 = TOSCARSSR::AngularFrequencyToEv(w0);
     
     std::cout << std::setprecision(40) << std::endl;
-    std::cout << "wc: " << wc << std::endl;
-
-    double const wc1 = TOSCARSSR::AngularFrequencyToEv( wc);
+    std::cout << "w01: " << w01 << std::endl;
+    
+    long double const wc1 = gamma * gamma * gamma;
     
     std::cout << std::setprecision(40) << std::endl;
     std::cout << "wc1: " << wc1 << std::endl;
     
+    double const wc2 = 1.5 * wc1;
+    
+    std::cout << std::setprecision(40) << "wc2: " << wc2 << std::endl;
+
+    double const wc3 = wc2 * w01;
+    
+    std::cout << std::setprecision(40) << "wc3: " << wc3 << std::endl;
+    
     double const psi = Angle;
     
-    std::cout << std::setprecision(40) << std::endl;
+    std::cout << std::setprecision(10) << std::endl;
     std::cout << "psi: " << psi << std::endl;
     
-    double const xi = (1/2) * (wc / wc) * sqrt(1 + (gamma*gamma) * (psi*psi)) * sqrt(1 + (gamma*gamma) * (psi*psi)) * sqrt(1 + (gamma*gamma) * (psi*psi));
+    double const xi = (1/2) * (1) * sqrt(1 + (gamma*gamma) * (psi*psi)) * sqrt(1 + (gamma*gamma) * (psi*psi)) * sqrt(1 + (gamma*gamma) * (psi*psi));
     
     std::cout << std::setprecision(40) << std::endl;
     std::cout << "xi: " << xi << std::endl;
