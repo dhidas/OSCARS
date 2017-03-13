@@ -166,6 +166,7 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
     
   double const pi = TOSCARSSR::Pi();
     
+    std::cout << std::endl;
     std::cout << "pi: " << pi << std::endl;
     
   double const Epsilon0 = TOSCARSSR::Epsilon0();
@@ -176,8 +177,9 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
     
     std::cout << "c: " << c << std::endl;
     
-  double const d2I1 = (3./4.) * ((Q*Q*gamma*gamma) / (4 * (pi*pi*pi) * Epsilon0 * c));
+  double const d2I1 = (3./4.) * ((Q*Q*gamma*gamma) / (4. * (pi*pi*pi) * Epsilon0 * c));
     
+    std::cout << std::endl;
     std::cout << "d2I1: " << d2I1 << std::endl;
     
     double const d2I2 = myK2 + (((gamma*gamma*psi*psi) / (1 + (gamma*gamma*psi*psi))) * myK1);
@@ -192,5 +194,18 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
     
     std::cout << "d2I: " << d2I << std::endl;
     
-  return d2I;
+    double const alpha = 1. / 137.;
+    
+    std::cout << std::endl;
+    std::cout << "alpha: " << alpha << std::endl;
+    
+    double const I = 0.5;
+    
+    std::cout << "I: " << I << std::endl;
+    
+    double const d = (3./4.) * (alpha / (pi*pi)) * (gamma*gamma) * (I / Q) * (1) * d2I3 * d2I2;
+    
+    std::cout << "d: " << d << std::endl;
+    
+  return d;
 }
