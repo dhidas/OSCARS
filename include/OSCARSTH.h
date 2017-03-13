@@ -18,7 +18,7 @@ class OSCARSTH
     ~OSCARSTH ();
 
     double UndulatorK (double const BFieldMax, double const Period) const;
-    double DipoleSpectrum (double const BField, double const BeamEnergy_GeV, double const Angle, TVector2D const EnergyRange_eV) const;
+    double DipoleSpectrum (double const BField, double const BeamEnergy_GeV, double const Angle, double const Energy_eV) const;
 };
 
 

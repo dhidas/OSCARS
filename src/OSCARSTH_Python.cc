@@ -136,11 +136,12 @@ static PyObject* OSCARSTH_DipoleSpectrum(OSCARSTHObject* self, PyObject* args, P
   double BField = 0;
   double BeamEnergy = 0;
   double Angle = 0;
-  PyObject* List_EnergyRange = PyList_New(0);
+  double Energy_eV = 0;
+  //PyObject* List_EnergyRange = PyList_New(0);
 
   // Input variables and parsing
-  static char *kwlist[] = {"bfield", "beam_energy_GeV", "angle", "energy_range_eV", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dddO", kwlist, &BField, &BeamEnergy, &Angle, &List_EnergyRange)) {
+  static char *kwlist[] = {"bfield", "beam_energy_GeV", "angle", "energy_eV", NULL};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dddd", kwlist, &BField, &BeamEnergy, &Angle, &Energy_eV)) {
     return NULL;
   }
 
@@ -150,18 +151,19 @@ static PyObject* OSCARSTH_DipoleSpectrum(OSCARSTHObject* self, PyObject* args, P
     return NULL;
   }
 
-  TVector2D const EnergyRange = OSCARSTH_ListAsTVector2D(List_EnergyRange);
-  if (EnergyRange[0] >= EnergyRange[1] || EnergyRange[0] <= 1 || EnergyRange[1] <= 0) {
-    PyErr_SetString(PyExc_ValueError, "'energy_range_eV' is incorrect");
-    return NULL;
-  }
+  //TVector2D const EnergyRange = OSCARSTH_ListAsTVector2D(List_EnergyRange);
+  //if (EnergyRange[0] >= EnergyRange[1] || EnergyRange[0] <= 1 || EnergyRange[1] <= 0) {
+  //  PyErr_SetString(PyExc_ValueError, "'energy_range_eV' is incorrect");
+  //  return NULL;
+  //}
 
   // Calculate the spectrum
-  self->obj->DipoleSpectrum(BField, BeamEnergy, Angle, EnergyRange);
+  double const Result = self->obj->DipoleSpectrum(BField, BeamEnergy, Angle, Energy_eV);
 
+  return Py_BuildValue("d", Result);
   // Must return python object None in a special way
-  Py_INCREF(Py_None);
-  return Py_None;
+  //Py_INCREF(Py_None);
+  //return Py_None;
 }
 
 

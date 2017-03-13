@@ -42,12 +42,13 @@ double OSCARSTH::UndulatorK (double const BFieldMax, double const Period) const
 }
 
 
-double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_GeV, double const Angle, TVector2D const EnergyRange_eV) const
+double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_GeV, double const Angle, double const Energy_eV) const
 {
   std::cout << "BField:         " << BField << std::endl;
   std::cout << "BeamEnergy_GeV: " << BeamEnergy_GeV << std::endl;
   std::cout << "Angle:          " << Angle << std::endl;
-  std::cout << "EnergyRange_eV: " << EnergyRange_eV << std::endl;
+  std::cout << "Energy_eV:      " << Energy_eV << std::endl;
+  //std::cout << "EnergyRange_eV: " << EnergyRange_eV << std::endl;
     
   double const R = BeamEnergy_GeV  * 1e9 / (BField * TOSCARSSR::C());
     
@@ -165,12 +166,31 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
     
   double const pi = TOSCARSSR::Pi();
     
-    std::cout << "pi: " << pi << std::endl'
+    std::cout << "pi: " << pi << std::endl;
     
-  double const d2I1 = (3./4.) * ((Q*Q) / (4 * (pi*pi*pi) * ))
+  double const Epsilon0 = TOSCARSSR::Epsilon0();
     
+    std::cout << "Epsilon0: " << Epsilon0 << std::endl;
     
+  double const c = TOSCARSSR::C();
     
+    std::cout << "c: " << c << std::endl;
     
-  return myK1;
+  double const d2I1 = (3./4.) * ((Q*Q*gamma*gamma) / (4 * (pi*pi*pi) * Epsilon0 * c));
+    
+    std::cout << "d2I1: " << d2I1 << std::endl;
+    
+    double const d2I2 = myK2 + (((gamma*gamma*psi*psi) / (1 + (gamma*gamma*psi*psi))) * myK1);
+    
+    std::cout << "d2I2: " << d2I2 << std::endl;
+    
+    double const d2I3 = ((w / wc4) * (w / wc4)) * ((1 + (gamma*gamma)*(psi*psi))*(1 + (gamma*gamma)*(psi*psi)));
+    
+    std::cout << "d2I3: " << d2I3 << std::endl;
+    
+  double const d2I = d2I1 * d2I2 * d2I3;
+    
+    std::cout << "d2I: " << d2I << std::endl;
+    
+  return d2I;
 }
