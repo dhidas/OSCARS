@@ -158,11 +158,12 @@ static PyObject* OSCARSTH_DipoleSpectrum(OSCARSTHObject* self, PyObject* args, P
   //}
 
   // Calculate the spectrum
-  self->obj->DipoleSpectrum(BField, BeamEnergy, Angle, Energy_eV);
+  double const Result = self->obj->DipoleSpectrum(BField, BeamEnergy, Angle, Energy_eV);
 
+  return Py_BuildValue("d", Result);
   // Must return python object None in a special way
-  Py_INCREF(Py_None);
-  return Py_None;
+  //Py_INCREF(Py_None);
+  //return Py_None;
 }
 
 
