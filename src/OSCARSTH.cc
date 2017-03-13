@@ -151,15 +151,22 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
     std::cout << std::setprecision(40) << std::endl;
     std::cout << "xi: " << xi << std::endl;
     
-    double const K = TOMATH::BesselK( 2/3, xi);
+    double const K2 = TOMATH::BesselK( 2/3, xi);
     
     std::cout << std::setprecision(40) << std::endl;
-    std::cout << "K: " << K << std::endl;
+    std::cout << "K2: " << K2 << std::endl;
     
-    double const myK = K * K;
+    double const myK2 = K2 * K2;
     
-    std::cout << std::setprecision(40) << std::endl;
-    std::cout << "myK: " << myK << std::endl;
+    std::cout << std::setprecision(40) << "myK2: " << myK2 << std::endl;
     
-  return myK;
+    double const K1 = TOMATH::BesselK( 1/3, xi);
+    
+    std::cout << std::setprecision(40) << "K1: " << K1 << std::endl;
+    
+    double const myK1 = K1 * K1;
+    
+    std::cout << std::setprecision(40) << "myK1: " << myK1 << std::endl;
+    
+  return myK1;
 }
