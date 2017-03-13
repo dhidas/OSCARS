@@ -42,12 +42,13 @@ double OSCARSTH::UndulatorK (double const BFieldMax, double const Period) const
 }
 
 
-double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_GeV, double const Angle, TVector2D const EnergyRange_eV) const
+double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_GeV, double const Angle, double const Energy_eV) const
 {
   std::cout << "BField:         " << BField << std::endl;
   std::cout << "BeamEnergy_GeV: " << BeamEnergy_GeV << std::endl;
   std::cout << "Angle:          " << Angle << std::endl;
-  std::cout << "EnergyRange_eV: " << EnergyRange_eV << std::endl;
+  std::cout << "Energy_eV:      " << Energy_eV << std::endl;
+  //std::cout << "EnergyRange_eV: " << EnergyRange_eV << std::endl;
     
   double const R = BeamEnergy_GeV  * 1e9 / (BField * TOSCARSSR::C());
     
