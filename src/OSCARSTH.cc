@@ -141,12 +141,20 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
     
     std::cout << std::setprecision(40) << "wc3: " << wc3 << std::endl;
     
+    double const wc4 = TOSCARSSR::EvToAngularFrequency(wc3);
+    
+    std::cout << std::setprecision(40) << "wc4: " << wc4 << std::endl;
+    
+    double const w = TOSCARSSR::EvToAngularFrequency(2390);
+    
+    std::cout << std::setprecision(40) << "w: " << w << std::endl;
+    
     double const psi = Angle;
     
     std::cout << std::setprecision(10) << std::endl;
     std::cout << "psi: " << psi << std::endl;
     
-    double const xi = (1/2) * (1) * sqrt(1 + (gamma*gamma) * (psi*psi)) * sqrt(1 + (gamma*gamma) * (psi*psi)) * sqrt(1 + (gamma*gamma) * (psi*psi));
+    double const xi = (1/2) * (w / wc4) * sqrt(1 + (gamma*gamma) * (psi*psi)) * sqrt(1 + (gamma*gamma) * (psi*psi)) * sqrt(1 + (gamma*gamma) * (psi*psi));
     
     std::cout << std::setprecision(40) << std::endl;
     std::cout << "xi: " << xi << std::endl;
