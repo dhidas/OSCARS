@@ -137,7 +137,7 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
     
     std::cout << std::setprecision(40) << "w: " << w << std::endl;
     
-  double const psi = 0;
+  double const psi = -(3 * Angle);
     
     std::cout << std::setprecision(10) << std::endl;
     std::cout << "psi: " << psi << std::endl;
@@ -194,16 +194,20 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
     
     std::cout << "d2I: " << d2I << std::endl;
     
-    double const alpha = 1. / 137.;
+    double const Hbar = TOSCARSSR::Hbar();
     
     std::cout << std::endl;
+    std::cout << "Hbar: " << Hbar << std::endl;
+    
+    double const alpha = (Q*Q) / (4. * (pi*pi*pi) * Epsilon0 * c * Hbar);
+    
     std::cout << "alpha: " << alpha << std::endl;
     
     double const I = 0.5;
     
     std::cout << "I: " << I << std::endl;
     
-    double const d = (3./4.) * (alpha / (pi*pi)) * (gamma*gamma) * (I / Q) * (1) * d2I3 * d2I2;
+    double const d = (3./4.) * (alpha) * (gamma*gamma) * (I / Q) * (1.) * d2I3 * d2I2;
     
     std::cout << "d: " << d << std::endl;
     
