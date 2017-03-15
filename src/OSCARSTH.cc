@@ -133,11 +133,11 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
     
     std::cout << std::setprecision(40) << "wc4: " << wc4 << std::endl;
     
-  double const w = TOSCARSSR::EvToAngularFrequency(2390);
+  double const w = TOSCARSSR::EvToAngularFrequency(Energy_eV);
     
     std::cout << std::setprecision(40) << "w: " << w << std::endl;
     
-  double const psi = -(3 * Angle);
+  double const psi = 0;
     
     std::cout << std::setprecision(10) << std::endl;
     std::cout << "psi: " << psi << std::endl;
