@@ -137,7 +137,7 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
     
     std::cout << std::setprecision(40) << "w: " << w << std::endl;
     
-  double const psi = 0;
+  double const psi = Angle;
     
     std::cout << std::setprecision(10) << std::endl;
     std::cout << "psi: " << psi << std::endl;
