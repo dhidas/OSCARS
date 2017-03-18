@@ -9,14 +9,16 @@
 #include "OSCARSTH.h"
 
 #include <iostream>
+#include <cmath>
+#include <iomanip>
+#include <complex>
 
 #include "TOSCARSSR.h"
-
-#include <cmath>
-
-#include <iomanip>
-
 #include "TOMATH.h"
+
+
+
+
 
 OSCARSTH::OSCARSTH ()
 {
@@ -216,4 +218,32 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
     std::cout << "d2N: " << d2N << std::endl;
     
   return d2N;
+}
+
+
+
+
+
+double OSCARSTH::UndulatorFlux (double const BField, double const Period, double const NPeriods, double const BeamEnergy, double const AngleV, double const AngleH,  double const Energy_eV) const
+{
+  // Return the flux at a given energy and horizontal and vertical angle [photons/s/mrad^2/0.1%bw]
+
+  // Print input fields as a check
+  std::cout << "BField:       " << BField << std::endl;
+  std::cout << "Period:       " << Period << std::endl;
+  std::cout << "NPeriods:     " << NPeriods << std::endl;
+  std::cout << "BeamEnergy:   " << BeamEnergy << std::endl;
+  std::cout << "AngleV:       " << AngleV << std::endl;
+  std::cout << "AngleH:       " << AngleH << std::endl;
+  std::cout << "Energy_eV:    " << Energy_eV << std::endl;
+
+  // The undulator K
+  double const K = this->UndulatorK(BField, Period);
+  std::cout << "K:            " << K << std::endl;
+
+  // This is a complex number
+  std::complex<double> const I(0, 1);
+  std::cout << "I:            " << I << std::endl;
+
+  return 0;
 }

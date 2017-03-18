@@ -126,8 +126,8 @@ static PyObject* OSCARSTH_UndulatorK (OSCARSTHObject* self, PyObject* args, PyOb
 
 
 
-const char* DOC_OSCARSTH_DipoleSpectrum= "Get the spectrum from ideal dipole field";
-static PyObject* OSCARSTH_DipoleSpectrum(OSCARSTHObject* self, PyObject* args, PyObject* keywds)
+const char* DOC_OSCARSTH_DipoleSpectrum = "Get the spectrum from ideal dipole field";
+static PyObject* OSCARSTH_DipoleSpectrum (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {
   // Return a list of points corresponding to the flux in a given energy range for a given vertical angle.
   // This approximation assumes that the particle beam is perpendicular to the magnetic field
@@ -165,6 +165,62 @@ static PyObject* OSCARSTH_DipoleSpectrum(OSCARSTHObject* self, PyObject* args, P
   //Py_INCREF(Py_None);
   //return Py_None;
 }
+
+
+
+
+
+const char* DOC_OSCARSTH_UndulatorFlux = "Get the flux for an ideal undulator";
+static PyObject* OSCARSTH_UndulatorFlux (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
+{
+  // Return the flux [gamma/s/mrad^2/0.1%bw] at a given angle
+  // This approximation assumes that the particle beam is perpendicular to the magnetic field
+
+  // Require 2 arguments
+  double BField = 0;
+  double NPeriods = 0;
+  double Period = 0;
+  double BeamEnergy = 0;
+  double AngleV = 0;
+  double AngleH = 0;
+  double Energy_eV = 0;
+
+  // Input variables and parsing
+  static char *kwlist[] = {"bfield", "period", "nperiods", "beam_energy_GeV", "angle_vertical", "angle_horizontal", "energy_eV", NULL};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ddddddd", kwlist, &BField, &Period, &NPeriods, &BeamEnergy, &AngleV, &AngleH, &Energy_eV)) {
+    return NULL;
+  }
+
+  // Check that beam energy makes sense
+  if (BeamEnergy <= 0) {
+    PyErr_SetString(PyExc_ValueError, "'beam_energy_GeV' must be > 0");
+    return NULL;
+  }
+
+  // Check period and nperiods
+  if (Period <= 0 || NPeriods <= 0) {
+    PyErr_SetString(PyExc_ValueError, "'period' and 'nperiods' must be > 0");
+    return NULL;
+  }
+
+  // Check that photon energy is > 0
+  if (Energy_eV <= 0) {
+    PyErr_SetString(PyExc_ValueError, "'energy_eV' must be > 0");
+    return NULL;
+  }
+
+
+
+  // Calculate the spectrum
+  double const Result = self->obj->UndulatorFlux(BField, Period, NPeriods, BeamEnergy, AngleV, AngleH, Energy_eV);
+
+  return Py_BuildValue("d", Result);
+}
+
+
+
+
+
 
 
 
@@ -231,6 +287,7 @@ static PyMethodDef OSCARSTH_methods[] = {
   {"undulator_K",                                (PyCFunction) OSCARSTH_UndulatorK,                              METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorK},
 
   {"dipole_spectrum",                            (PyCFunction) OSCARSTH_DipoleSpectrum,                          METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleSpectrum},
+  {"undulator_flux",                             (PyCFunction) OSCARSTH_UndulatorFlux,                           METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorFlux},
   {"bessel_k",                                   (PyCFunction) OSCARSTH_BesselK,                                 METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_BesselK},
 
   {NULL}  /* Sentinel */
