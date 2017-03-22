@@ -314,7 +314,7 @@ static PyObject* OSCARSTH_UndulatorFluxKHarmonic (OSCARSTHObject* self, PyObject
   int    Harmonic = 0;
 
   // Input variables and parsing
-  static char *kwlist[] = {"k", "period", "nperiods", "beam_energy_GeV", "harmonic", "NULL"};
+  static char *kwlist[] = {"k", "period", "nperiods", "beam_energy_GeV", "harmonic", NULL};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "ddidi", kwlist, 
                                                           &K,
                                                           &Period,
@@ -330,7 +330,6 @@ static PyObject* OSCARSTH_UndulatorFluxKHarmonic (OSCARSTHObject* self, PyObject
     return NULL;
   }
 
-  /*
   // Check that K is > 0
   if (K <= 0) {
     PyErr_SetString(PyExc_ValueError, "'k' must be > 0");
@@ -355,7 +354,6 @@ static PyObject* OSCARSTH_UndulatorFluxKHarmonic (OSCARSTHObject* self, PyObject
     PyErr_SetString(PyExc_ValueError, "'harmonic' must be > 0");
     return NULL;
   }
-  */
 
   // Calculate the spectrum
   double const Result = self->obj->UndulatorFluxKHarmonic(K, Period, NPeriods, BeamEnergy, Harmonic);
