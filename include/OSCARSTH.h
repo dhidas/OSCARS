@@ -9,6 +9,7 @@
 ////////////////////////////////////////////////////////////////////
 
 #include "TVector2D.h"
+#include "TOMATH.h"
 
 
 class OSCARSTH
@@ -20,6 +21,22 @@ class OSCARSTH
     double UndulatorK (double const BFieldMax, double const Period) const;
     double DipoleSpectrum (double const BField, double const BeamEnergy_GeV, double const Angle, double const Energy_eV) const;
     double UndulatorFlux (double const BField, double const Period, double const NPeriods, double const BeamEnergy, double const AngleV, double const AngleH,  double const Energy_eV) const;
+
+
+    double UndulatorFluxKHarmonic (double const K,
+                                   double const Period,
+                                   double const NPeriods,
+                                   double const BeamEnergy,
+                                   int const Harmonic) const;
+
+    double UndulatorFluxOnAxis (double const BField,
+                                double const Period,
+                                double const NPeriods,
+                                double const BeamEnergy,
+                                double const Energy_eV,
+                                int const FirstHarmonic,
+                                int const LastHarmonic) const;
+
 };
 
 

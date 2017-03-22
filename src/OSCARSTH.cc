@@ -247,3 +247,44 @@ double OSCARSTH::UndulatorFlux (double const BField, double const Period, double
 
   return 0;
 }
+
+
+
+double J(int const n, double const x)
+{
+  return TOMATH::BesselJ(n, x);;
+}
+
+
+double OSCARSTH::UndulatorFluxKHarmonic (double const K, double const Period, double const NPeriods, double const BeamEnergy, int const Harmonic) const
+{
+  // Return the on-axis flux for this K value and harmonic
+
+  std::cout << "K             " << K << std::endl;
+  std::cout << "Period:       " << Period << std::endl;
+  std::cout << "NPeriods:     " << NPeriods << std::endl;
+  std::cout << "BeamEnergy:   " << BeamEnergy << std::endl;
+  std::cout << "Harmonic      " << Harmonic << std::endl;
+
+  return 0;
+}
+
+double OSCARSTH::UndulatorFluxOnAxis (double const BField, double const Period, double const NPeriods, double const BeamEnergy, double const Energy_eV, int const FirstHarmonic, int const LastHarmonic) const
+{
+  // Return the flux at a given energy and horizontal and vertical angle [photons/s/mrad^2/0.1%bw]
+
+  // Print input fields as a check
+  std::cout << "BField:       " << BField << std::endl;
+  std::cout << "Period:       " << Period << std::endl;
+  std::cout << "NPeriods:     " << NPeriods << std::endl;
+  std::cout << "BeamEnergy:   " << BeamEnergy << std::endl;
+  std::cout << "Energy_eV:    " << Energy_eV << std::endl;
+  std::cout << "FirstHarmonic " << FirstHarmonic << std::endl;
+  std::cout << "LastHarmonic  " << LastHarmonic << std::endl;
+
+  // The undulator K
+  double const K = this->UndulatorK(BField, Period);
+  double const K2 = K * K;
+
+  return 0;
+}
