@@ -266,7 +266,15 @@ double OSCARSTH::UndulatorFluxKHarmonic (double const K, double const Period, do
   std::cout << "BeamEnergy:   " << BeamEnergy << std::endl;
   std::cout << "Harmonic      " << Harmonic << std::endl;
 
-  return 0;
+    double const n = 1.;
+    
+    std::cout << "n: " << n << std::endl;
+    
+    double const JBessel = (n * K * K) / (4. + (2. * K * K));
+    
+    std::cout << "JBessel: " << JBessel << std::endl;
+    
+  return JBessel;
 }
 
 double OSCARSTH::UndulatorFluxOnAxis (double const BField, double const Period, double const NPeriods, double const BeamEnergy, double const Energy_eV, int const FirstHarmonic, int const LastHarmonic) const
