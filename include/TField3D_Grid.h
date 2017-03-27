@@ -40,6 +40,13 @@ class TField3D_Grid : public TField
     void ReadFile_SPECTRA   (std::string const&, TVector3D const& Rotations = TVector3D(0, 0, 0), TVector3D const& Translation = TVector3D(0, 0, 0), char const CommentChar = '#');
 
     void InterpolateFromFiles (std::vector<std::pair<double, std::string> > const&, double const, TVector3D const& Rotations = TVector3D(0, 0, 0), TVector3D const& Translation = TVector3D(0, 0, 0), std::vector<double> const& Scaling = std::vector<double>(), char const CommentChar = '#');
+    void InterpolateFromFiles_OSCARS1D (std::vector<std::pair<double, std::string> > const& Mapping,
+                                        double const Parameter,
+                                        std::string const& InFormat,
+                                        TVector3D const& Rotations,
+                                        TVector3D const& Translation,
+                                        std::vector<double> const& Scaling,
+                                        char const CommentChar = '#');
 
     TVector3D InterpolateFields (std::vector<double> const&, std::vector<TVector3D> const&, double const);
 
