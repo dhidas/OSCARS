@@ -20,6 +20,7 @@ class TVector3D
 {
   public:
     TVector3D ();
+    TVector3D (double const);
     TVector3D (double const, double const, double const);
     ~TVector3D ();
 
@@ -64,6 +65,10 @@ class TVector3D
     double     operator [] (int const) const;
     double&    operator [] (int const);
 
+    // This one is special for spline calculation.
+    TVector3D  operator  * (TVector3D const&) const;
+    TVector3D  operator  / (TVector3D const&) const;
+    TVector3D  operator  - (double const&) const;
 
 
   private:
@@ -147,6 +152,15 @@ inline TVector3D operator * (TVector3D const& L, double const V)
 {
   // Multiply vector by some scalar
   return TVector3D(L.GetX() * V, L.GetY() * V, L.GetZ() * V);
+}
+
+
+
+
+inline TVector3D operator / (double const V, TVector3D const& R)
+{
+  // Multiply vector by some scalar
+  return TVector3D(V / R.GetX(), V / R.GetY(), V / R.GetZ());
 }
 
 
