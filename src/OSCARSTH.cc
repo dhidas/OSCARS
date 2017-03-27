@@ -286,7 +286,11 @@ double OSCARSTH::UndulatorFluxKHarmonic (double const K, double const Period, do
     
     std::cout << "c: " << c << std::endl;
     
-    double const gamma2 = (Me * c * c)/ BeamEnergy;
+    double const E = BeamEnergy * 1e9;
+    
+    std::cout << "E: " << E << std::endl;
+    
+    double const gamma2 = (Me * c * c)/ E;
     
     std::cout << "gamma2: " << gamma2 << std::endl;
     
