@@ -256,14 +256,14 @@ double J(int const n, double const x)
 }
 
 
-double OSCARSTH::UndulatorFluxKHarmonic (double const K, double const Period, double const NPeriods, double const BeamEnergy, int const Harmonic) const
+double OSCARSTH::UndulatorFluxKHarmonic (double const K, double const Period, double const NPeriods, double const BeamEnergyGeV, int const Harmonic) const
 {
   // Return the on-axis flux for this K value and harmonic
 
   std::cout << "K             " << K << std::endl;
   std::cout << "Period:       " << Period << std::endl;
   std::cout << "NPeriods:     " << NPeriods << std::endl;
-  std::cout << "BeamEnergy:   " << BeamEnergy << std::endl;
+  std::cout << "BeamEnergyGeV:   " << BeamEnergyGeV << std::endl;
   std::cout << "Harmonic      " << Harmonic << std::endl;
 
     double const n = 1.;
@@ -274,27 +274,19 @@ double OSCARSTH::UndulatorFluxKHarmonic (double const K, double const Period, do
     
     std::cout << "nu: " << nu << std::endl;
     
-    double const JBessel = (n * K * K) / (4. + (2. * K * K));
+    double const JB = (n * K * K) / (4. + (2. * K * K));
     
-    std::cout << "JBessel: " << JBessel << std::endl;
+    std::cout << "JB: " << JB << std::endl;
     
-    double const Me = 0.511e6;
-    
-    std::cout << "Me: " << Me << std::endl;
-    
-    double const c = TOSCARSSR::C();
-    
-    std::cout << "c: " << c << std::endl;
-    
-    double const E = BeamEnergy * 1e9;
+    double const E = BeamEnergyGeV * 1e9;
     
     std::cout << "E: " << E << std::endl;
     
-    double const gamma2 = (Me * c * c)/ E;
+    double const gamma = BeamEnergyGeV / TOSCARSSR::kgToGeV( TOSCARSSR::Me());
     
-    std::cout << "gamma2: " << gamma2 << std::endl;
+    std::cout << "gamma: " << gamma << std::endl;
     
-    double const JBessel1 = TOMATH::BesselJ(nu, JBessel);
+    double const JBessel1 = TOMATH::BesselJ(nu, JB);
     
     std::cout << "JBessel1: " << JBessel1 << std::endl;
     
@@ -310,7 +302,7 @@ double OSCARSTH::UndulatorFluxKHarmonic (double const K, double const Period, do
     
     std::cout << "z3: " << z3 << std::endl;
     
-    double const JBessel2 = z3 * gamma2 * JBessel1;
+    double const JBessel2 = z3 * gamma * JBessel1;
     
     std::cout << "JBessel2: " << JBessel2 << std::endl;
     
