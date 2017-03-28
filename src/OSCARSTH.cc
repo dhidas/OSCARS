@@ -304,6 +304,7 @@ double OSCARSTH::UndulatorFluxKHarmonic (double const K, double const Period, do
     
     double const JBessel2 = z3 * gamma * JBessel1;
     
+    std::cout << std::setprecision(20) << std::endl;
     std::cout << "JBessel2: " << JBessel2 << std::endl;
     
   return JBessel2;
