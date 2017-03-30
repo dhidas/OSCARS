@@ -274,6 +274,10 @@ double OSCARSTH::UndulatorFluxKHarmonic (double const K, double const Period, do
     
     std::cout << "nu: " << nu << std::endl;
     
+    double const nu2 = (n - 1.) / 2.;
+    
+    std::cout << "nu2: " << nu2 << std::endl;
+    
     double const JB = (n * K * K) / (4. + (2. * K * K));
     
     std::cout << "JB: " << JB << std::endl;
@@ -290,6 +294,10 @@ double OSCARSTH::UndulatorFluxKHarmonic (double const K, double const Period, do
     
     std::cout << "JBessel1: " << JBessel1 << std::endl;
     
+    double const JBessel3 = TOMATH::BesselJ(nu2, JB);
+    
+    std::cout << "JBessel3: " << JBessel3 << std::endl;
+    
     double const z1 = n * K;
     
     std::cout << "z1: " << z1 << std::endl;
@@ -302,7 +310,7 @@ double OSCARSTH::UndulatorFluxKHarmonic (double const K, double const Period, do
     
     std::cout << "z3: " << z3 << std::endl;
     
-    double const JBessel2 = z3 * gamma * JBessel1;
+    double const JBessel2 = z3 * gamma * (JBessel1 - JBessel3);
     
     std::cout << std::setprecision(20) << std::endl;
     std::cout << "JBessel2: " << JBessel2 << std::endl;
