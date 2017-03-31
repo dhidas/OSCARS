@@ -310,12 +310,56 @@ double OSCARSTH::UndulatorFluxKHarmonic (double const K, double const Period, do
     
     std::cout << "z3: " << z3 << std::endl;
     
-    double const JBessel2 = z3 * gamma * (JBessel1 - JBessel3);
+    double const h0 = z3 * gamma * (JBessel1 - JBessel3);
     
     std::cout << std::setprecision(20) << std::endl;
-    std::cout << "JBessel2: " << JBessel2 << std::endl;
+    std::cout << "h0: " << h0 << std::endl;
     
-  return JBessel2;
+    double const Q = TOSCARSSR::Qe();
+    
+    std::cout << "Q: " << Q << std::endl;
+    
+    double const c = TOSCARSSR::C();
+    
+    std::cout << "c: " << c << std::endl;
+    
+    double const pi = TOSCARSSR::Pi();
+    
+    std::cout << "pi: " << pi << std::endl;
+    
+    double const Epsilon0 = TOSCARSSR::Epsilon0();
+    
+    std::cout << "Epsilon0: " << Epsilon0 << std::endl;
+    
+    double const Hbar = TOSCARSSR::Hbar();
+    
+    std::cout << "Hbar: " << Hbar << std::endl;
+    
+    double const alpha = (Q*Q) / (4. * (pi*pi*pi) * Epsilon0 * c * Hbar);
+    
+    std::cout << "alpha: " << alpha << std::endl;
+    
+    double const I = 0.5;
+    
+    std::cout << "I: " << I << std::endl;
+    
+    double const N = 1.;
+    
+    std::cout << "N: " << N << std::endl;
+    
+    double const Nsq = N * N;
+    
+    std::cout << "Nsq: " << Nsq << std::endl;
+    
+    double const h0squrd = h0 * h0;
+    
+    std::cout << "h0squrd: " << h0squrd << std::endl;
+    
+    double const h00 = alpha * (I / Q) * Nsq * h0squrd;
+    
+    std::cout << "h00: " << h00 << std::endl;
+    
+  return h00;
 }
 
 double OSCARSTH::UndulatorFluxOnAxis (double const BField, double const Period, double const NPeriods, double const BeamEnergy, double const Energy_eV, int const FirstHarmonic, int const LastHarmonic) const
