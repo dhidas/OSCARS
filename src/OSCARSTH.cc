@@ -343,7 +343,7 @@ double OSCARSTH::UndulatorFluxKHarmonic (double const K, double const Period, do
     
     std::cout << "I: " << I << std::endl;
     
-    double const N = 1.;
+    double const N = NPeriods;
     
     std::cout << "N: " << N << std::endl;
     
@@ -355,7 +355,11 @@ double OSCARSTH::UndulatorFluxKHarmonic (double const K, double const Period, do
     
     std::cout << "h0squrd: " << h0squrd << std::endl;
     
-    double const h00 = alpha * (I / Q) * Nsq * h0squrd;
+    double const h001 = alpha * (I / Q) * Nsq * h0squrd;
+    
+    std::cout << "h001: " << h001 << std::endl;
+    
+    double const h00 = h001 * 1e-6;
     
     std::cout << "h00: " << h00 << std::endl;
     
