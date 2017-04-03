@@ -23,11 +23,11 @@ class OSCARSTH
     double UndulatorFlux (double const BField, double const Period, double const NPeriods, double const BeamEnergy, double const AngleV, double const AngleH,  double const Energy_eV) const;
 
 
-    double UndulatorFluxKHarmonic (double const K,
-                                   double const Period,
-                                   double const NPeriods,
-                                   double const BeamEnergy,
-                                   int const Harmonic) const;
+    TVector2D UndulatorFluxKHarmonic (double const K,
+                                      double const Period,
+                                      double const NPeriods,
+                                      double const BeamEnergy,
+                                      int const Harmonic) const;
 
     double UndulatorFluxOnAxis (double const BField,
                                 double const Period,

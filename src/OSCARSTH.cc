@@ -256,7 +256,7 @@ double J(int const n, double const x)
 }
 
 
-double OSCARSTH::UndulatorFluxKHarmonic (double const K, double const Period, double const NPeriods, double const BeamEnergyGeV, int const Harmonic) const
+TVector2D OSCARSTH::UndulatorFluxKHarmonic (double const K, double const Period, double const NPeriods, double const BeamEnergyGeV, int const Harmonic) const
 {
   // Return the on-axis flux for this K value and harmonic
 
@@ -363,7 +363,7 @@ double OSCARSTH::UndulatorFluxKHarmonic (double const K, double const Period, do
     
     std::cout << "h00: " << h00 << std::endl;
     
-  return h00;
+  return TVector2D(0, h00);
 }
 
 double OSCARSTH::UndulatorFluxOnAxis (double const BField, double const Period, double const NPeriods, double const BeamEnergy, double const Energy_eV, int const FirstHarmonic, int const LastHarmonic) const

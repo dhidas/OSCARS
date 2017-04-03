@@ -424,9 +424,11 @@ static PyObject* OSCARSTH_UndulatorFluxKHarmonic (OSCARSTHObject* self, PyObject
   }
 
   // Calculate the spectrum
-  double const Result = self->obj->UndulatorFluxKHarmonic(K, Period, NPeriods, BeamEnergy, Harmonic);
+  //double const Result = self->obj->UndulatorFluxKHarmonic(K, Period, NPeriods, BeamEnergy, Harmonic);
+  TVector2D const Result = self->obj->UndulatorFluxKHarmonic(K, Period, NPeriods, BeamEnergy, Harmonic);
 
-  return Py_BuildValue("d", Result);
+  //return Py_BuildValue("d", Result);
+  return OSCARSTH_TVector2DAsList(Result);
 }
 
 
