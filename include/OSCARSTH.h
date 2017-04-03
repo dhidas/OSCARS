@@ -37,6 +37,24 @@ class OSCARSTH
                                 int const FirstHarmonic,
                                 int const LastHarmonic) const;
 
+    double UndulatorFluxWeak (double const K,
+                              double const Period,
+                              double const NPeriods,
+                              double const BeamEnergy,
+                              int const Harmonic) const;
+
+    double DipoleBrightness () const;
+
+    TVector2D UndulatorBrightness (double const BField,
+                                   double const Period,
+                                   int    const NPeriods,
+                                   int    const N,
+                                   double const BeamEnergy_GeV,
+                                   double const SigmaE,
+                                   double const Current,
+                                   TVector2D const BetaX,
+                                   TVector2D const Emittance) const;
+
 };
 
 

@@ -19,6 +19,7 @@ namespace TOMATH
 
 // Modified bessel function K
 double BesselK  (double const nu, double const x);
+double BesselK_IntegralToInfty (double const nu, double const x);
 double BesselJ0 (double const x);
 double BesselJ1 (double const x);
 double BesselJ  (int    const nu, double const x);

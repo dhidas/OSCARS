@@ -328,3 +328,127 @@ double OSCARSTH::UndulatorFluxOnAxis (double const BField, double const Period, 
 
   return 0;
 }
+
+
+
+
+
+
+
+
+double OSCARSTH::UndulatorFluxWeak (double const K, double const Period, double const NPeriods, double const BeamEnergyGeV, int const Harmonic) const
+{
+  // Return the on-axis flux for this K value and harmonic
+
+  std::cout << "K             " << K << std::endl;
+  std::cout << "Period:       " << Period << std::endl;
+  std::cout << "NPeriods:     " << NPeriods << std::endl;
+  std::cout << "BeamEnergyGeV:   " << BeamEnergyGeV << std::endl;
+  std::cout << "Harmonic      " << Harmonic << std::endl;
+
+
+  double const Gamma = BeamEnergyGeV / TOSCARSSR::kgToGeV( TOSCARSSR::Me());
+
+  return Gamma;
+}
+
+
+
+
+
+double OSCARSTH::DipoleBrightness () const
+{
+  double const BField = 0.4;
+  double const BeamEnergy_GeV = 3;
+  double const Energy_eV = 123;
+  double const Angle = 0;
+  double const Current = 0.500;
+  double const EmittanceX = 0.9e-9;
+  double const EmittanceY = 0.008e-9;
+  double const SigmaE = 0.005;
+  
+  double const BetaX = pow(44.2e-6, 2) / EmittanceX;
+  double const BetaY = pow(15.7e-6, 2) / EmittanceY;
+  double const EtaX = 0;
+  double const EtaY = 0;
+
+  double const Gamma = BeamEnergy_GeV / TOSCARSSR::kgToGeV( TOSCARSSR::Me());
+  double const Alpha = 1. / 137.;
+
+  double const Omega = TOSCARSSR::EvToAngularFrequency(Energy_eV);
+  double const OmegaC = 3. * Gamma * Gamma * Gamma * TOSCARSSR::C() / (2. * BeamEnergy_GeV * 1e9 * TOSCARSSR::Qe() / (TOSCARSSR::Qe() * TOSCARSSR::C() * BField));
+
+  double const Y = Omega / OmegaC;
+
+  double const D1F = sqrt(3) / TOSCARSSR::TwoPi() * Alpha * Gamma * 0.001 * Current / TOSCARSSR::Qe() * Y * TOMATH::BesselK_IntegralToInfty(5. / 3., Y);
+  double const D2F = 3. * Alpha / (4 * TOSCARSSR::Pi2()) * Gamma * Gamma * 0.001 * Current / TOSCARSSR::Qe() * Y * Y * pow(TOMATH::BesselK(2. / 3., Y / 2.), 2);
+
+  double const SigmaPsi = 1. / TOSCARSSR::Sqrt2Pi() * D1F / D2F;
+
+  // Diffraction limited source size
+  //double const SigmaR = (TOSCARSSR::C() * TOSCARSSR::TwoPi() / Omega) / (TOSCARSSR::FourPi() * SigmaPsi);
+  double const SigmaR = (TOSCARSSR::C() / Omega) / (2. * SigmaPsi);
+
+
+  double const SigmaX = sqrt(EmittanceX * BetaX + EtaX * EtaX * SigmaE * SigmaE + SigmaR * SigmaR);
+  //double const SigmaY = sqrt(EmittanceY * BetaY + SigmaR * SigmaR + (EmittanceY * EmittanceY + EmittanceY * GammaY * SigmaR * SigmaR) / (SigmaPsi * SigmaPsi));
+
+
+  return TOSCARSSR::AngularFrequencyToEv(OmegaC);
+  return TOMATH::BesselK_IntegralToInfty(2./3., 1);
+}
+
+
+
+
+
+
+TVector2D OSCARSTH::UndulatorBrightness (double const BField,
+                                         double const Period,
+                                         int    const NPeriods,
+                                         int    const N,
+                                         double const BeamEnergy_GeV,
+                                         double const SigmaE,
+                                         double const Current,
+                                         TVector2D const Beta,
+                                         TVector2D const Emittance
+                                         ) const
+{
+  // Return the on-axis theoretical brightness for a planar undulator
+  if (N % 2 == 0) {
+    return TVector2D(0, 0);
+  }
+
+  double const sigx = sqrt(Emittance[0] * Beta[0]);
+  double const sigy = sqrt(Emittance[1] * Beta[1]);
+
+  double const sigxp = sqrt(Emittance[0] / Beta[0]);
+  double const sigyp = sqrt(Emittance[1] / Beta[1]);
+
+  double const Gamma = BeamEnergy_GeV / TOSCARSSR::kgToGeV( TOSCARSSR::Me());
+
+  double const K = this->UndulatorK(BField, Period);
+  double const K2 = K * K;
+
+  double const Lambda = Period / (2 * Gamma * Gamma) * (1. + K2 / 2.) / (double) N;
+  double const Energy_eV = TOSCARSSR::FrequencyToEv(TOSCARSSR::C() / Lambda);
+
+  double const Fn = K2 * N * N / pow(1. + K2 / 2., 2) * pow(
+      TOMATH::BesselJ( (N - 1) / 2, N * K2 / (4 * (1. + 0.5 * K2))) - TOMATH::BesselJ( (N + 1) / 2, N * K2 / (4 * (1. + 0.5 * K2))),
+      2);
+
+  double const Qn = (1. + K2 / 2.) * Fn / (double) N;
+
+  double const Fu = TOSCARSSR::Pi() * TOSCARSSR::Alpha() * NPeriods * 0.001 * Current / TOSCARSSR::Qe() * Qn;
+
+
+  double const sigr = 1 / TOSCARSSR::FourPi() * sqrt(Lambda * Period * NPeriods);
+  double const sigrp = sqrt(Lambda / (Period * NPeriods));
+  double const SigmaX = sqrt(sigx * sigx + sigr * sigr);
+  double const SigmaY = sqrt(sigy * sigy + sigr * sigr);
+  double const SigmaXP = sqrt(sigxp * sigxp + sigrp * sigrp);
+  double const SigmaYP = sqrt(sigyp * sigyp + sigrp * sigrp);
+
+  return TVector2D(Energy_eV, Fu / (4 * TOSCARSSR::Pi2() * SigmaX * SigmaY * SigmaXP * SigmaYP) * 1.e-12);
+  //return TVector2D(Energy_eV, Fu / (TOSCARSSR::TwoPi() * SigmaXP * SigmaYP) * 1e-6);
+}
