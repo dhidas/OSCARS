@@ -266,7 +266,7 @@ TVector2D OSCARSTH::UndulatorFluxKHarmonic (double const K, double const Period,
   std::cout << "BeamEnergyGeV:   " << BeamEnergyGeV << std::endl;
   std::cout << "Harmonic      " << Harmonic << std::endl;
 
-    double const n = 1.;
+    double const n = Harmonic;
     
     std::cout << "n: " << n << std::endl;
     
@@ -363,7 +363,23 @@ TVector2D OSCARSTH::UndulatorFluxKHarmonic (double const K, double const Period,
     
     std::cout << "h00: " << h00 << std::endl;
     
-  return TVector2D(0, h00);
+    double const w1 = 2. * n * c * gamma * gamma;
+    
+    std::cout << "w1: " << w1 << std::endl;
+    
+    double const w2 = Period * (1. + ((K * K)/ 2.));
+    
+    std::cout << "w2: " << w2 << std::endl;
+    
+    double const wn = w1 / w2;
+    
+    std::cout << "wn: " << wn << std::endl;
+    
+    double const omega_1 = TOSCARSSR::FrequencyToEv(wn);
+    
+    std::cout << "omega_1: " << omega_1 << std::endl;
+    
+  return TVector2D(omega_1, h00);
 }
 
 double OSCARSTH::UndulatorFluxOnAxis (double const BField, double const Period, double const NPeriods, double const BeamEnergy, double const Energy_eV, int const FirstHarmonic, int const LastHarmonic) const
