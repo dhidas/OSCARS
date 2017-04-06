@@ -310,6 +310,34 @@ TVector2D OSCARSTH::UndulatorFluxKHarmonic (double const K, double const Period,
     
     std::cout << "JBessel3: " << JBessel3 << std::endl;
     
+    double const Q = TOSCARSSR::Qe();
+    
+    std::cout << "Q: " << Q << std::endl;
+    
+    double const c = TOSCARSSR::C();
+    
+    std::cout << "c: " << c << std::endl;
+    
+    double const Me_eV = TOSCARSSR::kgToGeV(TOSCARSSR::Me()) * 1e9;
+    
+    std::cout << "Me_eV: " << Me_eV << std::endl;
+    
+    double const pi = TOSCARSSR::Pi();
+    
+    std::cout << "pi: " << pi << std::endl;
+    
+    double const K_1 = Q * 1. * Period;
+    
+    std::cout << "K_1: " << K_1 << std::endl;
+    
+    double const K_2 = 2. * pi * Me_eV * c * c;
+    
+    std::cout << "K_2: " << K_2 << std::endl;
+    
+    double const K_0 = K_1 / K_2;
+    
+    std::cout << "K_0: " << K_0 << std::endl;
+    
     double const z1 = n * K;
     
     std::cout << "z1: " << z1 << std::endl;
@@ -327,18 +355,6 @@ TVector2D OSCARSTH::UndulatorFluxKHarmonic (double const K, double const Period,
     std::cout << std::setprecision(20) << std::endl;
     std::cout << "h0: " << h0 << std::endl;
     
-    double const Q = TOSCARSSR::Qe();
-    
-    std::cout << "Q: " << Q << std::endl;
-    
-    double const c = TOSCARSSR::C();
-    
-    std::cout << "c: " << c << std::endl;
-    
-    double const pi = TOSCARSSR::Pi();
-    
-    std::cout << "pi: " << pi << std::endl;
-    
     double const Epsilon0 = TOSCARSSR::Epsilon0();
     
     std::cout << "Epsilon0: " << Epsilon0 << std::endl;
@@ -347,7 +363,7 @@ TVector2D OSCARSTH::UndulatorFluxKHarmonic (double const K, double const Period,
     
     std::cout << "Hbar: " << Hbar << std::endl;
     
-    double const alpha = (Q*Q) / (4. * (pi*pi*pi) * Epsilon0 * c * Hbar);
+    double const alpha = (Q*Q) / (4. * pi * Epsilon0 * c * Hbar);
     
     std::cout << "alpha: " << alpha << std::endl;
     
@@ -371,7 +387,7 @@ TVector2D OSCARSTH::UndulatorFluxKHarmonic (double const K, double const Period,
     
     std::cout << "h001: " << h001 << std::endl;
     
-    double const h00 = h001 * 1e-6;
+    double const h00 = h001 * 1e-6 * 0.001;
     
     std::cout << "h00: " << h00 << std::endl;
     
