@@ -375,7 +375,11 @@ TVector2D OSCARSTH::UndulatorFluxKHarmonic (double const K, double const Period,
     
     std::cout << "h001: " << h001 << std::endl;
     
-    double const h00 = h001 * 1e-6 * 0.001;
+    double const h002 = h001 * 0.001;
+    
+    std::cout << "h002: " << h002 << std::endl;
+    
+    double const h00 = h002 * 1e-6;
     
     std::cout << "h00: " << h00 << std::endl;
     
