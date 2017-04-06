@@ -1612,6 +1612,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   double      Weight                     = 1;
   double      Mass                       = 0;
   double      Charge                     = 0;
+  char const* Beam                       = "";
   PyObject*   List_Position       = PyList_New(0);
   PyObject*   List_Direction             = PyList_New(0);
   PyObject*   List_Rotations             = PyList_New(0);
@@ -1632,34 +1633,51 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
 
 
   // Input variables and parsing
-  static char *kwlist[] = {"type", "name", "energy_GeV", "d0", "x0", "sigma_energy_GeV", "t0", "current", "weight", "rotations", "translation", "horizontal_direction", "beta", "emittance", "lattice_reference", "mass", "charge", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ssdOO|ddddOOOOOOdd", kwlist,
-                                                                       &Type,
-                                                                       &Name,
-                                                                       &Energy_GeV,
-                                                                       &List_Direction,
-                                                                       &List_Position,
-                                                                       &Sigma_Energy_GeV,
-                                                                       &T0,
-                                                                       &Current,
-                                                                       &Weight,
-                                                                       &List_Rotations,
-                                                                       &List_Translation,
-                                                                       &List_Horizontal_Direction,
-                                                                       &List_Beta,
-                                                                       &List_Emittance,
-                                                                       &List_Lattice_Reference,
-                                                                       &Mass,
-                                                                       &Charge)) {
+  static char *kwlist[] = {"type", "name", "energy_GeV", "d0", "x0", "beam", "sigma_energy_GeV", "t0", "current", "weight", "rotations", "translation", "horizontal_direction", "beta", "emittance", "lattice_reference", "mass", "charge", NULL};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ssdOOsddddOOOOOOdd", kwlist,
+                                                                        &Type,
+                                                                        &Name,
+                                                                        &Energy_GeV,
+                                                                        &List_Direction,
+                                                                        &List_Position,
+                                                                        &Beam,
+                                                                        &Sigma_Energy_GeV,
+                                                                        &T0,
+                                                                        &Current,
+                                                                        &Weight,
+                                                                        &List_Rotations,
+                                                                        &List_Translation,
+                                                                        &List_Horizontal_Direction,
+                                                                        &List_Beta,
+                                                                        &List_Emittance,
+                                                                        &List_Lattice_Reference,
+                                                                        &Mass,
+                                                                        &Charge)) {
     return NULL;
   }
 
 
-  // Check that type and name exist
-  if (std::strlen(Type) == 0 || std::strlen(Name) == 0) {
-    PyErr_SetString(PyExc_ValueError, "'type' or 'name' is blank");
+  // Are you asking for one of the predefined beams?
+  bool const HasPredefinedBeam = std::strlen(Beam) != 0 ? true : false;
+
+  // Check that name exist
+  if (std::strlen(Name) == 0) {
+    PyErr_SetString(PyExc_ValueError, "'name' is blank");
     return NULL;
   }
+
+
+  // Check if beam is defined (for predefined beams)
+  if (HasPredefinedBeam) {
+    try {
+      self->obj->AddParticleBeam(Beam, Name);
+    } catch (...) {
+      PyErr_SetString(PyExc_ValueError, "Error in predefined beam name / definition");
+      return NULL;
+    }
+  }
+
+
 
   // Initial position
   if (PyList_Size(List_Position) != 0) {
@@ -1668,6 +1686,11 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'x0'");
       return NULL;
+    }
+
+    // Change predefined beam accordingly
+    if (HasPredefinedBeam) {
+      self->obj->GetParticleBeam(Name).SetX0(Position);
     }
   }
 
@@ -1679,6 +1702,11 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'd0'");
       return NULL;
     }
+
+    // Change predefined beam accordingly
+    if (HasPredefinedBeam) {
+      self->obj->GetParticleBeam(Name).SetU0(Direction);
+    }
   }
 
   if (Sigma_Energy_GeV == 0) {
@@ -1686,6 +1714,11 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   } else if (Sigma_Energy_GeV < 0) {
     PyErr_SetString(PyExc_ValueError, "'sigma_energy_GeV' cannot be less than zero");
     return NULL;
+  } else {
+    // Change predefined beam accordingly
+    if (HasPredefinedBeam) {
+      self->obj->GetParticleBeam(Name).SetSigmaEnergyGeV(Sigma_Energy_GeV);
+    }
   }
 
   // Check for Rotations in the input
@@ -1769,8 +1802,6 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   }
 
 
-
-
   // Rotate beam parameters
   Position.RotateSelfXYZ(Rotations);
   Direction.RotateSelfXYZ(Rotations);
@@ -1786,24 +1817,34 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
 
 
   // Add the particle beam
-  try {
-    if (std::string(Type) == "custom") {
-      if (Mass == 0 || Charge == 0) {
-        PyErr_SetString(PyExc_ValueError, "'mass' or 'charge' is zero");
-        return NULL;
+  if (std::strlen(Beam) == 0) {
+    try {
+      if (std::string(Type) == "custom") {
+        if (Mass == 0 || Charge == 0) {
+          PyErr_SetString(PyExc_ValueError, "'mass' or 'charge' is zero");
+          return NULL;
+        }
+        // UPDATE: for custom beams
+        self->obj->AddParticleBeam(Type, Name, Position, Direction, Energy_GeV, T0, Current, Weight, Charge, Mass);
+      } else {
+        self->obj->AddParticleBeam(Type, Name, Position, Direction, Energy_GeV, T0, Current, Weight);
       }
-      // UPDATE: for custom beams
-      self->obj->AddParticleBeam(Type, Name, Position, Direction, Energy_GeV, T0, Current, Weight, Charge, Mass);
-    } else {
-      self->obj->AddParticleBeam(Type, Name, Position, Direction, Energy_GeV, T0, Current, Weight);
+    } catch (std::invalid_argument e) {
+      PyErr_SetString(PyExc_ValueError, "invalid argument in adding particle beam.  possibly 'name' already exists");
+      return NULL;
     }
-  } catch (std::invalid_argument e) {
-    PyErr_SetString(PyExc_ValueError, "invalid argument in adding particle beam.  possibly 'name' already exists");
-    return NULL;
+    // UPDATE: Change me to include sigma of beam
+    self->obj->GetParticleBeam(Name).SetSigma(Horizontal_Direction, SigmaU, SigmaUPrime, Lattice_Reference, Sigma_Energy_GeV);
   }
 
-  // UPDATE: Change me to include sigma of beam
-  self->obj->GetParticleBeam(Name).SetSigma(Horizontal_Direction, SigmaU, SigmaUPrime, Lattice_Reference, Sigma_Energy_GeV);
+
+  //self->obj->GetParticleBeam(Name).SetCurrent(Current);
+  //self->obj->GetParticleBeam(Name).SetX0(Position);
+  //self->obj->GetParticleBeam(Name).SetU0(Direction);
+  //self->obj->GetParticleBeam(Name).SetT0(T0);
+
+  // Should set weight on input
+  //self->obj->GetParticleBeam(Name).SetWeight(Weight);
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -1915,6 +1956,22 @@ static PyObject* OSCARSSR_ClearParticleBeams (OSCARSSRObject* self)
   // Clear the contents of the particle beam container in OSCARSSR
 
   self->obj->ClearParticleBeams();
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+static PyObject* OSCARSSR_PrintParticleBeams (OSCARSSRObject* self)
+{
+  // Print all particle beams stored in OSCARSSR
+
+  self->obj->GetParticleBeamContainer();
+  std::cout << self->obj->GetParticleBeamContainer() << std::endl;
+
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -3749,6 +3806,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"set_particle_beam",                 (PyCFunction) OSCARSSR_SetParticleBeam,                 METH_VARARGS | METH_KEYWORDS, "add a particle beam"},
   {"add_particle_beam",                 (PyCFunction) OSCARSSR_AddParticleBeam,                 METH_VARARGS | METH_KEYWORDS, "add a particle beam"},
   {"clear_particle_beams",              (PyCFunction) OSCARSSR_ClearParticleBeams,              METH_NOARGS,                  "Clear all existing particle beams from OSCARSSR"},
+  {"print_particle_beams",              (PyCFunction) OSCARSSR_PrintParticleBeams,              METH_NOARGS,                  "Print all existing particle beams in OSCARSSR"},
                                                                                           
   {"set_new_particle",                  (PyCFunction) OSCARSSR_SetNewParticle,                  METH_VARARGS | METH_KEYWORDS, "Set the internal particle to a new random particle"},
   {"get_particle_x0",                   (PyCFunction) OSCARSSR_GetParticleX0,                   METH_NOARGS,                  "Get the position at t0"},

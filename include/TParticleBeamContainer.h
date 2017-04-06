@@ -24,7 +24,21 @@ class TParticleBeamContainer
     TParticleBeamContainer ();
     ~TParticleBeamContainer ();
 
-    void AddNewParticleBeam (std::string const& Type, std::string const& Name, TVector3D const& X0, TVector3D const& D0, double const E0, double const T0, double const Current, double const Weight = 1, double const Charge = 0, double const Mass = 0);
+    void AddNewParticleBeam (std::string const& Type,
+                             std::string const& Name,
+                             TVector3D const& X0,
+                             TVector3D const& D0,
+                             double const E0,
+                             double const T0,
+                             double const Current,
+                             double const Weight = 1,
+                             double const Charge = 0,
+                             double const Mass = 0);
+
+    void AddNewParticleBeam (std::string const& Beam,
+                             std::string const& Name,
+                             double const Weight = 1);
+
     TParticleA GetNewParticle ();
     TParticleBeam& GetParticleBeam (size_t const);
     TParticleBeam& GetParticleBeam (std::string const&);
@@ -45,13 +59,21 @@ class TParticleBeamContainer
 };
 
 
+inline std::ostream& operator << (std::ostream& os, TParticleBeamContainer& o)
+{
+  // For easy printing
+  os << "TParticleBeamContainer" << std::endl;
 
+  size_t const N = o.GetNParticleBeams();
 
+  for (size_t i = 0; i != N; ++i) {
+    TParticleBeam B = o.GetParticleBeam(i);
 
+    os << B << std::endl;
+  }
 
-
-
-
+  return os;
+}
 
 
 

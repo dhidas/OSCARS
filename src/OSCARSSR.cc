@@ -354,6 +354,18 @@ void OSCARSSR::AddParticleBeam (std::string const& Type, std::string const& Name
 
 
 
+void OSCARSSR::AddParticleBeam (std::string const& Beam, std::string const& Name, double const Weight)
+{
+  // Add a particle beam
+  // Beam - The name of the predefined particle beam to add
+
+  fParticleBeamContainer.AddNewParticleBeam(Beam, Name, Weight);
+  return;
+}
+
+
+
+
 TParticleBeam& OSCARSSR::GetParticleBeam (std::string const& Name)
 {
   // Return a reference to the particle beam by a given name

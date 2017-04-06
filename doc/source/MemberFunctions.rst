@@ -151,6 +151,18 @@ oscars.sr
 
 
 
+.. py:method:: set_npoints_per_meter_trajectory(npoints)
+
+   Sets the number of points per meter to be used in the trajectory calculation.
+
+   :param npoints: Number of points per neter
+   :type npoints: int
+   :returns: None
+
+
+
+
+
 .. py:method:: oscars.sr.get_npoints_trajectory
 
    Gets the number of points to be used in the trajectory calculation

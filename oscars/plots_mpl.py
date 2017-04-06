@@ -187,11 +187,11 @@ def plot_flux(V, title='Flux [$\gamma / mm^2 / 0.1\%bw / s]$', xlabel='X1 Axis [
     NY = len(np.unique(Y))
 
     # Size and limits
-    plt.figure(1, figsize=figsize)
+    print(figsize)
+    plt.figure(figsize=figsize)
     if ylim is not None: plt.ylim(ylim[0], ylim[1])
     if xlim is not None: plt.xlim(xlim[0], xlim[1])
 
-    plt.figure(1, figsize=figsize)
     plt.hist2d(X, Y, bins=[NX, NY], weights=P)
     #cb.formatter.set_scientific(True)
     #cb.formatter.set_powerlimits((0, 0))

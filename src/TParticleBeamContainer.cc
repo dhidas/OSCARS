@@ -58,6 +58,29 @@ void TParticleBeamContainer::AddNewParticleBeam (std::string const& Type, std::s
 
 
 
+void TParticleBeamContainer::AddNewParticleBeam (std::string const& Beam, std::string const& Name, double const Weight)
+{
+  if (fParticleBeamMap.count(Name) != 0) {
+    std::cerr << "fParticleBeamMap.count(Name) != 0" << std::endl;
+    throw std::invalid_argument("beam with this name already exists");
+  }
+
+  if (fParticleBeamWeightSums.size() == 0) {
+    fParticleBeamWeightSums.push_back(Weight);
+  } else {
+    fParticleBeamWeightSums.push_back(fParticleBeamWeightSums.back() + Weight);
+  }
+
+  fParticleBeams.push_back( TParticleBeam(Beam) );
+
+  fParticleBeamMap[Name] = fParticleBeams.size() - 1;
+
+  return;
+}
+
+
+
+
 TParticleA TParticleBeamContainer::GetNewParticle ()
 {
   // UPDATE: incomplete
