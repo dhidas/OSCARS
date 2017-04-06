@@ -40,6 +40,7 @@ moduleOSCARSTH = Extension('oscars.th',
                       sources = ['src/OSCARSTH.cc',
                                  'src/OSCARSTH_Python.cc',
                                  'src/TVector2D.cc',
+                                 'src/TVector3D.cc',
                                  'src/TOMATH.cc'],
                       extra_compile_args=['-std=c++11', '-Wno-write-strings', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread']
                      )
@@ -54,8 +55,8 @@ setup(
   author = 'Dean Andrew Hidas',
   author_email = 'dhidas@bnl.gov',
   url = 'http://oscars.bnl.gov/',
-  license = 'see http://oscars.bnl.gov/',
-  long_description = '''The OSCARS SR Package.''',
+  license = 'LICENSE.txt',
+  long_description = '''The OSCARS Package.''',
   ext_modules = [moduleOSCARSSR, moduleOSCARSTH],
   data_files=[('oscars', ['LICENSE.txt', 'COPYRIGHT.txt'])],
   package_data = {'' : ['LICENSE.txt']},

@@ -29,6 +29,9 @@ namespace TOSCARSSR {
    inline double Sqrt2()    { return 1.4142135623730950488016887242097; }
    inline double Sqrt2Pi()  { return 2.5066282746310002416123552393401; }
 
+   // Fine structure constant
+   inline double Alpha()    { return 0.007297352566417; }
+
    // e (base of natural log)
    inline double E()        { return 2.71828182845904523536; }
 
@@ -61,6 +64,7 @@ namespace TOSCARSSR {
    inline double Epsilon0() { return 8.854187817E-12; }     // Add units
    inline double Mu0()      { return 1.2566370614E-6; }     // Add units
 
+   inline double FrequencyToWavelength (double const f) { return C() / f;           } // m
    inline double FrequencyToEv         (double const f) { return f * H() / Qe();    } // eV
    inline double AngularFrequencyToEv  (double const w) { return w * Hbar() / Qe(); } // eV
    inline double EvToAngularFrequency  (double const e) { return e * Qe() / Hbar(); } // rad s^-1
