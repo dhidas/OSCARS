@@ -44,6 +44,18 @@ double OSCARSTH::UndulatorK (double const BFieldMax, double const Period) const
 }
 
 
+
+double OSCARSTH::DipoleCriticalEnergy (double const BField, double const BeamEnergy_GeV) const
+{
+  // Return the critical energy in eV for dipole and electron beam
+  double const Gamma = BeamEnergy_GeV / TOSCARSSR::kgToGeV( TOSCARSSR::Me());
+  double const OmegaC = 3. * Gamma * Gamma * Gamma * TOSCARSSR::C() / (2. * BeamEnergy_GeV * 1e9 * TOSCARSSR::Qe() / (TOSCARSSR::Qe() * TOSCARSSR::C() * fabs(BField)));
+
+  return TOSCARSSR::AngularFrequencyToEv(OmegaC);
+}
+
+
+
 double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_GeV, double const Angle, double const Energy_eV) const
 {
   std::cout << "BField:         " << BField << std::endl;
@@ -523,5 +535,4 @@ TVector2D OSCARSTH::UndulatorBrightness (double const BField,
   double const SigmaYP = sqrt(sigyp * sigyp + sigrp * sigrp);
 
   return TVector2D(Energy_eV, Fu / (4 * TOSCARSSR::Pi2() * SigmaX * SigmaY * SigmaXP * SigmaYP) * 1.e-12);
-  //return TVector2D(Energy_eV, Fu / (TOSCARSSR::TwoPi() * SigmaXP * SigmaYP) * 1e-6);
 }

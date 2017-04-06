@@ -192,6 +192,39 @@ static PyObject* OSCARSTH_DipoleSpectrum (OSCARSTHObject* self, PyObject* args, 
 
 
 
+const char* DOC_OSCARSTH_DipoleCriticalEnergy = "Get the critical energy for bending magnet in [eV]";
+static PyObject* OSCARSTH_DipoleCriticalEnergy (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
+{
+  // Return a list of points corresponding to the flux in a given energy range for a given vertical angle.
+  // This approximation assumes that the particle beam is perpendicular to the magnetic field
+
+  // Require 2 arguments
+  double BField = 0;
+  double BeamEnergy = 0;
+
+  // Input variables and parsing
+  static char *kwlist[] = {"bfield", "beam_energy_GeV", NULL};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dd", kwlist, &BField, &BeamEnergy)) {
+    return NULL;
+  }
+
+  // Check that beam energy makes sense
+  if (BeamEnergy <= 0) {
+    PyErr_SetString(PyExc_ValueError, "'beam_energy_GeV' must be > 0");
+    return NULL;
+  }
+
+  // Calculate the spectrum
+  double const Result = self->obj->DipoleCriticalEnergy(BField, BeamEnergy);
+
+  return Py_BuildValue("d", Result);
+}
+
+
+
+
+
+
 const char* DOC_OSCARSTH_DipoleBrightness = "Get the spectrum from ideal dipole field";
 static PyObject* OSCARSTH_DipoleBrightness (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {
@@ -716,6 +749,7 @@ static PyMethodDef OSCARSTH_methods[] = {
   {"undulator_K",                                (PyCFunction) OSCARSTH_UndulatorK,                              METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorK},
 
   {"dipole_spectrum",                            (PyCFunction) OSCARSTH_DipoleSpectrum,                          METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleSpectrum},
+  {"dipole_critical_energy",                     (PyCFunction) OSCARSTH_DipoleCriticalEnergy,                    METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleCriticalEnergy},
   {"dipole_brightness",                          (PyCFunction) OSCARSTH_DipoleBrightness,                        METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleBrightness},
   {"undulator_flux",                             (PyCFunction) OSCARSTH_UndulatorFlux,                           METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorFlux},
   {"undulator_flux_onaxis",                      (PyCFunction) OSCARSTH_UndulatorFluxOnAxis,                     METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorFluxOnAxis},
