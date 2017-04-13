@@ -317,7 +317,7 @@ oscars.sr
 
 .. py:method:: oscars.sr.add_bfield_undulator(bfield, period, nperiods, [phase, rotations, translation])
 
-   Adds an ideal sinusoidal undulator field with a given maximum bfield amplitude, period, and number of periods.  Optionally one can specify the phase offset (in [rad]), rotations and translation.
+   Adds an ideal sinusoidal undulator field with a given maximum bfield amplitude, period, and number of periods.  Optionally one can specify the phase offset (in [rad]), rotations and translation.  The number of periods given is the full number of fields not counting the terminating fields.
 
    :param bfield: A list representing the peak field [Ex, Ey, Ez] in [V/m]
    :type  bfield: list[3]
@@ -511,7 +511,7 @@ oscars.sr
 
 .. py:method:: oscars.sr.add_efield_undulator(efield, period, nperiods, [phase, rotations, translation])
 
-   Adds an ideal sinusoidal undulator field with a given maximum efield amplitude, period, and number of periods.  Optionally one can specify the phase offset (in [rad]), rotations and translation.
+   Adds an ideal sinusoidal undulator field with a given maximum efield amplitude, period, and number of periods.  Optionally one can specify the phase offset (in [rad]), rotations and translation.  The number of periods given is the full number of fields not counting the terminating fields.
 
    :param efield: A list representing the peak field [Bx, By, Bz] in [T]
    :type  efield: list[3]
