@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <cstring>
 #include <stdexcept>
+#include <sstream>
 
 
 // External global random generator
@@ -763,6 +764,25 @@ static PyObject* OSCARSSR_ClearMagneticFields (OSCARSSRObject* self)
 
 
 
+static PyObject* OSCARSSR_PrintMagneticFields (OSCARSSRObject* self)
+{
+  // Print all magnetic stored in OSCARSSR
+
+  // Out string stream for printing beam information
+  std::ostringstream ostream;
+  ostream << "*Magnetic Fields*\n";
+  ostream << self->obj->GetBFieldContainer() << std::endl;
+
+  // Python printing
+  PyObject* sys = PyImport_ImportModule( "sys");
+  PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
+  std::string Message = ostream.str();
+  PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
 
 
 
@@ -1328,6 +1348,31 @@ static PyObject* OSCARSSR_ClearElectricFields (OSCARSSRObject* self)
 
 
 
+static PyObject* OSCARSSR_PrintElectricFields (OSCARSSRObject* self)
+{
+  // Print all magnetic stored in OSCARSSR
+
+  // Out string stream for printing beam information
+  std::ostringstream ostream;
+  ostream << "*Electric Fields*\n";
+  ostream << self->obj->GetEFieldContainer() << std::endl;
+
+  // Python printing
+  PyObject* sys = PyImport_ImportModule( "sys");
+  PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
+  std::string Message = ostream.str();
+  PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
 
 
 
@@ -1753,7 +1798,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
       return NULL;
     }
   } else {
-    Horizontal_Direction = Direction.Orthogonal().UnitVector();
+    Horizontal_Direction = -Direction.Orthogonal().UnitVector();
   }
   Horizontal_Direction = Horizontal_Direction.UnitVector();
 
@@ -1841,7 +1886,9 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   //self->obj->GetParticleBeam(Name).SetCurrent(Current);
   //self->obj->GetParticleBeam(Name).SetX0(Position);
   //self->obj->GetParticleBeam(Name).SetU0(Direction);
-  //self->obj->GetParticleBeam(Name).SetT0(T0);
+  if (T0 != 0) {
+    self->obj->GetParticleBeam(Name).SetT0(T0);
+  }
 
   // Should set weight on input
   //self->obj->GetParticleBeam(Name).SetWeight(Weight);
@@ -1969,9 +2016,15 @@ static PyObject* OSCARSSR_PrintParticleBeams (OSCARSSRObject* self)
 {
   // Print all particle beams stored in OSCARSSR
 
-  self->obj->GetParticleBeamContainer();
-  std::cout << self->obj->GetParticleBeamContainer() << std::endl;
+  // Out string stream for printing beam information
+  std::ostringstream ostream;
+  ostream << self->obj->GetParticleBeamContainer() << std::endl;
 
+  // Python printing
+  PyObject* sys = PyImport_ImportModule( "sys");
+  PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
+  std::string Message = ostream.str();
+  PyObject_CallMethod(s_out, "write", "s", Message.c_str());
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -3733,6 +3786,31 @@ static PyObject* OSCARSSR_CalculateElectricFieldTimeDomain (OSCARSSRObject* self
 
 
 
+static PyObject* OSCARSSR_Print (OSCARSSRObject* self)
+{
+  // Print beams and fields
+
+  OSCARSSR_PrintParticleBeams(self);
+  OSCARSSR_PrintMagneticFields(self);
+  OSCARSSR_PrintElectricFields(self);
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3789,6 +3867,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"add_bfield_undulator",              (PyCFunction) OSCARSSR_AddMagneticFieldIdealUndulator,  METH_VARARGS | METH_KEYWORDS, "add magnetic field from ideal undulator in 3D"},
   {"get_bfield",                        (PyCFunction) OSCARSSR_GetBField,                       METH_VARARGS,                 "get the magnetic field at a given position in space (and someday time?)"},
   {"clear_bfields",                     (PyCFunction) OSCARSSR_ClearMagneticFields,             METH_NOARGS,                  "clear all internal magnetic fields"},
+  {"print_bfields",                     (PyCFunction) OSCARSSR_PrintMagneticFields,             METH_NOARGS,                  "print all internal magnetic fields"},
 
   {"add_efield_file",                   (PyCFunction) OSCARSSR_AddElectricField,                METH_VARARGS | METH_KEYWORDS, "add an electric field from a file"},
   {"add_efield_function",               (PyCFunction) OSCARSSR_AddElectricFieldFunction,        METH_VARARGS,                 "add an electric field in form of python function"},
@@ -3797,6 +3876,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"add_efield_undulator",              (PyCFunction) OSCARSSR_AddElectricFieldIdealUndulator,  METH_VARARGS | METH_KEYWORDS, "add magnetic field from ideal undulator in 3D"},
   {"get_efield",                        (PyCFunction) OSCARSSR_GetEField,                       METH_VARARGS,                 "get the electric field at a given position in space (and someday time?)"},
   {"clear_efields",                     (PyCFunction) OSCARSSR_ClearElectricFields,             METH_NOARGS,                  "clear all internal electric fields"},
+  {"print_efields",                     (PyCFunction) OSCARSSR_PrintElectricFields,             METH_NOARGS,                  "print all internal electric fields"},
  
 
   {"write_bfield",                      (PyCFunction) OSCARSSR_WriteMagneticField,              METH_VARARGS | METH_KEYWORDS, "write the magnetic field to a file"},
@@ -3836,6 +3916,8 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"get_power_density",                 (PyCFunction) OSCARSSR_GetPowerDensity,                 METH_VARARGS | METH_KEYWORDS, "get the internal to OSCARSSR flux"},
 
   {"calculate_efield_vs_time",          (PyCFunction) OSCARSSR_CalculateElectricFieldTimeDomain,METH_VARARGS | METH_KEYWORDS, "calculate the electric field in the time domain"},
+
+  {"print",                             (PyCFunction) OSCARSSR_Print,                            METH_NOARGS,                  "print beams and fields"},
 
   {NULL}  /* Sentinel */
 };

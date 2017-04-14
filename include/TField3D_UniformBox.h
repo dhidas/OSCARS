@@ -16,16 +16,26 @@
 class TField3D_UniformBox : public TField
 {
   public:
-    TField3D_UniformBox (double const, double const, double const);
-    TField3D_UniformBox (TVector3D const&, TVector3D const& Width = TVector3D(0, 0, 0), TVector3D const& Center = TVector3D(0, 0, 0), TVector3D const& Rotations = TVector3D(0, 0, 0));
+    TField3D_UniformBox (double const Fx, double const Fy, double const Fz);
+    TField3D_UniformBox (TVector3D const& Field,
+                         TVector3D const& Width = TVector3D(0, 0, 0),
+                         TVector3D const& Center = TVector3D(0, 0, 0),
+                         TVector3D const& Rotations = TVector3D(0, 0, 0));
+
     ~TField3D_UniformBox ();
 
-    double    GetFx (double const, double const, double const) const;
-    double    GetFy (double const, double const, double const) const;
-    double    GetFz (double const, double const, double const) const;
-    TVector3D GetF  (double const, double const, double const) const;
-    TVector3D GetF  (TVector3D const&) const;
+    double    GetFx (double const X, double const Y, double const Z) const;
+    double    GetFy (double const X, double const Y, double const Z) const;
+    double    GetFz (double const X, double const Y, double const Z) const;
+    TVector3D GetF  (double const X, double const Y, double const Z) const;
+    TVector3D GetF  (TVector3D const& X) const;
 
+    TVector3D GetField () const;
+    TVector3D GetWidth () const;
+    TVector3D GetRotated () const;
+    TVector3D GetCenter () const;
+
+    void Print (std::ostream& os) const;
 
   private:
     TVector3D fField;
@@ -38,6 +48,21 @@ class TField3D_UniformBox : public TField
     bool fIgnoreAxisZ;
 };
 
+
+
+
+
+inline std::ostream& operator << (std::ostream& os, TField3D_UniformBox const& o)
+{
+  // For easy printing
+  os << "TField3D_UniformBox " << "\n"
+     << "Field               " << o.GetField() << "\n"
+     << "Width               " << o.GetWidth() << "\n"
+     << "Rotations           " << o.GetRotated() << "\n"
+     << "Center              " << o.GetCenter() << "\n";
+
+  return os;
+}
 
 
 

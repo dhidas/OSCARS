@@ -18,12 +18,15 @@ TField3D_Gaussian::TField3D_Gaussian ()
 
 
 
-TField3D_Gaussian::TField3D_Gaussian (TVector3D const& Field, TVector3D const& Center, TVector3D const& Sigma, TVector3D const& Rotations)
+TField3D_Gaussian::TField3D_Gaussian (TVector3D const& PeakField,
+                                      TVector3D const& Center,
+                                      TVector3D const& Sigma,
+                                      TVector3D const& Rotations)
 {
   // Constructor you should use.. just a suggestion...
 
-  fField = Field;
-  fField.RotateSelfXYZ(Rotations);
+  fPeakField = PeakField;
+  fPeakField.RotateSelfXYZ(Rotations);
 
   fCenter = Center;
   fSigma = Sigma;
@@ -89,7 +92,7 @@ TVector3D TField3D_Gaussian::GetF (TVector3D const& X) const
 {
   // Get the magnetic field at a point in space.
 
-  // If you rotate the object the field is rotated in fField and the coordinate rotation is done here
+  // If you rotate the object the field is rotated in fPeakField and the coordinate rotation is done here
 
   // Translate back into box frame
   TVector3D XInBoxCoordinates = X;
@@ -109,5 +112,50 @@ TVector3D TField3D_Gaussian::GetF (TVector3D const& X) const
     Fraction *= exp(-pow((RX.GetZ()) / fSigma.GetZ(), 2) / 2.);
   }
 
-  return Fraction * fField;
+  return Fraction * fPeakField;
+}
+
+
+
+
+
+TVector3D const& TField3D_Gaussian::GetPeakField () const
+{
+  return fPeakField;
+}
+
+
+
+
+
+TVector3D const& TField3D_Gaussian::GetCenter () const
+{
+  return fCenter;
+}
+
+
+
+
+
+TVector3D const& TField3D_Gaussian::GetSigma () const
+{
+  return fSigma;
+}
+
+
+
+
+
+TVector3D const& TField3D_Gaussian::GetRotations () const
+{
+  return fRotated;
+}
+
+
+
+
+void TField3D_Gaussian::Print (std::ostream& os) const
+{
+  os << *this << std::endl;
+  return;
 }

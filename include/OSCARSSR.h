@@ -278,6 +278,9 @@ class OSCARSSR
     void CalculateElectricFieldTimeDomain (TVector3D const& Observer, T3DScalarContainer&);
     void CalculateElectricFieldTimeDomain (TVector3D const& Observer, T3DScalarContainer&, TParticleA& Particle);
 
+    TFieldContainer const& GetBFieldContainer () const;
+    TFieldContainer const& GetEFieldContainer () const;
+
   private:
     TFieldContainer  fBFieldContainer;
     TFieldContainer  fEFieldContainer;

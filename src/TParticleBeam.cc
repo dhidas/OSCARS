@@ -28,34 +28,42 @@ TParticleBeam::TParticleBeam ()
 
 
 
-TParticleBeam::TParticleBeam (std::string const& PredefinedBeamType)
+TParticleBeam::TParticleBeam (std::string const& PredefinedBeamType, std::string const& Name, double const Weight)
 {
   // Constructor given a predefined beam name
   this->SetPredefinedBeam(PredefinedBeamType);
+  this->SetName(Name);
+  this->SetWeight(Weight);
+
 }
 
 
 
 
-TParticleBeam::TParticleBeam (std::string const& ParticleType, double const Energy, double const Current)
+TParticleBeam::TParticleBeam (std::string const& ParticleType, std::string const& Name, double const Energy, double const Current, double const Weight)
 {
   // Constructor given a particle type.
 
   this->SetParticleType(ParticleType);
+  this->SetName(Name);
   fE0 = Energy;
 
   this->SetCurrent(Current);
+  this->SetWeight(Weight);
+
+  SetBetaEmittance(TVector3D(0, 0, 0), TVector2D(0, 0), TVector2D(0, 0), TVector3D(0, 0, 0), 0);
 }
 
 
 
 
-TParticleBeam::TParticleBeam (std::string const& ParticleType, TVector3D const& X0, TVector3D const& D0, double const Energy, double const Current)
+TParticleBeam::TParticleBeam (std::string const& ParticleType, std::string const& Name, TVector3D const& X0, TVector3D const& D0, double const Energy, double const Current, double const Weight)
 {
   // Constructor given a particle type.
   // Sets the initial time to 0
 
   this->SetParticleType(ParticleType);
+  this->SetName(Name);
 
   fX0 = X0;
   fU0 = D0.UnitVector();
@@ -63,12 +71,15 @@ TParticleBeam::TParticleBeam (std::string const& ParticleType, TVector3D const& 
   fT0 = 0;
 
   this->SetCurrent(Current);
+  this->SetWeight(Weight);
+
+  SetBetaEmittance(TVector3D(0, 0, 0), TVector2D(0, 0), TVector2D(0, 0), TVector3D(0, 0, 0), 0);
 }
 
 
 
 
-TParticleBeam::TParticleBeam (std::string const& ParticleType, TVector3D const& X0, TVector3D const& D0, double const Energy, double const T0, double const Current, double const Charge, double const Mass)
+TParticleBeam::TParticleBeam (std::string const& ParticleType, std::string const& Name, TVector3D const& X0, TVector3D const& D0, double const Energy, double const T0, double const Current, double const Charge, double const Mass, double const Weight)
 {
   // Constructor given a particle type.
 
@@ -78,12 +89,16 @@ TParticleBeam::TParticleBeam (std::string const& ParticleType, TVector3D const& 
     this->SetParticleType(ParticleType);
   }
 
+  this->SetName(Name);
   fX0 = X0;
   fU0 = D0.UnitVector();
   fE0 = Energy;
   fT0 = T0;
 
   this->SetCurrent(Current);
+  this->SetWeight(Weight);
+
+  SetBetaEmittance(TVector3D(0, 0, 0), TVector2D(0, 0), TVector2D(0, 0), TVector3D(0, 0, 0), 0);
 }
 
 
@@ -101,14 +116,35 @@ void TParticleBeam::SetPredefinedBeam (std::string const& Beam)
 {
   // Set the beam to a predefined beam
 
-  if (Beam == "NSLSII-LongStraight") {
+  std::string BeamU = Beam;
+  std::transform(BeamU.begin(), BeamU.end(), BeamU.begin(), ::toupper);
+
+  if (BeamU == "NSLSII") {
     this->SetParticleType("electron");
     this->SetCurrent(0.500);
     this->SetE0(3);
     this->SetU0(TVector3D(0, 0, 1));
-    this->SetBetaEmittance(TVector3D(1, 0, 0), TVector2D(18, 3.1), TVector2D(0.55e-9, 0.008e-9), TVector3D(0, 0, 0), 3 * 0.001);
-  } else if (Beam == "NSLSII-ShortStraight") {
+    this->SetT0(0);
+    this->SetX0(0);
+    this->SetBetaEmittance(TVector3D(1, 0, 0), TVector2D(0, 0), TVector2D(0.55e-9, 0.008e-9), TVector3D(0, 0, 0), 3 * 0.001);
+
+  } else if (BeamU == "NSLSII-LONGSTRAIGHT") {
+    this->SetParticleType("electron");
     this->SetCurrent(0.500);
+    this->SetE0(3);
+    this->SetU0(TVector3D(0, 0, 1));
+    this->SetT0(0);
+    this->SetX0(0);
+    this->SetBetaEmittance(TVector3D(1, 0, 0), TVector2D(18, 3.1), TVector2D(0.55e-9, 0.008e-9), TVector3D(0, 0, 0), 3 * 0.001);
+
+  } else if (BeamU == "NSLSII-SHORTSTRAIGHT") {
+    this->SetParticleType("electron");
+    this->SetCurrent(0.500);
+    this->SetE0(3);
+    this->SetU0(TVector3D(0, 0, 1));
+    this->SetT0(0);
+    this->SetX0(0);
+    this->SetBetaEmittance(TVector3D(1, 0, 0), TVector2D(1.5, 0.8), TVector2D(0.55e-9, 0.008e-9), TVector3D(0, 0, 0), 3 * 0.001);
   }
 
   return;
@@ -209,24 +245,6 @@ void TParticleBeam::SetSigma (TVector3D const& HorizontalDirection, TVector2D co
 
 
 
-std::string const& TParticleBeam::GetName () const
-{
-  // Return the internal name of the particle beam
-  return fName;
-}
-
-
-
-
-double TParticleBeam::GetWeight () const
-{
-  // Return the internal weight for the particle beam
-  return fWeight;
-}
-
-
-
-
 TVector3D const& TParticleBeam::GetX0 () const
 {
   // Return const reference to the initial position
@@ -258,6 +276,69 @@ double TParticleBeam::GetT0 () const
 {
   // Return initial time
   return fT0;
+}
+
+
+
+
+std::string const& TParticleBeam::GetName () const
+{
+  // Return the internal name of the particle beam
+  return fName;
+}
+
+
+
+
+double TParticleBeam::GetWeight () const
+{
+  // Return the internal weight for the particle beam
+  return fWeight;
+}
+
+
+
+
+TVector2D TParticleBeam::GetBeta () const
+{
+  // Return the beta function values
+  return fBeta;
+}
+
+
+
+
+TVector2D TParticleBeam::GetEmittance () const
+{
+  // Return the emittance values
+  return fEmittance;
+}
+
+
+
+
+TVector3D TParticleBeam::GetHorizontalDirection () const
+{
+  // Return the horizontal direction
+  return fHorizontalDirection;
+}
+
+
+
+
+TVector3D TParticleBeam::GetVerticalDirection () const
+{
+  // Return the vertical direction
+  return fVerticalDirection;
+}
+
+
+
+
+TVector3D TParticleBeam::GetSigmaAt () const
+{
+  // Return the lattice reference
+  return fSigmaAt;
 }
 
 
@@ -311,6 +392,30 @@ void TParticleBeam::SetSigmaEnergyGeV (double const Sigma)
   return;
 }
 
+
+
+
+void TParticleBeam::SetName (std::string const& Name)
+{
+  // Set the name of this beam
+  fName = Name;
+  return;
+}
+
+
+
+
+void TParticleBeam::SetWeight (double const Weight)
+{
+  // Set the weight for this beam
+  if (Weight <= 0) {
+    std::cerr << "Weight cannot be <= 0" << std::endl;
+    throw;
+  }
+
+  fWeight = Weight;
+  return;
+}
 
 
 

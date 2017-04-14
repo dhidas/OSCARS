@@ -62,7 +62,7 @@ class TParticleBeamContainer
 inline std::ostream& operator << (std::ostream& os, TParticleBeamContainer& o)
 {
   // For easy printing
-  os << "TParticleBeamContainer" << std::endl;
+  os << "TParticleBeamContainer has " << o.GetNParticleBeams() << " beams" << std::endl;
 
   size_t const N = o.GetNParticleBeams();
 

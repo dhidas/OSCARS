@@ -27,7 +27,10 @@ TField3D_UniformBox::TField3D_UniformBox (double const Fx, double const Fy, doub
 
 
 
-TField3D_UniformBox::TField3D_UniformBox (TVector3D const& Field, TVector3D const& Width, TVector3D const& Center, TVector3D const& Rotations)
+TField3D_UniformBox::TField3D_UniformBox (TVector3D const& Field,
+                                          TVector3D const& Width,
+                                          TVector3D const& Center,
+                                          TVector3D const& Rotations)
 {
   fField = Field;
   fField.RotateSelfXYZ(Rotations);
@@ -113,5 +116,45 @@ TVector3D TField3D_UniformBox::GetF (TVector3D const& X) const
 
 
 
+TVector3D TField3D_UniformBox::GetField () const
+{
+  // Return the field
+  return fField;
+}
 
+
+
+
+TVector3D TField3D_UniformBox::GetWidth () const
+{
+  // Return the width
+  return fWidth;
+}
+
+
+
+
+TVector3D TField3D_UniformBox::GetRotated () const
+{
+  // Return the rotations
+  return fRotated;
+}
+
+
+
+
+TVector3D TField3D_UniformBox::GetCenter () const
+{
+  // Return the Center postion
+  return fCenter;
+}
+
+
+
+
+void TField3D_UniformBox::Print (std::ostream& os) const
+{
+  os << *this << std::endl;
+  return;
+}
 

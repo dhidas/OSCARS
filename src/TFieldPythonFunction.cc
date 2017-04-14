@@ -108,3 +108,13 @@ double TFieldPythonFunction::GetFz (double const X, double const Y, double const
 {
   return this->GetF(X, Y, Z).GetZ();
 }
+
+
+
+
+void TFieldPythonFunction::Print (std::ostream& os) const
+{
+  os << *this << std::endl;
+  return;
+}
+

@@ -24,7 +24,12 @@ TField3D_Grid::TField3D_Grid ()
 
 
 
-TField3D_Grid::TField3D_Grid (std::string const& InFileName, std::string const& FileFormat, TVector3D const& Rotations, TVector3D const& Translation, std::vector<double> const& Scaling, char const CommentChar)
+TField3D_Grid::TField3D_Grid (std::string         const& InFileName,
+                              std::string         const& FileFormat,
+                              TVector3D           const& Rotations,
+                              TVector3D           const& Translation,
+                              std::vector<double> const& Scaling,
+                              char                const  CommentChar)
 {
   // I will accept lower-case
   std::string format = FileFormat;
@@ -48,7 +53,13 @@ TField3D_Grid::TField3D_Grid (std::string const& InFileName, std::string const& 
 
 
 
-TField3D_Grid::TField3D_Grid (std::vector<std::pair<double, std::string> > Mapping, std::string const& FileFormat, double const Parameter, TVector3D const& Rotations, TVector3D const& Translation, std::vector<double> const& Scaling, char const CommentChar)
+TField3D_Grid::TField3D_Grid (std::vector<std::pair<double, std::string> > Mapping,
+                              std::string                           const& FileFormat,
+                              double                                const  Parameter,
+                              TVector3D                             const& Rotations,
+                              TVector3D                             const& Translation,
+                              std::vector<double>                   const& Scaling,
+                              char                                  const  CommentChar)
 {
   // This one is for interpolated fields from a mapping vector and parameter value.
   // It is meant for interpolating between different undulator gaps, but it is generalized
@@ -317,7 +328,11 @@ double TField3D_Grid::GetHeaderValueSRW (std::string const& L, const char Commen
 
 
 
-void TField3D_Grid::ReadFile (std::string const& InFileName, TVector3D const& Rotations, TVector3D const& Translation, std::vector<double> const& Scaling, char const CommentChar)
+void TField3D_Grid::ReadFile (std::string         const& InFileName,
+                              TVector3D           const& Rotations,
+                              TVector3D           const& Translation,
+                              std::vector<double> const& Scaling,
+                              char                const  CommentChar)
 {
   // Read file with the best format in the entire world, OSCARSv1.0
 
@@ -532,7 +547,12 @@ void TField3D_Grid::ReadFile (std::string const& InFileName, TVector3D const& Ro
 
 
 
-void TField3D_Grid::ReadFile_OSCARS1D (std::string const& InFileName, std::string const& InFormat, TVector3D const& Rotations, TVector3D const& Translation, std::vector<double> const& Scaling, char const CommentChar)
+void TField3D_Grid::ReadFile_OSCARS1D (std::string         const& InFileName,
+                                       std::string         const& InFormat,
+                                       TVector3D           const& Rotations,
+                                       TVector3D           const& Translation,
+                                       std::vector<double> const& Scaling,
+                                       char                const  CommentChar)
 {
   // Read file with OSCARS1D format
 
@@ -835,7 +855,10 @@ void TField3D_Grid::ReadFile_OSCARS1D (std::string const& InFileName, std::strin
 
 
 
-void TField3D_Grid::ReadFile_SRW (std::string const& InFileName, TVector3D const& Rotations, TVector3D const& Translation, char const CommentChar)
+void TField3D_Grid::ReadFile_SRW (std::string const& InFileName,
+                                  TVector3D   const& Rotations,
+                                  TVector3D   const& Translation,
+                                  char        const  CommentChar)
 {
   // Read file with SRW field input format
 
@@ -1007,7 +1030,10 @@ void TField3D_Grid::ReadFile_SRW (std::string const& InFileName, TVector3D const
 
 
 
-void TField3D_Grid::ReadFile_SPECTRA (std::string const& InFileName, TVector3D const& Rotations, TVector3D const& Translation, char const CommentChar)
+void TField3D_Grid::ReadFile_SPECTRA (std::string const& InFileName,
+                                      TVector3D   const& Rotations,
+                                      TVector3D   const& Translation,
+                                      char        const  CommentChar)
 {
   // Read file with SPECTRA field input format
 
@@ -1155,7 +1181,12 @@ void TField3D_Grid::ReadFile_SPECTRA (std::string const& InFileName, TVector3D c
 
 
 
-void TField3D_Grid::InterpolateFromFiles (std::vector<std::pair<double, std::string> > const& Mapping, double const Parameter, TVector3D const& Rotations, TVector3D const& Translation, std::vector<double> const& Scaling, char const CommentChar)
+void TField3D_Grid::InterpolateFromFiles (std::vector<std::pair<double, std::string> > const& Mapping,
+                                          double                                       const  Parameter,
+                                          TVector3D                                    const& Rotations,
+                                          TVector3D                                    const& Translation,
+                                          std::vector<double>                          const& Scaling,
+                                          char                                         const  CommentChar)
 {
   // Get interpolated field based on input files
 
@@ -1396,7 +1427,13 @@ void TField3D_Grid::InterpolateFromFiles (std::vector<std::pair<double, std::str
 
 
 
-void TField3D_Grid::InterpolateFromFiles_OSCARS1D (std::vector<std::pair<double, std::string> > const& Mapping, double const Parameter, std::string const& InFormat, TVector3D const& Rotations, TVector3D const& Translation, std::vector<double> const& Scaling, char const CommentChar)
+void TField3D_Grid::InterpolateFromFiles_OSCARS1D (std::vector<std::pair<double, std::string> > const& Mapping,
+                                                   double                                       const  Parameter,
+                                                   std::string                                  const& InFormat,
+                                                   TVector3D                                    const& Rotations,
+                                                   TVector3D                                    const& Translation,
+                                                   std::vector<double>                          const& Scaling,
+                                                   char                                         const  CommentChar)
 {
   // Get interpolated field based on input files
 
@@ -1746,7 +1783,9 @@ void TField3D_Grid::InterpolateFromFiles_OSCARS1D (std::vector<std::pair<double,
 
 
 
-TVector3D TField3D_Grid::InterpolateFields (std::vector<double> const& Parameters, std::vector<TVector3D> const& Fields, double const Parameter)
+TVector3D TField3D_Grid::InterpolateFields (std::vector<double>    const& Parameters,
+                                            std::vector<TVector3D> const& Fields,
+                                            double                 const  Parameter)
 {
   // Interpolate to find field at given Parameter value
 
@@ -1821,3 +1860,65 @@ bool TField3D_Grid::CompareMappingElements (std::pair<double, std::string> const
   return A.first < B.first;
 }
 
+
+
+
+TVector2D TField3D_Grid::GetXRange () const
+{
+  // Return the XRange as a TVector2D
+  return TVector2D(fXStart, fXStop);
+}
+
+
+
+
+TVector2D TField3D_Grid::GetYRange () const
+{
+  // Return the YRange as a TVector2D
+  return TVector2D(fYStart, fYStop);
+}
+
+
+
+
+TVector2D TField3D_Grid::GetZRange () const
+{
+  // Return the ZRange as a TVector2D
+  return TVector2D(fZStart, fZStop);
+}
+
+
+
+
+double TField3D_Grid::GetXStep () const
+{
+  // Return the X step size
+  return fXStep;
+}
+
+
+
+
+double TField3D_Grid::GetYStep () const
+{
+  // Return the Y step size
+  return fYStep;
+}
+
+
+
+
+double TField3D_Grid::GetZStep () const
+{
+  // Return the Z step size
+  return fZStep;
+}
+
+
+
+
+void TField3D_Grid::Print (std::ostream& os) const
+{
+  os << *this << std::endl;
+  return;
+}

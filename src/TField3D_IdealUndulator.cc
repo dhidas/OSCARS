@@ -147,3 +147,65 @@ TVector3D TField3D_IdealUndulator::GetF (double const X, double const Y, double 
 }
 
 
+
+
+
+TVector3D TField3D_IdealUndulator::GetField () const
+{
+  // Return the peak field
+  return fField;
+}
+
+
+
+
+TVector3D TField3D_IdealUndulator::GetPeriod () const
+{
+  // Return the period
+  return fPeriod;
+}
+
+
+
+
+int TField3D_IdealUndulator::GetNPeriods () const
+{
+  // Return the peak field
+  return fNPeriods;
+}
+
+
+
+
+TVector3D TField3D_IdealUndulator::GetCenter () const
+{
+  // Return the center position
+  return fCenter;
+}
+
+
+
+
+double TField3D_IdealUndulator::GetPhase () const
+{
+  // Return the phase shift
+  return fPhase;
+}
+
+
+
+
+double TField3D_IdealUndulator::GetTaper () const
+{
+  // Return the taper
+  return fTaper;
+}
+
+
+
+
+void TField3D_IdealUndulator::Print (std::ostream& os) const
+{
+  os << *this << std::endl;
+  return;
+}

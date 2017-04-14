@@ -46,9 +46,9 @@ void TParticleBeamContainer::AddNewParticleBeam (std::string const& Type, std::s
   }
 
   if (Type == "custom") {
-    fParticleBeams.push_back( TParticleBeam(Type, X0, D0, E0, T0, Current, Charge, Mass) );
+    fParticleBeams.push_back( TParticleBeam(Type, Name, X0, D0, E0, T0, Current, Charge, Mass, Weight) );
   } else {
-    fParticleBeams.push_back( TParticleBeam(Type, X0, D0, E0, T0, Current) );
+    fParticleBeams.push_back( TParticleBeam(Type, Name, X0, D0, E0, T0, Current, Weight) );
   }
   fParticleBeamMap[Name] = fParticleBeams.size() - 1;
 
@@ -71,7 +71,7 @@ void TParticleBeamContainer::AddNewParticleBeam (std::string const& Beam, std::s
     fParticleBeamWeightSums.push_back(fParticleBeamWeightSums.back() + Weight);
   }
 
-  fParticleBeams.push_back( TParticleBeam(Beam) );
+  fParticleBeams.push_back( TParticleBeam(Beam, Name) );
 
   fParticleBeamMap[Name] = fParticleBeams.size() - 1;
 

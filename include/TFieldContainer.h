@@ -33,6 +33,8 @@ class TFieldContainer
     TVector3D GetF  (double const, double const, double const) const;
     TVector3D GetF  (TVector3D const&) const;
 
+    TField const& GetField (size_t const) const;
+
     size_t GetNFields () const;
 
     void      Clear ();
@@ -42,6 +44,21 @@ class TFieldContainer
   private:
     std::vector<TField*> fFields;
 };
+
+
+inline std::ostream& operator << (std::ostream& os, TFieldContainer const& o)
+{
+  // For easy printing
+  os << "TFieldContainer has " << o.GetNFields() << " fields" << std::endl;
+
+  size_t const N = o.GetNFields();
+
+  for (size_t i = 0; i != N; ++i) {
+    o.GetField(i).Print(os);
+  }
+
+  return os;
+}
 
 
 

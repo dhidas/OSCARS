@@ -2880,3 +2880,23 @@ void OSCARSSR::CalculateElectricFieldTimeDomain (TVector3D const& Observer, T3DS
   //return TVector3D(Mult * (NearField + FarField));
   return;
 }
+
+
+
+
+
+TFieldContainer const& OSCARSSR::GetBFieldContainer () const
+{
+  // Return the bfield container
+  return fBFieldContainer;
+}
+
+
+
+
+
+TFieldContainer const& OSCARSSR::GetEFieldContainer () const
+{
+  // Return the efield container
+  return fEFieldContainer;
+}
