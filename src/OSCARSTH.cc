@@ -58,177 +58,46 @@ double OSCARSTH::DipoleCriticalEnergy (double const BField, double const BeamEne
 
 double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_GeV, double const Angle, double const Energy_eV) const
 {
-  std::cout << "BField:         " << BField << std::endl;
-  std::cout << "BeamEnergy_GeV: " << BeamEnergy_GeV << std::endl;
-  std::cout << "Angle:          " << Angle << std::endl;
-  std::cout << "Energy_eV:      " << Energy_eV << std::endl;
-  //std::cout << "EnergyRange_eV: " << EnergyRange_eV << std::endl;
-    
+
   double const R = BeamEnergy_GeV  * 1e9 / (BField * TOSCARSSR::C());
-    
-  std::cout << "R: " << R << std::endl;
-
-  // I take out the "return" otherwise what is below it never happens
-  // return R;
-    
   double const Q = TOSCARSSR::Qe();
-    
-  std::cout << "Q: " << Q << std::endl;
-   
   double const Me = 0.511e6;
-    
-    std::cout << "Me: " << Me << std::endl;
-    
   long double const v5 = Me * Me;
-    
-    std::cout << std::setprecision(40) << "v5: " << v5 << std::endl;
-    
-    double const v6 = (BeamEnergy_GeV * 1e9) * (BeamEnergy_GeV * 1e9);
-    
-    std::cout << std::setprecision(40) <<"v6: " << v6 << std::endl;
-    
-    double const v7 = v5 / v6;
-    
-    std::cout << std::setprecision(40) <<"v7: " << v7 << std::endl;
-    
+  double const v6 = (BeamEnergy_GeV * 1e9) * (BeamEnergy_GeV * 1e9);
+  double const v7 = v5 / v6;
   long double const v1 = ((TOSCARSSR::Me() * TOSCARSSR::Me()) * (TOSCARSSR::C() * TOSCARSSR::C() * TOSCARSSR::C() * TOSCARSSR::C())) / ((BeamEnergy_GeV * TOSCARSSR::Qe() * (1e-9)) * (BeamEnergy_GeV * TOSCARSSR::Qe() * (1e-9)));
-    
-    std::cout << std::setprecision(40) << "v1: " << v1 << std::endl;
-    
-    double const v2 = 1 - v7;
-    
-    std::cout << std::setprecision(40) << "v2: " << v2 << std::endl;
-    
-    double const v3 = sqrt(v2);
-    
-    std::cout << std::setprecision(40) << "v3: " << v3 << std::endl;
-  
+  double const v2 = 1 - v7;
+  double const v3 = sqrt(v2);
   double const v = TOSCARSSR::C() * v3;
-    
-    std::cout << std::setprecision(40) << "v: " << v << std::endl;
-
-    
   long double const gamma = BeamEnergy_GeV / TOSCARSSR::kgToGeV( TOSCARSSR::Me());
-    
-    std::cout << std::setprecision(40) << std::endl;
-    std::cout << "gamma: " << gamma << std::endl;
-    
   long double const beta_sqr = 1 - (1 / (gamma * gamma));
-    
-    std::cout << std::setprecision(40) << std::endl;
-    std::cout << "beta_sqr: " << beta_sqr << std::endl;
-    
   long double const beta = sqrt(beta_sqr);
-    
-    std::cout << std::setprecision(40) << "beta: " << beta << std::endl;
-    
   double const w0 = v / R;
-    
-    std::cout << std::setprecision(40) << std::endl;
-    std::cout << "w0: " << w0 << std::endl;
-    
-    double const w01 = TOSCARSSR::AngularFrequencyToEv(w0);
-    
-    std::cout << std::setprecision(40) << "w01: " << w01 << std::endl;
-    
-    long double const wc1 = gamma * gamma * gamma;
-    
-    std::cout << std::setprecision(40) << "wc1: " << wc1 << std::endl;
-    
-    double const wc2 = 1.5 * wc1;
-    
-    std::cout << std::setprecision(40) << "wc2: " << wc2 << std::endl;
-
-    double const wc3 = wc2 * w01;
-    
-    std::cout << std::setprecision(40) << "wc3: " << wc3 << std::endl;
-    
+  double const w01 = TOSCARSSR::AngularFrequencyToEv(w0);
+  long double const wc1 = gamma * gamma * gamma;
+  double const wc2 = 1.5 * wc1;
+  double const wc3 = wc2 * w01;
   double const wc4 = TOSCARSSR::EvToAngularFrequency(wc3);
-    
-    std::cout << std::setprecision(40) << "wc4: " << wc4 << std::endl;
-    
   double const w = TOSCARSSR::EvToAngularFrequency(Energy_eV);
-    
-    std::cout << std::setprecision(40) << "w: " << w << std::endl;
-    
   double const psi = Angle;
-    
-    std::cout << std::setprecision(10) << std::endl;
-    std::cout << "psi: " << psi << std::endl;
-    
   double const xi = (1./2.) * (w / wc4) * sqrt(1 + (gamma*gamma) * (psi*psi)) * sqrt(1 + (gamma*gamma) * (psi*psi)) * sqrt(1 + (gamma*gamma) * (psi*psi));
-    
-    std::cout << std::setprecision(40) << std::endl;
-    std::cout << "xi: " << xi << std::endl;
-    
-    double const K2 = TOMATH::BesselK( 2./3. , xi);
-    
-    std::cout << std::setprecision(40) << std::endl;
-    std::cout << "K2: " << K2 << std::endl;
-    
+  double const K2 = TOMATH::BesselK( 2./3. , xi);
   double const myK2 = K2 * K2;
-    
-    std::cout << std::setprecision(40) << "myK2: " << myK2 << std::endl;
-    
-    double const K1 = TOMATH::BesselK( 1. /3. , xi);
-    
-    std::cout << std::setprecision(40) << "K1: " << K1 << std::endl;
-    
+  double const K1 = TOMATH::BesselK( 1. /3. , xi);
   double const myK1 = K1 * K1;
-    
-    std::cout << std::setprecision(40) << "myK1: " << myK1 << std::endl;
-    
   double const pi = TOSCARSSR::Pi();
-    
-    std::cout << std::endl;
-    std::cout << "pi: " << pi << std::endl;
-    
   double const Epsilon0 = TOSCARSSR::Epsilon0();
-    
-    std::cout << "Epsilon0: " << Epsilon0 << std::endl;
-    
   double const c = TOSCARSSR::C();
-    
-    std::cout << "c: " << c << std::endl;
-    
   double const d2I1 = (3./4.) * ((Q*Q*gamma*gamma) / (4. * (pi*pi*pi) * Epsilon0 * c));
-    
-    std::cout << std::endl;
-    std::cout << "d2I1: " << d2I1 << std::endl;
-    
-    double const d2I2 = myK2 + (((gamma*gamma*psi*psi) / (1 + (gamma*gamma*psi*psi))) * myK1);
-    
-    std::cout << "d2I2: " << d2I2 << std::endl;
-    
-    double const d2I3 = ((w / wc4) * (w / wc4)) * ((1 + (gamma*gamma)*(psi*psi))*(1 + (gamma*gamma)*(psi*psi)));
-    
-    std::cout << "d2I3: " << d2I3 << std::endl;
-    
+  double const d2I2 = myK2 + (((gamma*gamma*psi*psi) / (1 + (gamma*gamma*psi*psi))) * myK1);
+  double const d2I3 = ((w / wc4) * (w / wc4)) * ((1 + (gamma*gamma)*(psi*psi))*(1 + (gamma*gamma)*(psi*psi)));
   double const d2I = d2I1 * d2I2 * d2I3;
-    
-    std::cout << "d2I: " << d2I << std::endl;
-    
-    double const Hbar = TOSCARSSR::Hbar();
-    
-    std::cout << std::endl;
-    std::cout << "Hbar: " << Hbar << std::endl;
-    
-    double const alpha = (Q*Q) / (4. * (pi*pi*pi) * Epsilon0 * c * Hbar);
-    
-    std::cout << "alpha: " << alpha << std::endl;
-    
-    double const I = 0.5;
-    
-    std::cout << "I: " << I << std::endl;
-    
-    double const d = (3./4.) * (alpha) * (gamma*gamma) * (I / Q) * (0.001) * d2I3 * d2I2;
-    
-    std::cout << "d: " << d << std::endl;
-    
-    double const d2N = d * (1e-6);
-    
-    std::cout << "d2N: " << d2N << std::endl;
-    
+  double const Hbar = TOSCARSSR::Hbar();
+  double const alpha = (Q*Q) / (4. * (pi*pi*pi) * Epsilon0 * c * Hbar);
+  double const I = 0.5;
+  double const d = (3./4.) * (alpha) * (gamma*gamma) * (I / Q) * (0.001) * d2I3 * d2I2;
+  double const d2N = d * (1e-6);
+
   return d2N;
 }
 
@@ -262,151 +131,53 @@ double OSCARSTH::UndulatorFlux (double const BField, double const Period, double
 
 
 
+
 double J(int const n, double const x)
 {
   return TOMATH::BesselJ(n, x);;
 }
 
 
+
+
 TVector2D OSCARSTH::UndulatorFluxKHarmonic (double const K, double const Period, double const NPeriods, double const BeamEnergyGeV, int const Harmonic) const
 {
   // Return the on-axis flux for this K value and harmonic
 
-  std::cout << "K             " << K << std::endl;
-  std::cout << "Period:       " << Period << std::endl;
-  std::cout << "NPeriods:     " << NPeriods << std::endl;
-  std::cout << "BeamEnergyGeV:   " << BeamEnergyGeV << std::endl;
-  std::cout << "Harmonic      " << Harmonic << std::endl;
 
-    double const n = Harmonic;
-    
-    std::cout << "n: " << n << std::endl;
-    
-    double const nu = (n + 1.) / 2.;
-    
-    std::cout << "nu: " << nu << std::endl;
-    
-    double const nu2 = (n - 1.) / 2.;
-    
-    std::cout << "nu2: " << nu2 << std::endl;
-    
-    double const JB = (n * K * K) / (4. + (2. * K * K));
-    
-    std::cout << "JB: " << JB << std::endl;
-    
-    double const E = BeamEnergyGeV * 1e9;
-    
-    std::cout << "E: " << E << std::endl;
-    
-    double const gamma = BeamEnergyGeV / TOSCARSSR::kgToGeV( TOSCARSSR::Me());
-    
-    std::cout << "gamma: " << gamma << std::endl;
-    
-    double const JBessel1 = TOMATH::BesselJ(nu, JB);
-    
-    std::cout << "JBessel1: " << JBessel1 << std::endl;
-    
-    double const JBessel3 = TOMATH::BesselJ(nu2, JB);
-    
-    std::cout << "JBessel3: " << JBessel3 << std::endl;
-    
-    double const Q = TOSCARSSR::Qe();
-    
-    std::cout << "Q: " << Q << std::endl;
-    
-    double const c = TOSCARSSR::C();
-    
-    std::cout << "c: " << c << std::endl;
-    
-    double const Me_eV = TOSCARSSR::kgToGeV(TOSCARSSR::Me()) * 1e9;
-    
-    std::cout << "Me_eV: " << Me_eV << std::endl;
-    
-    double const pi = TOSCARSSR::Pi();
-    
-    std::cout << "pi: " << pi << std::endl;
-    
-    double const K_1 = Q * 1. * Period;
-    
-    std::cout << "K_1: " << K_1 << std::endl;
-    
-    double const K_2 = 2. * pi * Me_eV * c * c;
-    
-    std::cout << "K_2: " << K_2 << std::endl;
-    
-    double const K_0 = K_1 / K_2;
-    
-    std::cout << "K_0: " << K_0 << std::endl;
-    
-    double const z1 = n * K;
-    
-    std::cout << "z1: " << z1 << std::endl;
-    
-    double const z2 = 1. + ((K * K)/2.);
-    
-    std::cout << "z2: " << z2 << std::endl;
-    
-    double const z3 = z1 / z2;
-    
-    std::cout << "z3: " << z3 << std::endl;
-    
-    double const h0 = z3 * gamma * (JBessel1 - JBessel3);
-    
-    std::cout << std::setprecision(20) << std::endl;
-    std::cout << "h0: " << h0 << std::endl;
-    
-    double const Epsilon0 = TOSCARSSR::Epsilon0();
-    
-    std::cout << "Epsilon0: " << Epsilon0 << std::endl;
-    
-    double const Hbar = TOSCARSSR::Hbar();
-    
-    std::cout << "Hbar: " << Hbar << std::endl;
-    
-    double const alpha = (Q*Q) / (4. * pi * Epsilon0 * c * Hbar);
-    
-    std::cout << "alpha: " << alpha << std::endl;
-    
-    double const I = 0.5;
-    
-    std::cout << "I: " << I << std::endl;
-    
-    double const N = NPeriods;
-    
-    std::cout << "N: " << N << std::endl;
-    
-    double const Nsq = N * N;
-    
-    std::cout << "Nsq: " << Nsq << std::endl;
-    
-    double const h0squrd = h0 * h0;
-    
-    std::cout << "h0squrd: " << h0squrd << std::endl;
-    
-    double const h001 = alpha * (I / Q) * Nsq * h0squrd;
-    
-    std::cout << "h001: " << h001 << std::endl;
-    
-    double const h00 = h001 * 1e-6 * 0.001;
-    
-    std::cout << "h00: " << h00 << std::endl;
-    
-    double const w1 = 2. * n * c * gamma * gamma;
-    
-    std::cout << "w1: " << w1 << std::endl;
-    
-    double const w2 = Period * (1. + ((K * K)/ 2.));
-    
-    std::cout << "w2: " << w2 << std::endl;
-    
-    double const wn = w1 / w2;
-    
-    std::cout << "wn: " << wn << std::endl;
-    
-    double const omega_1 = TOSCARSSR::FrequencyToEv(wn);
-    
-    std::cout << "omega_1: " << omega_1 << std::endl;
-    
+  double const n = Harmonic;
+  double const nu = (n + 1.) / 2.;
+  double const nu2 = (n - 1.) / 2.;
+  double const JB = (n * K * K) / (4. + (2. * K * K));
+  double const E = BeamEnergyGeV * 1e9;
+  double const gamma = BeamEnergyGeV / TOSCARSSR::kgToGeV( TOSCARSSR::Me());
+  double const JBessel1 = TOMATH::BesselJ(nu, JB);
+  double const JBessel3 = TOMATH::BesselJ(nu2, JB);
+  double const Q = TOSCARSSR::Qe();
+  double const c = TOSCARSSR::C();
+  double const Me_eV = TOSCARSSR::kgToGeV(TOSCARSSR::Me()) * 1e9;
+  double const pi = TOSCARSSR::Pi();
+  double const K_1 = Q * 1. * Period;
+  double const K_2 = 2. * pi * Me_eV * c * c;
+  double const K_0 = K_1 / K_2;
+  double const z1 = n * K;
+  double const z2 = 1. + ((K * K)/2.);
+  double const z3 = z1 / z2;
+  double const h0 = z3 * gamma * (JBessel1 - JBessel3);
+  double const Epsilon0 = TOSCARSSR::Epsilon0();
+  double const Hbar = TOSCARSSR::Hbar();
+  double const alpha = (Q*Q) / (4. * pi * Epsilon0 * c * Hbar);
+  double const I = 0.5;
+  double const N = NPeriods;
+  double const Nsq = N * N;
+  double const h0squrd = h0 * h0;
+  double const h001 = alpha * (I / Q) * Nsq * h0squrd;
+  double const h00 = h001 * 1e-6 * 0.001;
+  double const w1 = 2. * n * c * gamma * gamma;
+  double const w2 = Period * (1. + ((K * K)/ 2.));
+  double const wn = w1 / w2;
+  double const omega_1 = TOSCARSSR::FrequencyToEv(wn);
+
   return TVector2D(omega_1, h00);
 }
 
