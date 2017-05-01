@@ -15,19 +15,31 @@ class TField3D_Gaussian : public TField
 {
   public:
     TField3D_Gaussian ();
-    TField3D_Gaussian (TVector3D const&, TVector3D const&, TVector3D const&, TVector3D const& Rotations = TVector3D(0, 0, 0));
+    TField3D_Gaussian (TVector3D const& PeakField,
+                       TVector3D const& Center,
+                       TVector3D const& Sigma,
+                       TVector3D const& Rotations);
     ~TField3D_Gaussian ();
 
-    double    GetFx (double const, double const, double const) const;
-    double    GetFy (double const, double const, double const) const;
-    double    GetFz (double const, double const, double const) const;
-    TVector3D GetF  (double const, double const, double const) const;
-    TVector3D GetF  (TVector3D const&) const;
+    double    GetFx (double const X, double const Y, double const Z) const;
+    double    GetFy (double const X, double const Y, double const Z) const;
+    double    GetFz (double const X, double const Y, double const Z) const;
+    TVector3D GetF  (double const X, double const Y, double const Z) const;
+    TVector3D GetF  (TVector3D const& X) const;
 
-    bool IsWithinRange (double const, double const, double const) const;
+    bool IsWithinRange (double const X, double const Y, double const Z) const;
+
+    TVector3D const& GetPeakField () const;
+    TVector3D const& GetCenter () const;
+    TVector3D const& GetSigma () const;
+    TVector3D const& GetRotations () const;
+
+    void Print (std::ostream& os) const;
+
+
 
   private:
-    TVector3D fField;
+    TVector3D fPeakField;
     TVector3D fCenter;
     TVector3D fSigma;
     TVector3D fRotated;
@@ -37,6 +49,22 @@ class TField3D_Gaussian : public TField
     bool fIgnoreAxisZ;
 
 };
+
+
+inline std::ostream& operator << (std::ostream& os, TField3D_Gaussian const& o)
+{
+  // For easy printing
+  os << "Gaussian  " << "\n"
+     << "Peak      " << o.GetPeakField() << "\n"
+     << "Center    " << o.GetCenter() << "\n"
+     << "Sigma     " << o.GetSigma() << "\n"
+     << "Rotations " << o.GetRotations() << "\n";
+
+  return os;
+}
+
+
+
 
 
 

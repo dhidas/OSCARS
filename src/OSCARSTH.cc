@@ -172,7 +172,8 @@ TVector2D OSCARSTH::UndulatorFluxKHarmonic (double const K, double const Period,
   double const Nsq = N * N;
   double const h0squrd = h0 * h0;
   double const h001 = alpha * (I / Q) * Nsq * h0squrd;
-  double const h00 = h001 * 1e-6 * 0.001;
+  double const h002 = h001 * 0.001;
+  double const h00 = h002 * 1e-6;
   double const w1 = 2. * n * c * gamma * gamma;
   double const w2 = Period * (1. + ((K * K)/ 2.));
   double const wn = w1 / w2;

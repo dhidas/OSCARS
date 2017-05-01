@@ -23,6 +23,8 @@ class TFieldPythonFunction : public TField
     TVector3D GetF  (double const, double const, double const) const;
     TVector3D GetF  (TVector3D const&) const;
 
+    void Print (std::ostream& os) const;
+
   private:
     PyObject* fPythonFunction;
 
@@ -30,6 +32,13 @@ class TFieldPythonFunction : public TField
 
 
 
+inline std::ostream& operator << (std::ostream& os, TFieldPythonFunction const& o)
+{
+  // For easy printing
+  os << "TFieldPythonFunction at address " << &o << "\n";
+
+  return os;
+}
 
 
 

@@ -120,6 +120,15 @@ TVector3D TFieldContainer::GetF (TVector3D const& X) const
 
 
 
+TField const& TFieldContainer::GetField (size_t const i) const
+{
+  // Return reference to field (const)
+  return *fFields[i];
+}
+
+
+
+
 size_t TFieldContainer::GetNFields () const
 {
   // Return the number of fields input

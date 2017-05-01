@@ -21,6 +21,8 @@ class TField
     virtual TVector3D GetF  (double const, double const, double const) const = 0;
     virtual TVector3D GetF  (TVector3D const&) const = 0;
 
+    virtual void      Print (std::ostream&) const = 0;
+
     virtual ~TField () {};
 
 
