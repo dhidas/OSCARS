@@ -55,17 +55,6 @@ OSCARSSR::~OSCARSSR ()
 
 
 
-std::string OSCARSSR::GetVersionString ()
-{
-  // Get the version string based off of the compiler defines
-  char ver[200];
-  sprintf(ver, "%i.%02i.%02i", OSCARSSR_VMAJOR, OSCARSSR_VMINOR, OSCARSSR_REVISION);
-  return std::string(ver);
-}
-
-
-
-
 void OSCARSSR::AddMagneticField (std::string const FileName,
                                  std::string const Format,
                                  TVector3D const& Rotations,

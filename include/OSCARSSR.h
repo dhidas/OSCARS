@@ -11,9 +11,6 @@
 //
 ////////////////////////////////////////////////////////////////////
 
-#define OSCARSSR_VMAJOR 1
-#define OSCARSSR_VMINOR 34
-#define OSCARSSR_REVISION 9
 
 #include "TOSCARSSR.h"
 
@@ -36,8 +33,6 @@ class OSCARSSR
   public:
     OSCARSSR ();
     ~OSCARSSR ();
-
-    static std::string GetVersionString ();
 
     // Functions related to the magnetic field
     void AddMagneticField (std::string const FileName,
