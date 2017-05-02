@@ -13,7 +13,7 @@
 
 #define OSCARSSR_VMAJOR 1
 #define OSCARSSR_VMINOR 34
-#define OSCARSSR_REVISION 5
+#define OSCARSSR_REVISION 9
 
 #include "TOSCARSSR.h"
 
@@ -77,6 +77,11 @@ class OSCARSSR
 
     // Functions related to the particle beam(s)
     void AddParticleBeam (std::string const&, std::string const&, TVector3D const&, TVector3D const&, double const, double const, double const, double const, double const Charge = 0, double const Mass = 0);
+    void AddParticleBeam (std::string const& Beam, std::string const& Name, double const Weight = 1);
+    TParticleBeamContainer& GetParticleBeamContainer () 
+    {
+      return fParticleBeamContainer;
+    }
     TParticleBeam& GetParticleBeam (std::string const&);
     size_t GetNParticleBeams () const;
     TParticleA GetNewParticle ();
@@ -92,7 +97,7 @@ class OSCARSSR
     TParticleTrajectoryPoints const& GetTrajectory ();
 
     void SetNPointsTrajectory (size_t const);
-    void SetNPointsPerMeter (size_t const);
+    void SetNPointsPerMeterTrajectory (size_t const);
     void SetCTStartStop (double const, double const);
 
     size_t GetNPointsTrajectory () const;
@@ -272,6 +277,9 @@ class OSCARSSR
     // Electric Field Calculations
     void CalculateElectricFieldTimeDomain (TVector3D const& Observer, T3DScalarContainer&);
     void CalculateElectricFieldTimeDomain (TVector3D const& Observer, T3DScalarContainer&, TParticleA& Particle);
+
+    TFieldContainer const& GetBFieldContainer () const;
+    TFieldContainer const& GetEFieldContainer () const;
 
   private:
     TFieldContainer  fBFieldContainer;

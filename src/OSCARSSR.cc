@@ -109,9 +109,10 @@ void OSCARSSR::AddMagneticFieldInterpolated (std::vector<std::pair<double, std::
   std::string FormatUpperCase = Format;
   std::transform(FormatUpperCase.begin(), FormatUpperCase.end(), FormatUpperCase.begin(), ::toupper);
 
+
   // Check that the format name is correct
-  if ( (FormatUpperCase == "OSCARS" || FormatUpperCase == "SRW" || FormatUpperCase == "SPECTRA") ||
-     (FormatUpperCase.size() > 8 && std::string(FormatUpperCase.begin(), FormatUpperCase.begin() + 8) == std::string("OSCARSSR")) ) {
+  if ( (FormatUpperCase == "OSCARS"  || FormatUpperCase == "SRW" || FormatUpperCase == "SPECTRA") ||
+     (FormatUpperCase.size() > 8 && std::string(FormatUpperCase.begin(), FormatUpperCase.begin() + 8) == std::string("OSCARS1D")) ) {
 
     this->fBFieldContainer.AddField( new TField3D_Grid(Mapping, Format, Parameter, Rotations, Translation, Scaling) );
 
@@ -354,6 +355,18 @@ void OSCARSSR::AddParticleBeam (std::string const& Type, std::string const& Name
 
 
 
+void OSCARSSR::AddParticleBeam (std::string const& Beam, std::string const& Name, double const Weight)
+{
+  // Add a particle beam
+  // Beam - The name of the predefined particle beam to add
+
+  fParticleBeamContainer.AddNewParticleBeam(Beam, Name, Weight);
+  return;
+}
+
+
+
+
 TParticleBeam& OSCARSSR::GetParticleBeam (std::string const& Name)
 {
   // Return a reference to the particle beam by a given name
@@ -440,7 +453,7 @@ void OSCARSSR::SetNPointsTrajectory (size_t const N)
 
 
 
-void OSCARSSR::SetNPointsPerMeter (size_t const N)
+void OSCARSSR::SetNPointsPerMeterTrajectory (size_t const N)
 {
   // Set this number of points for any trajectory calculations
   fNPointsPerMeter = N;
@@ -2866,4 +2879,24 @@ void OSCARSSR::CalculateElectricFieldTimeDomain (TVector3D const& Observer, T3DS
 
   //return TVector3D(Mult * (NearField + FarField));
   return;
+}
+
+
+
+
+
+TFieldContainer const& OSCARSSR::GetBFieldContainer () const
+{
+  // Return the bfield container
+  return fBFieldContainer;
+}
+
+
+
+
+
+TFieldContainer const& OSCARSSR::GetEFieldContainer () const
+{
+  // Return the efield container
+  return fEFieldContainer;
 }

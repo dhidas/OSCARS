@@ -28,38 +28,42 @@ TParticleBeam::TParticleBeam ()
 
 
 
-TParticleBeam::TParticleBeam (std::string const& ParticleType)
+TParticleBeam::TParticleBeam (std::string const& PredefinedBeamType, std::string const& Name, double const Weight)
 {
-  // Constructor given a particle type.
-  // Sets the current to the single charge / s
+  // Constructor given a predefined beam name
+  this->SetPredefinedBeam(PredefinedBeamType);
+  this->SetName(Name);
+  this->SetWeight(Weight);
 
-  this->SetParticleType(ParticleType);
-
-  this->SetCurrent(this->GetQ());
 }
 
 
 
 
-TParticleBeam::TParticleBeam (std::string const& ParticleType, double const Energy, double const Current)
+TParticleBeam::TParticleBeam (std::string const& ParticleType, std::string const& Name, double const Energy, double const Current, double const Weight)
 {
   // Constructor given a particle type.
 
   this->SetParticleType(ParticleType);
+  this->SetName(Name);
   fE0 = Energy;
 
   this->SetCurrent(Current);
+  this->SetWeight(Weight);
+
+  SetBetaEmittance(TVector3D(0, 0, 0), TVector2D(0, 0), TVector2D(0, 0), TVector3D(0, 0, 0), 0);
 }
 
 
 
 
-TParticleBeam::TParticleBeam (std::string const& ParticleType, TVector3D const& X0, TVector3D const& D0, double const Energy, double const Current)
+TParticleBeam::TParticleBeam (std::string const& ParticleType, std::string const& Name, TVector3D const& X0, TVector3D const& D0, double const Energy, double const Current, double const Weight)
 {
   // Constructor given a particle type.
   // Sets the initial time to 0
 
   this->SetParticleType(ParticleType);
+  this->SetName(Name);
 
   fX0 = X0;
   fU0 = D0.UnitVector();
@@ -67,12 +71,15 @@ TParticleBeam::TParticleBeam (std::string const& ParticleType, TVector3D const& 
   fT0 = 0;
 
   this->SetCurrent(Current);
+  this->SetWeight(Weight);
+
+  SetBetaEmittance(TVector3D(0, 0, 0), TVector2D(0, 0), TVector2D(0, 0), TVector3D(0, 0, 0), 0);
 }
 
 
 
 
-TParticleBeam::TParticleBeam (std::string const& ParticleType, TVector3D const& X0, TVector3D const& D0, double const Energy, double const T0, double const Current, double const Charge, double const Mass)
+TParticleBeam::TParticleBeam (std::string const& ParticleType, std::string const& Name, TVector3D const& X0, TVector3D const& D0, double const Energy, double const T0, double const Current, double const Charge, double const Mass, double const Weight)
 {
   // Constructor given a particle type.
 
@@ -82,12 +89,16 @@ TParticleBeam::TParticleBeam (std::string const& ParticleType, TVector3D const& 
     this->SetParticleType(ParticleType);
   }
 
+  this->SetName(Name);
   fX0 = X0;
   fU0 = D0.UnitVector();
   fE0 = Energy;
   fT0 = T0;
 
   this->SetCurrent(Current);
+  this->SetWeight(Weight);
+
+  SetBetaEmittance(TVector3D(0, 0, 0), TVector2D(0, 0), TVector2D(0, 0), TVector3D(0, 0, 0), 0);
 }
 
 
@@ -96,6 +107,47 @@ TParticleBeam::TParticleBeam (std::string const& ParticleType, TVector3D const& 
 TParticleBeam::~TParticleBeam ()
 {
   // Destruction!
+}
+
+
+
+
+void TParticleBeam::SetPredefinedBeam (std::string const& Beam)
+{
+  // Set the beam to a predefined beam
+
+  std::string BeamU = Beam;
+  std::transform(BeamU.begin(), BeamU.end(), BeamU.begin(), ::toupper);
+
+  if (BeamU == "NSLSII") {
+    this->SetParticleType("electron");
+    this->SetCurrent(0.500);
+    this->SetE0(3);
+    this->SetU0(TVector3D(0, 0, 1));
+    this->SetT0(0);
+    this->SetX0(0);
+    this->SetBetaEmittance(TVector3D(1, 0, 0), TVector2D(0, 0), TVector2D(0.55e-9, 0.008e-9), TVector3D(0, 0, 0), 3 * 0.001);
+
+  } else if (BeamU == "NSLSII-LONGSTRAIGHT") {
+    this->SetParticleType("electron");
+    this->SetCurrent(0.500);
+    this->SetE0(3);
+    this->SetU0(TVector3D(0, 0, 1));
+    this->SetT0(0);
+    this->SetX0(0);
+    this->SetBetaEmittance(TVector3D(1, 0, 0), TVector2D(18, 3.1), TVector2D(0.55e-9, 0.008e-9), TVector3D(0, 0, 0), 3 * 0.001);
+
+  } else if (BeamU == "NSLSII-SHORTSTRAIGHT") {
+    this->SetParticleType("electron");
+    this->SetCurrent(0.500);
+    this->SetE0(3);
+    this->SetU0(TVector3D(0, 0, 1));
+    this->SetT0(0);
+    this->SetX0(0);
+    this->SetBetaEmittance(TVector3D(1, 0, 0), TVector2D(1.5, 0.8), TVector2D(0.55e-9, 0.008e-9), TVector3D(0, 0, 0), 3 * 0.001);
+  }
+
+  return;
 }
 
 
@@ -134,7 +186,40 @@ void TParticleBeam::SetInitialConditions (TVector3D const& X, TVector3D const& D
 
 
 
-void TParticleBeam::SetSigma (TVector3D const& HorizontalDirection, TVector2D const& SigmaU, TVector2D const& SigmaUP, TVector3D const& SigmaAt, double const SigmaE)
+void TParticleBeam::SetBetaEmittance (TVector3D const& HorizontalDirection, TVector2D const& Beta, TVector2D const& Emittance, TVector3D const& SigmaAt, double const SigmaEnergyGeV)
+{
+  // Set beam parameters.  This function likely to be updated with better twiss functions
+  // UPDATE: Twiss?
+
+  fBeta = Beta;
+  fEmittance = Emittance;
+
+
+  fSigmaU[0]  = sqrt(Emittance[0] * Beta[0]);
+  fSigmaU[1]  = sqrt(Emittance[1] * Beta[1]);
+  fSigmaUP[0] = sqrt(Emittance[0] / Beta[0]);
+  fSigmaUP[1] = sqrt(Emittance[1] / Beta[1]);
+
+  fHorizontalDirection = HorizontalDirection.UnitVector();
+  fSigmaAt             = SigmaAt;
+  fSigmaEnergyGeV      = SigmaEnergyGeV;
+
+  // The vertical direction has to be orthogonal to the two other directions
+  fVerticalDirection = fU0.Cross(fHorizontalDirection).UnitVector();
+
+  if (fabs(fHorizontalDirection.Dot(this->GetU0())) > 0.00000001) {
+    // We're supposed to be doing precision science here!
+    throw;
+  }
+
+
+  return;
+}
+
+
+
+
+void TParticleBeam::SetSigma (TVector3D const& HorizontalDirection, TVector2D const& SigmaU, TVector2D const& SigmaUP, TVector3D const& SigmaAt, double const SigmaEnergyGeV)
 {
   // Set beam parameters.  This function likely to be updated with better twiss functions
   // UPDATE: Twiss?
@@ -143,7 +228,7 @@ void TParticleBeam::SetSigma (TVector3D const& HorizontalDirection, TVector2D co
   fSigmaU              = SigmaU;
   fSigmaUP             = SigmaUP;
   fSigmaAt             = SigmaAt;
-  fSigmaE              = SigmaE;
+  fSigmaEnergyGeV      = SigmaEnergyGeV;
 
   // The vertical direction has to be orthogonal to the two other directions
   fVerticalDirection = fU0.Cross(fHorizontalDirection).UnitVector();
@@ -196,6 +281,144 @@ double TParticleBeam::GetT0 () const
 
 
 
+std::string const& TParticleBeam::GetName () const
+{
+  // Return the internal name of the particle beam
+  return fName;
+}
+
+
+
+
+double TParticleBeam::GetWeight () const
+{
+  // Return the internal weight for the particle beam
+  return fWeight;
+}
+
+
+
+
+TVector2D TParticleBeam::GetBeta () const
+{
+  // Return the beta function values
+  return fBeta;
+}
+
+
+
+
+TVector2D TParticleBeam::GetEmittance () const
+{
+  // Return the emittance values
+  return fEmittance;
+}
+
+
+
+
+TVector3D TParticleBeam::GetHorizontalDirection () const
+{
+  // Return the horizontal direction
+  return fHorizontalDirection;
+}
+
+
+
+
+TVector3D TParticleBeam::GetVerticalDirection () const
+{
+  // Return the vertical direction
+  return fVerticalDirection;
+}
+
+
+
+
+TVector3D TParticleBeam::GetSigmaAt () const
+{
+  // Return the lattice reference
+  return fSigmaAt;
+}
+
+
+
+
+void TParticleBeam::SetX0 (TVector3D const& X)
+{
+  // Set the initial position of particle beam
+  fX0 = X;
+  return;
+}
+
+
+
+
+void TParticleBeam::SetU0 (TVector3D const& U)
+{
+  // Set the initial direction of particle beam (use a unit vector)
+  fU0 = U.UnitVector();
+  return;
+}
+
+
+
+
+void TParticleBeam::SetE0 (double const En)
+{
+  // Set energy of the beam [GeV]
+  fE0 = En;
+  return;
+}
+
+
+
+
+void TParticleBeam::SetT0 (double const Time)
+{
+  // Set initial time of beam (int [m])
+  fT0 = Time;
+  return;
+}
+
+
+
+
+
+void TParticleBeam::SetSigmaEnergyGeV (double const Sigma)
+{
+  // Set initial time of beam (int [m])
+  fSigmaEnergyGeV = Sigma;
+  return;
+}
+
+
+
+
+void TParticleBeam::SetName (std::string const& Name)
+{
+  // Set the name of this beam
+  fName = Name;
+  return;
+}
+
+
+
+
+void TParticleBeam::SetWeight (double const Weight)
+{
+  // Set the weight for this beam
+  if (Weight <= 0) {
+    std::cerr << "Weight cannot be <= 0" << std::endl;
+    throw;
+  }
+
+  fWeight = Weight;
+  return;
+}
+
+
+
 
 TParticleA TParticleBeam::GetNewParticle (std::string const& IdealOrRandom)
 {
@@ -236,7 +459,7 @@ TParticleA TParticleBeam::GetNewParticle ()
   // UPDATE: Needs rand for twiss, or other beam configurations...
   // UPDATE: Could also take a python function
 
-  double    ENew = fE0 + fSigmaE * gRandomA->Normal(); // correlated with BNew, not sure how to handle this yet
+  double    ENew = fE0 + fSigmaEnergyGeV * gRandomA->Normal(); // correlated with BNew, not sure how to handle this yet
 
   double const Gamma = ENew / TOSCARSSR::kgToGeV(this->GetM());
   double const Beta = sqrt(1.0 - 1.0 / (Gamma * Gamma));

@@ -20,6 +20,17 @@ TVector3D::TVector3D ()
 
 
 
+TVector3D::TVector3D (double const V)
+{
+  // Constructor - makes all elements the same
+  fX = V;
+  fY = V;
+  fZ = V;
+}
+
+
+
+
 TVector3D::TVector3D (double const X, double const Y, double const Z)
 {
   // Probably most used and useful constructor
@@ -400,5 +411,30 @@ double& TVector3D::operator [] (int const i)
   }
   return fX;
 }
+
+
+
+TVector3D TVector3D::operator * (TVector3D const& V) const
+{
+  // Vector addition, add components and return a vector
+  return TVector3D(fX * V.GetX(), fY * V.GetY(), fZ * V.GetZ());
+}
+
+
+TVector3D TVector3D::operator - (double const& V) const
+{
+  // Vector addition, add components and return a vector
+  return TVector3D(fX - V, fY - V, fZ - V);
+}
+
+
+
+TVector3D TVector3D::operator / (TVector3D const& V) const
+{
+  // Vector addition, add components and return a vector
+  return TVector3D(fX / V.GetX(), fY / V.GetY(), fZ / V.GetZ());
+}
+
+
 
 

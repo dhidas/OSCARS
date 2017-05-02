@@ -30,6 +30,7 @@
 #include <algorithm>
 #include <cstring>
 #include <stdexcept>
+#include <sstream>
 
 
 // External global random generator
@@ -336,6 +337,28 @@ static PyObject* OSCARSSR_SetNPointsTrajectory (OSCARSSRObject* self, PyObject* 
 
   // Set the object variable
   self->obj->SetNPointsTrajectory(N);
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
+
+
+static PyObject* OSCARSSR_SetNPointsPerMeterTrajectory (OSCARSSRObject* self, PyObject* arg)
+{
+  // Set the number of points for trajectory calculation
+
+  // Grab the value from input
+  size_t N = PyLong_AsSsize_t(arg);
+
+  // Set the object variable
+  self->obj->SetNPointsPerMeterTrajectory(N);
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -741,6 +764,25 @@ static PyObject* OSCARSSR_ClearMagneticFields (OSCARSSRObject* self)
 
 
 
+static PyObject* OSCARSSR_PrintMagneticFields (OSCARSSRObject* self)
+{
+  // Print all magnetic stored in OSCARSSR
+
+  // Out string stream for printing beam information
+  std::ostringstream ostream;
+  ostream << "*Magnetic Fields*\n";
+  ostream << self->obj->GetBFieldContainer() << std::endl;
+
+  // Python printing
+  PyObject* sys = PyImport_ImportModule( "sys");
+  PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
+  std::string Message = ostream.str();
+  PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
 
 
 
@@ -1306,6 +1348,31 @@ static PyObject* OSCARSSR_ClearElectricFields (OSCARSSRObject* self)
 
 
 
+static PyObject* OSCARSSR_PrintElectricFields (OSCARSSRObject* self)
+{
+  // Print all magnetic stored in OSCARSSR
+
+  // Out string stream for printing beam information
+  std::ostringstream ostream;
+  ostream << "*Electric Fields*\n";
+  ostream << self->obj->GetEFieldContainer() << std::endl;
+
+  // Python printing
+  PyObject* sys = PyImport_ImportModule( "sys");
+  PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
+  std::string Message = ostream.str();
+  PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
 
 
 
@@ -1590,6 +1657,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   double      Weight                     = 1;
   double      Mass                       = 0;
   double      Charge                     = 0;
+  char const* Beam                       = "";
   PyObject*   List_Position       = PyList_New(0);
   PyObject*   List_Direction             = PyList_New(0);
   PyObject*   List_Rotations             = PyList_New(0);
@@ -1610,34 +1678,51 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
 
 
   // Input variables and parsing
-  static char *kwlist[] = {"type", "name", "energy_GeV", "d0", "x0", "sigma_energy_GeV", "t0", "current", "weight", "rotations", "translation", "horizontal_direction", "beta", "emittance", "lattice_reference", "mass", "charge", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ssdOO|ddddOOOOOOdd", kwlist,
-                                                                       &Type,
-                                                                       &Name,
-                                                                       &Energy_GeV,
-                                                                       &List_Direction,
-                                                                       &List_Position,
-                                                                       &Sigma_Energy_GeV,
-                                                                       &T0,
-                                                                       &Current,
-                                                                       &Weight,
-                                                                       &List_Rotations,
-                                                                       &List_Translation,
-                                                                       &List_Horizontal_Direction,
-                                                                       &List_Beta,
-                                                                       &List_Emittance,
-                                                                       &List_Lattice_Reference,
-                                                                       &Mass,
-                                                                       &Charge)) {
+  static char *kwlist[] = {"type", "name", "energy_GeV", "d0", "x0", "beam", "sigma_energy_GeV", "t0", "current", "weight", "rotations", "translation", "horizontal_direction", "beta", "emittance", "lattice_reference", "mass", "charge", NULL};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ssdOOsddddOOOOOOdd", kwlist,
+                                                                        &Type,
+                                                                        &Name,
+                                                                        &Energy_GeV,
+                                                                        &List_Direction,
+                                                                        &List_Position,
+                                                                        &Beam,
+                                                                        &Sigma_Energy_GeV,
+                                                                        &T0,
+                                                                        &Current,
+                                                                        &Weight,
+                                                                        &List_Rotations,
+                                                                        &List_Translation,
+                                                                        &List_Horizontal_Direction,
+                                                                        &List_Beta,
+                                                                        &List_Emittance,
+                                                                        &List_Lattice_Reference,
+                                                                        &Mass,
+                                                                        &Charge)) {
     return NULL;
   }
 
 
-  // Check that type and name exist
-  if (std::strlen(Type) == 0 || std::strlen(Name) == 0) {
-    PyErr_SetString(PyExc_ValueError, "'type' or 'name' is blank");
+  // Are you asking for one of the predefined beams?
+  bool const HasPredefinedBeam = std::strlen(Beam) != 0 ? true : false;
+
+  // Check that name exist
+  if (std::strlen(Name) == 0) {
+    PyErr_SetString(PyExc_ValueError, "'name' is blank");
     return NULL;
   }
+
+
+  // Check if beam is defined (for predefined beams)
+  if (HasPredefinedBeam) {
+    try {
+      self->obj->AddParticleBeam(Beam, Name);
+    } catch (...) {
+      PyErr_SetString(PyExc_ValueError, "Error in predefined beam name / definition");
+      return NULL;
+    }
+  }
+
+
 
   // Initial position
   if (PyList_Size(List_Position) != 0) {
@@ -1646,6 +1731,11 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'x0'");
       return NULL;
+    }
+
+    // Change predefined beam accordingly
+    if (HasPredefinedBeam) {
+      self->obj->GetParticleBeam(Name).SetX0(Position);
     }
   }
 
@@ -1657,6 +1747,11 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'd0'");
       return NULL;
     }
+
+    // Change predefined beam accordingly
+    if (HasPredefinedBeam) {
+      self->obj->GetParticleBeam(Name).SetU0(Direction);
+    }
   }
 
   if (Sigma_Energy_GeV == 0) {
@@ -1664,6 +1759,11 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   } else if (Sigma_Energy_GeV < 0) {
     PyErr_SetString(PyExc_ValueError, "'sigma_energy_GeV' cannot be less than zero");
     return NULL;
+  } else {
+    // Change predefined beam accordingly
+    if (HasPredefinedBeam) {
+      self->obj->GetParticleBeam(Name).SetSigmaEnergyGeV(Sigma_Energy_GeV);
+    }
   }
 
   // Check for Rotations in the input
@@ -1698,7 +1798,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
       return NULL;
     }
   } else {
-    Horizontal_Direction = Direction.Orthogonal().UnitVector();
+    Horizontal_Direction = -Direction.Orthogonal().UnitVector();
   }
   Horizontal_Direction = Horizontal_Direction.UnitVector();
 
@@ -1747,8 +1847,6 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   }
 
 
-
-
   // Rotate beam parameters
   Position.RotateSelfXYZ(Rotations);
   Direction.RotateSelfXYZ(Rotations);
@@ -1764,24 +1862,36 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
 
 
   // Add the particle beam
-  try {
-    if (std::string(Type) == "custom") {
-      if (Mass == 0 || Charge == 0) {
-        PyErr_SetString(PyExc_ValueError, "'mass' or 'charge' is zero");
-        return NULL;
+  if (std::strlen(Beam) == 0) {
+    try {
+      if (std::string(Type) == "custom") {
+        if (Mass == 0 || Charge == 0) {
+          PyErr_SetString(PyExc_ValueError, "'mass' or 'charge' is zero");
+          return NULL;
+        }
+        // UPDATE: for custom beams
+        self->obj->AddParticleBeam(Type, Name, Position, Direction, Energy_GeV, T0, Current, Weight, Charge, Mass);
+      } else {
+        self->obj->AddParticleBeam(Type, Name, Position, Direction, Energy_GeV, T0, Current, Weight);
       }
-      // UPDATE: for custom beams
-      self->obj->AddParticleBeam(Type, Name, Position, Direction, Energy_GeV, T0, Current, Weight, Charge, Mass);
-    } else {
-      self->obj->AddParticleBeam(Type, Name, Position, Direction, Energy_GeV, T0, Current, Weight);
+    } catch (std::invalid_argument e) {
+      PyErr_SetString(PyExc_ValueError, "invalid argument in adding particle beam.  possibly 'name' already exists");
+      return NULL;
     }
-  } catch (std::invalid_argument e) {
-    PyErr_SetString(PyExc_ValueError, "invalid argument in adding particle beam.  possibly 'name' already exists");
-    return NULL;
+    // UPDATE: Change me to include sigma of beam
+    self->obj->GetParticleBeam(Name).SetSigma(Horizontal_Direction, SigmaU, SigmaUPrime, Lattice_Reference, Sigma_Energy_GeV);
   }
 
-  // UPDATE: Change me to include sigma of beam
-  self->obj->GetParticleBeam(Name).SetSigma(Horizontal_Direction, SigmaU, SigmaUPrime, Lattice_Reference, Sigma_Energy_GeV);
+
+  //self->obj->GetParticleBeam(Name).SetCurrent(Current);
+  //self->obj->GetParticleBeam(Name).SetX0(Position);
+  //self->obj->GetParticleBeam(Name).SetU0(Direction);
+  if (T0 != 0) {
+    self->obj->GetParticleBeam(Name).SetT0(T0);
+  }
+
+  // Should set weight on input
+  //self->obj->GetParticleBeam(Name).SetWeight(Weight);
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -1893,6 +2003,28 @@ static PyObject* OSCARSSR_ClearParticleBeams (OSCARSSRObject* self)
   // Clear the contents of the particle beam container in OSCARSSR
 
   self->obj->ClearParticleBeams();
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+static PyObject* OSCARSSR_PrintParticleBeams (OSCARSSRObject* self)
+{
+  // Print all particle beams stored in OSCARSSR
+
+  // Out string stream for printing beam information
+  std::ostringstream ostream;
+  ostream << self->obj->GetParticleBeamContainer() << std::endl;
+
+  // Python printing
+  PyObject* sys = PyImport_ImportModule( "sys");
+  PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
+  std::string Message = ostream.str();
+  PyObject_CallMethod(s_out, "write", "s", Message.c_str());
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -3654,6 +3786,31 @@ static PyObject* OSCARSSR_CalculateElectricFieldTimeDomain (OSCARSSRObject* self
 
 
 
+static PyObject* OSCARSSR_Print (OSCARSSRObject* self)
+{
+  // Print beams and fields
+
+  OSCARSSR_PrintParticleBeams(self);
+  OSCARSSR_PrintMagneticFields(self);
+  OSCARSSR_PrintElectricFields(self);
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3699,6 +3856,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"get_ctstop",                        (PyCFunction) OSCARSSR_GetCTStop,                       METH_NOARGS,                  "get the stop time in [m]"},
   {"set_ctstartstop",                   (PyCFunction) OSCARSSR_SetCTStartStop,                  METH_VARARGS,                 "set the start and stop time in [m]"},
   {"set_npoints_trajectory",            (PyCFunction) OSCARSSR_SetNPointsTrajectory,            METH_O,                       "set the total number of points for the trajectory"},
+  {"set_npoints_per_meter_trajectory",  (PyCFunction) OSCARSSR_SetNPointsPerMeterTrajectory,    METH_O,                       "set the total number of points per meter used for trajectory"},
   {"get_npoints_trajectory",            (PyCFunction) OSCARSSR_GetNPointsTrajectory,            METH_NOARGS,                  "get the total number of points for the trajectory"},
                                                                                           
   {"add_bfield_file",                   (PyCFunction) OSCARSSR_AddMagneticField,                METH_VARARGS | METH_KEYWORDS, "add a magnetic field from a file"},
@@ -3709,6 +3867,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"add_bfield_undulator",              (PyCFunction) OSCARSSR_AddMagneticFieldIdealUndulator,  METH_VARARGS | METH_KEYWORDS, "add magnetic field from ideal undulator in 3D"},
   {"get_bfield",                        (PyCFunction) OSCARSSR_GetBField,                       METH_VARARGS,                 "get the magnetic field at a given position in space (and someday time?)"},
   {"clear_bfields",                     (PyCFunction) OSCARSSR_ClearMagneticFields,             METH_NOARGS,                  "clear all internal magnetic fields"},
+  {"print_bfields",                     (PyCFunction) OSCARSSR_PrintMagneticFields,             METH_NOARGS,                  "print all internal magnetic fields"},
 
   {"add_efield_file",                   (PyCFunction) OSCARSSR_AddElectricField,                METH_VARARGS | METH_KEYWORDS, "add an electric field from a file"},
   {"add_efield_function",               (PyCFunction) OSCARSSR_AddElectricFieldFunction,        METH_VARARGS,                 "add an electric field in form of python function"},
@@ -3717,6 +3876,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"add_efield_undulator",              (PyCFunction) OSCARSSR_AddElectricFieldIdealUndulator,  METH_VARARGS | METH_KEYWORDS, "add magnetic field from ideal undulator in 3D"},
   {"get_efield",                        (PyCFunction) OSCARSSR_GetEField,                       METH_VARARGS,                 "get the electric field at a given position in space (and someday time?)"},
   {"clear_efields",                     (PyCFunction) OSCARSSR_ClearElectricFields,             METH_NOARGS,                  "clear all internal electric fields"},
+  {"print_efields",                     (PyCFunction) OSCARSSR_PrintElectricFields,             METH_NOARGS,                  "print all internal electric fields"},
  
 
   {"write_bfield",                      (PyCFunction) OSCARSSR_WriteMagneticField,              METH_VARARGS | METH_KEYWORDS, "write the magnetic field to a file"},
@@ -3726,6 +3886,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"set_particle_beam",                 (PyCFunction) OSCARSSR_SetParticleBeam,                 METH_VARARGS | METH_KEYWORDS, "add a particle beam"},
   {"add_particle_beam",                 (PyCFunction) OSCARSSR_AddParticleBeam,                 METH_VARARGS | METH_KEYWORDS, "add a particle beam"},
   {"clear_particle_beams",              (PyCFunction) OSCARSSR_ClearParticleBeams,              METH_NOARGS,                  "Clear all existing particle beams from OSCARSSR"},
+  {"print_particle_beams",              (PyCFunction) OSCARSSR_PrintParticleBeams,              METH_NOARGS,                  "Print all existing particle beams in OSCARSSR"},
                                                                                           
   {"set_new_particle",                  (PyCFunction) OSCARSSR_SetNewParticle,                  METH_VARARGS | METH_KEYWORDS, "Set the internal particle to a new random particle"},
   {"get_particle_x0",                   (PyCFunction) OSCARSSR_GetParticleX0,                   METH_NOARGS,                  "Get the position at t0"},
@@ -3755,6 +3916,8 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"get_power_density",                 (PyCFunction) OSCARSSR_GetPowerDensity,                 METH_VARARGS | METH_KEYWORDS, "get the internal to OSCARSSR flux"},
 
   {"calculate_efield_vs_time",          (PyCFunction) OSCARSSR_CalculateElectricFieldTimeDomain,METH_VARARGS | METH_KEYWORDS, "calculate the electric field in the time domain"},
+
+  {"print",                             (PyCFunction) OSCARSSR_Print,                            METH_NOARGS,                  "print beams and fields"},
 
   {NULL}  /* Sentinel */
 };

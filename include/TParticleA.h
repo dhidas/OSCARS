@@ -75,7 +75,7 @@ class TParticleA
 
     // This is a funny one so I'll explain it here.
     // This is here because TParticleBeam inherits this class
-    // but it is more convenient for SRS to have this as a TParticleA
+    // but it is more convenient for SR to have this as a TParticleA
     // class member.
     double fCurrent;
 
