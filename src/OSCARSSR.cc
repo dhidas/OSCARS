@@ -2525,18 +2525,18 @@ void OSCARSSR::CalculateFlux (TParticleA& Particle,
 {
   // Final stop for entry to calculation
 
-  if (Dimension == 3) {
-    for (int i = 0; i != Surface.GetNPoints(); ++i) {
-      FluxContainer.AddPoint(Surface.GetPoint(i).GetPoint(), 0);
-    }
-  } else if (Dimension == 2) {
-    for (int i = 0; i != Surface.GetNPoints(); ++i) {
-      FluxContainer.AddPoint( TVector3D(Surface.GetX1(i), Surface.GetX2(i), 0), 0);
-    }
-  } else {
-    std::cerr << "wRong dimension" << std::endl;
-    throw;
-  }
+  //if (Dimension == 3) {
+  //  for (int i = 0; i != Surface.GetNPoints(); ++i) {
+  //    FluxContainer.AddPoint(Surface.GetPoint(i).GetPoint(), 0);
+  //  }
+  //} else if (Dimension == 2) {
+  //  for (int i = 0; i != Surface.GetNPoints(); ++i) {
+  //    FluxContainer.AddPoint( TVector3D(Surface.GetX1(i), Surface.GetX2(i), 0), 0);
+  //  }
+  //} else {
+  //  std::cerr << "wRong dimension" << std::endl;
+  //  throw;
+  //}
 
   this->CalculateFlux2(Particle, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, Dimension, Weight);
 
@@ -2633,8 +2633,7 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
   if (OutFileName != "") {
     FluxContainer.WriteToFileText(OutFileName, Dimension);
   }
-
-  return;
+  exit(0);
 
   return;
 }
@@ -2671,20 +2670,20 @@ void OSCARSSR::CalculateFluxThreads (TParticleA& Particle,
     }
   }
 
-  if (Surface.GetNPoints() == 0) {
-    if (Dimension == 3) {
-      for (int i = 0; i != Surface.GetNPoints(); ++i) {
-        FluxContainer.AddPoint(Surface.GetPoint(i).GetPoint(), 0);
-      }
-    } else if (Dimension == 2) {
-      for (int i = 0; i != Surface.GetNPoints(); ++i) {
-        FluxContainer.AddPoint( TVector3D(Surface.GetX1(i), Surface.GetX2(i), 0), 0);
-      }
-    } else {
-      std::cerr << "wrOng dimension" << std::endl;
-      throw;
-    }
-  }
+  //if (Surface.GetNPoints() == 0) {
+  //  if (Dimension == 3) {
+  //    for (int i = 0; i != Surface.GetNPoints(); ++i) {
+  //      FluxContainer.AddPoint(Surface.GetPoint(i).GetPoint(), 0);
+  //    }
+  //  } else if (Dimension == 2) {
+  //    for (int i = 0; i != Surface.GetNPoints(); ++i) {
+  //      FluxContainer.AddPoint( TVector3D(Surface.GetX1(i), Surface.GetX2(i), 0), 0);
+  //    }
+  //  } else {
+  //    std::cerr << "wrOng dimension" << std::endl;
+  //    throw;
+  //  }
+  //}
 
   // Check if NThreads is overriding the default nthreads
   int const NThreadsToUse = NThreads > 0 ? NThreads : fNThreadsGlobal;
