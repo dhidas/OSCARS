@@ -187,7 +187,6 @@ def plot_flux(V, title='Flux [$\gamma / mm^2 / 0.1\%bw / s]$', xlabel='X1 Axis [
     NY = len(np.unique(Y))
 
     # Size and limits
-    print(figsize)
     plt.figure(figsize=figsize)
     if ylim is not None: plt.ylim(ylim[0], ylim[1])
     if xlim is not None: plt.xlim(xlim[0], xlim[1])
