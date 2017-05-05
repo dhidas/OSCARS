@@ -102,6 +102,76 @@ def power_density_3d(srs, surface,
 
 
 
+
+
+
+
+
+
+
+
+def power_density_3ds(srs, surface, ax,
+                    normal=1, rotations=[0, 0, 0], translation=[0, 0, 0], nparticles=0, gpu=0, nthreads=0,
+                    alpha=0.4, transparent=True):
+    """calculate power density for and plot a parametric surface in 3d"""
+
+    points = []
+
+
+    for u in np.linspace(surface.ustart, surface.ustop, surface.nu):
+        for v in np.linspace(surface.vstart, surface.vstop, surface.nv):
+            points.append([surface.position(u, v), surface.normal(u, v)])
+
+
+    power_density = srs.calculate_power_density(points=points, normal=normal, rotations=rotations, translation=translation, nparticles=nparticles, gpu=gpu, nthreads=nthreads)
+    P = [item[1] for item in power_density]
+
+    X2 = []
+    Y2 = []
+    Z2 = []
+    for i in range(surface.nu):
+        tX = []
+        tY = []
+        tZ = []
+        for j in range(surface.nv):
+            tX.append(power_density[i * surface.nv + j][0][0])
+            tY.append(power_density[i * surface.nv + j][0][1])
+            tZ.append(power_density[i * surface.nv + j][0][2])
+        X2.append(tX)
+        Y2.append(tY)
+        Z2.append(tZ)
+
+    colors =[]
+    MAXP = max(P)
+    PP = []
+    for i in range(surface.nu):
+        tmpP = []
+        tmpPP = []
+        for j in range(surface.nv):
+            tmpP.append(P[i * surface.nv + j] / MAXP)
+            tmpPP.append(P[i * surface.nv + j])
+
+        colors.append(tmpP)
+        PP.append(tmpPP)
+  
+
+
+
+    #ax.invert_xaxis()
+    return ax.plot_surface(X2, Z2, Y2, facecolors=cm.viridis(colors), rstride=1, cstride=1, alpha=alpha)
+
+
+
+
+
+
+
+
+
+
+
+
+
 def plot_bfield2D (srs, xlim=[-0.001, 0.001], zlim=[-1, 1], nx=20, nz=50):
     """plot the bfield in 3D vector form"""
 

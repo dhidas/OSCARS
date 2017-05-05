@@ -90,6 +90,15 @@ class TField3D_Grid : public TField
                                         std::vector<double>                          const& Scaling,
                                         char                                         const  CommentChar = '#');
 
+    void InterpolateFromFiles_SRW (std::vector<std::pair<double, std::string> > const& Mapping,
+                                   double                                       const  Parameter,
+                                   TVector3D                                    const& Rotations = TVector3D(0, 0, 0),
+                                   TVector3D                                    const& Translation = TVector3D(0, 0, 0),
+                                   std::vector<double>                          const& Scaling = std::vector<double>(),
+                                   char                                         const  CommentChar = '#');
+
+
+
     TVector3D InterpolateFields (std::vector<double>    const& Parameters,
                                  std::vector<TVector3D> const& Fields,
                                  double                 const  Parameter);
