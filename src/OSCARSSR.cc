@@ -2599,6 +2599,7 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
     throw;
   }
 
+
   // Don't write output in individual mode
   std::string const BlankOutFileName = "";
 
@@ -2633,7 +2634,6 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
   if (OutFileName != "") {
     FluxContainer.WriteToFileText(OutFileName, Dimension);
   }
-  exit(0);
 
   return;
 }
