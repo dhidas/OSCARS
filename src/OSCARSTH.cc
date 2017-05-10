@@ -324,11 +324,11 @@ double OSCARSTH::UndulatorEnergyAtHarmonicB (double const BField,
 
 
 
-TVector2D OSCARSTH::UndulatorBrightness (double const BField,
-                                         double const Period,
-                                         int    const NPeriods,
-                                         int    const N
-                                         ) const
+TVector2D OSCARSTH::UndulatorBrightnessK (double const K,
+                                          double const Period,
+                                          int    const NPeriods,
+                                          int    const N
+                                          ) const
 {
   // Return the on-axis theoretical brightness for a planar undulator
   if (N % 2 == 0) {
@@ -350,7 +350,6 @@ TVector2D OSCARSTH::UndulatorBrightness (double const BField,
 
   double const Gamma = BeamEnergy_GeV / TOSCARSSR::kgToGeV( TOSCARSSR::Me());
 
-  double const K = this->UndulatorK(BField, Period);
   double const K2 = K * K;
 
   double const Lambda = Period / (2 * Gamma * Gamma) * (1. + K2 / 2.) / (double) N;
@@ -380,9 +379,18 @@ TVector2D OSCARSTH::UndulatorBrightness (double const BField,
 
 
 
-void SetParticleBeam (std::string const&, std::string const&, TVector3D const&, TVector3D const&, double const, double const, double const, double const, double const Charge = 0, double const Mass = 0);
-void SetParticleBeam (std::string const& Beam, std::string const& Name, double const Weight = 1);
-TParticleBeam& GetParticleBeam ();
+TVector2D OSCARSTH::UndulatorBrightnessB (double const BField,
+                                          double const Period,
+                                          int    const NPeriods,
+                                          int    const Harmonic
+                                          ) const
+{
+  // Return the on-axis theoretical brightness for a planar undulator
+
+  return UndulatorBrightnessK(this->UndulatorK(BField, Period), Period, NPeriods, Harmonic);
+}
+
+
 
 
 

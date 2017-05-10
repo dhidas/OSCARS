@@ -71,10 +71,15 @@ class OSCARSTH
                                        int    const Harmonic,
                                        double const BeamEnergy_GeV) const;
 
-    TVector2D UndulatorBrightness (double const BField,
-                                   double const Period,
-                                   int    const NPeriods,
-                                   int    const N) const;
+    TVector2D UndulatorBrightnessK (double const BField,
+                                    double const Period,
+                                    int    const NPeriods,
+                                    int    const N) const;
+
+    TVector2D UndulatorBrightnessB (double const BField,
+                                    double const Period,
+                                    int    const NPeriods,
+                                    int    const N) const;
 
 
 

@@ -41,6 +41,10 @@ moduleOSCARSTH = Extension('oscars.th',
                                  'src/OSCARSTH_Python.cc',
                                  'src/TVector2D.cc',
                                  'src/TVector3D.cc',
+                                 'src/TParticleA.cc',
+                                 'src/TParticleBeam.cc',
+                                 'src/TRandomA.cc',
+                                 'src/TParticleTrajectoryPoints.cc',
                                  'src/TOMATH.cc'],
                       extra_compile_args=['-std=c++11', '-Wno-write-strings', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread']
                      )

@@ -519,21 +519,22 @@ def plot_electric_field_vs_time(efield, show=True, ofile='', ret=False):
 
 
 
-def plot_brightness(oth, period, nperiods, harmonics, minimum=0, bfield=None, k=None, show=True, ret=False, title='Brightness', figsize=None, ofile=None):
+def plot_brightness(oth, period, nperiods, harmonics, minimum=0, bfield=None, K=None, show=True, ret=False, title='Brightness', figsize=None, ofile=None):
     '''Plot the brightness of an undulator.  More docstring needed'''
 
-    if bfield is None and k is None:
-        raise ValueError('bfield or k must be defined')
+    if bfield is None and K is None:
+        raise ValueError('bfield or K must be defined')
 
-    if bfield is not None and k is not None:
-        raise ValueError('bfield and k cannot both be defined.  pick one or the other')
+    if bfield is not None and K is not None:
+        raise ValueError('bfield and K cannot both be defined.  pick one or the other')
 
     if bfield is not None:
         if len(bfield) is not 2:
             raise ValueError('bfield must be: [min, max]')
         else:
-            k = [oth.undulator_K(bfield[0], period), oth.undulator_K(bfield[1], period)]
+            K = [oth.undulator_K(bfield[0], period), oth.undulator_K(bfield[1], period)]
 
+    print(K)
     # Size and limits
     plt.figure(1, figsize=figsize)
     plt.loglog()
@@ -543,12 +544,13 @@ def plot_brightness(oth, period, nperiods, harmonics, minimum=0, bfield=None, k=
     for i in harmonics:
         
         R = []
-        for bf in np.linspace(bfield[1], bfield[0], 300):
-            ev_brightness = oth.undulator_brightness(bfield=bf,
+        for k in np.linspace(K[1], K[0], 300):
+            ev_brightness = oth.undulator_brightness(K=k,
                                                      period=period,
                                                      nperiods=nperiods,
                                                      harmonic=i
                                                     )
+            print(ev_brightness)
             if ev_brightness[1] < minimum:
                 break
             R.append(ev_brightness)

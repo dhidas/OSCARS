@@ -547,33 +547,34 @@ static PyObject* OSCARSTH_UndulatorBrightness (OSCARSTHObject* self, PyObject* a
   // Return the brightness [gamma/s/mrad^2/mm^2/0.1%bw] at a given K for a given harmonic
 
   // Require some arguments
-  double BField = 0;
-  double Period = 0;
+  double Period   = 0;
   int    NPeriods = 0;
   int    Harmonic = 0;
-  double BeamEnergy_GeV = 0;
-  double SigmaE = 0;
-  double Current = 0;
-  PyObject* List_Beta      = PyList_New(0);
-  PyObject* List_Emittance = PyList_New(0);
-
-  TVector2D Beta;
-  TVector2D Emittance;
+  double BField   = 0;
+  double K        = 0;
 
   // Input variables and parsing
-  static char *kwlist[] = {"bfield", "period", "nperiods", "harmonic", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ddii", kwlist, 
-                                                         &BField,
+  static char *kwlist[] = {"period", "nperiods", "harmonic", "bfield", "K", NULL};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dii|dd", kwlist, 
                                                          &Period,
                                                          &NPeriods,
-                                                         &Harmonic
+                                                         &Harmonic,
+                                                         &BField,
+                                                         &K
                                                          )) {
     return NULL;
   }
 
-  // Check that K is > 0
-  if (BField <= 0) {
-    PyErr_SetString(PyExc_ValueError, "'bfield' must be > 0");
+
+  // Check that bfield is > 0 or K > 0
+  if (BField <= 0 && K <= 0) {
+    PyErr_SetString(PyExc_ValueError, "'bfield' or 'K' must be > 0");
+    return NULL;
+  }
+
+  // Check that bfield and K not both defined
+  if (BField > 0 && K > 0) {
+    PyErr_SetString(PyExc_ValueError, "use 'bfield' or 'K' but not both");
     return NULL;
   }
 
@@ -591,10 +592,17 @@ static PyObject* OSCARSTH_UndulatorBrightness (OSCARSTHObject* self, PyObject* a
   }
 
 
+  TVector2D Result;
 
+  if (K > 0) {
+    Result = self->obj->UndulatorBrightnessK(BField, Period, NPeriods, Harmonic);
+  } else if (BField > 0) {
+    Result = self->obj->UndulatorBrightnessB(BField, Period, NPeriods, Harmonic);
+  } else {
+    PyErr_SetString(PyExc_ValueError, "not B nor K.  please report this bug");
+    return NULL;
+  }
 
-  // Calculate the spectrum
-  TVector2D const Result = self->obj->UndulatorBrightness(BField, Period, NPeriods, Harmonic);
 
   return OSCARSTH_TVector2DAsList(Result);
 }
