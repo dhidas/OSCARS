@@ -1659,7 +1659,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   double      Mass                       = 0;
   double      Charge                     = 0;
   char const* Beam                       = "";
-  PyObject*   List_Position       = PyList_New(0);
+  PyObject*   List_Position              = PyList_New(0);
   PyObject*   List_Direction             = PyList_New(0);
   PyObject*   List_Rotations             = PyList_New(0);
   PyObject*   List_Translation           = PyList_New(0);
@@ -2022,7 +2022,7 @@ static PyObject* OSCARSSR_PrintParticleBeams (OSCARSSRObject* self)
   ostream << self->obj->GetParticleBeamContainer() << std::endl;
 
   // Python printing
-  PyObject* sys = PyImport_ImportModule( "sys");
+  PyObject* sys = PyImport_ImportModule("sys");
   PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
   std::string Message = ostream.str();
   PyObject_CallMethod(s_out, "write", "s", Message.c_str());
