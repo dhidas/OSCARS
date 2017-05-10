@@ -276,21 +276,71 @@ double OSCARSTH::DipoleBrightness () const
 
 
 
+double OSCARSTH::UndulatorEnergyAtHarmonicK (double const K,
+                                             double const Period,
+                                             int    const Harmonic,
+                                             double const BeamEnergy_GeV
+                                             ) const
+{
+  // Return the on-axis theoretical photon energy for a planar undulator
+
+  // Even harmonics don't exist
+  if (Harmonic % 2 == 0) {
+    return 0;
+  }
+
+  double const Gamma = BeamEnergy_GeV / TOSCARSSR::kgToGeV( TOSCARSSR::Me());
+
+  double const K2 = K * K;
+
+  double const Lambda = Period / (2 * Gamma * Gamma) * (1. + K2 / 2.) / (double) Harmonic;
+  double const Energy_eV = TOSCARSSR::FrequencyToEv(TOSCARSSR::C() / Lambda);
+
+  return Energy_eV;
+}
+
+
+
+
+
+
+double OSCARSTH::UndulatorEnergyAtHarmonicB (double const BField,
+                                             double const Period,
+                                             int    const Harmonic,
+                                             double const BeamEnergy_GeV
+                                             ) const
+{
+  // Return the on-axis theoretical photon energy for a planar undulator
+
+  // Undulator deflection parameter
+  double const K = this->UndulatorK(BField, Period);
+
+  // The value is calculated using the K value in the following function
+  return this->UndulatorEnergyAtHarmonicK(K, Period, Harmonic, BeamEnergy_GeV);
+}
+
+
+
+
+
+
 TVector2D OSCARSTH::UndulatorBrightness (double const BField,
                                          double const Period,
                                          int    const NPeriods,
-                                         int    const N,
-                                         double const BeamEnergy_GeV,
-                                         double const SigmaE,
-                                         double const Current,
-                                         TVector2D const Beta,
-                                         TVector2D const Emittance
+                                         int    const N
                                          ) const
 {
   // Return the on-axis theoretical brightness for a planar undulator
   if (N % 2 == 0) {
     return TVector2D(0, 0);
   }
+
+  // Properties from beam
+  double    const BeamEnergy_GeV = fParticleBeam.GetE0();
+  TVector2D const Beta           = fParticleBeam.GetBeta();
+  TVector2D const Emittance      = fParticleBeam.GetEmittance();
+  double    const Current        = fParticleBeam.GetCurrent();
+
 
   double const sigx = sqrt(Emittance[0] * Beta[0]);
   double const sigy = sqrt(Emittance[1] * Beta[1]);
@@ -304,7 +354,7 @@ TVector2D OSCARSTH::UndulatorBrightness (double const BField,
   double const K2 = K * K;
 
   double const Lambda = Period / (2 * Gamma * Gamma) * (1. + K2 / 2.) / (double) N;
-  double const Energy_eV = TOSCARSSR::FrequencyToEv(TOSCARSSR::C() / Lambda);
+  double const Energy_eV = UndulatorEnergyAtHarmonicK(K, Period, N, BeamEnergy_GeV);
 
   double const Fn = K2 * N * N / pow(1. + K2 / 2., 2) * pow(
       TOMATH::BesselJ( (N - 1) / 2, N * K2 / (4 * (1. + 0.5 * K2))) - TOMATH::BesselJ( (N + 1) / 2, N * K2 / (4 * (1. + 0.5 * K2))),
@@ -324,3 +374,56 @@ TVector2D OSCARSTH::UndulatorBrightness (double const BField,
 
   return TVector2D(Energy_eV, Fu / (4 * TOSCARSSR::Pi2() * SigmaX * SigmaY * SigmaXP * SigmaYP) * 1.e-12);
 }
+
+
+
+
+
+
+void SetParticleBeam (std::string const&, std::string const&, TVector3D const&, TVector3D const&, double const, double const, double const, double const, double const Charge = 0, double const Mass = 0);
+void SetParticleBeam (std::string const& Beam, std::string const& Name, double const Weight = 1);
+TParticleBeam& GetParticleBeam ();
+
+
+
+
+void OSCARSTH::SetParticleBeam (std::string const& Beam)
+{
+  // Add a particle beam
+  // Beam - The name of the predefined particle beam to add
+
+  fParticleBeam.SetPredefinedBeam(Beam);
+  return;
+}
+
+
+
+
+void OSCARSTH::SetParticleBeam (double const Energy_GeV,
+                                double const Current,
+                                TVector2D const& Beta,
+                                TVector2D const& Emittance,
+                                double const SigmaEnergyGeV)
+{
+  // Add a particle beam
+  // Energy_GeV  - Energy of particle beam in GeV
+  // Current     - Beam current in Amperes
+
+  fParticleBeam = TParticleBeam("electron", "beam", Energy_GeV, Current);
+  fParticleBeam.SetBetaEmittance(TVector3D(1, 0, 0), Beta, Emittance, TVector3D(0, 0, 0), SigmaEnergyGeV);
+
+  return;
+}
+
+
+
+
+TParticleBeam& OSCARSTH::GetParticleBeam ()
+{
+  // Return a reference to the particle beam by a given name
+  return fParticleBeam;
+}
+
+
+
+

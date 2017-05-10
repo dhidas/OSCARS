@@ -113,20 +113,20 @@ def plot_trajectory_velocity(trajectory, show=True, ofile='', figsize=[18, 4.5],
     plt.subplot(131)
     plt.plot(T, VX)
     plt.xlabel('T [step]')
-    plt.ylabel('BX []')
-    plt.title('Particle Beta X')
+    plt.ylabel('$\\beta_x$')
+    plt.title('Particle $\\beta_x$')
 
     plt.subplot(132)
     plt.plot(T, VY)
     plt.xlabel('T [step]')
-    plt.ylabel('BY []')
-    plt.title('Particle Beta Y')
+    plt.ylabel('$\\beta_y$')
+    plt.title('Particle $\\beta_y$')
 
     plt.subplot(133)
     plt.plot(T, VZ)
     plt.xlabel('T [step]')
-    plt.ylabel('BZ []')
-    plt.title('Particle Beta Z')
+    plt.ylabel('$\\beta_z$')
+    plt.title('Particle $\\beta_z$')
 
     if ofile != '':
         plt.savefig(ofile, bbox_inches='tight')
@@ -218,7 +218,7 @@ def plot_flux(V, title='Flux [$\gamma / mm^2 / 0.1\%bw / s]$', xlabel='X1 Axis [
     return
 
 
-def plot_spectrum(S, log=False, show=True, ofile='', title='Spectrum', figsize=None, ylim=None, xlim=None, transparent=True, ret=False, **kwargs):
+def plot_spectrum(S, log=False, show=True, ofile='', title='Spectrum', figsize=None, ylim=None, xlim=None, transparent=True, ret=False, xticks=None, **kwargs):
     """Plot the spectrum"""
 
     # Size and limits
@@ -235,6 +235,9 @@ def plot_spectrum(S, log=False, show=True, ofile='', title='Spectrum', figsize=N
     plt.ylabel('$\gamma / mm^2 / 0.1\%bw / s$')
     plt.title(title)
 
+    if xticks is not None:
+        plt.xticks(xticks)
+
     if ofile != '':
         plt.savefig(ofile, bbox_inches='tight', transparent=transparent)
 
@@ -248,7 +251,7 @@ def plot_spectrum(S, log=False, show=True, ofile='', title='Spectrum', figsize=N
 
 
 
-def plot_spectra(spectra, label=None, show=True, ofile='', title='', loc='upper left', log=False, xlabel='Energy [eV]', ylabel='[$\gamma / mm^2 / 0.1\%bw / s$]', figsize=None, ylim=None, xlim=None, ret=False, axis=None, transparent=True, **kwargs):
+def plot_spectra(spectra, label=None, show=True, ofile='', title='', loc='upper left', log=False, xlabel='Energy [eV]', ylabel='[$\gamma / mm^2 / 0.1\%bw / s$]', figsize=None, ylim=None, xlim=None, ret=False, axis=None, transparent=True, xticks=None, **kwargs):
 
 
     # Size and limits
@@ -285,6 +288,9 @@ def plot_spectra(spectra, label=None, show=True, ofile='', title='', loc='upper 
     if axis is not None:
         plt.axis(axis)
 
+    if xticks is not None:
+        plt.xticks(xticks)
+
     if ofile != '':
         plt.savefig(ofile, bbox_inches='tight', transparent=transparent)
 
@@ -299,7 +305,7 @@ def plot_spectra(spectra, label=None, show=True, ofile='', title='', loc='upper 
 
 
 
-def plot_bfield(osc, mymin=-1, mymax=1, ylim=None, show=True, ofile='', axis='Z', npoints=20000, between_two_points=None, ret=False):
+def plot_bfield(osr, mymin=-1, mymax=1, ylim=None, show=True, ofile='', axis='Z', npoints=20000, between_two_points=None, ret=False):
     """Plot the magnetic field as a function of Z"""
 
 
@@ -322,24 +328,24 @@ def plot_bfield(osc, mymin=-1, mymax=1, ylim=None, show=True, ofile='', axis='Z'
             y = p0[1] + step[1] * float(i)
             z = p0[2] + step[2] * float(i)
 
-            Bx.append(osc.get_bfield([x, y, z])[0])
-            By.append(osc.get_bfield([x, y, z])[1])
-            Bz.append(osc.get_bfield([x, y, z])[2])
+            Bx.append(osr.get_bfield([x, y, z])[0])
+            By.append(osr.get_bfield([x, y, z])[1])
+            Bz.append(osr.get_bfield([x, y, z])[2])
             axis = 'Position'
     else:
         P = np.linspace(mymin, mymax, npoints)
         if axis is 'X':
-            Bx = [osc.get_bfield([p, 0, 0])[0] for p in P]
-            By = [osc.get_bfield([p, 0, 0])[1] for p in P]
-            Bz = [osc.get_bfield([p, 0, 0])[2] for p in P]
+            Bx = [osr.get_bfield([p, 0, 0])[0] for p in P]
+            By = [osr.get_bfield([p, 0, 0])[1] for p in P]
+            Bz = [osr.get_bfield([p, 0, 0])[2] for p in P]
         elif axis is 'Y':
-            Bx = [osc.get_bfield([0, p, 0])[0] for p in P]
-            By = [osc.get_bfield([0, p, 0])[1] for p in P]
-            Bz = [osc.get_bfield([0, p, 0])[2] for p in P]
+            Bx = [osr.get_bfield([0, p, 0])[0] for p in P]
+            By = [osr.get_bfield([0, p, 0])[1] for p in P]
+            Bz = [osr.get_bfield([0, p, 0])[2] for p in P]
         elif axis is 'Z':
-            Bx = [osc.get_bfield([0, 0, p])[0] for p in P]
-            By = [osc.get_bfield([0, 0, p])[1] for p in P]
-            Bz = [osc.get_bfield([0, 0, p])[2] for p in P]
+            Bx = [osr.get_bfield([0, 0, p])[0] for p in P]
+            By = [osr.get_bfield([0, 0, p])[1] for p in P]
+            Bz = [osr.get_bfield([0, 0, p])[2] for p in P]
         else:
             raise
 
@@ -378,7 +384,7 @@ def plot_bfield(osc, mymin=-1, mymax=1, ylim=None, show=True, ofile='', axis='Z'
 
 
 
-def plot_efield(osc, mymin=-1, mymax=1, ylim=None, show=True, ofile='', axis='Z', npoints=20000, between_two_points=None, ret=False):
+def plot_efield(osr, mymin=-1, mymax=1, ylim=None, show=True, ofile='', axis='Z', npoints=20000, between_two_points=None, ret=False):
     """Plot the electric field as a function of Z"""
 
 
@@ -401,24 +407,24 @@ def plot_efield(osc, mymin=-1, mymax=1, ylim=None, show=True, ofile='', axis='Z'
             y = p0[1] + step[1] * float(i)
             z = p0[2] + step[2] * float(i)
 
-            Bx.append(osc.get_efield([x, y, z])[0])
-            By.append(osc.get_efield([x, y, z])[1])
-            Bz.append(osc.get_efield([x, y, z])[2])
+            Bx.append(osr.get_efield([x, y, z])[0])
+            By.append(osr.get_efield([x, y, z])[1])
+            Bz.append(osr.get_efield([x, y, z])[2])
             axis = 'Position'
     else:
         P = np.linspace(mymin, mymax, npoints)
         if axis is 'X':
-            Bx = [osc.get_efield([p, 0, 0])[0] for p in P]
-            By = [osc.get_efield([p, 0, 0])[1] for p in P]
-            Bz = [osc.get_efield([p, 0, 0])[2] for p in P]
+            Bx = [osr.get_efield([p, 0, 0])[0] for p in P]
+            By = [osr.get_efield([p, 0, 0])[1] for p in P]
+            Bz = [osr.get_efield([p, 0, 0])[2] for p in P]
         elif axis is 'Y':
-            Bx = [osc.get_efield([0, p, 0])[0] for p in P]
-            By = [osc.get_efield([0, p, 0])[1] for p in P]
-            Bz = [osc.get_efield([0, p, 0])[2] for p in P]
+            Bx = [osr.get_efield([0, p, 0])[0] for p in P]
+            By = [osr.get_efield([0, p, 0])[1] for p in P]
+            Bz = [osr.get_efield([0, p, 0])[2] for p in P]
         elif axis is 'Z':
-            Bx = [osc.get_efield([0, 0, p])[0] for p in P]
-            By = [osc.get_efield([0, 0, p])[1] for p in P]
-            Bz = [osc.get_efield([0, 0, p])[2] for p in P]
+            Bx = [osr.get_efield([0, 0, p])[0] for p in P]
+            By = [osr.get_efield([0, 0, p])[1] for p in P]
+            Bz = [osr.get_efield([0, 0, p])[2] for p in P]
         else:
             raise
 
@@ -510,6 +516,67 @@ def plot_electric_field_vs_time(efield, show=True, ofile='', ret=False):
     
     
     
+
+
+
+def plot_brightness(oth, period, nperiods, harmonics, minimum=0, bfield=None, k=None, show=True, ret=False, title='Brightness', figsize=None, ofile=None):
+    '''Plot the brightness of an undulator.  More docstring needed'''
+
+    if bfield is None and k is None:
+        raise ValueError('bfield or k must be defined')
+
+    if bfield is not None and k is not None:
+        raise ValueError('bfield and k cannot both be defined.  pick one or the other')
+
+    if bfield is not None:
+        if len(bfield) is not 2:
+            raise ValueError('bfield must be: [min, max]')
+        else:
+            k = [oth.undulator_K(bfield[0], period), oth.undulator_K(bfield[1], period)]
+
+    # Size and limits
+    plt.figure(1, figsize=figsize)
+    plt.loglog()
+
+
+    # Loop over all harmonics
+    for i in harmonics:
+        
+        R = []
+        for bf in np.linspace(bfield[1], bfield[0], 300):
+            ev_brightness = oth.undulator_brightness(bfield=bf,
+                                                     period=period,
+                                                     nperiods=nperiods,
+                                                     harmonic=i
+                                                    )
+            if ev_brightness[1] < minimum:
+                break
+            R.append(ev_brightness)
+
+        X = []
+        Y = []
+        for j in range(len(R)):
+            X.append(R[j][0])
+            Y.append(R[j][1])
+        plt.plot(X, Y, label=str(i))
+
+    plt.legend(title='Harmonics')
+
+    plt.xlabel('Energy [eV]')
+    plt.ylabel('[$\gamma / mm^2 / mrad^2 / 0.1\%bw / s$]')
+    plt.title(title)
+    
+    if ofile is not None:
+        plt.savefig(ofile, bbox_inches='tight', transparent=transparent)
+
+    if show == True:
+        plt.show()
+
+    if ret:
+        return plt
+    return
+
+
 
 
 
