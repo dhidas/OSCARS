@@ -1006,7 +1006,7 @@ void TField3D_Grid::ReadFile_SRW (std::string const& InFileName,
 
         size_t const Index = this->GetIndex(ix, iy, iz);
         if (Index >= fData.size()) {
-          throw;
+          throw std::out_of_range("the index is out of range.  please report this bug.");
         }
         fData[Index] = F;
       }
@@ -1203,6 +1203,7 @@ void TField3D_Grid::InterpolateFromFiles (std::vector<std::pair<double, std::str
 
     if (!InFiles.back()->is_open()) {
       std::cerr << "ERROR: cannot open file" << std::endl;
+      // UPDATE: throws
       //throw std::ifstream::failure("cannot open file for reading");
     }
   }
@@ -1220,6 +1221,7 @@ void TField3D_Grid::InterpolateFromFiles (std::vector<std::pair<double, std::str
     for (size_t i = 1; i < InFiles.size(); ++i) {
       std::getline(*(InFiles[i]), L);
       if (HeaderValues[ih] != GetHeaderValue(L)) {
+        // UPDATE: throws
         throw;
       }
     }
@@ -1782,7 +1784,6 @@ void TField3D_Grid::InterpolateFromFiles_SRW (std::vector<std::pair<double, std:
 {
   // Get interpolated field based on input files
 
-  std::cout << "EHERE" << std::endl;
   // First sort the input mapping vector
   std::vector<std::pair<double, std::string> > MyMapping = Mapping;
   std::sort(MyMapping.begin(), MyMapping.end(), this->CompareMappingElements);
@@ -1813,14 +1814,11 @@ void TField3D_Grid::InterpolateFromFiles_SRW (std::vector<std::pair<double, std:
     for (size_t i = 1; i < InFiles.size(); ++i) {
       std::getline(*(InFiles[i]), L);
       if (HeaderValues[ih] != GetHeaderValueSRW(L)) {
-        std::cerr << "not all header values the same" << std::endl;
-        std::cout << HeaderValues[ih] << " " << GetHeaderValueSRW(L) << std::endl;
-        //throw;
+        throw std::out_of_range("not all header values the same in all files.  incompatible files");
       }
     }
   }
 
-  std::cout << "got headers" << std::endl;
 
 
   // Initial X
@@ -2049,7 +2047,7 @@ TVector3D TField3D_Grid::InterpolateFields (std::vector<double>    const& Parame
 
   // Check size of parameters vector.  Must be at least 2
   if (Parameters.size() < 2) {
-    throw;
+    throw std::out_of_range("must have at least 2 points for interpolation");
   }
 
   TOMATH::TSpline1D3<TVector3D> S(Parameters, Fields);
@@ -2066,7 +2064,7 @@ TVector3D TField3D_Grid::InterpolateFields (std::vector<double>    const& Parame
 
     // If outside of the range throw for now
     if (i == 0 && Parameter < V) {
-      throw;
+      throw std::out_of_range("parameter must be within range.  extrapolation not allowed.");
     }
 
     if (V < Parameter) {
@@ -2081,7 +2079,7 @@ TVector3D TField3D_Grid::InterpolateFields (std::vector<double>    const& Parame
 
   // Make sure that an after point was found, otherwise outside of range
   if (!HasAfter) {
-    throw;
+    throw std::out_of_range("After point not found.  Please report this bug.");
   }
 
   // How far in and slope
