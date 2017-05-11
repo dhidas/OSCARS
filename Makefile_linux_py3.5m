@@ -10,6 +10,51 @@ PYPATH =  /home/dhidas/miniconda2/envs/oscars
 
 
 
+
+OBJSSR = lib/OSCARSSR.o \
+         lib/OSCARSSR_Python.o \
+         lib/T3DScalarContainer.o \
+         lib/TField3D_Gaussian.o \
+         lib/TField3D_Grid.o \
+         lib/TField3D_IdealUndulator.o \
+         lib/TField3D_UniformBox.o \
+         lib/TFieldContainer.o \
+         lib/TFieldPythonFunction.o \
+         lib/TOMATH.o \
+         lib/TParticleA.o \
+         lib/TParticleBeamContainer.o \
+         lib/TParticleBeam.o \
+         lib/TParticleTrajectoryPoints.o \
+         lib/TRandomA.o \
+         lib/TSpectrumContainer.o \
+         lib/TSurfaceOfPoints.o \
+         lib/TSurfacePoint.o \
+         lib/TSurfacePoints_3D.o \
+         lib/TSurfacePoints_Rectangle.o \
+         lib/TVector2D.o \
+         lib/TVector3DC.o \
+         lib/TVector3D.o \
+         lib/TVector4D.o
+
+OBJSTH = lib/OSCARSTH.o \
+         lib/OSCARSTH_Python.o \
+         lib/TOMATH.o \
+         lib/TParticleA.o \
+         lib/TParticleBeamContainer.o \
+         lib/TParticleBeam.o \
+         lib/TParticleTrajectoryPoints.o \
+         lib/TRandomA.o \
+         lib/TSpectrumContainer.o \
+         lib/TSurfaceOfPoints.o \
+         lib/TSurfacePoint.o \
+         lib/TSurfacePoints_3D.o \
+         lib/TSurfacePoints_Rectangle.o \
+         lib/TVector2D.o \
+         lib/TVector3DC.o \
+         lib/TVector3D.o \
+         lib/TVector4D.o
+
+
 CFLAGS = -DCUDA -Wall -ansi -pedantic -O3 -pthread -std=c++11 -fPIC
 CUDACFLAGS = -DCUDA -std=c++11 -shared --compiler-options '-fPIC'
 LIBS = -L$(MMADIR) -Llib -L/usr/lib64 -L/lib64 -L/lib -lpython$(PYVERSION) -L/usr/local/cuda/lib64 -lcuda -lcudart
@@ -21,32 +66,32 @@ EXECS = $(patsubst exe/%.cc,bin/%,$(wildcard exe/*.cc))
 EXEOBJS  = $(patsubst exe/%.cc,lib/%.o,$(wildcard exe/*.cc))
 
 
-SOLIB =  lib/OSCARS.so
+SOLIBSR =  lib/sr.so
+SOLIBTH =  lib/th.so
+
+
+all: $(OBJS) $(CUDAOBJS) $(EXEOBJS) $(EXECS) $(SOLIBSR) $(SOLIBTH)
 
 
 
-
-all: $(OBJS) $(CUDAOBJS) $(EXEOBJS) $(EXECS) $(SOLIB)
-
-mma: bin/SRS_MMA
-
-
-wstp/%_tm.cc : wstp/%.tm
-	$(WSPREP) $< -o $@
-
-lib/OSCARS.so : $(OBJS) $(CUDAOBJS)
-	$(LD)  -Wall -shared $(LIBS) $(OBJS) $(CUDAOBJS) -o $@
-
-
-lib/%.o : src/%.cc
-	$(CC) -Wall $(CFLAGS) $(INCLUDE) -c $< -o $@
 
 lib/%.o : src/%.cu
 	$(NVCC) $(CUDACFLAGS) $(INCLUDE) -c $< -o $@
 
+lib/%.o : src/%.cc
+	$(CC) -Wall $(CFLAGS) $(INCLUDE) -c $< -o $@
+
+
 
 lib/%.o : exe/%.cc
 	$(CC) -Wall $(CFLAGS) $(INCLUDE) -c $< -o $@
+
+
+lib/sr.so : $(OBJSSR) $(CUDAOBJS)
+	$(LD)  -Wall -shared $(LIBS) $(OBJSSR) $(CUDAOBJS) -o $@
+
+lib/th.so : $(OBJSTH)
+	$(LD)  -Wall -shared $(LIBS) $(OBJSTH) -o $@
 
 
 
