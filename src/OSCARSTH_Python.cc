@@ -141,8 +141,56 @@ static PyObject* OSCARSTH_UndulatorK (OSCARSTHObject* self, PyObject* args, PyOb
   }
 
 
-  // Return the internal OSCARSTH number constant pi
+  // Return the deflection parameter K
   return Py_BuildValue("d", self->obj->UndulatorK(BFieldMax, Period));
+}
+
+
+
+
+
+const char* DOC_OSCARSTH_UndulatorBField = "Get the undulator BFieldMax parameter value";
+static PyObject* OSCARSTH_UndulatorBField (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
+{
+  // Return the undulator BFieldMax parameter give the K and period
+
+  // Require 2 arguments
+  double K = 0;
+  double Period = 0;
+
+  // Input variables and parsing
+  static char *kwlist[] = {"K", "period", NULL};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dd", kwlist, &K, &Period)) {
+    return NULL;
+  }
+
+
+  // Return the BField Max value
+  return Py_BuildValue("d", self->obj->UndulatorBField(K, Period));
+}
+
+
+
+
+
+const char* DOC_OSCARSTH_UndulatorPeriod = "Get the undulator Period parameter vaule";
+static PyObject* OSCARSTH_UndulatorPeriod (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
+{
+  // Return the undulator Period parameter given peak bfield and K
+
+  // Require 2 arguments
+  double BFieldMax = 0;
+  double K = 0;
+
+  // Input variables and parsing
+  static char *kwlist[] = {"bfield", "K", NULL};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dd", kwlist, &BFieldMax, &K)) {
+    return NULL;
+  }
+
+
+  // Return the undulator Period
+  return Py_BuildValue("d", self->obj->UndulatorPeriod(BFieldMax, K));
 }
 
 
@@ -910,6 +958,8 @@ static PyMethodDef OSCARSTH_methods[] = {
   // python names, and tell python the method of input parameters.
 
   {"undulator_K",                                (PyCFunction) OSCARSTH_UndulatorK,                              METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorK},
+  {"undulator_bfield",                           (PyCFunction) OSCARSTH_UndulatorBField,                         METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorBField},
+  {"undulator_period",                           (PyCFunction) OSCARSTH_UndulatorPeriod,                         METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorPeriod},
 
   {"dipole_spectrum",                            (PyCFunction) OSCARSTH_DipoleSpectrum,                          METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleSpectrum},
   {"dipole_critical_energy",                     (PyCFunction) OSCARSTH_DipoleCriticalEnergy,                    METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleCriticalEnergy},

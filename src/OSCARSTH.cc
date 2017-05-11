@@ -45,6 +45,24 @@ double OSCARSTH::UndulatorK (double const BFieldMax, double const Period) const
 
 
 
+double OSCARSTH::UndulatorBField (double const K, double const Period) const
+{
+  // Return the 'BFieldMax' [T] value for an undulator with deflection parameter K, Period [m]
+
+  return K / (Period * TOSCARSSR::Qe() / (TOSCARSSR::TwoPi() * TOSCARSSR::Me() * TOSCARSSR::C()));
+}
+
+
+
+double OSCARSTH::UndulatorPeriod (double const BFieldMax, double const K) const
+{
+  // Return the Period [m] value for an undulator with max bfield [T] and deflection parameter K
+
+  return K / (BFieldMax * TOSCARSSR::Qe() / (TOSCARSSR::TwoPi() * TOSCARSSR::Me() * TOSCARSSR::C()));
+}
+
+
+
 double OSCARSTH::DipoleCriticalEnergy (double const BField, double const BeamEnergy_GeV) const
 {
   // Return the critical energy in eV for dipole and electron beam

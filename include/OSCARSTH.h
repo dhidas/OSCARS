@@ -22,6 +22,12 @@ class OSCARSTH
     double UndulatorK (double const BFieldMax,
                        double const Period) const;
 
+    double UndulatorBField (double const K,
+                            double const Period) const;
+
+    double UndulatorPeriod (double const BField,
+                            double const K) const;
+
     double DipoleCriticalEnergy (double const BField,
                                  double const BeamEnergy_GeV) const;
 
