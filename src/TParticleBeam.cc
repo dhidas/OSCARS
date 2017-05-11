@@ -123,7 +123,12 @@ void TParticleBeam::SetPredefinedBeam (std::string const& Beam)
     this->SetParticleType("electron");
     this->SetCurrent(0.500);
     this->SetE0(3);
+
+    double const Gamma = this->GetE0() / TOSCARSSR::kgToGeV(this->GetM());
+    double const Beta = sqrt(1.0 - 1.0 / (Gamma * Gamma));
+
     this->SetU0(TVector3D(0, 0, 1));
+    this->SetB0(this->GetU0() * Beta);
     this->SetT0(0);
     this->SetX0(0);
     this->SetBetaEmittance(TVector3D(1, 0, 0), TVector2D(0, 0), TVector2D(0.55e-9, 0.008e-9), TVector3D(0, 0, 0), 3 * 0.001);
@@ -132,7 +137,12 @@ void TParticleBeam::SetPredefinedBeam (std::string const& Beam)
     this->SetParticleType("electron");
     this->SetCurrent(0.500);
     this->SetE0(3);
+
+    double const Gamma = this->GetE0() / TOSCARSSR::kgToGeV(this->GetM());
+    double const Beta = sqrt(1.0 - 1.0 / (Gamma * Gamma));
+
     this->SetU0(TVector3D(0, 0, 1));
+    this->SetB0(this->GetU0() * Beta);
     this->SetT0(0);
     this->SetX0(0);
     this->SetBetaEmittance(TVector3D(1, 0, 0), TVector2D(18, 3.1), TVector2D(0.55e-9, 0.008e-9), TVector3D(0, 0, 0), 3 * 0.001);
@@ -141,7 +151,12 @@ void TParticleBeam::SetPredefinedBeam (std::string const& Beam)
     this->SetParticleType("electron");
     this->SetCurrent(0.500);
     this->SetE0(3);
+
+    double const Gamma = this->GetE0() / TOSCARSSR::kgToGeV(this->GetM());
+    double const Beta = sqrt(1.0 - 1.0 / (Gamma * Gamma));
+
     this->SetU0(TVector3D(0, 0, 1));
+    this->SetB0(this->GetU0() * Beta);
     this->SetT0(0);
     this->SetX0(0);
     this->SetBetaEmittance(TVector3D(1, 0, 0), TVector2D(1.5, 0.8), TVector2D(0.55e-9, 0.008e-9), TVector3D(0, 0, 0), 3 * 0.001);
