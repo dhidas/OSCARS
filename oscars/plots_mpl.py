@@ -519,7 +519,66 @@ def plot_electric_field_vs_time(efield, show=True, ofile='', ret=False):
 
 
 
-def plot_brightness(oth, period, nperiods, harmonics, minimum=0, bfield=None, K=None, show=True, ret=False, title='Brightness', figsize=None, ofile=None):
+def plot_undulator_flux_onaxis(oth, period, nperiods, harmonics, minimum=0, bfield=None, K=None, show=True, ret=False, title='Flux On-Axis', figsize=None, ofile=None):
+    '''Plot the on-axis flux of an undulator.  More docstring needed'''
+
+    if bfield is None and K is None:
+        raise ValueError('bfield or K must be defined')
+
+    if bfield is not None and K is not None:
+        raise ValueError('bfield and K cannot both be defined.  pick one or the other')
+
+    if bfield is not None:
+        if len(bfield) is not 2:
+            raise ValueError('bfield must be: [min, max]')
+        else:
+            K = [oth.undulator_K(bfield[0], period), oth.undulator_K(bfield[1], period)]
+
+    # Size and limits
+    plt.figure(1, figsize=figsize)
+    plt.loglog()
+
+
+    # Loop over all harmonics
+    for i in harmonics:
+        
+        R = []
+        for k in np.linspace(K[1], K[0], 300):
+            ev_flux = oth.undulator_flux_onaxis(K=k,
+                                                period=period,
+                                                nperiods=nperiods,
+                                                harmonic=i
+                                               )
+            if ev_flux[1] < minimum:
+                break
+            R.append(ev_flux)
+
+        X = []
+        Y = []
+        for j in range(len(R)):
+            X.append(R[j][0])
+            Y.append(R[j][1])
+        plt.plot(X, Y, label=str(i))
+
+    plt.legend(title='Harmonics')
+
+    plt.xlabel('Energy [eV]')
+    plt.ylabel('[$\gamma / mrad^2 / 0.1\%bw / s$]')
+    plt.title(title)
+    
+    if ofile is not None:
+        plt.savefig(ofile, bbox_inches='tight', transparent=transparent)
+
+    if show == True:
+        plt.show()
+
+    if ret:
+        return plt
+    return
+
+
+
+def plot_undulator_brightness(oth, period, nperiods, harmonics, minimum=0, bfield=None, K=None, show=True, ret=False, title='Brightness', figsize=None, ofile=None):
     '''Plot the brightness of an undulator.  More docstring needed'''
 
     if bfield is None and K is None:
@@ -534,7 +593,6 @@ def plot_brightness(oth, period, nperiods, harmonics, minimum=0, bfield=None, K=
         else:
             K = [oth.undulator_K(bfield[0], period), oth.undulator_K(bfield[1], period)]
 
-    print(K)
     # Size and limits
     plt.figure(1, figsize=figsize)
     plt.loglog()
@@ -550,7 +608,6 @@ def plot_brightness(oth, period, nperiods, harmonics, minimum=0, bfield=None, K=
                                                      nperiods=nperiods,
                                                      harmonic=i
                                                     )
-            print(ev_brightness)
             if ev_brightness[1] < minimum:
                 break
             R.append(ev_brightness)

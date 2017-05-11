@@ -39,19 +39,15 @@ class OSCARSTH
                           double const Energy_eV) const;
 
 
-    TVector2D UndulatorFluxKHarmonic (double const K,
-                                      double const Period,
-                                      double const NPeriods,
-                                      double const BeamEnergy,
-                                      int    const Harmonic) const;
+    TVector2D UndulatorFluxOnAxisK (double const K,
+                                    double const Period,
+                                    double const NPeriods,
+                                    int    const Harmonic) const;
 
-    double UndulatorFluxOnAxis (double const BField,
-                                double const Period,
-                                double const NPeriods,
-                                double const BeamEnergy,
-                                double const Energy_eV,
-                                int const FirstHarmonic,
-                                int const LastHarmonic) const;
+    TVector2D UndulatorFluxOnAxisB (double const BField,
+                                    double const Period,
+                                    double const NPeriods,
+                                    int    const Harmonic) const;
 
     double UndulatorFluxWeak (double const K,
                               double const Period,
@@ -63,13 +59,11 @@ class OSCARSTH
 
     double UndulatorEnergyAtHarmonicK (double const K,
                                        double const Period,
-                                       int    const Harmonic,
-                                       double const BeamEnergy_GeV) const;
+                                       int    const Harmonic) const;
 
     double UndulatorEnergyAtHarmonicB (double const BField,
                                        double const Period,
-                                       int    const Harmonic,
-                                       double const BeamEnergy_GeV) const;
+                                       int    const Harmonic) const;
 
     TVector2D UndulatorBrightnessK (double const BField,
                                     double const Period,
