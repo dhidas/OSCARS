@@ -639,3 +639,56 @@ def plot_undulator_brightness(oth, period, nperiods, harmonics, minimum=0, bfiel
 
 
 
+def plot_flux_spectrum(F, S, title='Flux [$\gamma / mm^2 / 0.1\%bw / s]$', xlabel='X1 Axis [$m$]', ylabel='X2 Axis [$m$]', show=True, ofile='', figsize=[10, 3], energy=None, ylim=None, xlim=None, colorbar=True, ret=False):
+    """Plot a 2D histogram with equal spacing"""
+        
+    X = [item[0][0] for item in F]
+    Y = [item[0][1] for item in F]
+    P = [item[1]    for item in F]
+
+    NX = len(np.unique(X))
+    NY = len(np.unique(Y))
+
+    # Size and limits
+    plt.figure(1, figsize=figsize)
+    plt.subplot(121)
+    if ylim is not None: plt.ylim(ylim[0], ylim[1])
+    if xlim is not None: plt.xlim(xlim[0], xlim[1])
+
+    plt.hist2d(X, Y, bins=[NX, NY], weights=P)
+    plt.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
+    plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+    if colorbar is True:
+        plt.colorbar(format='%.0e')
+
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
+
+
+
+    plt.subplot(122)
+
+    X2 = [item[0] for item in S]
+    Y2 = [item[1] for item in S]
+    plt.plot(X2, Y2)
+    plt.xlabel('Energy [eV]')
+    plt.ylabel('$\gamma / mm^2 / 0.1\%bw / s$')
+    plt.title('Spectrum')
+
+    if energy is not None:
+        plt.axvline(x=energy, color='red')
+
+    plt.figure(1)
+    if ofile != '':
+        plt.savefig(ofile, bbox_inches='tight')
+
+    if show == True:
+        plt.show()
+
+    if ret:
+        return plt
+
+    return
+
+
