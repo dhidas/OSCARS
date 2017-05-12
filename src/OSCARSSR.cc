@@ -994,7 +994,7 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
   }
 
   // Should we use the GPU or not?
-  bool UseGPU = GPU == 1 ? true : this->GetUseGPUGlobal() && (this->CheckGPU() > 0) ? true : false;
+  bool const UseGPU = GPU == 0 ? false : this->GetUseGPUGlobal() && (this->CheckGPU() > 0) ? true : false;
 
   // Don't write output in individual mode
   std::string const BlankOutFileName = "";
@@ -1760,7 +1760,7 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface, T3DScalarCo
   }
 
   // Should we use the GPU or not?
-  bool UseGPU = GPU == 1 ? true : this->GetUseGPUGlobal() && (this->CheckGPU() > 0) ? true : false;
+  bool const UseGPU = GPU == 0 ? false : this->GetUseGPUGlobal() && (this->CheckGPU() > 0) ? true : false;
 
 
   // Check that particle has been set yet.  If fType is "" it has not been set yet
@@ -2614,7 +2614,7 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
   }
 
   // Should we use the GPU or not?
-  bool UseGPU = GPU == 1 ? true : this->GetUseGPUGlobal() && (this->CheckGPU() > 0) ? true : false;
+  bool const UseGPU = GPU == 0 ? false : this->GetUseGPUGlobal() && (this->CheckGPU() > 0) ? true : false;
 
   // Check that particle has been set yet.  If fType is "" it has not been set yet
   if (fParticle.GetType() == "") {
