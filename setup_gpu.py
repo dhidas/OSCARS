@@ -33,7 +33,7 @@ moduleOSCARSSR = Extension('oscars.sr',
                                  'src/TOMATH.cc'],
                       extra_compile_args=['-DCUDA', '-std=c++11', '-Wno-write-strings', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread'],
                       libraries = ['cuda', 'cudart'],
-                      library_dirs = ['/usr/local/cuda/lib64', '/lib64', '/usr/lib64'],
+                      library_dirs = ['/usr/local/cuda/lib64', '/lib64', '/usr/lib64', '/usr/local/cuda/lib'],
                       extra_objects = ['lib/OSCARSSR_Cuda.o']
                      )
 
@@ -51,7 +51,7 @@ moduleOSCARSTH = Extension('oscars.th',
                                  'src/TOMATH.cc'],
                       extra_compile_args=['-DCUDA', '-std=c++11', '-Wno-write-strings', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread'],
                       libraries = ['cuda', 'cudart'],
-                      library_dirs = ['/usr/local/cuda/lib64', '/lib64', '/usr/lib64'],
+                      library_dirs = ['/usr/local/cuda/lib64', '/lib64', '/usr/lib64', '/usr/local/cuda/lib'],
                       extra_objects = ['lib/OSCARSSR_Cuda.o']
                      )
 
