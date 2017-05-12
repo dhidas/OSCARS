@@ -501,10 +501,41 @@ double OSCARSSR::GetCTStop () const
 
 
 
-void OSCARSSR::SetUseGPUGlobal (int const in)
+bool OSCARSSR::SetUseGPUGlobal (int const in)
 {
-  fUseGPUGlobal = in;
-  return;
+  // Must be a 0 or a 1 at the moment.  Will return false if you tried to set the GPU but it's not available
+
+  if (in == 0) {
+    fUseGPUGlobal = 0;
+    return true;
+  }
+
+  if (in != 1) {
+    fUseGPUGlobal = 0;
+    return false;
+  }
+
+  #ifdef CUDA
+  if (OSCARSSR_Cuda_GetDeviceCount() > 0) {
+    fUseGPUGlobal = 1;
+    return true;
+  } else {
+    fUseGPUGlobal = 0;
+    return false;
+  }
+  #endif
+
+  fUseGPUGlobal = 0;
+
+  return false;
+}
+
+
+
+
+int OSCARSSR::GetUseGPUGlobal () const
+{
+  return fUseGPUGlobal;
 }
 
 
@@ -962,12 +993,15 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
     }
   }
 
+  // Should we use the GPU or not?
+  bool UseGPU = GPU == 1 ? true : this->GetUseGPUGlobal() && (this->CheckGPU() > 0) ? true : false;
+
   // Don't write output in individual mode
   std::string const BlankOutFileName = "";
 
   // GPU will outrank NThreads...
   if (NParticles == 0) {
-    if (GPU == 0) {
+    if (UseGPU == 0) {
       if (NThreads == 1) {
         this->CalculateSpectrum(fParticle,
                                 ObservationPoint,
@@ -1001,7 +1035,7 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
                                          BlankOutFileName);
         }
       }
-    } else if (GPU == 1) {
+    } else if (UseGPU == 1) {
       this->CalculateSpectrumGPU(fParticle,
                                  ObservationPoint,
                                  Spectrum,
@@ -1016,7 +1050,7 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
     double const Weight = 1.0 / (double) NParticles;
     for (int i = 0; i != NParticles; ++i) {
       this->SetNewParticle();
-      if (GPU == 0) {
+      if (UseGPU == 0) {
         if (NThreads == 1) {
           // UPDATE: No outfile here, check
           this->CalculateSpectrum(fParticle,
@@ -1052,7 +1086,7 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
                                            BlankOutFileName);
           }
         }
-      } else if (GPU == 1) {
+      } else if (UseGPU == 1) {
         this->CalculateSpectrumGPU(fParticle,
                                    ObservationPoint,
                                    Spectrum,
@@ -1725,6 +1759,8 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface, T3DScalarCo
     throw;
   }
 
+  // Should we use the GPU or not?
+  bool UseGPU = GPU == 1 ? true : this->GetUseGPUGlobal() && (this->CheckGPU() > 0) ? true : false;
 
 
   // Check that particle has been set yet.  If fType is "" it has not been set yet
@@ -1754,26 +1790,26 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface, T3DScalarCo
 
   // GPU will outrank NThreads...
   if (NParticles == 0) {
-    if (GPU == 0) {
+    if (UseGPU == 0) {
       if (NThreadsToUse == 1) {
         this->CalculatePowerDensity(fParticle, Surface, PowerDensityContainer, Dimension, Directional, 1, BlankOutFileName);
       } else {
         this->CalculatePowerDensityThreads(fParticle, Surface, PowerDensityContainer, NThreadsToUse, Dimension, Directional, 1, BlankOutFileName);
       }
-    } else if (GPU == 1) {
+    } else if (UseGPU == 1) {
       this->CalculatePowerDensityGPU(fParticle, Surface, PowerDensityContainer, Dimension, Directional, 1, BlankOutFileName);
     }
   } else {
     double const Weight = 1.0 / (double) NParticles;
     for (int i = 0; i != NParticles; ++i) {
       this->SetNewParticle();
-      if (GPU == 0) {
+      if (UseGPU == 0) {
         if (NThreadsToUse == 1) {
           this->CalculatePowerDensity(fParticle, Surface, PowerDensityContainer, Dimension, Directional, Weight, BlankOutFileName);
         } else {
           this->CalculatePowerDensityThreads(fParticle, Surface, PowerDensityContainer,  NThreadsToUse, Dimension, Directional, Weight, BlankOutFileName);
         }
-      } else if (GPU == 1) {
+      } else if (UseGPU == 1) {
         this->CalculatePowerDensityGPU(fParticle, Surface, PowerDensityContainer, Dimension, Directional, Weight, BlankOutFileName);
       }
     }
@@ -2577,6 +2613,9 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
     throw;
   }
 
+  // Should we use the GPU or not?
+  bool UseGPU = GPU == 1 ? true : this->GetUseGPUGlobal() && (this->CheckGPU() > 0) ? true : false;
+
   // Check that particle has been set yet.  If fType is "" it has not been set yet
   if (fParticle.GetType() == "") {
     try {
@@ -2605,26 +2644,26 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
 
   // GPU will outrank NThreads...
   if (NParticles == 0) {
-    if (GPU == 0) {
+    if (UseGPU == 0) {
       if (NThreadsToUse == 1) {
         this->CalculateFlux(fParticle, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, Dimension, 1, BlankOutFileName);
       } else {
         this->CalculateFluxThreads(fParticle, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NThreadsToUse, Dimension, 1, BlankOutFileName);
       }
-    } else if (GPU == 1) {
+    } else if (UseGPU == 1) {
       this->CalculateFluxGPU(fParticle, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, Dimension, 1, BlankOutFileName);
     }
   } else {
     double const Weight = 1.0 / (double) NParticles;
     for (int i = 0; i != NParticles; ++i) {
       this->SetNewParticle();
-      if (GPU == 0) {
+      if (UseGPU == 0) {
         if (NThreadsToUse == 1) {
           this->CalculateFlux(fParticle, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, Dimension, Weight, BlankOutFileName);
         } else {
           this->CalculateFluxThreads(fParticle, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NThreadsToUse, Dimension, Weight, BlankOutFileName);
         }
-      } else if (GPU == 1) {
+      } else if (UseGPU == 1) {
         this->CalculateFluxGPU(fParticle, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, Dimension, Weight, BlankOutFileName);
       }
     }

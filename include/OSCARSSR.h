@@ -100,7 +100,8 @@ class OSCARSSR
     double GetCTStop  () const;
 
     // Global threads and GPU settings
-    void SetUseGPUGlobal (int const);
+    bool SetUseGPUGlobal (int const);
+    int  GetUseGPUGlobal () const;
     int  CheckGPU () const;
     void SetNThreadsGlobal (int const);
 

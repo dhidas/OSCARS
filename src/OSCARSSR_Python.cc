@@ -219,7 +219,18 @@ static PyObject* OSCARSSR_SetGPUGlobal (OSCARSSRObject* self, PyObject* arg)
   // Grab the value from input
   int const GPU = (int) PyLong_AsLong(arg);
 
-  self->obj->SetUseGPUGlobal(GPU);
+  if (GPU != 0 && GPU != 1) {
+    PyErr_SetString(PyExc_ValueError, "global gpu settign must be 0 or 1");
+    return NULL;
+  }
+
+  // If it was not successful print an error message
+  if (!self->obj->SetUseGPUGlobal(GPU)) {
+    PyObject* sys = PyImport_ImportModule( "sys");
+    PyObject* s_out = PyObject_GetAttrString(sys, "stderr");
+    std::string Message = "GPU is not available: Setting gpu global setting to 0.\n";
+    PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+  }
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
