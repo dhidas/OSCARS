@@ -25,8 +25,8 @@ conda install -n root git
 # Fix for temporary conda bug for some distributions
 conda install -n root pyyaml
 
-# Download the materials.
-git clone https://github.com/dhidas/OSCARS -b 1.36.00
+# Download OSCARS
+git clone https://github.com/dhidas/OSCARS -b 1.36.03
 
 # Create a new "conda environment" and install the required Python packages.
 cd OSCARS
@@ -67,8 +67,8 @@ conda install -n root git
 # Fix for temporary conda bug for some distributions
 conda install -n root pyyaml
 
-# Download the materials.
-git clone https://github.com/dhidas/OSCARS -b 1.36.00
+# Download OSCARS
+git clone https://github.com/dhidas/OSCARS -b 1.36.03
 
 # Create a new "conda environment" and install the required Python packages.
 cd OSCARS
