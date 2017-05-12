@@ -77,6 +77,7 @@ conda env create -f environment.yml
 # Activate the oscars conda environment
 source activate oscars
 
-# Build and install OSCARS
+# Build and install OSCARS with GPU support
+make
 python setup_gpu.py install
 ```
