@@ -219,7 +219,18 @@ static PyObject* OSCARSSR_SetGPUGlobal (OSCARSSRObject* self, PyObject* arg)
   // Grab the value from input
   int const GPU = (int) PyLong_AsLong(arg);
 
-  self->obj->SetUseGPUGlobal(GPU);
+  if (GPU != 0 && GPU != 1) {
+    PyErr_SetString(PyExc_ValueError, "global gpu settign must be 0 or 1");
+    return NULL;
+  }
+
+  // If it was not successful print an error message
+  if (!self->obj->SetUseGPUGlobal(GPU)) {
+    PyObject* sys = PyImport_ImportModule( "sys");
+    PyObject* s_out = PyObject_GetAttrString(sys, "stderr");
+    std::string Message = "GPU is not available: Setting gpu global setting to 0.\n";
+    PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+  }
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -1659,7 +1670,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   double      Mass                       = 0;
   double      Charge                     = 0;
   char const* Beam                       = "";
-  PyObject*   List_Position       = PyList_New(0);
+  PyObject*   List_Position              = PyList_New(0);
   PyObject*   List_Direction             = PyList_New(0);
   PyObject*   List_Rotations             = PyList_New(0);
   PyObject*   List_Translation           = PyList_New(0);
@@ -2022,7 +2033,7 @@ static PyObject* OSCARSSR_PrintParticleBeams (OSCARSSRObject* self)
   ostream << self->obj->GetParticleBeamContainer() << std::endl;
 
   // Python printing
-  PyObject* sys = PyImport_ImportModule( "sys");
+  PyObject* sys = PyImport_ImportModule("sys");
   PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
   std::string Message = ostream.str();
   PyObject_CallMethod(s_out, "write", "s", Message.c_str());
@@ -2279,7 +2290,7 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
   PyObject*   List_PropogationDirection = PyList_New(0);
   int NParticles = 0;
   int NThreads = 0;
-  int GPU = 0;
+  int GPU = -1;
   char* OutFileName = "";
   char* OutFileNameBinary = "";
 
@@ -2383,7 +2394,7 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
 
 
   // Check GPU parameter
-  if (GPU != 0 && GPU != 1) {
+  if (GPU != 0 && GPU != 1 && GPU != -1) {
     PyErr_SetString(PyExc_ValueError, "'gpu' must be 0 or 1");
     return NULL;
   }
@@ -2496,7 +2507,7 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
   int         NormalDirection = 0;
   int const   Dim = 3;
   int         NParticles = 0;
-  int         GPU = 0;
+  int         GPU = -1;
   int         NThreads = 0;
   char const* OutFileName = "";
 
@@ -2599,7 +2610,7 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
 
 
   // Check GPU parameter
-  if (GPU != 0 && GPU != 1) {
+  if (GPU != 0 && GPU != 1 && GPU != -1) {
     PyErr_SetString(PyExc_ValueError, "'gpu' must be 0 or 1");
     return NULL;
   }
@@ -2686,7 +2697,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
   PyObject*   List_X0X1X2      = PyList_New(0);
   int         NormalDirection = 0;
   int         NParticles = 0;
-  int         GPU = 0;
+  int         GPU = -1;
   int         NThreads = 0;
   int         Dim = 2;
   char*       OutFileName = "";
@@ -2826,7 +2837,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
 
 
   // Check GPU parameter
-  if (GPU != 0 && GPU != 1) {
+  if (GPU != 0 && GPU != 1 && GPU != -1) {
     PyErr_SetString(PyExc_ValueError, "'gpu' must be 0 or 1");
     return NULL;
   }
@@ -2923,7 +2934,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
   int         NormalDirection = 0;
   int         Dim = 3;
   int         NParticles = 0;
-  int         GPU = 0;
+  int         GPU = -1;
   int         NThreads = 0;
   char const* OutFileName = "";
 
@@ -3021,7 +3032,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
   }
 
   // Check GPU parameter
-  if (GPU != 0 && GPU != 1) {
+  if (GPU != 0 && GPU != 1 && GPU != -1) {
     PyErr_SetString(PyExc_ValueError, "'gpu' must be 0 or 1");
     return NULL;
   }
@@ -3117,7 +3128,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   PyObject*   List_PropogationDirection = PyList_New(0);
   int         NParticles = 0;
   int         NThreads = 0;
-  int         GPU = 0;
+  int         GPU = -1;
   char const* OutFileName = "";
 
 
@@ -3291,7 +3302,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
 
 
   // Check GPU parameter
-  if (GPU != 0 && GPU != 1) {
+  if (GPU != 0 && GPU != 1 && GPU != -1) {
     PyErr_SetString(PyExc_ValueError, "'gpu' must be 0 or 1");
     return NULL;
   }

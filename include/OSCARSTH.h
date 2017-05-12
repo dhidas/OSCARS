@@ -10,6 +10,7 @@
 
 #include "TVector2D.h"
 #include "TOMATH.h"
+#include "TParticleBeamContainer.h"
 
 
 class OSCARSTH
@@ -20,6 +21,12 @@ class OSCARSTH
 
     double UndulatorK (double const BFieldMax,
                        double const Period) const;
+
+    double UndulatorBField (double const K,
+                            double const Period) const;
+
+    double UndulatorPeriod (double const BField,
+                            double const K) const;
 
     double DipoleCriticalEnergy (double const BField,
                                  double const BeamEnergy_GeV) const;
@@ -38,19 +45,15 @@ class OSCARSTH
                           double const Energy_eV) const;
 
 
-    TVector2D UndulatorFluxKHarmonic (double const K,
-                                      double const Period,
-                                      double const NPeriods,
-                                      double const BeamEnergy,
-                                      int    const Harmonic) const;
+    TVector2D UndulatorFluxOnAxisK (double const K,
+                                    double const Period,
+                                    double const NPeriods,
+                                    int    const Harmonic) const;
 
-    double UndulatorFluxOnAxis (double const BField,
-                                double const Period,
-                                double const NPeriods,
-                                double const BeamEnergy,
-                                double const Energy_eV,
-                                int const FirstHarmonic,
-                                int const LastHarmonic) const;
+    TVector2D UndulatorFluxOnAxisB (double const BField,
+                                    double const Period,
+                                    double const NPeriods,
+                                    int    const Harmonic) const;
 
     double UndulatorFluxWeak (double const K,
                               double const Period,
@@ -60,15 +63,37 @@ class OSCARSTH
 
     double DipoleBrightness () const;
 
-    TVector2D UndulatorBrightness (double const BField,
-                                   double const Period,
-                                   int    const NPeriods,
-                                   int    const N,
-                                   double const BeamEnergy_GeV,
-                                   double const SigmaE,
-                                   double const Current,
-                                   TVector2D const BetaX,
-                                   TVector2D const Emittance) const;
+    double UndulatorEnergyAtHarmonicK (double const K,
+                                       double const Period,
+                                       int    const Harmonic) const;
+
+    double UndulatorEnergyAtHarmonicB (double const BField,
+                                       double const Period,
+                                       int    const Harmonic) const;
+
+    TVector2D UndulatorBrightnessK (double const BField,
+                                    double const Period,
+                                    int    const NPeriods,
+                                    int    const N) const;
+
+    TVector2D UndulatorBrightnessB (double const BField,
+                                    double const Period,
+                                    int    const NPeriods,
+                                    int    const N) const;
+
+
+
+    // Functions related to the particle beam
+    void SetParticleBeam (std::string const& Beam);
+    void SetParticleBeam (double const Energy_GeV,
+                          double const Current,
+                          TVector2D const& Beta = TVector2D(0, 0),
+                          TVector2D const& Emittance = TVector2D(0, 0),
+                          double const SigmaEnergyGeV = 0);
+    TParticleBeam& GetParticleBeam ();
+
+  private:
+    TParticleBeam fParticleBeam;
 
 };
 

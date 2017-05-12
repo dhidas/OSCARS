@@ -1,0 +1,108 @@
+CC = nvcc
+LD = nvcc
+NVCC = nvcc
+
+PYVERSION = 3.5
+PYPATH = /Users/dhidas/miniconda2/envs/oscars-dev/
+
+
+OBJS  = $(patsubst src/%.cc,lib/%.o,$(wildcard src/*.cc))
+CUDAOBJS  = $(patsubst src/%.cu,lib/%.o,$(wildcard src/*.cu))
+EXECS = $(patsubst exe/%.cc,bin/%,$(wildcard exe/*.cc))
+EXEOBJS  = $(patsubst exe/%.cc,lib/%.o,$(wildcard exe/*.cc))
+
+OBJSSR = lib/OSCARSSR.o \
+         lib/OSCARSSR_Python.o \
+         lib/T3DScalarContainer.o \
+         lib/TField3D_Gaussian.o \
+         lib/TField3D_Grid.o \
+         lib/TField3D_IdealUndulator.o \
+         lib/TField3D_UniformBox.o \
+         lib/TFieldContainer.o \
+         lib/TFieldPythonFunction.o \
+         lib/TOMATH.o \
+         lib/TParticleA.o \
+         lib/TParticleBeamContainer.o \
+         lib/TParticleBeam.o \
+         lib/TParticleTrajectoryPoints.o \
+         lib/TRandomA.o \
+         lib/TSpectrumContainer.o \
+         lib/TSurfaceOfPoints.o \
+         lib/TSurfacePoint.o \
+         lib/TSurfacePoints_3D.o \
+         lib/TSurfacePoints_Rectangle.o \
+         lib/TVector2D.o \
+         lib/TVector3DC.o \
+         lib/TVector3D.o \
+         lib/TVector4D.o
+
+OBJSTH = lib/OSCARSTH.o \
+         lib/OSCARSTH_Python.o \
+         lib/TOMATH.o \
+         lib/TParticleA.o \
+         lib/TParticleBeamContainer.o \
+         lib/TParticleBeam.o \
+         lib/TParticleTrajectoryPoints.o \
+         lib/TRandomA.o \
+         lib/TSpectrumContainer.o \
+         lib/TSurfaceOfPoints.o \
+         lib/TSurfacePoint.o \
+         lib/TSurfacePoints_3D.o \
+         lib/TSurfacePoints_Rectangle.o \
+         lib/TVector2D.o \
+         lib/TVector3DC.o \
+         lib/TVector3D.o \
+         lib/TVector4D.o
+
+
+CUDACFLAGS = -DCUDA -std=c++11 -shared --compiler-options '-fPIC'
+LIBS = -Llib -L$(PYPATH)/lib -lpython3.5m -L/usr/local/cuda/lib -lcuda -lcudart_static -lc++ -lstdc++
+INCLUDE = -Iinclude -I$(PYPATH)/include/python$(PYVERSION)m
+
+OBJS  = $(patsubst src/%.cc,lib/%.o,$(wildcard src/*.cc))
+CUDAOBJS  = $(patsubst src/%.cu,lib/%.o,$(wildcard src/*.cu))
+EXECS = $(patsubst exe/%.cc,bin/%,$(wildcard exe/*.cc))
+EXEOBJS  = $(patsubst exe/%.cc,lib/%.o,$(wildcard exe/*.cc))
+
+
+SOLIBSR =  lib/sr.so
+SOLIBTH =  lib/th.so
+
+
+all: $(OBJS) $(CUDAOBJS) $(EXEOBJS) $(EXECS) $(SOLIBSR) $(SOLIBTH)
+
+
+
+
+lib/%.o : src/%.cu
+	$(NVCC) $(CUDACFLAGS) $(INCLUDE) -c $< -o $@
+
+lib/%.o : src/%.cc
+	$(CC) $(CUDACFLAGS) $(INCLUDE) -c $< -o $@
+
+
+
+lib/%.o : exe/%.cc
+	$(CC) $(CUDACFLAGS) $(INCLUDE) -c $< -o $@
+
+
+lib/sr.so : $(OBJSSR) $(CUDAOBJS)
+	$(LD) -shared $(LIBS) $(OBJSSR) $(CUDAOBJS) -o $@
+
+lib/th.so : $(OBJSTH)
+	$(LD) -shared $(LIBS) $(OBJSTH) -o $@
+
+
+
+
+bin/% : $(OBJS) $(CUDAOBJS) lib/%.o
+	$(LD) $(LIBS) $(OBJS) $(CUDAOBJS) lib/$*.o -o bin/$*
+
+
+
+
+
+
+clean:
+	rm -f $(EXECS) lib/*.o $(SOLIB)
+
