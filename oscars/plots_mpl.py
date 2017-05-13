@@ -549,9 +549,8 @@ def plot_undulator_flux_onaxis(oth, period, nperiods, harmonics, minimum=0, bfie
                                                 nperiods=nperiods,
                                                 harmonic=i
                                                )
-            if ev_flux[1] < minimum:
-                break
-            R.append(ev_flux)
+            if ev_flux[1] >= minimum:
+                R.append(ev_flux)
 
         X = []
         Y = []
@@ -608,9 +607,8 @@ def plot_undulator_brightness(oth, period, nperiods, harmonics, minimum=0, bfiel
                                                      nperiods=nperiods,
                                                      harmonic=i
                                                     )
-            if ev_brightness[1] < minimum:
-                break
-            R.append(ev_brightness)
+            if ev_brightness[1] >= minimum:
+                R.append(ev_brightness)
 
         X = []
         Y = []
@@ -626,7 +624,7 @@ def plot_undulator_brightness(oth, period, nperiods, harmonics, minimum=0, bfiel
     plt.title(title)
     
     if ofile is not None:
-        plt.savefig(ofile, bbox_inches='tight', transparent=transparent)
+        plt.savefig(ofile, bbox_inches='tight', transparent=True)
 
     if show == True:
         plt.show()
