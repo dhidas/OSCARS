@@ -60,7 +60,7 @@ moduleOSCARSTH = Extension('oscars.th',
 
 setup(
   name="oscars",
-  version="1.36.04",
+  version="1.36.06",
   description = 'Open Source Code for Advanced Radiation Simulation',
   author = 'Dean Andrew Hidas',
   author_email = 'dhidas@bnl.gov',
