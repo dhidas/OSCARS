@@ -637,7 +637,7 @@ def plot_undulator_brightness(oth, period, nperiods, harmonics, minimum=0, bfiel
 
 
 
-def plot_flux_spectrum(F, S, title='Flux [$\gamma / mm^2 / 0.1\%bw / s]$', xlabel='X1 Axis [$m$]', ylabel='X2 Axis [$m$]', show=True, ofile='', figsize=[10, 3], energy=None, ylim=None, xlim=None, colorbar=True, ret=False):
+def plot_flux_spectrum(F, S, energy=None, title='Flux [$\gamma / mm^2 / 0.1\%bw / s]$', xlabel='X1 Axis [$m$]', ylabel='X2 Axis [$m$]', show=True, ofile='', figsize=[10, 3], ylim=None, xlim=None, colorbar=True, ret=False):
     """Plot a 2D histogram with equal spacing"""
         
     X = [item[0][0] for item in F]
