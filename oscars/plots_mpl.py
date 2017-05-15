@@ -549,9 +549,8 @@ def plot_undulator_flux_onaxis(oth, period, nperiods, harmonics, minimum=0, bfie
                                                 nperiods=nperiods,
                                                 harmonic=i
                                                )
-            if ev_flux[1] < minimum:
-                break
-            R.append(ev_flux)
+            if ev_flux[1] >= minimum:
+                R.append(ev_flux)
 
         X = []
         Y = []
@@ -608,9 +607,8 @@ def plot_undulator_brightness(oth, period, nperiods, harmonics, minimum=0, bfiel
                                                      nperiods=nperiods,
                                                      harmonic=i
                                                     )
-            if ev_brightness[1] < minimum:
-                break
-            R.append(ev_brightness)
+            if ev_brightness[1] >= minimum:
+                R.append(ev_brightness)
 
         X = []
         Y = []
@@ -626,7 +624,7 @@ def plot_undulator_brightness(oth, period, nperiods, harmonics, minimum=0, bfiel
     plt.title(title)
     
     if ofile is not None:
-        plt.savefig(ofile, bbox_inches='tight', transparent=transparent)
+        plt.savefig(ofile, bbox_inches='tight', transparent=True)
 
     if show == True:
         plt.show()
@@ -639,7 +637,7 @@ def plot_undulator_brightness(oth, period, nperiods, harmonics, minimum=0, bfiel
 
 
 
-def plot_flux_spectrum(F, S, title='Flux [$\gamma / mm^2 / 0.1\%bw / s]$', xlabel='X1 Axis [$m$]', ylabel='X2 Axis [$m$]', show=True, ofile='', figsize=[10, 3], energy=None, ylim=None, xlim=None, colorbar=True, ret=False):
+def plot_flux_spectrum(F, S, energy=None, title='Flux [$\gamma / mm^2 / 0.1\%bw / s]$', xlabel='X1 Axis [$m$]', ylabel='X2 Axis [$m$]', show=True, ofile='', figsize=[10, 3], ylim=None, xlim=None, colorbar=True, ret=False):
     """Plot a 2D histogram with equal spacing"""
         
     X = [item[0][0] for item in F]
