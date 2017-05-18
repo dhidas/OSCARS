@@ -578,7 +578,7 @@ def plot_undulator_flux_onaxis(oth, period, nperiods, harmonics, minimum=0, bfie
 
 
 def plot_undulator_brightness(oth, period, nperiods, harmonics, minimum=0, bfield=None, K=None, show=True, ret=False, title='Brightness', figsize=None, ofile=None):
-    '''Plot the brightness of an undulator.  More docstring needed'''
+    '''Plot the brightness of an undulator.'''
 
     if bfield is None and K is None:
         raise ValueError('bfield or K must be defined')
