@@ -4,15 +4,17 @@ Member Functions
 Primer for the Examples
 -----------------------
 
-All examples here assume that you have the OSCARS SR module in your path and have an OSCARS SR object called osr, perhaps as in the following example
+All examples here assume that you have the OSCARS SR and TH modules in your path and have an OSCARS SR (TH) object called osr (oth), perhaps as in the following example
 
 .. code-block:: py
 
    # Import the OSCARS SR module
    import oscars.sr
+   import oscars.th
 
    # Creat an OSCARS SR object
    osr = oscars.sr.sr()
+   oth = oscars.th.th()
 
 
 
@@ -173,7 +175,37 @@ oscars.sr
 
 
 
-.. py:method:: oscars.sr.add_bfield_file(ifile, iformat, [rotation, translation, scaling])
+.. py:method:: oscars.sr.add_bfield_interpolated(mapping, iformat, parameter, rotations, translation, scale)
+
+   Add a magnetic field given a paramater and a mapping between known parameters and magnetic field data files where the field is interpolated from the known data points.
+
+   :param mapping: list of parameters and associated filenames
+   :type  list: [[parameter, filename], ...]
+   :param iformat: which input format to use
+   :type  iformat: str
+   :param parameter: value of parameter you are interested in
+   :param rotations: A list representing the rotations of this beam about the X, Y amd Z axis (in that order)
+   :type  rotations: list[3]
+   :param translation: A list representing the translation of the x0 of this object
+   :type  translation: list[3]
+   :param scale: Scaling of input parameters
+   :type  scale: list
+   :returns: None
+
+   :example:
+
+   .. code-block:: py
+
+      # Add a magnetic field from a file where the columns are in the order Z, Bx, By, Bz where Z is in [m] and Bx, By, Bz are in [T].
+      osr.add_bfield_file(ifile='file.txt', iformat='OSCARS1D Z Bx By Bz')
+
+
+
+
+
+
+
+.. py:method:: oscars.sr.add_bfield_file(ifile, iformat, [rotation, translation, scale])
 
    Add a magnetic field from a text file *ifile* according to the format *iformat*.
    
@@ -185,11 +217,11 @@ oscars.sr
 
    For the OSCARS1D format you must also include the order of the data columns, which would typically look something like: 'OSCARS1D Z Bx By Bz'.  You may use X or Y instead of Z and the order and number of B[xyz] does not matter.  This mode also accepts non-uniformly distributed data.
 
-   Optionally you can rotate and translate the field in space.  You can use an input *scaling* list to scale the input (which must be in SI units of [m] for distances/positions and [T] for magnetic field values.
+   Optionally you can rotate and translate the field in space.  You can use an input *scale* list to scale the input (which must be in SI units of [m] for distances/positions and [T] for magnetic field values.
 
    The rotation is performed first in the order: :math:`\theta_x, \theta_y, \theta_z`
 
-   *scaling* is a list of less than or equal length to the number of elements in *iformat* when OSCARS1D is selected.  This will scale the input values of the i-th column before any rotation or translation.  This is useful if your data file is not in [T] and [m]
+   *scale* is a list of less than or equal length to the number of elements in *iformat* when OSCARS1D is selected.  This will scale the input values of the i-th column before any rotation or translation.  This is useful if your data file is not in [T] and [m]
 
    :param ifile: Name of input file
    :type  ifile: str
@@ -198,9 +230,9 @@ oscars.sr
    :param rotation: [:math:`\theta_x, \theta_y, \theta_z`]
    :type  rotation: list[3]
    :param translation: Translation in space [x, y, z]
-   :type  filename: list[3]
-   :param scaling: Scaling of input parameters
-   :type  filename: list
+   :type  translation: list[3]
+   :param scale: Scaling of input parameters
+   :type  scale: list
    :returns: None
 
    :example:
@@ -367,7 +399,7 @@ oscars.sr
 
 
 
-.. py:method:: oscars.sr.add_efield_file(ifile, iformat, [rotation, translation, scaling])
+.. py:method:: oscars.sr.add_efield_file(ifile, iformat, [rotation, translation, scale])
 
    Add an electric field from a text file *ifile* according to the format *iformat*.
    
@@ -379,11 +411,11 @@ oscars.sr
 
    For the OSCARS1D format you must also include the order of the data columns, which would typically look something like: 'OSCARS1D Z Bx By Bz'.  You may use X or Y instead of Z and the order and number of B[xyz] does not matter.  This mode also accepts non-uniformly distributed data.
 
-   Optionally you can rotate and translate the field in space.  You can use an input *scaling* list to scale the input (which must be in SI units of [m] for distances/positions and [T] for electric field values.
+   Optionally you can rotate and translate the field in space.  You can use an input *scale* list to scale the input (which must be in SI units of [m] for distances/positions and [T] for electric field values.
 
    The rotation is performed first in the order: :math:`\theta_x, \theta_y, \theta_z`
 
-   *scaling* is a list of less than or equal length to the number of elements in *iformat* when OSCARS1D is selected.  This will scale the input values of the i-th column before any rotation or translation.  This is useful if your data file is not in [T] and [m]
+   *scale* is a list of less than or equal length to the number of elements in *iformat* when OSCARS1D is selected.  This will scale the input values of the i-th column before any rotation or translation.  This is useful if your data file is not in [T] and [m]
 
    :param ifile: Name of input file
    :type  ifile: str
@@ -392,9 +424,9 @@ oscars.sr
    :param rotation: [:math:`\theta_x, \theta_y, \theta_z`]
    :type  rotation: list[3]
    :param translation: Translation in space [x, y, z]
-   :type  filename: list[3]
-   :param scaling: Scaling of input parameters
-   :type  filename: list
+   :type  translation: list[3]
+   :param scale: Scaling of input parameters
+   :type  scale: list
    :returns: None
 
    :example:
@@ -623,16 +655,16 @@ oscars.sr
 
 
 
-.. py:method:: oscars.sr.set_particle_beam(type, name, energy_GeV, d0, x0, [sigma_energy_GeV, t0, current, weight, rotations, translation, horizontal_direction, beta, emittance, lattice_center, mass, charge])
+.. py:method:: oscars.sr.set_particle_beam(type, name, energy_GeV, d0, x0, [beam, sigma_energy_GeV, t0, current, weight, rotations, translation, horizontal_direction, beta, emittance, lattice_center, mass, charge])
 
    This function is the same as oscars.sr.add_particle_beam(), but it clears all particle beams before the 'add'.
 
 
 
 
-.. py:method:: oscars.sr.add_particle_beam(type, name, energy_GeV, x0, d0, [sigma_energy_GeV, t0, current, weight, rotations, translation, horizontal_direction, beta, emittance, lattice_reference, mass, charge])
+.. py:method:: oscars.sr.add_particle_beam(type, name, energy_GeV, d0, x0, [beam, sigma_energy_GeV, t0, current, weight, rotations, translation, horizontal_direction, beta, emittance, lattice_reference, mass, charge])
 
-   Add a particle beam to the OSCARS object with a name given by *name*.  There is no limit to the number of different particle beams one can add.  They are added with a *weight* which is by default 1.  The weight is used in random sampling when asking for a new particle, for example in oscars.sr.set_new_particle().
+   Add a particle beam to the OSCARS object with a name given by *name*.  There is no limit to the number of different particle beams one can add.  They are added with a *weight* which is by default 1.  The weight is used in random sampling when asking for a new particle, for example in oscars.sr.set_new_particle().  If the *beam* parameter is given you only need to specify *name* and *x0*.
 
    Supported particle types for *type* are:
       * electron
@@ -654,6 +686,8 @@ oscars.sr
    :type  d0: [float, float, float]
    :param x0: Coordinates of the initial position in [m]
    :type  x0: [float, float, float]
+   :param beam: name of predefined beam
+   :type  beam: str
    :param sigma_energy_GeV: Beam energy in [GeV]
    :type  sigma_energy_GeV: float
    :param t0: Initial time in [m] at the initial_position.  Time here is in terms of ct.
@@ -680,6 +714,12 @@ oscars.sr
    :type  charge: float
    :returns: None
 
+   Currently the predefined beam types are:
+   * NSLSII
+   * NSLSII-ShortStraight
+   * NSLSII-LongStraight
+
+
    :Example: Add an electron beam with 0.500 [A] current at an initial position of [0, 0, 0] in the Y direction with energy of 3 [GeV]
 
    .. code-block:: py
@@ -698,6 +738,13 @@ oscars.sr
       theta = 0.25 * osr.pi()
       osr.add_particle_beam(type='positron', name='beam_0', x0=[-2, 0, 0], d0=[sin(theta), cos(theta), 0], energy_GeV=3, current=0.500)
 
+   :Example: Add a predefined beam
+
+   .. code-block:: py
+
+      # Add the NSLSII beam in a short straight section
+      osr.add_particle_beam(beam='NSLSII-ShortStraight', name='beam_0', x0=[-2, 0, 0])
+
 
 
 
@@ -706,6 +753,17 @@ oscars.sr
 .. py:method:: oscars.sr.clear_particle_beams()
 
    Remove all of the existing particle beams
+
+   :returns: None
+
+
+
+
+
+
+.. py:method:: oscars.sr.print_particle_beams()
+
+   Print information for all internal particle beams
 
    :returns: None
 
@@ -1154,6 +1212,220 @@ oscars.sr
    :param ofile: Output file name
    :type  ofile: str
    :returns: A list, each element of which has a time (in [s]) and a 3-dimensional list representing the x, y, and z componemts of the electric field at that time: [[t, [Ex, Ey, Ez]], ...]
+
+
+
+
+
+
+.. py:method:: oscars.sr.print()
+
+   Print all internal information related to beams and fields
+
+   :returns: None
+
+
+
+
+
+
+
+
+
+
+
+
+
+oscars.th
+---------
+
+
+.. py:method:: oscars.th.undulator_K(bfield, period)
+
+   Get the undulator deflection parameter K
+
+   :param bfield: peak magnetic field
+   :type  bfield: float
+   :param period: undulator period in [m]
+   :type  period: float
+   :returns: float
+
+
+
+
+.. py:method:: oscars.th.undulator_bfield(K, period)
+
+   Get the undulator peak bfield given K and period
+
+   :param K: undulator deflection parameter K
+   :type  K: float
+   :param period: undulator period in [m]
+   :type  period: float
+   :returns: float
+
+
+
+
+.. py:method:: oscars.th.undulator_period(bfield, K)
+
+   Get the undulator period given the peak field and undulator parameter K
+
+   :param bfield: peak magnetic field
+   :type  bfield: float
+   :param K: undulator deflection parameter K
+   :type  K: float
+   :returns: float
+
+
+
+
+.. py:method:: oscars.th.undulator_brightness(period, nperiods, harmonic, [bfield, K])
+
+   Get the idealized undulator brightness given already defined beam parameters.  You must define a *K* or *bfield*, but not both.  You must have previously defined the beam.
+
+   :param period: undulator period in [m]
+   :type  period: float
+   :param nperiods: number of periods
+   :type  nperiods: int
+   :param harmonic: harmonic number of interest
+   :type  harmonic: int
+   :param bfield: peak magnetic field
+   :type  bfield: float
+   :param K: undulator deflection parameter K
+   :type  K: float
+   :returns: float
+
+
+
+
+
+.. py:method:: oscars.th.undulator_flux_onaxis(period, nperiods, harmonic, [bfield, K])
+
+   Get the idealized undulator on-axis flux given already defined beam parameters.  You must define a *K* or *bfield*, but not both.  You must have previously defined the beam.
+
+   :param period: undulator period in [m]
+   :type  period: float
+   :param nperiods: number of periods
+   :type  nperiods: int
+   :param harmonic: harmonic number of interest
+   :type  harmonic: int
+   :param bfield: peak magnetic field
+   :type  bfield: float
+   :param K: undulator deflection parameter K
+   :type  K: float
+   :returns: float
+
+
+
+
+.. py:method:: oscars.th.undulator_energy_harmonic(period, harmonic, bfield, K)
+
+   Get the energy at peak flux for the harmonic given.  You must define a *K* or *bfield*, but not both.  You must have previously defined the beam.
+
+   :param period: undulator period in [m]
+   :type  period: float
+   :param harmonic: harmonic number of interest
+   :type  harmonic: int
+   :param bfield: peak magnetic field
+   :type  bfield: float
+   :param K: undulator deflection parameter K
+   :type  K: float
+   :returns: float
+
+
+
+
+.. py:method:: oscars.th.bessel_k(nu, x)
+
+   Get the value of the modified bessel function of the second kind K according to the method of VACLAV O. KOSTROUN, SIMPLE NUMERICAL EVALUATION OF MODIFIED BESSEL FUNCTIONS Kv(x) OF FRACTIONAL ORDER AND THE INTEGRAL fxKv(rT)dr7, Nuclear Instruments and Methods 172 (1980) 371-374
+
+
+   :param nu: nu parameter
+   :type  nu: float
+   :param x: x parameter
+   :type  x: float
+   :returns: float
+
+
+
+
+
+.. py:method:: oscars.th.set_particle_beam(energy_GeV, beam, sigma_energy_GeV, current, beta, emittance)
+
+   Set the internal particle beam parameters.  This is similar to the oscars.th method of the same name and contains the same predefined beam definitions.  Only electron beams are currently allowed here.
+
+
+   :param energy_GeV: Beam energy in [GeV]
+   :type  energy_GeV: float
+   :param beam: name of predefined beam
+   :type  beam: str
+   :param sigma_energy_GeV: Beam energy in [GeV]
+   :type  sigma_energy_GeV: float
+   :param current: Beam current in [A].  If this parameter is 0, the current defaults to the single particle charge
+   :type  current: float
+   :param beta: values of the horizontal and vertical beta funtion at the point *lattice_center* [beta_x, beta_y]
+   :type  beat: [float, float]
+   :param emittance: values of the horizontal and vertical emittance [emittance_x, emittance_y]
+   :type  emittance: [float, float]
+   :returns: None
+
+   :Example: Add a particle beam
+
+   .. code-block:: py
+
+      # Setup beam parameters
+      oth.set_particle_beam(energy_GeV=3, sigma_energy_GeV=0.001*3, current=0.500, beta=[1.5, 0.8], emittance=[5.5e-10, 8e-12])
+
+   :Example: Add a particle beam
+
+   .. code-block:: py
+
+      # Setup beam parameters
+      oth.set_particle_beam(beam='NSLSII-ShortStraight')
+
+
+
+
+.. py:method:: oscars.th.print()
+
+   Print internal information related to the beam
+
+   :returns: None
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
