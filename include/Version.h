@@ -8,7 +8,7 @@
 
 #define OSCARS_VMAJOR 1
 #define OSCARS_VMINOR 36
-#define OSCARS_REVISION 12
+#define OSCARS_REVISION 13
 
 namespace OSCARS {
 
