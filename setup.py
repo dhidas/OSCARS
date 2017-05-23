@@ -30,6 +30,7 @@ moduleOSCARSSR = Extension('oscars.sr',
                                  'src/TVector3D.cc',
                                  'src/TVector3DC.cc',
                                  'src/TVector4D.cc',
+                                 'src/TField3D_Quadrupole.cc',
                                  'src/TOMATH.cc'],
                       extra_compile_args=['-std=c++11', '-Wno-write-strings', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread']
                      )
@@ -60,6 +61,7 @@ moduleOSCARSTH = Extension('oscars.th',
                                  'src/TVector3D.cc',
                                  'src/TVector3DC.cc',
                                  'src/TVector4D.cc',
+                                 'src/TField3D_Quadrupole.cc',
                                  'src/TOMATH.cc'],
                       extra_compile_args=['-std=c++11', '-Wno-write-strings', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread']
                      )
