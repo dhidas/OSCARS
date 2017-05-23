@@ -6,5 +6,6 @@ Previous Release: 1.36.12
 
 
 
+Spectrum: corrected energy_range_eV stepping
 
 
