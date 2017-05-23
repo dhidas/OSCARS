@@ -81,7 +81,7 @@ void TSpectrumContainer::Init (size_t const N, double const EFirst, double const
 
   // Set the energy in each element
   for (size_t i = 0; i != fSpectrumPoints.size(); ++i) {
-    fSpectrumPoints[i].first = EFirst + (ELast - EFirst) / (N - 1) * (double) (i + 1);
+    fSpectrumPoints[i].first = EFirst + (ELast - EFirst) / (N - 1) * (double) (i);
   }
 
   return;
