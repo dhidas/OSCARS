@@ -24,6 +24,7 @@
 #include "TField3D_Gaussian.h"
 #include "TField3D_UniformBox.h"
 #include "TField3D_IdealUndulator.h"
+#include "TField3D_Quadrupole.h"
 #include "TRandomA.h"
 
 #include <iostream>
@@ -879,6 +880,67 @@ static PyObject* OSCARSSR_AddMagneticFieldIdealUndulator (OSCARSSRObject* self, 
 
   // Add field
   self->obj->AddMagneticField( (TField*) new TField3D_IdealUndulator(Field, Period, NPeriods, Translation, Phase, Taper));
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
+
+
+static PyObject* OSCARSSR_AddMagneticFieldQuadrupole (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
+{
+  // Add a magnetic field for undulator
+
+  // Lists and variables
+  double K = 0;
+  double Width = 0;
+  PyObject* List_Rotations   = PyList_New(0);
+  PyObject* List_Translation = PyList_New(0);
+
+  TVector3D Rotations(0, 0, 0);
+  TVector3D Translation(0, 0, 0);
+
+  // Input variables and parsing
+  static char *kwlist[] = {"K", "width", "rotations", "translation", NULL};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dd|OO", kwlist,
+                                                          &K,
+                                                          &Width,
+                                                          &List_Rotations,
+                                                          &List_Translation
+                                                          )) {
+    return NULL;
+  }
+
+
+  // Check for Rotations in the input
+  if (PyList_Size(List_Rotations) != 0) {
+    try {
+      Rotations = OSCARSSR_ListAsTVector3D(List_Rotations);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
+      return NULL;
+    }
+  }
+
+  // Check for Translation in the input
+  if (PyList_Size(List_Translation) != 0) {
+    try {
+      Translation = OSCARSSR_ListAsTVector3D(List_Translation);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
+      return NULL;
+    }
+  }
+
+
+  // Add field
+  self->obj->AddMagneticField( (TField*) new TField3D_Quadrupole(K, Width, Rotations, Translation));
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -3877,6 +3939,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"add_bfield_gaussian",               (PyCFunction) OSCARSSR_AddMagneticFieldGaussian,        METH_VARARGS | METH_KEYWORDS, "add a magnetic field in form of 3D gaussian"},
   {"add_bfield_uniform",                (PyCFunction) OSCARSSR_AddMagneticFieldUniform,         METH_VARARGS | METH_KEYWORDS, "add a uniform magnetic field in 3D"},
   {"add_bfield_undulator",              (PyCFunction) OSCARSSR_AddMagneticFieldIdealUndulator,  METH_VARARGS | METH_KEYWORDS, "add magnetic field from ideal undulator in 3D"},
+  {"add_bfield_quadrupole",             (PyCFunction) OSCARSSR_AddMagneticFieldQuadrupole,      METH_VARARGS | METH_KEYWORDS, "add magnetic field for quadrupole"},
   {"get_bfield",                        (PyCFunction) OSCARSSR_GetBField,                       METH_VARARGS,                 "get the magnetic field at a given position in space (and someday time?)"},
   {"clear_bfields",                     (PyCFunction) OSCARSSR_ClearMagneticFields,             METH_NOARGS,                  "clear all internal magnetic fields"},
   {"print_bfields",                     (PyCFunction) OSCARSSR_PrintMagneticFields,             METH_NOARGS,                  "print all internal magnetic fields"},
