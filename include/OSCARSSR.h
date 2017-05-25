@@ -176,22 +176,12 @@ class OSCARSSR
 
 
     // Flux Calculations
-    void CalculateFlux2   (TParticleA& Particle,
-                           TSurfacePoints const& Surface,
-                           double const Energy_eV,
-                           T3DScalarContainer& FluxContainer,
-                           std::string const& Polarization = "all",
-                           double const Angle = 0,
-                           TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
-                           TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
-                           int const Dimension = 3,
-                           double const Weight = 1);
-
     void CalculateFluxPoint (TParticleA& Particle,
                              TSurfacePoints const& Surface,
                              double const Energy_eV,
                              T3DScalarContainer& FluxContainer,
                              size_t const i,
+                             bool& Done,
                              std::string const& Polarization = "all",
                              double const Angle = 0,
                              TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
@@ -199,31 +189,24 @@ class OSCARSSR
                              int const Dimension = 3,
                              double const Weight = 1);
 
-    void CalculateFlux    (TParticleA&,
-                           TSurfacePoints const&,
-                           double const,
-                           T3DScalarContainer&,
-                           std::string const& Polarization = "all",
-                           double const Angle = 0,
-                           TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
-                           TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
-                           int const Dimension = 3,
-                           double const Weight = 1,
-                           std::string const& OutFileName = "");
+    void CalculateFlux1 (TParticleA& Particle,
+                         TSurfacePoints const& Surface,
+                         double const Energy_eV,
+                         T3DScalarContainer& FluxContainer,
+                         std::string const& OutFileName = "");
 
-    void CalculateFlux1   (TParticleA&, TSurfacePoints const&, double const, T3DScalarContainer&, std::string const& OutFileName = "");
-    void CalculateFlux    (TSurfacePoints const& Surface,
-                           double const Energy_eV,
-                           T3DScalarContainer& FluxContainer,
-                           std::string const& Polarization = "all",
-                           double const Angle = 0,
-                           TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
-                           TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
-                           int const NParticles = 0,
-                           int const NThreads = 0,
-                           int const GPU = 0,
-                           int const Dimension = 3,
-                           std::string const& OutFileName = "");
+    void CalculateFlux (TSurfacePoints const& Surface,
+                        double const Energy_eV,
+                        T3DScalarContainer& FluxContainer,
+                        std::string const& Polarization = "all",
+                        double const Angle = 0,
+                        TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
+                        TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
+                        int const NParticles = 0,
+                        int const NThreads = 0,
+                        int const GPU = 0,
+                        int const Dimension = 3,
+                        std::string const& OutFileName = "");
 
     void CalculateFluxThreads (TParticleA& Particle,
                                TSurfacePoints const& Surface,
