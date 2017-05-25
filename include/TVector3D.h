@@ -41,6 +41,7 @@ class TVector3D
     double Perp2 (TVector3D const&) const;
     TVector3D Cross (TVector3D const&) const;
     TVector3D UnitVector () const;
+    double Angle (TVector3D const&) const;
 
     void RotateSelfX (double const);
     void RotateSelfY (double const);

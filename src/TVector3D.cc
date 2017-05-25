@@ -162,6 +162,15 @@ TVector3D TVector3D::UnitVector () const
 
 
 
+double TVector3D::Angle (TVector3D const& V) const
+{
+  // Return the angle with respect to another vector
+  return acos(Dot(V) / sqrt(Mag2() * V.Mag2()));
+}
+
+
+
+
 void TVector3D::RotateSelfX(double const Angle) {
   // Rotate vector around X
   double const s = sin(Angle);
