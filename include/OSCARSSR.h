@@ -145,21 +145,12 @@ class OSCARSSR
                                  TVector3D const&,
                                  TSpectrumContainer&,
                                  int const i,
+                                 bool& Done,
                                  std::string const& Polarization = "all",
                                  double const Angle = 0,
                                  TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
                                  TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
                                  double const Weight = 1);
-
-    void CalculateSpectrum (TParticleA&,
-                            TVector3D const&,
-                            TSpectrumContainer&,
-                            std::string const& Polarization = "all",
-                            double const Angle = 0,
-                            TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
-                            TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
-                            double const Weight = 1);
-
 
     void AddToSpectrum (TSpectrumContainer const&, double const Weight = 1);
     void AddToFlux (T3DScalarContainer const&, double const Weight = 1);
