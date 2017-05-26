@@ -117,8 +117,7 @@ class OSCARSSR
                                double const Angle = 0,
                                TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
                                TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
-                               double const Weight = 1,
-                               std::string const OutFileName = "");
+                               double const Weight = 1);
 
     void CalculateSpectrum (TVector3D const& ObservationPoint,
                             TSpectrumContainer& Spectrum,
@@ -138,8 +137,7 @@ class OSCARSSR
                                    double const Angle = 0,
                                    TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
                                    TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
-                                   double const Weight = 1,
-                                   std::string const& OutFileName = "");
+                                   double const Weight = 1);
 
     void CalculateSpectrumPoint (TParticleA& ,
                                  TVector3D const&,
@@ -151,6 +149,15 @@ class OSCARSSR
                                  TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
                                  TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
                                  double const Weight = 1);
+
+    void CalculateSpectrum (TParticleA& Particle,
+                            TVector3D const& ObservationPoint,
+                            TSpectrumContainer& Spectrum,
+                            std::string const& Polarization,
+                            double const Angle,
+                            TVector3D const& HorizontalDirection,
+                            TVector3D const& PropogationDirection,
+                            double const Weight);
 
     void AddToSpectrum (TSpectrumContainer const&, double const Weight = 1);
     void AddToFlux (T3DScalarContainer const&, double const Weight = 1);
