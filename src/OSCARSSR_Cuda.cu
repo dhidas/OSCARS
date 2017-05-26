@@ -701,7 +701,6 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (TParticleA& Particle,
                                                 double const Angle,
                                                 TVector3D const& HorizontalDirection,
                                                 TVector3D const& PropogationDirection,
-                                                int const Dimension,
                                                 double const Weight)
 {
   // Do the setup for and call the GPU calculation of flux.  Your limitation here is only GPU memory.

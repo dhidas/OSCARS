@@ -32,7 +32,6 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (TParticleA& Particle,
                                                 double const Angle = 0,
                                                 TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
                                                 TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
-                                                int const Dimension = 3,
                                                 double const Weight = 1);
 
 extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (TParticleA& Particle,

@@ -240,7 +240,16 @@ void OSCARSSR::ClearElectricFields ()
 
 
 
-void OSCARSSR::WriteField (std::string const& BorE, std::string const& OutFileName, std::string const& OutFormat, TVector2D const& XLim, int const NX, TVector2D const& YLim, int const NY, TVector2D const& ZLim, int const NZ, std::string const& Comment)
+void OSCARSSR::WriteField (std::string const& BorE,
+                           std::string const& OutFileName,
+                           std::string const& OutFormat,
+                           TVector2D const& XLim,
+                           int const NX,
+                           TVector2D const& YLim,
+                           int const NY,
+                           TVector2D const& ZLim,
+                           int const NZ,
+                           std::string const& Comment)
 {
   if (BorE == "B") {
     fBFieldContainer.WriteToFile(OutFileName, OutFormat, XLim, NX, YLim, NY, ZLim, NZ, Comment);
@@ -924,51 +933,136 @@ void OSCARSSR::RK4 (double y[], double dydx[], int n, double x, double h, double
 
 
 
-void OSCARSSR::CalculateSpectrumGPU (TParticleA& Particle,
-                                     TVector3D const& ObservationPoint,
-                                     TSpectrumContainer& Spectrum,
-                                     std::string const& Polarization,
-                                     double const Angle,
-                                     TVector3D const& HorizontalDirection,
-                                     TVector3D const& PropogationDirection,
-                                     double const Weight)
+void OSCARSSR::CalculateSpectrum (TParticleA& Particle,
+                                  TVector3D const& ObservationPoint,
+                                  TSpectrumContainer& Spectrum,
+                                  std::string const& Polarization,
+                                  double const Angle,
+                                  TVector3D const& HorizontalDirection,
+                                  TVector3D const& PropogationDirection,
+                                  double const Weight)
 {
+  // Calculates the single particle spectrum at a given observation point
+  // in units of [photons / second / 0.001% BW / mm^2]
+  // Save this in the spectrum container.
+  //
+  // Particle - the Particle.. with a Trajectory structure hopefully
+  // ObservationPoint - Observation Point
+  // Spectrum - Spectrum container
+
   // Check that particle has been set yet.  If fType is "" it has not been set yet
   if (Particle.GetType() == "") {
-    try {
-      this->SetNewParticle();
-    } catch (std::exception e) {
-      throw std::out_of_range("no beam defined");
-    }
+    throw std::out_of_range("no particle defined");
   }
 
   // Calculate trajectory
   this->CalculateTrajectory(Particle);
 
-  #ifdef CUDA
-  // Check that the GPU exists
-  if (this->CheckGPU() < 1) {
-    throw std::invalid_argument("You are requesting the GPU, but none were found");
+  // Grab the Trajectory
+  TParticleTrajectoryPoints& T = Particle.GetTrajectory();
+
+
+  // Time step.  Expecting it to be constant throughout calculation
+  double const DeltaT = T.GetDeltaT();
+
+
+  // Number of points in the trajectory
+  size_t const NTPoints = T.GetNPoints();
+
+  if (NTPoints < 1) {
+    throw std::length_error("no points in trajectory.  Is particle or beam defined?");
   }
 
-  return OSCARSSR_Cuda_CalculateSpectrumGPU (Particle,
-                                             ObservationPoint,
-                                             Spectrum,
-                                             Polarization,
-                                             Angle,
-                                             HorizontalDirection,
-                                             PropogationDirection,
-                                             Weight);
-  #else
-  throw std::invalid_argument("GPU functionality not compiled into this binary distribution");
-  #endif
+  // Number of points in the spectrum container
+  size_t const NEPoints = Spectrum.GetNPoints();
+
+  // Constant C0 for calculation
+  double const C0 = Particle.GetQ() / (TOSCARSSR::FourPi() * TOSCARSSR::C() * TOSCARSSR::Epsilon0() * TOSCARSSR::Sqrt2Pi());
+
+  // Constant for flux calculation at the end
+  double const C2 = TOSCARSSR::FourPi() * Particle.GetCurrent() / (TOSCARSSR::H() * fabs(Particle.GetQ()) * TOSCARSSR::Mu0() * TOSCARSSR::C()) * 1e-6 * 0.001;
+
+  // Imaginary "i" and complxe 1+0i
+  std::complex<double> const I(0, 1);
+  std::complex<double> const One(1, 0);
+
+  // Photon vertical direction and positive and negative helicity
+  TVector3D const VerticalDirection = PropogationDirection.Cross(HorizontalDirection).UnitVector();
+  TVector3DC const Positive = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) + VerticalDirection * I );
+  TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * I );
+
+
+  // Loop over all points in the spectrum container
+  for (size_t i = 0; i != NEPoints; ++i) {
+
+    // Angular frequency
+    double const Omega = Spectrum.GetAngularFrequency(i);
+
+    // Constant for field calculation
+    std::complex<double> ICoverOmega = I * TOSCARSSR::C() / Omega;
+
+    // Constant for calculation
+    std::complex<double> const C1(0, C0 * Omega);
+
+    // Electric field summation in frequency space
+    TVector3DC SumE(0, 0, 0);
+
+    // Loop over all points in trajectory
+    for (int iT = 0; iT != NTPoints; ++iT) {
+
+      // Particle position
+      TVector3D const& X = T.GetX(iT);
+
+      // Particle "Beta" (velocity over speed of light)
+      TVector3D const& B = T.GetB(iT);
+
+      // Vector pointing from particle to observer
+      TVector3D const R = ObservationPoint - X;
+
+      // Unit vector pointing from particl to observer
+      TVector3D const N = R.UnitVector();
+
+      // Distance from particle to observer
+      double const D = R.Mag();
+
+      // Exponent for fourier transformed field
+      std::complex<double> Exponent(0, Omega * (DeltaT * iT + D / TOSCARSSR::C()));
+
+      // Sum in fourier transformed field (integral)
+      SumE += (TVector3DC(B) - (N * ( One + (ICoverOmega / (D))))) / D * std::exp(Exponent);
+    }
+
+    // Multiply field by Constant C1 and time step
+    SumE *= C1 * DeltaT;
+
+    // If a polarization is specified, calculate it
+    if (Polarization == "all") {
+      // Do nothing, it is already ALL
+    } else if (Polarization == "linear-horizontal") {
+      SumE = SumE.Dot(HorizontalDirection) * HorizontalDirection;
+    } else if (Polarization == "linear-vertical") {
+      SumE = SumE.Dot(VerticalDirection) * VerticalDirection;
+    } else if (Polarization == "linear") {
+      TVector3D PolarizationAngle = HorizontalDirection;
+      PolarizationAngle.RotateSelf(Angle, PropogationDirection);
+      SumE = SumE.Dot(PolarizationAngle) * PolarizationAngle;
+    } else if (Polarization == "circular-left") {
+      SumE = SumE.Dot(Positive.CC()) * Positive;
+    } else if (Polarization == "circular-right") {
+      SumE = SumE.Dot(Negative.CC()) * Negative;
+    } else {
+      // Throw invalid argument if polarization is not recognized
+      throw std::invalid_argument("Polarization requested not recognized");
+    }
+
+    // Set the flux for this frequency / energy point
+    Spectrum.AddToFlux(i, C2 *  SumE.Dot( SumE.CC() ).real() * Weight);
+  }
+
+
 
   return;
 }
-
-
-
-
 
 
 
@@ -1367,148 +1461,60 @@ void OSCARSSR::CalculateSpectrumThreads (TParticleA& Particle,
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-void OSCARSSR::CalculateSpectrum (TParticleA& Particle,
-                                  TVector3D const& ObservationPoint,
-                                  TSpectrumContainer& Spectrum,
-                                  std::string const& Polarization,
-                                  double const Angle,
-                                  TVector3D const& HorizontalDirection,
-                                  TVector3D const& PropogationDirection,
-                                  double const Weight)
+void OSCARSSR::CalculateSpectrumGPU (TParticleA& Particle,
+                                     TVector3D const& ObservationPoint,
+                                     TSpectrumContainer& Spectrum,
+                                     std::string const& Polarization,
+                                     double const Angle,
+                                     TVector3D const& HorizontalDirection,
+                                     TVector3D const& PropogationDirection,
+                                     double const Weight)
 {
-  // Calculates the single particle spectrum at a given observation point
-  // in units of [photons / second / 0.001% BW / mm^2]
-  // Save this in the spectrum container.
-  //
-  // Particle - the Particle.. with a Trajectory structure hopefully
-  // ObservationPoint - Observation Point
-  // Spectrum - Spectrum container
-
   // Check that particle has been set yet.  If fType is "" it has not been set yet
   if (Particle.GetType() == "") {
-    throw std::out_of_range("no particle defined");
+    try {
+      this->SetNewParticle();
+    } catch (std::exception e) {
+      throw std::out_of_range("no beam defined");
+    }
   }
 
   // Calculate trajectory
   this->CalculateTrajectory(Particle);
 
-  // Grab the Trajectory
-  TParticleTrajectoryPoints& T = Particle.GetTrajectory();
-
-
-  // Time step.  Expecting it to be constant throughout calculation
-  double const DeltaT = T.GetDeltaT();
-
-
-  // Number of points in the trajectory
-  size_t const NTPoints = T.GetNPoints();
-
-  if (NTPoints < 1) {
-    throw std::length_error("no points in trajectory.  Is particle or beam defined?");
+  #ifdef CUDA
+  // Check that the GPU exists
+  if (this->CheckGPU() < 1) {
+    throw std::invalid_argument("You are requesting the GPU, but none were found");
   }
 
-  // Number of points in the spectrum container
-  size_t const NEPoints = Spectrum.GetNPoints();
-
-  // Constant C0 for calculation
-  double const C0 = Particle.GetQ() / (TOSCARSSR::FourPi() * TOSCARSSR::C() * TOSCARSSR::Epsilon0() * TOSCARSSR::Sqrt2Pi());
-
-  // Constant for flux calculation at the end
-  double const C2 = TOSCARSSR::FourPi() * Particle.GetCurrent() / (TOSCARSSR::H() * fabs(Particle.GetQ()) * TOSCARSSR::Mu0() * TOSCARSSR::C()) * 1e-6 * 0.001;
-
-  // Imaginary "i" and complxe 1+0i
-  std::complex<double> const I(0, 1);
-  std::complex<double> const One(1, 0);
-
-  // Photon vertical direction and positive and negative helicity
-  TVector3D const VerticalDirection = PropogationDirection.Cross(HorizontalDirection).UnitVector();
-  TVector3DC const Positive = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) + VerticalDirection * I );
-  TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * I );
-
-
-  // Loop over all points in the spectrum container
-  for (size_t i = 0; i != NEPoints; ++i) {
-
-    // Angular frequency
-    double const Omega = Spectrum.GetAngularFrequency(i);
-
-    // Constant for field calculation
-    std::complex<double> ICoverOmega = I * TOSCARSSR::C() / Omega;
-
-    // Constant for calculation
-    std::complex<double> const C1(0, C0 * Omega);
-
-    // Electric field summation in frequency space
-    TVector3DC SumE(0, 0, 0);
-
-    // Loop over all points in trajectory
-    for (int iT = 0; iT != NTPoints; ++iT) {
-
-      // Particle position
-      TVector3D const& X = T.GetX(iT);
-
-      // Particle "Beta" (velocity over speed of light)
-      TVector3D const& B = T.GetB(iT);
-
-      // Vector pointing from particle to observer
-      TVector3D const R = ObservationPoint - X;
-
-      // Unit vector pointing from particl to observer
-      TVector3D const N = R.UnitVector();
-
-      // Distance from particle to observer
-      double const D = R.Mag();
-
-      // Exponent for fourier transformed field
-      std::complex<double> Exponent(0, Omega * (DeltaT * iT + D / TOSCARSSR::C()));
-
-      // Sum in fourier transformed field (integral)
-      SumE += (TVector3DC(B) - (N * ( One + (ICoverOmega / (D))))) / D * std::exp(Exponent);
-    }
-
-    // Multiply field by Constant C1 and time step
-    SumE *= C1 * DeltaT;
-
-    // If a polarization is specified, calculate it
-    if (Polarization == "all") {
-      // Do nothing, it is already ALL
-    } else if (Polarization == "linear-horizontal") {
-      SumE = SumE.Dot(HorizontalDirection) * HorizontalDirection;
-    } else if (Polarization == "linear-vertical") {
-      SumE = SumE.Dot(VerticalDirection) * VerticalDirection;
-    } else if (Polarization == "linear") {
-      TVector3D PolarizationAngle = HorizontalDirection;
-      PolarizationAngle.RotateSelf(Angle, PropogationDirection);
-      SumE = SumE.Dot(PolarizationAngle) * PolarizationAngle;
-    } else if (Polarization == "circular-left") {
-      SumE = SumE.Dot(Positive.CC()) * Positive;
-    } else if (Polarization == "circular-right") {
-      SumE = SumE.Dot(Negative.CC()) * Negative;
-    } else {
-      // Throw invalid argument if polarization is not recognized
-      throw std::invalid_argument("Polarization requested not recognized");
-    }
-
-
-    // Set the flux for this frequency / energy point
-    Spectrum.AddToFlux(i, C2 *  SumE.Dot( SumE.CC() ).real() * Weight);
-  }
-
-
+  return OSCARSSR_Cuda_CalculateSpectrumGPU (Particle,
+                                             ObservationPoint,
+                                             Spectrum,
+                                             Polarization,
+                                             Angle,
+                                             HorizontalDirection,
+                                             PropogationDirection,
+                                             Weight);
+  #else
+  throw std::invalid_argument("GPU functionality not compiled into this binary distribution");
+  #endif
 
   return;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2200,6 +2206,282 @@ double OSCARSSR::CalculateTotalPower (TParticleA& Particle)
 
 
 
+void OSCARSSR::CalculateFlux (TParticleA& Particle,
+                              TSurfacePoints const& Surface,
+                              double const Energy_eV,
+                              T3DScalarContainer& FluxContainer,
+                              std::string const& Polarization,
+                              double const Angle,
+                              TVector3D const& HorizontalDirection,
+                              TVector3D const& PropogationDirection,
+                              double const Weight)
+{
+  // Calculates the single particle spectrum at a given observation point
+  // in units of [photons / second / 0.001% BW / mm^2]
+  // Save this in the spectrum container.
+  //
+  // Particle - the Particle.. with a Trajectory structure hopefully
+  // ObservationPoint - Observation Point
+  // Spectrum - Spectrum container
+
+  // Check that particle has been set yet.  If fType is "" it has not been set yet
+  if (Particle.GetType() == "") {
+    throw std::out_of_range("no particle defined");
+  }
+
+  // Calculate trajectory
+  this->CalculateTrajectory(Particle);
+
+  // Grab the Trajectory
+  TParticleTrajectoryPoints& T = Particle.GetTrajectory();
+
+  // Time step.  Expecting it to be constant throughout calculation
+  double const DeltaT = T.GetDeltaT();
+
+
+  // Number of points in the trajectory
+  size_t const NTPoints = T.GetNPoints();
+
+  if (NTPoints < 1) {
+    throw std::length_error("no points in trajectory.  Is particle or beam defined?");
+  }
+
+  // Number of points in the spectrum container
+  size_t const NSPoints = Surface.GetNPoints();
+
+  // Constant C0 for calculation
+  double const C0 = Particle.GetQ() / (TOSCARSSR::FourPi() * TOSCARSSR::C() * TOSCARSSR::Epsilon0() * TOSCARSSR::Sqrt2Pi());
+
+  // Constant for flux calculation at the end
+  double const C2 = TOSCARSSR::FourPi() * Particle.GetCurrent() / (TOSCARSSR::H() * fabs(Particle.GetQ()) * TOSCARSSR::Mu0() * TOSCARSSR::C()) * 1e-6 * 0.001;
+
+  // Imaginary "i" and complxe 1+0i
+  std::complex<double> const I(0, 1);
+  std::complex<double> const One(1, 0);
+
+  // Photon vertical direction and positive and negative helicity
+  TVector3D const VerticalDirection = PropogationDirection.Cross(HorizontalDirection).UnitVector();
+  TVector3DC const Positive = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) + VerticalDirection * I );
+  TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * I );
+
+
+  // Angular frequency
+  double const Omega = TOSCARSSR::EvToAngularFrequency(Energy_eV);;
+
+  // Constant for field calculation
+  std::complex<double> ICoverOmega = I * TOSCARSSR::C() / Omega;
+
+  // Constant for calculation
+  std::complex<double> const C1(0, C0 * Omega);
+
+  // Loop over all points in the spectrum container
+  for (size_t i = 0; i != NSPoints; ++i) {
+
+    // Obs point
+    TVector3D ObservationPoint = Surface.GetPoint(i).GetPoint();
+
+    // Electric field summation in frequency space
+    TVector3DC SumE(0, 0, 0);
+
+    // Loop over all points in trajectory
+    for (int iT = 0; iT != NTPoints; ++iT) {
+
+      // Particle position
+      TVector3D const& X = T.GetX(iT);
+
+      // Particle "Beta" (velocity over speed of light)
+      TVector3D const& B = T.GetB(iT);
+
+      // Vector pointing from particle to observer
+      TVector3D const R = ObservationPoint - X;
+
+      // Unit vector pointing from particl to observer
+      TVector3D const N = R.UnitVector();
+
+      // Distance from particle to observer
+      double const D = R.Mag();
+
+      // Exponent for fourier transformed field
+      std::complex<double> Exponent(0, Omega * (DeltaT * iT + D / TOSCARSSR::C()));
+
+      // Sum in fourier transformed field (integral)
+      SumE += (TVector3DC(B) - (N * ( One + (ICoverOmega / (D))))) / D * std::exp(Exponent);
+    }
+
+
+    // Multiply field by Constant C1 and time step
+    SumE *= C1 * DeltaT;
+
+    // If a polarization is specified, calculate it
+    if (Polarization == "all") {
+      // Do nothing, it is already ALL
+    } else if (Polarization == "linear-horizontal") {
+      SumE = SumE.Dot(HorizontalDirection) * HorizontalDirection;
+    } else if (Polarization == "linear-vertical") {
+      SumE = SumE.Dot(VerticalDirection) * VerticalDirection;
+    } else if (Polarization == "linear") {
+      TVector3D PolarizationAngle = HorizontalDirection;
+      PolarizationAngle.RotateSelf(Angle, PropogationDirection);
+      SumE = SumE.Dot(PolarizationAngle) * PolarizationAngle;
+    } else if (Polarization == "circular-left") {
+      SumE = SumE.Dot(Positive.CC()) * Positive;
+    } else if (Polarization == "circular-right") {
+      SumE = SumE.Dot(Negative.CC()) * Negative;
+    } else {
+      // Throw invalid argument if polarization is not recognized
+      throw std::invalid_argument("Polarization requested not recognized");
+    }
+
+    // Set the flux for this frequency / energy point
+    double const ThisFlux = C2 *  SumE.Dot( SumE.CC() ).real() * Weight;
+
+    // All point to flux container
+    FluxContainer.AddToPoint(i, ThisFlux);
+  }
+
+  return;
+}
+
+
+
+
+
+void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
+                              double const Energy_eV,
+                              T3DScalarContainer& FluxContainer,
+                              std::string const& Polarization,
+                              double const Angle,
+                              TVector3D const& HorizontalDirection,
+                              TVector3D const& PropogationDirection,
+                              int const NParticles,
+                              int const NThreads,
+                              int const GPU,
+                              int const Dimension)
+{
+  // Check that particle has been set yet.  If fType is "" it has not been set yet
+  if (fParticle.GetType() == "") {
+    try {
+      this->SetNewParticle();
+    } catch (std::exception e) {
+      throw std::out_of_range("no beam defined");
+    }
+  }
+
+  // Number of threads to possibly use
+  int const NThreadsToUse = NThreads < 1 ? fNThreadsGlobal : NThreads;
+  if (NThreadsToUse <= 0) {
+    std::cerr << "NThreads or NThreadsGlobal must be >= 1" << std::endl;
+    throw;
+  }
+
+  // Should we use the GPU or not?
+  bool const UseGPU = GPU == 0 ? false : this->GetUseGPUGlobal() && (this->CheckGPU() > 0) ? true : false;
+
+  if (Dimension == 3) {
+    for (int i = 0; i != Surface.GetNPoints(); ++i) {
+      FluxContainer.AddPoint(Surface.GetPoint(i).GetPoint(), 0);
+    }
+  } else if (Dimension == 2) {
+    for (int i = 0; i != Surface.GetNPoints(); ++i) {
+      FluxContainer.AddPoint( TVector3D(Surface.GetX1(i), Surface.GetX2(i), 0), 0);
+    }
+  } else {
+    std::cerr << "wROng dimension" << std::endl;
+    throw;
+  }
+
+  // GPU will outrank NThreads...
+  if (NParticles == 0) {
+    if (UseGPU == 0) {
+      if (NThreadsToUse == 1) {
+        this->CalculateFlux(fParticle,
+                            Surface,
+                            Energy_eV,
+                            FluxContainer,
+                            Polarization,
+                            Angle,
+                            HorizontalDirection,
+                            PropogationDirection,
+                            1);
+      } else {
+        this->CalculateFluxThreads(fParticle,
+                                   Surface,
+                                   Energy_eV,
+                                   FluxContainer,
+                                   Polarization,
+                                   Angle,
+                                   HorizontalDirection,
+                                   PropogationDirection,
+                                   NThreadsToUse,
+                                   1);
+      }
+    } else if (UseGPU == 1) {
+      this->CalculateFluxGPU(fParticle,
+                             Surface,
+                             Energy_eV,
+                             FluxContainer,
+                             Polarization,
+                             Angle,
+                             HorizontalDirection,
+                             PropogationDirection,
+                             1);
+    }
+  } else {
+
+    // Weight this by the number of particles
+    double const Weight = 1.0 / (double) NParticles;
+
+    // Loop over particles
+    for (int i = 0; i != NParticles; ++i) {
+
+      // Set a new random particle
+      this->SetNewParticle();
+
+      // GPU will outrank NThreads...
+      if (UseGPU == 0) {
+        if (NThreadsToUse == 1) {
+          this->CalculateFlux(fParticle,
+                              Surface,
+                              Energy_eV,
+                              FluxContainer,
+                              Polarization,
+                              Angle,
+                              HorizontalDirection,
+                              PropogationDirection,
+                              Weight);
+        } else {
+          this->CalculateFluxThreads(fParticle,
+                                     Surface,
+                                     Energy_eV,
+                                     FluxContainer,
+                                     Polarization,
+                                     Angle,
+                                     HorizontalDirection,
+                                     PropogationDirection,
+                                     NThreadsToUse,
+                                     Weight);
+        }
+      } else if (UseGPU == 1) {
+        this->CalculateFluxGPU(fParticle,
+                               Surface,
+                               Energy_eV,
+                               FluxContainer,
+                               Polarization,
+                               Angle,
+                               HorizontalDirection,
+                               PropogationDirection,
+                               Weight);
+      }
+    }
+  }
+
+  return;
+}
+
+
+
+
+
 
 void OSCARSSR::CalculateFluxPoint (TParticleA& Particle,
                                    TSurfacePoints const& Surface,
@@ -2211,7 +2493,6 @@ void OSCARSSR::CalculateFluxPoint (TParticleA& Particle,
                                    double const Angle,
                                    TVector3D const& HorizontalDirection,
                                    TVector3D const& PropogationDirection,
-                                   int const Dimension,
                                    double const Weight)
 {
   // Calculates the single particle spectrum at a given observation point
@@ -2336,222 +2617,6 @@ void OSCARSSR::CalculateFluxPoint (TParticleA& Particle,
 
 
 
-void OSCARSSR::CalculateFlux1 (TParticleA& Particle, TSurfacePoints const& Surface, double const Energy_eV, T3DScalarContainer& FluxContainer)
-{
-  // Here for historical reasons.
-  //
-  // Calculates the single particle spectrum at a given observation point
-  // in units of [photons / second / 0.001% BW / mm^2]
-  //
-  // T - Trajectory of particle
-  // Surface - Surface of Observation Points
-  // Current - beam current
-  // Energy - beam energy in eV
-
-  // Check that particle has been set yet.  If fType is "" it has not been set yet
-  if (Particle.GetType() == "") {
-    throw std::out_of_range("no particle defined");
-  }
-
-  // UPDATE: Dimension is hard coded
-  int const Dimension = 2;
-
-
-  // Calculate trajectory
-  this->CalculateTrajectory(Particle);
-
-  // Grab the Trajectory
-  TParticleTrajectoryPoints& T = Particle.GetTrajectory();
-
-  // Number of points in trajectory
-  size_t const NTPoints = T.GetNPoints();
-
-  // Time step size
-  double const DeltaT = T.GetDeltaT();
-
-  // Constand C0
-  double const C0 = Particle.GetQ() / (4 * TOSCARSSR::Pi() * TOSCARSSR::C() * TOSCARSSR::Epsilon0() * TOSCARSSR::Sqrt2Pi());
-
-
-  // Constant for flux calculation at the end
-  double const C2 = TOSCARSSR::FourPi() * Particle.GetCurrent() / (TOSCARSSR::H() * fabs(Particle.GetQ()) * TOSCARSSR::Mu0() * TOSCARSSR::C()) * 1e-6 * 0.001;
-
-  // Complex number i
-  std::complex<double> const I(0, 1);
-
-  // UPDATE: use common function
-  double const Omega = Energy_eV * TOSCARSSR::TwoPi() / 4.1357e-15;
-
-  // Constant C1 (complex)
-  //std::complex<double> const C1(0, C0 * Omega);
-
-  // Loop over all surface points
-  for (size_t ip = 0; ip != Surface.GetNPoints(); ++ip) {
-
-    // Observation point
-    TVector3D const Obs = Surface.GetPoint(ip).GetPoint();
-
-    // Sum E-field
-    TVector3DC SumE(0, 0, 0);
-
-    // Loop over trajectory points
-    for (int iT = 0; iT != NTPoints; ++iT) {
-
-      // Get position, Beta, and Acceleration (over c)
-      TVector3D const& X = T.GetX(iT);
-      TVector3D const& B = T.GetB(iT);
-      TVector3D const& AoverC = T.GetAoverC(iT);
-
-      // Define R and unit vector in direction of R, and D (distance to observer)
-      TVector3D const R = Obs - X;
-      TVector3D const N = R.UnitVector();
-      double const D = R.Mag();
-
-      // Exponent in transformed field
-      std::complex<double> Exponent(0, -Omega * (DeltaT * iT + D / TOSCARSSR::C()));
-
-      // UPDATE: with better field avoiding A
-      // TVector3DC const ThisEw = ( N.Cross( (N - B).Cross(AoverC) ) ) / ( D * pow(1 - N.Dot(B), 2) ) * std::exp(Exponent) * DeltaT; // FF only
-
-      TVector3DC const ThisEw = ( ( (1 - (B).Mag2()) * (N - B) ) / ( D * D * (pow(1 - N.Dot(B), 2)) )
-          + ( N.Cross( (N - B).Cross(AoverC) ) ) / ( D * pow(1 - N.Dot(B), 2) ) ) * std::exp(Exponent) * DeltaT; // NF + FF
-
-      // Add this contribution
-      SumE += ThisEw;
-
-    }
-
-    // Multiply by constant factor
-    SumE *= C0;
-
-
-    double const ThisFlux = C2 * SumE.Dot( SumE.CC() ).real();
-  }
-
-  return;
-}
-
-
-
-
-
-void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
-                              double const Energy_eV,
-                              T3DScalarContainer& FluxContainer,
-                              std::string const& Polarization,
-                              double const Angle,
-                              TVector3D const& HorizontalDirection,
-                              TVector3D const& PropogationDirection,
-                              int const NParticles,
-                              int const NThreads,
-                              int const GPU,
-                              int const Dimension)
-{
-  // Check that particle has been set yet.  If fType is "" it has not been set yet
-  if (fParticle.GetType() == "") {
-    try {
-      this->SetNewParticle();
-    } catch (std::exception e) {
-      throw std::out_of_range("no beam defined");
-    }
-  }
-
-  // Number of threads to possibly use
-  int const NThreadsToUse = NThreads < 1 ? fNThreadsGlobal : NThreads;
-  if (NThreadsToUse <= 0) {
-    std::cerr << "NThreads or NThreadsGlobal must be >= 1" << std::endl;
-    throw;
-  }
-
-  // Should we use the GPU or not?
-  bool const UseGPU = GPU == 0 ? false : this->GetUseGPUGlobal() && (this->CheckGPU() > 0) ? true : false;
-
-  if (Dimension == 3) {
-    for (int i = 0; i != Surface.GetNPoints(); ++i) {
-      FluxContainer.AddPoint(Surface.GetPoint(i).GetPoint(), 0);
-    }
-  } else if (Dimension == 2) {
-    for (int i = 0; i != Surface.GetNPoints(); ++i) {
-      FluxContainer.AddPoint( TVector3D(Surface.GetX1(i), Surface.GetX2(i), 0), 0);
-    }
-  } else {
-    std::cerr << "wROng dimension" << std::endl;
-    throw;
-  }
-
-  // GPU will outrank NThreads...
-  if (NParticles == 0) {
-    if (UseGPU == 0) {
-      this->CalculateFluxThreads(fParticle,
-                                 Surface,
-                                 Energy_eV,
-                                 FluxContainer,
-                                 Polarization,
-                                 Angle,
-                                 HorizontalDirection,
-                                 PropogationDirection,
-                                 NThreadsToUse,
-                                 Dimension,
-                                 1);
-    } else if (UseGPU == 1) {
-      this->CalculateFluxGPU(fParticle,
-                             Surface,
-                             Energy_eV,
-                             FluxContainer,
-                             Polarization,
-                             Angle,
-                             HorizontalDirection,
-                             PropogationDirection,
-                             Dimension,
-                             1);
-    }
-  } else {
-
-    // Weight this by the number of particles
-    double const Weight = 1.0 / (double) NParticles;
-
-    // Loop over particles
-    for (int i = 0; i != NParticles; ++i) {
-
-      // Set a new random particle
-      this->SetNewParticle();
-
-      // GPU will outrank NThreads...
-      if (UseGPU == 0) {
-        this->CalculateFluxThreads(fParticle,
-                                   Surface,
-                                   Energy_eV,
-                                   FluxContainer,
-                                   Polarization,
-                                   Angle,
-                                   HorizontalDirection,
-                                   PropogationDirection,
-                                   NThreadsToUse,
-                                   Dimension,
-                                   Weight);
-      } else if (UseGPU == 1) {
-        this->CalculateFluxGPU(fParticle,
-                               Surface,
-                               Energy_eV,
-                               FluxContainer,
-                               Polarization,
-                               Angle,
-                               HorizontalDirection,
-                               PropogationDirection,
-                               Dimension,
-                               Weight);
-      }
-    }
-  }
-
-  return;
-}
-
-
-
-
-
-
 void OSCARSSR::CalculateFluxThreads (TParticleA& Particle,
                                      TSurfacePoints const& Surface,
                                      double const Energy_eV,
@@ -2561,7 +2626,6 @@ void OSCARSSR::CalculateFluxThreads (TParticleA& Particle,
                                      TVector3D const& HorizontalDirection,
                                      TVector3D const& PropogationDirection,
                                      int const NThreads,
-                                     int const Dimension,
                                      double const Weight)
 {
   // Calculates the single particle spectrum at a given observation point
@@ -2615,7 +2679,6 @@ void OSCARSSR::CalculateFluxThreads (TParticleA& Particle,
                                   Angle,
                                   HorizontalDirection,
                                   PropogationDirection,
-                                  Dimension,
                                   Weight));
 
     // Incement the number of points started so far
@@ -2676,7 +2739,6 @@ void OSCARSSR::CalculateFluxThreads (TParticleA& Particle,
                                     Angle,
                                     HorizontalDirection,
                                     PropogationDirection,
-                                    Dimension,
                                     Weight);
 
           // Increment the number of points that have been started
@@ -2705,36 +2767,6 @@ void OSCARSSR::CalculateFluxThreads (TParticleA& Particle,
 
 
 
-void OSCARSSR::CalculateFluxGPU (TSurfacePoints const& Surface,
-                                 double const Energy_eV,
-                                 T3DScalarContainer& FluxContainer,
-                                 std::string const& Polarization,
-                                 double const Angle,
-                                 TVector3D const& HorizontalDirection,
-                                 TVector3D const& PropogationDirection,
-                                 int const Dimension,
-                                 double const Weight)
-{
-  // If you compile for Cuda use the GPU in this function, else throw
-
-  // Check that particle has been set yet.  If fType is "" it has not been set yet
-  if (fParticle.GetType() == "") {
-    try {
-      this->SetNewParticle();
-    } catch (std::exception e) {
-      throw std::out_of_range("no beam defined");
-    }
-  }
-
-  this->CalculateFluxGPU(fParticle, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, Dimension, Weight);
-
-  return;
-}
-
-
-
-
-
 void OSCARSSR::CalculateFluxGPU (TParticleA& Particle,
                                  TSurfacePoints const& Surface,
                                  double const Energy_eV,
@@ -2743,7 +2775,6 @@ void OSCARSSR::CalculateFluxGPU (TParticleA& Particle,
                                  double const Angle,
                                  TVector3D const& HorizontalDirection,
                                  TVector3D const& PropogationDirection,
-                                 int const Dimension,
                                  double const Weight)
 {
   // If you compile for Cuda use the GPU in this function, else throw
@@ -2767,7 +2798,7 @@ void OSCARSSR::CalculateFluxGPU (TParticleA& Particle,
     throw std::invalid_argument("You are requesting the GPU, but none were found");
   }
 
-  return OSCARSSR_Cuda_CalculateFluxGPU(Particle, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, Dimension, Weight);
+  return OSCARSSR_Cuda_CalculateFluxGPU(Particle, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, Weight);
   #else
   throw std::invalid_argument("GPU functionality not compiled into this binary distribution");
   #endif
