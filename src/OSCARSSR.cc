@@ -1231,9 +1231,6 @@ void OSCARSSR::CalculateSpectrumThreads (TParticleA& Particle,
   // Calculate trajectory before we fanout into threads
   this->CalculateTrajectory(Particle);
 
-  // Check if NThreads is overriding the default nthreads
-  size_t const NThreadsMaxToUse = (size_t) NThreads > 0 ? NThreads : fNThreadsGlobal;
-
   // Calculate the trajectory from scratch
   this->CalculateTrajectory(Particle);
 
@@ -1244,7 +1241,7 @@ void OSCARSSR::CalculateSpectrumThreads (TParticleA& Particle,
   size_t const NPoints = Spectrum.GetNPoints();
 
   // How many threads to start in the first for loop
-  size_t const NThreadsActual = NPoints > NThreadsMaxToUse ? NThreadsMaxToUse : NPoints;
+  size_t const NThreadsActual = NPoints > NThreads ? NThreads : NPoints;
 
   // Keep track of which threads are finished and started
   bool Done[NThreadsActual];
@@ -1499,13 +1496,6 @@ void OSCARSSR::ClearPowerDensity ()
 
 
 
-void OSCARSSR::CalculatePowerDensity (TParticleA& Particle, TSurfacePoints const& Surface, int const Dimension, bool const Directional, double const Weight, std::string const& OutFileName)
-{
-  T3DScalarContainer PowerDensityContainer;
-  this->CalculatePowerDensity(Particle, Surface, PowerDensityContainer, Dimension, Directional, Weight, OutFileName);
-
-  return;
-}
 
 
 
@@ -1514,9 +1504,11 @@ void OSCARSSR::CalculatePowerDensity (TParticleA& Particle, TSurfacePoints const
 
 
 
-
-
-void OSCARSSR::CalculatePowerDensity (TParticleA& Particle, TSurfacePoints const& Surface, T3DScalarContainer& PowerDensityContainer, int const Dimension, bool const Directional, double const Weight, std::string const& OutFileName)
+void OSCARSSR::CalculatePowerDensity (TParticleA& Particle,
+                                      TSurfacePoints const& Surface,
+                                      T3DScalarContainer& PowerDensityContainer,
+                                      bool const Directional,
+                                      double const Weight)
 {
   // Calculates the single particle spectrum at a given observation point
   // in units of [photons / second / 0.001% BW / mm^2]
@@ -1529,9 +1521,6 @@ void OSCARSSR::CalculatePowerDensity (TParticleA& Particle, TSurfacePoints const
   if (Particle.GetType() == "") {
     throw std::out_of_range("no particle defined");
   }
-
-  // Are we writing to a file?
-  bool const WriteToFile = OutFileName != "" ? true : false;
 
   // Calculate the trajectory from scratch
   this->CalculateTrajectory(Particle);
@@ -1549,23 +1538,14 @@ void OSCARSSR::CalculatePowerDensity (TParticleA& Particle, TSurfacePoints const
   TVector3D Numerator;
   double Denominator;
 
-  // If writing to a file, open it and set to scientific output
-  std::ofstream of;
-  if (WriteToFile) {
-    of.open(OutFileName.c_str());
-    if (!of.is_open()) {
-      throw std::ofstream::failure("cannot open output file");
-    }
-    of << std::scientific;
-  }
   //std::cout << "Directional: " << Directional << std::endl;
 
   // Loop over all points in the given surface
   for (size_t io = 0; io < Surface.GetNPoints(); ++io) {
 
     // Get the observation point (on the surface, and its "normal"
-    TVector3D Obs = Surface.GetPoint(io).GetPoint();
-    TVector3D Normal = Surface.GetPoint(io).GetNormal();
+    TVector3D const Obs = Surface.GetPoint(io).GetPoint();
+    TVector3D const Normal = Surface.GetPoint(io).GetNormal();
 
 
     // For summing power contributions
@@ -1619,26 +1599,8 @@ void OSCARSSR::CalculatePowerDensity (TParticleA& Particle, TSurfacePoints const
       }
     }
 
-    if (Dimension == 2) {
-      if (WriteToFile) {
-        of << Surface.GetX1(io) << " " << Surface.GetX2(io) << " " << Sum << "\n";
-      } else {
-        PowerDensityContainer.AddToPoint(io, Sum);
-      }
-    } else if (Dimension == 3) {
-      if (WriteToFile) {
-        of << Obs.GetX() << " " << Obs.GetY() << " " << Obs.GetZ() << " " << Sum << "\n";
-      } else {
-        PowerDensityContainer.AddToPoint(io, Sum);
-      }
-    } else {
-      throw std::out_of_range("incorrect dimensions");
-    }
-
-  }
-
-  if (WriteToFile) {
-    of.close();
+    // Add to container
+    PowerDensityContainer.AddToPoint(io, Sum);
   }
 
   return;
@@ -1647,12 +1609,19 @@ void OSCARSSR::CalculatePowerDensity (TParticleA& Particle, TSurfacePoints const
 
 
 
-void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface, T3DScalarContainer& PowerDensityContainer, int const Dimension, bool const Directional, int const NParticles, std::string const& OutFileName, int const NThreads, int const GPU)
+void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface,
+                                      T3DScalarContainer& PowerDensityContainer,
+                                      int const Dimension,
+                                      bool const Directional,
+                                      int const NParticles,
+                                      int const NThreads,
+                                      int const GPU)
 {
   // Calculates the power density
   // in units of [W / mm^2]
   //
   // UPDATE: inputs
+
 
   // How many threads to use.
   int const NThreadsToUse = NThreads < 1 ? fNThreadsGlobal : NThreads;
@@ -1687,19 +1656,21 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface, T3DScalarCo
     throw;
   }
 
-  // Don't write output in individual mode
-  std::string const BlankOutFileName = "";
-
   // GPU will outrank NThreads...
   if (NParticles == 0) {
+    // nparticles = 0 has special meaning.  Set new ideal particle.  Of course if you have multiple
+    // beams defined this is a bit strange as it will pick randomly
+    // UPDATE: Consider adding "beam" as an input
+    this->SetNewParticle("", "ideal");
+
     if (UseGPU == 0) {
       if (NThreadsToUse == 1) {
-        this->CalculatePowerDensity(fParticle, Surface, PowerDensityContainer, Dimension, Directional, 1, BlankOutFileName);
+        this->CalculatePowerDensity(fParticle, Surface, PowerDensityContainer, Directional, 1);
       } else {
-        this->CalculatePowerDensityThreads(fParticle, Surface, PowerDensityContainer, NThreadsToUse, Dimension, Directional, 1, BlankOutFileName);
+        this->CalculatePowerDensityThreads(fParticle, Surface, PowerDensityContainer, NThreadsToUse, Directional, 1);
       }
     } else if (UseGPU == 1) {
-      this->CalculatePowerDensityGPU(fParticle, Surface, PowerDensityContainer, Dimension, Directional, 1, BlankOutFileName);
+      this->CalculatePowerDensityGPU(fParticle, Surface, PowerDensityContainer, Directional, 1);
     }
   } else {
     double const Weight = 1.0 / (double) NParticles;
@@ -1707,19 +1678,14 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface, T3DScalarCo
       this->SetNewParticle();
       if (UseGPU == 0) {
         if (NThreadsToUse == 1) {
-          this->CalculatePowerDensity(fParticle, Surface, PowerDensityContainer, Dimension, Directional, Weight, BlankOutFileName);
+          this->CalculatePowerDensity(fParticle, Surface, PowerDensityContainer, Directional, Weight);
         } else {
-          this->CalculatePowerDensityThreads(fParticle, Surface, PowerDensityContainer,  NThreadsToUse, Dimension, Directional, Weight, BlankOutFileName);
+          this->CalculatePowerDensityThreads(fParticle, Surface, PowerDensityContainer,  NThreadsToUse, Directional, Weight);
         }
       } else if (UseGPU == 1) {
-        this->CalculatePowerDensityGPU(fParticle, Surface, PowerDensityContainer, Dimension, Directional, Weight, BlankOutFileName);
+        this->CalculatePowerDensityGPU(fParticle, Surface, PowerDensityContainer, Directional, Weight);
       }
     }
-  }
-
-
-  if (OutFileName != "") {
-    PowerDensityContainer.WriteToFileText(OutFileName, Dimension);
   }
 
   return;
@@ -1730,10 +1696,13 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface, T3DScalarCo
 
 
 
-
-
-
-void OSCARSSR::CalculatePowerDensityPoint (TParticleA& Particle, TSurfacePoints const& Surface, T3DScalarContainer& PowerDensityContainer, size_t const io, int const Dimension, bool const Directional, double const Weight)
+void OSCARSSR::CalculatePowerDensityPoint (TParticleA& Particle,
+                                           TSurfacePoints const& Surface,
+                                           T3DScalarContainer& PowerDensityContainer,
+                                           size_t const io,
+                                           bool& Done,
+                                           bool const Directional,
+                                           double const Weight)
 {
   // Calculates the single particle spectrum at a given observation point
   // in units of [photons / second / 0.001% BW / mm^2]
@@ -1768,70 +1737,66 @@ void OSCARSSR::CalculatePowerDensityPoint (TParticleA& Particle, TSurfacePoints 
   TVector3D const Normal = Surface.GetPoint(io).GetNormal();
 
 
-    // For summing power contributions
-    double Sum = 0;
+  // For summing power contributions
+  double Sum = 0;
 
-    // Loop over all points in the trajectory
-    for (int iT = 0; iT != NTPoints ; ++iT) {
+  // Loop over all points in the trajectory
+  for (int iT = 0; iT != NTPoints ; ++iT) {
 
-      // Get current position, Beta, and Acceleration(over c)
-      TVector3D const& X = T.GetX(iT);
-      TVector3D const& B = T.GetB(iT);
-      TVector3D const& AoverC = T.GetAoverC(iT);
+    // Get current position, Beta, and Acceleration(over c)
+    TVector3D const& X = T.GetX(iT);
+    TVector3D const& B = T.GetB(iT);
+    TVector3D const& AoverC = T.GetAoverC(iT);
 
-      // Define the three normal vectors.  N1 is in the direction of propogation,
-      // N2 and N3 are in a plane perpendicular to N1
-      TVector3D const N1 = (Obs - X).UnitVector();
-      TVector3D const N2 = N1.Orthogonal().UnitVector();
-      TVector3D const N3 = N1.Cross(N2).UnitVector();
+    // Define the three normal vectors.  N1 is in the direction of propogation,
+    // N2 and N3 are in a plane perpendicular to N1
+    TVector3D const N1 = (Obs - X).UnitVector();
+    TVector3D const N2 = N1.Orthogonal().UnitVector();
+    TVector3D const N3 = N1.Cross(N2).UnitVector();
 
-      // Speed up here if you want
-      //if (B.Angle(N1) > 5. / (Particle.GetGamma())) {
-      //  continue;
-      //}
+    // Speed up here if you want
+    //if (B.Angle(N1) > 5. / (Particle.GetGamma())) {
+    //  continue;
+    //}
 
-      // For computing non-normally incidence
-      double const N1DotNormal = N1.Dot(Normal);
-      // UPDATE: URGENT: Check this
-      if (Directional && N1DotNormal <= 0) {
-        continue;
-      }
+    // For computing non-normally incidence
+    double const N1DotNormal = N1.Dot(Normal);
+    // UPDATE: URGENT: Check this
+    if (Directional && N1DotNormal <= 0) {
+      continue;
+    }
 
-      // Compute Numerator and denominator
-      Numerator = N1.Cross( ( (N1 - B).Cross((AoverC)) ) );
-      Denominator = pow(1 - (B).Dot(N1), 5);
+    // Compute Numerator and denominator
+    Numerator = N1.Cross( ( (N1 - B).Cross((AoverC)) ) );
+    Denominator = pow(1 - (B).Dot(N1), 5);
 
-      // Add contributions from both N2 and N3
-      Sum += pow(Numerator.Dot(N2), 2) / Denominator / (Obs - X).Mag2() * N1DotNormal;
-      Sum += pow(Numerator.Dot(N3), 2) / Denominator / (Obs - X).Mag2() * N1DotNormal;
+    // Add contributions from both N2 and N3
+    Sum += pow(Numerator.Dot(N2), 2) / Denominator / (Obs - X).Mag2() * N1DotNormal;
+    Sum += pow(Numerator.Dot(N3), 2) / Denominator / (Obs - X).Mag2() * N1DotNormal;
 
   }
-    // Undulators, Wigglers and their applications, p42
-    Sum *= fabs(Particle.GetQ() * Particle.GetCurrent()) / (16 * TOSCARSSR::Pi2() * TOSCARSSR::Epsilon0() * TOSCARSSR::C()) * DeltaT;
+  // Undulators, Wigglers and their applications, p42
+  Sum *= fabs(Particle.GetQ() * Particle.GetCurrent()) / (16 * TOSCARSSR::Pi2() * TOSCARSSR::Epsilon0() * TOSCARSSR::C()) * DeltaT;
 
-    // m^2 to mm^2
-    Sum /= 1e6;
+  // m^2 to mm^2
+  Sum /= 1e6;
 
-    // Weight this event
-    Sum *= Weight;
+  // Weight this event
+  Sum *= Weight;
 
-    // If you don't care about the direction of the normal vector
-    // UPDATE: Check
-    if (!Directional) {
-      if (Sum < 0) {
-        Sum *= -1;
-      }
+  // If you don't care about the direction of the normal vector
+  // UPDATE: Check
+  if (!Directional) {
+    if (Sum < 0) {
+      Sum *= -1;
     }
+  }
 
-    if (Dimension == 2) {
-      PowerDensityContainer.AddToPoint(io, Sum);
-    } else if (Dimension == 3) {
-      PowerDensityContainer.AddToPoint(io, Sum);
-    } else {
-      throw std::out_of_range("incorrect dimensions");
-    }
+  // Add to container
+  PowerDensityContainer.AddToPoint(io, Sum);
 
-
+  // Set the done bit
+  Done = true;
 
   return;
 }
@@ -1843,7 +1808,12 @@ void OSCARSSR::CalculatePowerDensityPoint (TParticleA& Particle, TSurfacePoints 
 
 
 
-void OSCARSSR::CalculatePowerDensityThreads (TParticleA& Particle, TSurfacePoints const& Surface, T3DScalarContainer& PowerDensityContainer, int const NThreads, int const Dimension, bool const Directional, double const Weight, std::string const& OutFileName)
+void OSCARSSR::CalculatePowerDensityThreads (TParticleA& Particle,
+                                             TSurfacePoints const& Surface,
+                                             T3DScalarContainer& PowerDensityContainer,
+                                             int const NThreads,
+                                             bool const Directional,
+                                             double const Weight)
 {
   // Calculates the single particle spectrum at a given observation point
   // in units of [photons / second / 0.001% BW / mm^2]
@@ -1859,22 +1829,6 @@ void OSCARSSR::CalculatePowerDensityThreads (TParticleA& Particle, TSurfacePoint
     }
   }
 
-  if (Dimension == 3) {
-    for (int i = 0; i != Surface.GetNPoints(); ++i) {
-      PowerDensityContainer.AddPoint(Surface.GetPoint(i).GetPoint(), 0);
-    }
-  } else if (Dimension == 2) {
-    for (int i = 0; i != Surface.GetNPoints(); ++i) {
-      PowerDensityContainer.AddPoint( TVector3D(Surface.GetX1(i), Surface.GetX2(i), 0), 0);
-    }
-  } else {
-    std::cerr << "wrong dimension" << std::endl;
-    throw;
-  }
-
-  // Check if NThreads is overriding the default nthreads
-  int const NThreadsToUse = NThreads > 0 ? NThreads : fNThreadsGlobal;
-
   // Calculate the trajectory from scratch
   this->CalculateTrajectory(Particle);
 
@@ -1884,19 +1838,100 @@ void OSCARSSR::CalculatePowerDensityThreads (TParticleA& Particle, TSurfacePoint
   size_t const NPoints = Surface.GetNPoints();
 
   // How many threads to start in the first for loop
-  size_t const NFirst = (size_t) NPoints > NThreadsToUse ? NThreadsToUse : NPoints;
+  size_t const NThreadsActual = (size_t) NPoints > NThreads ? NThreads : NPoints;
+
+  // Keep track of which threads are finished and started
+  bool Done[NThreadsActual];
+  bool Submitted[NThreadsActual];
+
+  // Number of points for which a thread was started so far
+  size_t NPointsStarted = 0;
 
   // Start threads and keep in vector
-  for (size_t io = 0; io != NFirst; ++io) {
-    Threads.push_back(std::thread(&OSCARSSR::CalculatePowerDensityPoint, this, std::ref(Particle), std::ref(Surface), std::ref(PowerDensityContainer), (int) io, Dimension, Directional, Weight));
+  for (size_t it = 0; it != NThreadsActual; ++it) {
+
+    // Set Done to false for this thread
+    Done[it] = false;
+
+    // Start thread for this point
+    Threads.push_back(std::thread(&OSCARSSR::CalculatePowerDensityPoint,
+                                  this,
+                                  std::ref(Particle),
+                                  std::ref(Surface),
+                                  std::ref(PowerDensityContainer),
+                                  (int) it,
+                                  std::ref(Done[it]),
+                                  Directional,
+                                  Weight));
+
+    // Incement the number of points started so far
+    ++NPointsStarted;
+
+    // Set the submitted flag for this thread to true
+    Submitted[it] = true;
   }
 
-  // Look for threads that end in order, once joined replace with a new thread if we're not yet at the end
-  for (size_t io = NFirst; io != NPoints + NFirst; ++io) {
-    size_t const it = io % NFirst;
-    Threads[it].join();
-    if (io < NPoints) {
-      Threads[it] = std::thread(&OSCARSSR::CalculatePowerDensityPoint, this, std::ref(Particle), std::ref(Surface), std::ref(PowerDensityContainer), (int) io, Dimension, Directional, Weight);
+
+  // Keep track of how many threads have completed
+  size_t NThreadsFinished = 0;
+
+  // Are all of the threads finished or not?  Continue loop until all come back.
+  // UPDATE: Could think about applying a timeout feature here
+  bool AllThreadsFinished = false;
+  while (!AllThreadsFinished) {
+
+    // So as to not use the current thread at 100%
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+    // Check all threads
+    for (size_t it = 0; it != NThreadsActual; ++it) {
+
+      // If it hasn't reported done leave it alone, otherwise see about creating another thread
+      if (!Done[it]) {
+        continue;
+      } else if (Submitted[it] && Done[it]) {
+
+        // Join the thread
+        Threads[it].join();
+
+        // Set the submitted bit to false (so it's open)
+        Submitted[it] = false;
+
+        // Increment the number of finished threads
+        ++NThreadsFinished;
+
+        // If the number of points started is less than the total number start another point
+        if (NPointsStarted < NPoints) {
+
+          // Set done bit to false for this thread
+          Done[it] = false;
+
+          // Index of the point of interest
+          int const ThisPoint = (int) NPointsStarted;
+
+          // Create a new thread for this point
+          Threads[it] = std::thread(&OSCARSSR::CalculatePowerDensityPoint,
+                                    this,
+                                    std::ref(Particle),
+                                    std::ref(Surface),
+                                    std::ref(PowerDensityContainer),
+                                    ThisPoint,
+                                    std::ref(Done[it]),
+                                    Directional,
+                                    Weight);
+
+          // Increment the number of points that have been started
+          ++NPointsStarted;
+
+          // Set the submitted bit to true
+          Submitted[it] = true;
+        }
+      }
+    }
+
+    // If the number finished is equal to the number of points total then we're done
+    if (NThreadsFinished == NPoints) {
+      AllThreadsFinished = true;
     }
   }
 
@@ -1915,17 +1950,17 @@ void OSCARSSR::CalculatePowerDensityThreads (TParticleA& Particle, TSurfacePoint
 
 
 
-void OSCARSSR::CalculatePowerDensityGPU (TParticleA& Particle, TSurfacePoints const& Surface, T3DScalarContainer& PowerDensityContainer, int const Dimension, bool const Directional, double const Weight, std::string const& OutFileName)
+void OSCARSSR::CalculatePowerDensityGPU (TParticleA& Particle,
+                                         TSurfacePoints const& Surface,
+                                         T3DScalarContainer& PowerDensityContainer,
+                                         bool const Directional,
+                                         double const Weight)
 {
   // If you compile for Cuda use the GPU in this function, else throw
 
   // Check that particle has been set yet.  If fType is "" it has not been set yet
   if (Particle.GetType() == "") {
     throw std::out_of_range("no particle defined");
-  }
-
-  for (int i = 0; i != Surface.GetNPoints(); ++i) {
-    PowerDensityContainer.AddPoint(Surface.GetPoint(i).GetPoint(), 0);
   }
 
   // Calculate the trajectory from scratch
@@ -1937,35 +1972,10 @@ void OSCARSSR::CalculatePowerDensityGPU (TParticleA& Particle, TSurfacePoints co
     throw std::invalid_argument("You are requesting the GPU, but none were found");
   }
 
-  return OSCARSSR_Cuda_CalculatePowerDensityGPU (Particle, Surface, PowerDensityContainer, Dimension, Directional, Weight, OutFileName);
+  return OSCARSSR_Cuda_CalculatePowerDensityGPU (Particle, Surface, PowerDensityContainer, Directional, Weight);
   #else
   throw std::invalid_argument("GPU functionality not compiled into this binary distribution");
   #endif
-
-  return;
-}
-
-
-
-
-
-void OSCARSSR::CalculatePowerDensityGPU (TSurfacePoints const& Surface, T3DScalarContainer& PowerDensityContainer, int const Dimension, bool const Directional, double const Weight, std::string const& OutFileName)
-{
-  // Calculates the single particle spectrum at a given observation point
-  // in units of [photons / second / 0.001% BW / mm^2]
-  //
-  // Surface - Observation Point
-
-  // Check that particle has been set yet.  If fType is "" it has not been set yet
-  if (fParticle.GetType() == "") {
-    try {
-      this->SetNewParticle();
-    } catch (std::exception e) {
-      throw std::out_of_range("no beam defined");
-    }
-  }
-
-  this->CalculatePowerDensityGPU(fParticle, Surface, PowerDensityContainer, Dimension, Directional, Weight, OutFileName);
 
   return;
 }
@@ -2179,7 +2189,7 @@ void OSCARSSR::CalculateFluxPoint (TParticleA& Particle,
 
 
 
-void OSCARSSR::CalculateFlux1 (TParticleA& Particle, TSurfacePoints const& Surface, double const Energy_eV, T3DScalarContainer& FluxContainer, std::string const& OutFileName)
+void OSCARSSR::CalculateFlux1 (TParticleA& Particle, TSurfacePoints const& Surface, double const Energy_eV, T3DScalarContainer& FluxContainer)
 {
   // Here for historical reasons.
   //
@@ -2198,9 +2208,6 @@ void OSCARSSR::CalculateFlux1 (TParticleA& Particle, TSurfacePoints const& Surfa
 
   // UPDATE: Dimension is hard coded
   int const Dimension = 2;
-
-  // Write to a file?
-  bool const WriteToFile = OutFileName != "" ? true : false;
 
 
   // Calculate trajectory
@@ -2231,21 +2238,11 @@ void OSCARSSR::CalculateFlux1 (TParticleA& Particle, TSurfacePoints const& Surfa
   // Constant C1 (complex)
   //std::complex<double> const C1(0, C0 * Omega);
 
-  // If writing to a file, open it and set to scientific output
-  std::ofstream of;
-  if (WriteToFile) {
-    of.open(OutFileName.c_str());
-    if (!of.is_open()) {
-      throw std::ofstream::failure("cannot open output file");
-    }
-    of << std::scientific;
-  }
-
   // Loop over all surface points
   for (size_t ip = 0; ip != Surface.GetNPoints(); ++ip) {
 
     // Observation point
-    TVector3D Obs = Surface.GetPoint(ip).GetPoint();
+    TVector3D const Obs = Surface.GetPoint(ip).GetPoint();
 
     // Sum E-field
     TVector3DC SumE(0, 0, 0);
@@ -2282,35 +2279,6 @@ void OSCARSSR::CalculateFlux1 (TParticleA& Particle, TSurfacePoints const& Surfa
 
 
     double const ThisFlux = C2 * SumE.Dot( SumE.CC() ).real();
-
-
-    // If you don't care about the direction of the normal vector
-    //if (!Directional) {
-    //  if (Sum < 0) {
-    //    Sum *= -1;
-    //  }
-    //}
-
-    if (Dimension == 2) {
-      if (WriteToFile) {
-        of << Surface.GetX1(ip) << " " << Surface.GetX2(ip) << " " << ThisFlux << "\n";
-      } else {
-        FluxContainer.AddToPoint(ip, ThisFlux);
-      }
-    } else if (Dimension == 3) {
-      if (WriteToFile) {
-        of << Obs.GetX() << " " << Obs.GetY() << " " << Obs.GetZ() << " " << ThisFlux << "\n";
-      } else {
-        FluxContainer.AddToPoint(ip, ThisFlux);
-      }
-    } else {
-      throw std::out_of_range("incorrect dimensions");
-    }
-
-  }
-
-  if (WriteToFile) {
-    of.close();
   }
 
   return;
@@ -2330,8 +2298,7 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
                               int const NParticles,
                               int const NThreads,
                               int const GPU,
-                              int const Dimension,
-                              std::string const& OutFileName)
+                              int const Dimension)
 {
   // Check that particle has been set yet.  If fType is "" it has not been set yet
   if (fParticle.GetType() == "") {
@@ -2365,10 +2332,6 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
     throw;
   }
 
-
-  // Don't write output in individual mode
-  std::string const BlankOutFileName = "";
-
   // GPU will outrank NThreads...
   if (NParticles == 0) {
     if (UseGPU == 0) {
@@ -2382,8 +2345,7 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
                                  PropogationDirection,
                                  NThreadsToUse,
                                  Dimension,
-                                 1,
-                                 BlankOutFileName);
+                                 1);
     } else if (UseGPU == 1) {
       this->CalculateFluxGPU(fParticle,
                              Surface,
@@ -2394,8 +2356,7 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
                              HorizontalDirection,
                              PropogationDirection,
                              Dimension,
-                             1,
-                             BlankOutFileName);
+                             1);
     }
   } else {
 
@@ -2420,8 +2381,7 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
                                    PropogationDirection,
                                    NThreadsToUse,
                                    Dimension,
-                                   Weight,
-                                   BlankOutFileName);
+                                   Weight);
       } else if (UseGPU == 1) {
         this->CalculateFluxGPU(fParticle,
                                Surface,
@@ -2432,15 +2392,9 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
                                HorizontalDirection,
                                PropogationDirection,
                                Dimension,
-                               Weight,
-                               BlankOutFileName);
+                               Weight);
       }
     }
-  }
-
-
-  if (OutFileName != "") {
-    FluxContainer.WriteToFileText(OutFileName, Dimension);
   }
 
   return;
@@ -2461,8 +2415,7 @@ void OSCARSSR::CalculateFluxThreads (TParticleA& Particle,
                                      TVector3D const& PropogationDirection,
                                      int const NThreads,
                                      int const Dimension,
-                                     double const Weight,
-                                     std::string const& OutFileName)
+                                     double const Weight)
 {
   // Calculates the single particle spectrum at a given observation point
   // in units of [photons / second / 0.001% BW / mm^2]
@@ -2478,9 +2431,6 @@ void OSCARSSR::CalculateFluxThreads (TParticleA& Particle,
     }
   }
 
-  // Check if NThreads is overriding the default nthreads
-  int const NThreadsToUse = NThreads > 0 ? NThreads : fNThreadsGlobal;
-
   // Calculate the trajectory from scratch
   this->CalculateTrajectory(Particle);
 
@@ -2490,7 +2440,7 @@ void OSCARSSR::CalculateFluxThreads (TParticleA& Particle,
   size_t const NPoints = Surface.GetNPoints();
 
   // How many threads to start in the first for loop
-  size_t const NThreadsActual = (size_t) NPoints > NThreadsToUse ? NThreadsToUse : NPoints;
+  size_t const NThreadsActual = (size_t) NPoints > NThreads ? NThreads : NPoints;
 
   // Keep track of which threads are finished and started
   bool Done[NThreadsActual];
@@ -2608,6 +2558,36 @@ void OSCARSSR::CalculateFluxThreads (TParticleA& Particle,
 
 
 
+void OSCARSSR::CalculateFluxGPU (TSurfacePoints const& Surface,
+                                 double const Energy_eV,
+                                 T3DScalarContainer& FluxContainer,
+                                 std::string const& Polarization,
+                                 double const Angle,
+                                 TVector3D const& HorizontalDirection,
+                                 TVector3D const& PropogationDirection,
+                                 int const Dimension,
+                                 double const Weight)
+{
+  // If you compile for Cuda use the GPU in this function, else throw
+
+  // Check that particle has been set yet.  If fType is "" it has not been set yet
+  if (fParticle.GetType() == "") {
+    try {
+      this->SetNewParticle();
+    } catch (std::exception e) {
+      throw std::out_of_range("no beam defined");
+    }
+  }
+
+  this->CalculateFluxGPU(fParticle, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, Dimension, Weight);
+
+  return;
+}
+
+
+
+
+
 void OSCARSSR::CalculateFluxGPU (TParticleA& Particle,
                                  TSurfacePoints const& Surface,
                                  double const Energy_eV,
@@ -2617,8 +2597,7 @@ void OSCARSSR::CalculateFluxGPU (TParticleA& Particle,
                                  TVector3D const& HorizontalDirection,
                                  TVector3D const& PropogationDirection,
                                  int const Dimension,
-                                 double const Weight,
-                                 std::string const& OutFileName)
+                                 double const Weight)
 {
   // If you compile for Cuda use the GPU in this function, else throw
 
@@ -2641,49 +2620,13 @@ void OSCARSSR::CalculateFluxGPU (TParticleA& Particle,
     throw std::invalid_argument("You are requesting the GPU, but none were found");
   }
 
-  return OSCARSSR_Cuda_CalculateFluxGPU(Particle, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, Dimension, Weight, OutFileName);
+  return OSCARSSR_Cuda_CalculateFluxGPU(Particle, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, Dimension, Weight);
   #else
   throw std::invalid_argument("GPU functionality not compiled into this binary distribution");
   #endif
 
   return;
 }
-
-
-
-
-
-void OSCARSSR::CalculateFluxGPU (TSurfacePoints const& Surface,
-                                 double const Energy_eV,
-                                 T3DScalarContainer& FluxContainer,
-                                 std::string const& Polarization,
-                                 double const Angle,
-                                 TVector3D const& HorizontalDirection,
-                                 TVector3D const& PropogationDirection,
-                                 int const Dimension,
-                                 double const Weight,
-                                 std::string const& OutFileName)
-{
-  // Calculates the single particle spectrum at a given observation point
-  // in units of [photons / second / 0.001% BW / mm^2]
-  //
-  // Surface - Observation Point
-
-  // Check that particle has been set yet.  If fType is "" it has not been set yet
-  if (fParticle.GetType() == "") {
-    try {
-      this->SetNewParticle();
-    } catch (std::exception e) {
-      throw std::out_of_range("no beam defined");
-    }
-  }
-
-  this->CalculateFluxGPU(fParticle, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, Dimension, Weight, OutFileName);
-
-  return;
-}
-
-
 
 
 

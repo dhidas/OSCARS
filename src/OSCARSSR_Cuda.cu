@@ -702,8 +702,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (TParticleA& Particle,
                                                 TVector3D const& HorizontalDirection,
                                                 TVector3D const& PropogationDirection,
                                                 int const Dimension,
-                                                double const Weight,
-                                                std::string const& OutFileName)
+                                                double const Weight)
 {
   // Do the setup for and call the GPU calculation of flux.  Your limitation here is only GPU memory.
 
@@ -1442,7 +1441,7 @@ __global__ void OSCARSSR_Cuda_PowerDensityGPU (double *x, double *y, double *z, 
 
 
 
-extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (TParticleA& Particle, TSurfacePoints const& Surface, T3DScalarContainer& PowerDensityContainer, int const Dimension, bool const Directional, double const Weight, std::string const& OutFileName)
+extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (TParticleA& Particle, TSurfacePoints const& Surface, T3DScalarContainer& PowerDensityContainer, int const Dimension, bool const Directional, double const Weight)
 {
 
   int ngpu = 0;

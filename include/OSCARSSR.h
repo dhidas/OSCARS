@@ -164,13 +164,41 @@ class OSCARSSR
     void ClearPowerDensity ();
 
     // Power Density calculation
-    void CalculatePowerDensity (TParticleA&, TSurfacePoints const&, int const Dimension = 3, bool const Directional = true, double const Weight = 1, std::string const& OutFileName = "");
-    void CalculatePowerDensity (TParticleA&, TSurfacePoints const&, T3DScalarContainer&, int const Dimension = 3, bool const Directional = true, double const Weight = 1, std::string const& OutFileName = "");
-    void CalculatePowerDensity (TSurfacePoints const&, T3DScalarContainer&, int const Dimension = 3, bool const Directional = true, int const NParticles = 0, std::string const& OutFileName = "", int const NThreads = 0, int const GPU = 0);
-    void CalculatePowerDensityGPU (TParticleA&, TSurfacePoints const&, T3DScalarContainer&, int const Dimension = 3, bool const Directional = true, double const Weight = 1, std::string const& OutFileName = "");
-    void CalculatePowerDensityGPU (TSurfacePoints const&, T3DScalarContainer&, int const Dimension = 3, bool const Directional = true, double const Weight = 1, std::string const& OutFileName = "");
-    void CalculatePowerDensityThreads (TParticleA&, TSurfacePoints const&, T3DScalarContainer&, int const, int const Dimension = 3, bool const Directional = true, double const Weight = 1, std::string const& OutFileName = "");
-    void CalculatePowerDensityPoint (TParticleA&, TSurfacePoints const&, T3DScalarContainer&, size_t const, int const Dimension = 3, bool const Directional = true, double const Weight = 1);
+    void CalculatePowerDensity (TParticleA& Particle,
+                                TSurfacePoints const& Surface,
+                                T3DScalarContainer& PowerDensityContainer,
+                                bool const Directional,
+                                double const Weight);
+
+    void CalculatePowerDensity (TSurfacePoints const& Surface,
+                                T3DScalarContainer& PowerDensityContainer,
+                                int const Dimension,
+                                bool const Directional,
+                                int const NParticles,
+                                int const NThreads,
+                                int const GPU);
+
+    void CalculatePowerDensityPoint (TParticleA& Particle,
+                                     TSurfacePoints const& Surface,
+                                     T3DScalarContainer& PowerDensityContainer,
+                                     size_t const io,
+                                     bool& Done,
+                                     bool const Directional,
+                                     double const Weight);
+
+    void CalculatePowerDensityThreads (TParticleA& Particle,
+                                       TSurfacePoints const& Surface,
+                                       T3DScalarContainer& PowerDensityContainer,
+                                       int const NThreads,
+                                       bool const Directional,
+                                       double const Weight);
+
+    void CalculatePowerDensityGPU (TParticleA& Particle,
+                                   TSurfacePoints const& Surface,
+                                   T3DScalarContainer& PowerDensityContainer,
+                                   bool const Directional,
+                                   double const Weight);
+
     double CalculateTotalPower ();
     double CalculateTotalPower (TParticleA&);
 
@@ -192,8 +220,7 @@ class OSCARSSR
     void CalculateFlux1 (TParticleA& Particle,
                          TSurfacePoints const& Surface,
                          double const Energy_eV,
-                         T3DScalarContainer& FluxContainer,
-                         std::string const& OutFileName = "");
+                         T3DScalarContainer& FluxContainer);
 
     void CalculateFlux (TSurfacePoints const& Surface,
                         double const Energy_eV,
@@ -205,8 +232,7 @@ class OSCARSSR
                         int const NParticles = 0,
                         int const NThreads = 0,
                         int const GPU = 0,
-                        int const Dimension = 3,
-                        std::string const& OutFileName = "");
+                        int const Dimension = 3);
 
     void CalculateFluxThreads (TParticleA& Particle,
                                TSurfacePoints const& Surface,
@@ -218,8 +244,7 @@ class OSCARSSR
                                TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
                                int const NThreads = 0,
                                int const Dimension = 3,
-                               double const Weight = 1,
-                               std::string const& OutFileName = "");
+                               double const Weight = 1);
 
     void CalculateFluxGPU (TParticleA& Particle,
                            TSurfacePoints const& Surface,
@@ -230,19 +255,17 @@ class OSCARSSR
                            TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
                            TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
                            int const Dimension = 3,
-                           double const Weight = 1,
-                           std::string const& OutFileName = "");
+                           double const Weight = 1);
 
-    void CalculateFluxGPU (TSurfacePoints const&,
-                           double const,
-                           T3DScalarContainer&,
+    void CalculateFluxGPU (TSurfacePoints const& Surface,
+                           double const Energy_eV,
+                           T3DScalarContainer& FluxContainer,
                            std::string const& Polarization = "all",
                            double const Angle = 0,
                            TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
                            TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
                            int const Dimension = 3,
-                           double const Weight = 1,
-                           std::string const& OutFileName = "");
+                           double const Weight = 1);
 
     // Electric Field Calculations
     void CalculateElectricFieldTimeDomain (TVector3D const& Observer, T3DScalarContainer&);

@@ -2699,7 +2699,7 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
   bool const Directional = NormalDirection == 0 ? false : true;
 
   try {
-    self->obj->CalculatePowerDensity(Surface, PowerDensityContainer, Dim, Directional, NParticles, OutFileName, NThreads, GPU);
+    self->obj->CalculatePowerDensity(Surface, PowerDensityContainer, Dim, Directional, NParticles, NThreads, GPU);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -2716,6 +2716,7 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
   // Create a python list
   PyObject *PList = PyList_New(0);
 
+  // UPDATE: URGENT: PD output ofile, bofile
   size_t const NPoints = PowerDensityContainer.GetNPoints();
 
   for (size_t i = 0; i != NPoints; ++i) {
@@ -2928,7 +2929,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
   // Actually calculate the spectrum
   bool const Directional = NormalDirection == 0 ? false : true;
   try {
-    self->obj->CalculatePowerDensity(Surface, PowerDensityContainer, Dim, Directional, NParticles, OutFileName, NThreads, GPU);
+    self->obj->CalculatePowerDensity(Surface, PowerDensityContainer, Dim, Directional, NParticles, NThreads, GPU);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -2946,6 +2947,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
   // Create a python list
   PyObject *PList = PyList_New(0);
 
+  // UPDATE: URGENT: PD output ofile, bofile
   size_t const NPoints = PowerDensityContainer.GetNPoints();
 
   for (size_t i = 0; i != NPoints; ++i) {
@@ -2998,21 +3000,23 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
   int         NParticles = 0;
   int         GPU = -1;
   int         NThreads = 0;
-  char const* OutFileName = "";
+  char const* OutFileNameText = "";
+  char const* OutFileNameBinary = "";
 
 
-  static char *kwlist[] = {"energy_eV", "points", "normal", "rotations", "translation", "nparticles", "nthreads", "gpu", "ofile", NULL};
+  static char *kwlist[] = {"energy_eV", "points", "normal", "rotations", "translation", "nparticles", "nthreads", "gpu", "ofile", "bofile", NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dO|iOOiiis", kwlist,
-                                                              &Energy_eV,
-                                                              &List_Points,
-                                                              &NormalDirection,
-                                                              &List_Rotations,
-                                                              &List_Translation,
-                                                              &NParticles,
-                                                              &NThreads,
-                                                              &GPU,
-                                                              &OutFileName)) {
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dO|iOOiiiss", kwlist,
+                                                                &Energy_eV,
+                                                                &List_Points,
+                                                                &NormalDirection,
+                                                                &List_Rotations,
+                                                                &List_Translation,
+                                                                &NParticles,
+                                                                &NThreads,
+                                                                &GPU,
+                                                                &OutFileNameText,
+                                                                &OutFileNameBinary)) {
     return NULL;
   }
 
@@ -3121,7 +3125,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
   try {
     throw;
     // UPDATE: Must fix single flux to accept polarizaton and angle
-    self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, "all", 0, TVector3D(1, 0, 0), TVector3D(0, 1, 0), NParticles, NThreads, GPU, Dim, OutFileName);
+    self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, "all", 0, TVector3D(1, 0, 0), TVector3D(0, 1, 0), NParticles, NThreads, GPU, Dim);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -3132,6 +3136,19 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
   }
+
+
+  // Write the output file if requested
+  // Text output
+  if (std::string(OutFileNameText) != "") {
+    FluxContainer.WriteToFileText(OutFileNameText, Dim);
+  }
+
+  // Binary output
+  if (std::string(OutFileNameBinary) != "") {
+    FluxContainer.WriteToFileBinary(OutFileNameBinary, Dim);
+  }
+
 
   // Build the output list of: [[[x, y, z], Flux], [...]]
   // Create a python list
@@ -3191,12 +3208,13 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   int         NParticles = 0;
   int         NThreads = 0;
   int         GPU = -1;
-  char const* OutFileName = "";
+  char const* OutFileNameText = "";
+  char const* OutFileNameBinary = "";
 
 
-  static char *kwlist[] = {"energy_eV", "npoints", "plane", "normal", "dim", "width", "rotations", "translation", "x0x1x2", "polarization", "angle", "horizontal_direction", "propogation_direction", "nparticles", "nthreads", "gpu", "ofile", NULL};
+  static char *kwlist[] = {"energy_eV", "npoints", "plane", "normal", "dim", "width", "rotations", "translation", "x0x1x2", "polarization", "angle", "horizontal_direction", "propogation_direction", "nparticles", "nthreads", "gpu", "ofile", "bofile", NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dO|siiOOOOsdOOiiis", kwlist,
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dO|siiOOOOsdOOiiiss", kwlist,
                                                                    &Energy_eV,
                                                                    &List_NPoints,
                                                                    &SurfacePlane,
@@ -3213,7 +3231,8 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
                                                                    &NParticles,
                                                                    &NThreads,
                                                                    &GPU,
-                                                                   &OutFileName)) {
+                                                                   &OutFileNameText,
+                                                                   &OutFileNameBinary)) {
     return NULL;
   }
 
@@ -3393,7 +3412,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   //bool const Directional = NormalDirection == 0 ? false : true;
 
   try {
-    self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NParticles, NThreads, GPU, Dim, OutFileName);
+    self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NParticles, NThreads, GPU, Dim);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -3404,6 +3423,18 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
   }
+
+  // Write the output file if requested
+  // Text output
+  if (std::string(OutFileNameText) != "") {
+    FluxContainer.WriteToFileText(OutFileNameText, Dim);
+  }
+
+  // Binary output
+  if (std::string(OutFileNameBinary) != "") {
+    FluxContainer.WriteToFileBinary(OutFileNameBinary, Dim);
+  }
+
 
 
 

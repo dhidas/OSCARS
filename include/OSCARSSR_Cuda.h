@@ -33,8 +33,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (TParticleA& Particle,
                                                 TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
                                                 TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
                                                 int const Dimension = 3,
-                                                double const Weight = 1,
-                                                std::string const& OutFileName = "");
+                                                double const Weight = 1);
 
 extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (TParticleA& Particle,
                                                     TVector3D const& ObservationPoint,
@@ -45,7 +44,7 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (TParticleA& Particle,
                                                     TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
                                                     double const Weight = 1);
 
-extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (TParticleA& Particle, TSurfacePoints const& Surface, T3DScalarContainer& PowerDensityContainer, int const Dimension, bool const Directional, double const Weight, std::string const& OutFileName = "");
+extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (TParticleA& Particle, TSurfacePoints const& Surface, T3DScalarContainer& PowerDensityContainer, int const Dimension, bool const Directional, double const Weight);
 
 
 
