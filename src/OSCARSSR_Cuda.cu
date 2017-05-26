@@ -1441,7 +1441,11 @@ __global__ void OSCARSSR_Cuda_PowerDensityGPU (double *x, double *y, double *z, 
 
 
 
-extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (TParticleA& Particle, TSurfacePoints const& Surface, T3DScalarContainer& PowerDensityContainer, int const Dimension, bool const Directional, double const Weight)
+extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (TParticleA& Particle,
+                                                        TSurfacePoints const& Surface,
+                                                        T3DScalarContainer& PowerDensityContainer,
+                                                        bool const Directional,
+                                                        double const Weight)
 {
 
   int ngpu = 0;

@@ -44,7 +44,11 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (TParticleA& Particle,
                                                     TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
                                                     double const Weight = 1);
 
-extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (TParticleA& Particle, TSurfacePoints const& Surface, T3DScalarContainer& PowerDensityContainer, int const Dimension, bool const Directional, double const Weight);
+extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (TParticleA& Particle,
+                                                        TSurfacePoints const& Surface,
+                                                        T3DScalarContainer& PowerDensityContainer,
+                                                        bool const Directional,
+                                                        double const Weight);
 
 
 
