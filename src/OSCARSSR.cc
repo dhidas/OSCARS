@@ -952,114 +952,32 @@ void OSCARSSR::CalculateSpectrum (TParticleA& Particle,
 
   // Check that particle has been set yet.  If fType is "" it has not been set yet
   if (Particle.GetType() == "") {
-    throw std::out_of_range("no particle defined");
+    try {
+      this->SetNewParticle();
+    } catch (std::exception e) {
+      throw std::out_of_range("no beam defined");
+    }
   }
 
-  // Calculate trajectory
+  // Calculate the trajectory from scratch
   this->CalculateTrajectory(Particle);
 
-  // Grab the Trajectory
-  TParticleTrajectoryPoints& T = Particle.GetTrajectory();
+  // Extra inpts for calculation
+  bool Done = false;
+  size_t const iFirst = 0;
+  size_t const iLast = Spectrum.GetNPoints() - 1;
 
-
-  // Time step.  Expecting it to be constant throughout calculation
-  double const DeltaT = T.GetDeltaT();
-
-
-  // Number of points in the trajectory
-  size_t const NTPoints = T.GetNPoints();
-
-  if (NTPoints < 1) {
-    throw std::length_error("no points in trajectory.  Is particle or beam defined?");
-  }
-
-  // Number of points in the spectrum container
-  size_t const NEPoints = Spectrum.GetNPoints();
-
-  // Constant C0 for calculation
-  double const C0 = Particle.GetQ() / (TOSCARSSR::FourPi() * TOSCARSSR::C() * TOSCARSSR::Epsilon0() * TOSCARSSR::Sqrt2Pi());
-
-  // Constant for flux calculation at the end
-  double const C2 = TOSCARSSR::FourPi() * Particle.GetCurrent() / (TOSCARSSR::H() * fabs(Particle.GetQ()) * TOSCARSSR::Mu0() * TOSCARSSR::C()) * 1e-6 * 0.001;
-
-  // Imaginary "i" and complxe 1+0i
-  std::complex<double> const I(0, 1);
-  std::complex<double> const One(1, 0);
-
-  // Photon vertical direction and positive and negative helicity
-  TVector3D const VerticalDirection = PropogationDirection.Cross(HorizontalDirection).UnitVector();
-  TVector3DC const Positive = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) + VerticalDirection * I );
-  TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * I );
-
-
-  // Loop over all points in the spectrum container
-  for (size_t i = 0; i != NEPoints; ++i) {
-
-    // Angular frequency
-    double const Omega = Spectrum.GetAngularFrequency(i);
-
-    // Constant for field calculation
-    std::complex<double> ICoverOmega = I * TOSCARSSR::C() / Omega;
-
-    // Constant for calculation
-    std::complex<double> const C1(0, C0 * Omega);
-
-    // Electric field summation in frequency space
-    TVector3DC SumE(0, 0, 0);
-
-    // Loop over all points in trajectory
-    for (int iT = 0; iT != NTPoints; ++iT) {
-
-      // Particle position
-      TVector3D const& X = T.GetX(iT);
-
-      // Particle "Beta" (velocity over speed of light)
-      TVector3D const& B = T.GetB(iT);
-
-      // Vector pointing from particle to observer
-      TVector3D const R = ObservationPoint - X;
-
-      // Unit vector pointing from particl to observer
-      TVector3D const N = R.UnitVector();
-
-      // Distance from particle to observer
-      double const D = R.Mag();
-
-      // Exponent for fourier transformed field
-      std::complex<double> Exponent(0, Omega * (DeltaT * iT + D / TOSCARSSR::C()));
-
-      // Sum in fourier transformed field (integral)
-      SumE += (TVector3DC(B) - (N * ( One + (ICoverOmega / (D))))) / D * std::exp(Exponent);
-    }
-
-    // Multiply field by Constant C1 and time step
-    SumE *= C1 * DeltaT;
-
-    // If a polarization is specified, calculate it
-    if (Polarization == "all") {
-      // Do nothing, it is already ALL
-    } else if (Polarization == "linear-horizontal") {
-      SumE = SumE.Dot(HorizontalDirection) * HorizontalDirection;
-    } else if (Polarization == "linear-vertical") {
-      SumE = SumE.Dot(VerticalDirection) * VerticalDirection;
-    } else if (Polarization == "linear") {
-      TVector3D PolarizationAngle = HorizontalDirection;
-      PolarizationAngle.RotateSelf(Angle, PropogationDirection);
-      SumE = SumE.Dot(PolarizationAngle) * PolarizationAngle;
-    } else if (Polarization == "circular-left") {
-      SumE = SumE.Dot(Positive.CC()) * Positive;
-    } else if (Polarization == "circular-right") {
-      SumE = SumE.Dot(Negative.CC()) * Negative;
-    } else {
-      // Throw invalid argument if polarization is not recognized
-      throw std::invalid_argument("Polarization requested not recognized");
-    }
-
-    // Set the flux for this frequency / energy point
-    Spectrum.AddToFlux(i, C2 *  SumE.Dot( SumE.CC() ).real() * Weight);
-  }
-
-
+  this->CalculateSpectrumPoints(Particle,
+                                ObservationPoint,
+                                Spectrum,
+                                iFirst,
+                                iLast,
+                                Done,
+                                Polarization,
+                                Angle,
+                                HorizontalDirection,
+                                PropogationDirection,
+                                Weight);
 
   return;
 }
@@ -1182,16 +1100,18 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
 
 
 
-void OSCARSSR::CalculateSpectrumPoint (TParticleA& Particle,
-                                       TVector3D const& ObservationPoint,
-                                       TSpectrumContainer& Spectrum,
-                                       int const i,
-                                       bool& Done,
-                                       std::string const& Polarization,
-                                       double const Angle,
-                                       TVector3D const& HorizontalDirection,
-                                       TVector3D const& PropogationDirection,
-                                       double const Weight)
+
+void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
+                                        TVector3D const& ObservationPoint,
+                                        TSpectrumContainer& Spectrum,
+                                        size_t const iFirst,
+                                        size_t const iLast,
+                                        bool& Done,
+                                        std::string const& Polarization,
+                                        double const Angle,
+                                        TVector3D const& HorizontalDirection,
+                                        TVector3D const& PropogationDirection,
+                                        double const Weight)
 {
   // Calculates the single particle spectrum at a given observation point
   // in units of [photons / second / 0.001% BW / mm^2]
@@ -1209,10 +1129,8 @@ void OSCARSSR::CalculateSpectrumPoint (TParticleA& Particle,
   // Grab the Trajectory
   TParticleTrajectoryPoints& T = Particle.GetTrajectory();
 
-
   // Time step.  Expecting it to be constant throughout calculation
   double const DeltaT = T.GetDeltaT();
-
 
   // Number of points in the trajectory
   size_t const NTPoints = T.GetNPoints();
@@ -1221,6 +1139,10 @@ void OSCARSSR::CalculateSpectrumPoint (TParticleA& Particle,
     throw std::length_error("no points in trajectory.  Is particle or beam defined?");
   }
 
+  // Check input spectrum range numbers
+  if (iFirst < 0 || iLast < iFirst || iLast >= Spectrum.GetNPoints()) {
+    throw std::out_of_range("spectrum range is incorrect.  Please report this error.");
+  }
 
   // Constant C0 for calculation
   double const C0 = Particle.GetQ() / (TOSCARSSR::FourPi() * TOSCARSSR::C() * TOSCARSSR::Epsilon0() * TOSCARSSR::Sqrt2Pi());
@@ -1238,75 +1160,79 @@ void OSCARSSR::CalculateSpectrumPoint (TParticleA& Particle,
   TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * I );
 
 
-  // Angular frequency
-  double const Omega = Spectrum.GetAngularFrequency(i);
+  // Loop over all points in the spectrum container
+  for (size_t i = iFirst; i <= iLast; ++i) {
 
-  // Constant for field calculation
-  std::complex<double> ICoverOmega = I * TOSCARSSR::C() / Omega;
+    // Angular frequency
+    double const Omega = Spectrum.GetAngularFrequency(i);
 
-  // Constant for calculation
-  std::complex<double> const C1(0, C0 * Omega);
+    // Constant for field calculation
+    std::complex<double> ICoverOmega = I * TOSCARSSR::C() / Omega;
 
-  // Electric field summation in frequency space
-  TVector3DC SumE(0, 0, 0);
+    // Constant for calculation
+    std::complex<double> const C1(0, C0 * Omega);
 
-  // Loop over all points in trajectory
-  for (int iT = 0; iT != NTPoints; ++iT) {
+    // Electric field summation in frequency space
+    TVector3DC SumE(0, 0, 0);
 
-    // Particle position
-    TVector3D const& X = T.GetX(iT);
+    // Loop over all points in trajectory
+    for (int iT = 0; iT != NTPoints; ++iT) {
 
-    // Particle "Beta" (velocity over speed of light)
-    TVector3D const& B = T.GetB(iT);
+      // Particle position
+      TVector3D const& X = T.GetX(iT);
 
-    // Vector pointing from particle to observer
-    TVector3D const R = ObservationPoint - X;
+      // Particle "Beta" (velocity over speed of light)
+      TVector3D const& B = T.GetB(iT);
 
-    // Unit vector pointing from particl to observer
-    TVector3D const N = R.UnitVector();
+      // Vector pointing from particle to observer
+      TVector3D const R = ObservationPoint - X;
 
-    // Distance from particle to observer
-    double const D = R.Mag();
+      // Unit vector pointing from particl to observer
+      TVector3D const N = R.UnitVector();
 
-    // Exponent for fourier transformed field
-    std::complex<double> Exponent(0, Omega * (DeltaT * iT + D / TOSCARSSR::C()));
+      // Distance from particle to observer
+      double const D = R.Mag();
 
-    // Sum in fourier transformed field (integral)
-    SumE += (TVector3DC(B) - (N * ( One + (ICoverOmega / (D))))) / D * std::exp(Exponent);
+      // Exponent for fourier transformed field
+      std::complex<double> Exponent(0, Omega * (DeltaT * iT + D / TOSCARSSR::C()));
+
+      // Sum in fourier transformed field (integral)
+      SumE += (TVector3DC(B) - (N * ( One + (ICoverOmega / (D))))) / D * std::exp(Exponent);
+    }
+
+    // Multiply field by Constant C1 and time step
+    SumE *= C1 * DeltaT;
+
+    // If a polarization is specified, calculate it
+    if (Polarization == "all") {
+      // Do nothing, it is already ALL
+    } else if (Polarization == "linear-horizontal") {
+      SumE = SumE.Dot(HorizontalDirection) * HorizontalDirection;
+    } else if (Polarization == "linear-vertical") {
+      SumE = SumE.Dot(VerticalDirection) * VerticalDirection;
+    } else if (Polarization == "linear") {
+      TVector3D PolarizationAngle = HorizontalDirection;
+      PolarizationAngle.RotateSelf(Angle, PropogationDirection);
+      SumE = SumE.Dot(PolarizationAngle) * PolarizationAngle;
+    } else if (Polarization == "circular-left") {
+      SumE = SumE.Dot(Positive.CC()) * Positive;
+    } else if (Polarization == "circular-right") {
+      SumE = SumE.Dot(Negative.CC()) * Negative;
+    } else {
+      // Throw invalid argument if polarization is not recognized
+      throw std::invalid_argument("Polarization requested not recognized");
+    }
+
+    // Set the flux for this frequency / energy point
+    Spectrum.AddToFlux(i, C2 *  SumE.Dot( SumE.CC() ).real() * Weight);
   }
 
-  // Multiply field by Constant C1 and time step
-  SumE *= C1 * DeltaT;
 
-  // If a polarization is specified, calculate it
-  if (Polarization == "all") {
-    // Do nothing, it is already ALL
-  } else if (Polarization == "linear-horizontal") {
-    SumE = SumE.Dot(HorizontalDirection) * HorizontalDirection;
-  } else if (Polarization == "linear-vertical") {
-    SumE = SumE.Dot(VerticalDirection) * VerticalDirection;
-  } else if (Polarization == "linear") {
-    TVector3D PolarizationAngle = HorizontalDirection;
-    PolarizationAngle.RotateSelf(Angle, PropogationDirection);
-    SumE = SumE.Dot(PolarizationAngle) * PolarizationAngle;
-  } else if (Polarization == "circular-left") {
-    SumE = SumE.Dot(Positive.CC()) * Positive;
-  } else if (Polarization == "circular-right") {
-    SumE = SumE.Dot(Negative.CC()) * Negative;
-  } else {
-    // Throw invalid argument if polarization is not recognized
-    throw std::invalid_argument("Polarization requested not recognized");
-  }
-
-  // Set the flux for this frequency / energy point
-  Spectrum.AddToFlux(i, C2 *  SumE.Dot( SumE.CC() ).real() * Weight);
-
-  // Noify that this calculation is finished
+  // Set done to true
   Done = true;
 
   return;
 }
-
 
 
 
@@ -1335,9 +1261,6 @@ void OSCARSSR::CalculateSpectrumThreads (TParticleA& Particle,
     }
   }
 
-  // Calculate trajectory before we fanout into threads
-  this->CalculateTrajectory(Particle);
-
   // Calculate the trajectory from scratch
   this->CalculateTrajectory(Particle);
 
@@ -1350,26 +1273,33 @@ void OSCARSSR::CalculateSpectrumThreads (TParticleA& Particle,
   // How many threads to start in the first for loop
   size_t const NThreadsActual = NPoints > NThreads ? NThreads : NPoints;
 
-  // Keep track of which threads are finished and started
+  // Keep track of which threads are finished and re-joined
   bool Done[NThreadsActual];
-  bool Submitted[NThreadsActual];
+  bool Joined[NThreadsActual];
 
-  // Number of points for which a thread was started so far
-  size_t NPointsStarted = 0;
+  // Number per thread plus remainder to be added to first threads
+  size_t const NPerThread = NPoints / NThreadsActual;
+  size_t const NRemainder = NPoints % NThreadsActual;
 
   // Start threads and keep in vector
   for (size_t io = 0; io != NThreadsActual; ++io) {
 
-    // Set Done to false for this thread
+    // First and last points for each thread
+    size_t const iFirst = io < NRemainder ? NPerThread * io + io: NPerThread * io + NRemainder;
+    size_t const iLast  = io < NRemainder ? iFirst + NPerThread : iFirst + NPerThread - 1;
+
+    // Set Done and joined to false for this thread
     Done[io] = false;
+    Joined[io] = false;
 
     // Start thread for this point
-    Threads.push_back(std::thread(&OSCARSSR::CalculateSpectrumPoint,
+    Threads.push_back(std::thread(&OSCARSSR::CalculateSpectrumPoints,
                                   this,
                                   std::ref(Particle),
                                   std::ref(Obs),
                                   std::ref(Spectrum),
-                                  (int) io,
+                                  iFirst,
+                                  iLast,
                                   std::ref(Done[io]),
                                   std::ref(Polarization),
                                   Angle,
@@ -1377,20 +1307,13 @@ void OSCARSSR::CalculateSpectrumThreads (TParticleA& Particle,
                                   std::ref(PropogationDirection),
                                   Weight));
 
-    // Incement the number of points started so far
-    ++NPointsStarted;
-
-    // Set the submitted flag for this thread to true
-    Submitted[io] = true;
   }
 
-  // Keep track of how many threads have completed
-  size_t NThreadsFinished = 0;
-
   // Are all of the threads finished or not?  Continue loop until all come back.
-  // UPDATE: Could think about applying a timeout feature here
   bool AllThreadsFinished = false;
+  size_t NThreadsFinished = 0;
   while (!AllThreadsFinished) {
+
 
     // So as to not use the current thread at 100%
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -1398,57 +1321,19 @@ void OSCARSSR::CalculateSpectrumThreads (TParticleA& Particle,
     // Check all threads
     for (size_t it = 0; it != NThreadsActual; ++it) {
 
-      // If it hasn't reported done leave it alone, otherwise see about creating another thread
-      if (!Done[it]) {
-        continue;
-      } else if (Submitted[it] && Done[it]) {
-
-        // Join the thread
+      if (Done[it] && !Joined[it]) {
         Threads[it].join();
-
-        // Set the submitted bit to false (so it's open)
-        Submitted[it] = false;
-
-        // Increment the number of finished threads
+        Joined[it] = true;
         ++NThreadsFinished;
-
-        // If the number of points started is less than the total number start another point
-        if (NPointsStarted < NPoints) {
-
-          // Set done bit to false for this thread
-          Done[it] = false;
-
-          // Index of the point of interest
-          int const ThisPoint = (int) NPointsStarted;
-
-          // Create a new thread for this point
-          Threads[it] = std::thread(&OSCARSSR::CalculateSpectrumPoint,
-                                    this,
-                                    std::ref(Particle),
-                                    std::ref(Obs),
-                                    std::ref(Spectrum),
-                                    ThisPoint,
-                                    std::ref(Done[it]),
-                                    std::ref(Polarization),
-                                    Angle,
-                                    std::ref(HorizontalDirection),
-                                    std::ref(PropogationDirection),
-                                    Weight);
-
-          // Increment the number of points that have been started
-          ++NPointsStarted;
-
-          // Set the submitted bit to true
-          Submitted[it] = true;
-        }
       }
     }
 
     // If the number finished is equal to the number of points total then we're done
-    if (NThreadsFinished == NPoints) {
+    if (NThreadsFinished == NThreadsActual) {
       AllThreadsFinished = true;
     }
   }
+
 
   // Clear all threads
   Threads.clear();

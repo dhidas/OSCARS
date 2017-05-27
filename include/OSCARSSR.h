@@ -138,16 +138,17 @@ class OSCARSSR
                             int const NThreads = 0,
                             int const GPU = 0);
 
-    void CalculateSpectrumPoint (TParticleA& Particle,
-                                 TVector3D const& ObservationPoint,
-                                 TSpectrumContainer& Spectrum,
-                                 int const i,
-                                 bool& Done,
-                                 std::string const& Polarization,
-                                 double const Angle,
-                                 TVector3D const& HorizontalDirection,
-                                 TVector3D const& PropogationDirection,
-                                 double const Weight);
+    void CalculateSpectrumPoints (TParticleA& Particle,
+                                  TVector3D const& ObservationPoint,
+                                  TSpectrumContainer& Spectrum,
+                                  size_t const iFirst,
+                                  size_t const iLast,
+                                  bool& Done,
+                                  std::string const& Polarization,
+                                  double const Angle,
+                                  TVector3D const& HorizontalDirection,
+                                  TVector3D const& PropogationDirection,
+                                  double const Weight);
 
     void CalculateSpectrumThreads (TParticleA& Particle,
                                    TVector3D const& Obs,
