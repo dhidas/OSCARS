@@ -950,15 +950,6 @@ void OSCARSSR::CalculateSpectrum (TParticleA& Particle,
   // ObservationPoint - Observation Point
   // Spectrum - Spectrum container
 
-  // Check that particle has been set yet.  If fType is "" it has not been set yet
-  if (Particle.GetType() == "") {
-    try {
-      this->SetNewParticle();
-    } catch (std::exception e) {
-      throw std::out_of_range("no beam defined");
-    }
-  }
-
   // Calculate the trajectory from scratch
   this->CalculateTrajectory(Particle);
 
@@ -996,6 +987,9 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
                                   int const NThreads,
                                   int const GPU)
 {
+  // Calculate the spectrum at an observaton point.
+  // THIS is the ENTRY POINT typically
+
   // Check that particle has been set yet.  If fType is "" it has not been set yet
   if (fParticle.GetType() == "") {
     try {
@@ -1253,15 +1247,6 @@ void OSCARSSR::CalculateSpectrumThreads (TParticleA& Particle,
   //
   // Surface - Observation Point
 
-  // Check that particle has been set yet.  If fType is "" it has not been set yet
-  if (Particle.GetType() == "") {
-    try {
-      this->SetNewParticle();
-    } catch (std::exception e) {
-      throw std::out_of_range("no beam defined");
-    }
-  }
-
   // Calculate the trajectory from scratch
   this->CalculateTrajectory(Particle);
 
@@ -1356,14 +1341,6 @@ void OSCARSSR::CalculateSpectrumGPU (TParticleA& Particle,
                                      TVector3D const& PropogationDirection,
                                      double const Weight)
 {
-  // Check that particle has been set yet.  If fType is "" it has not been set yet
-  if (Particle.GetType() == "") {
-    try {
-      this->SetNewParticle();
-    } catch (std::exception e) {
-      throw std::out_of_range("no beam defined");
-    }
-  }
 
   // Calculate trajectory
   this->CalculateTrajectory(Particle);
@@ -1555,16 +1532,6 @@ void OSCARSSR::CalculatePowerDensity (TParticleA& Particle,
   // Particle - Particle, contains trajectory (or if not, calculate it)
   // Surface - Observation Point
 
-  // Check that particle has been set yet.  If fType is "" it has not been set yet
-  // UPDATE: Re-evaluate all of these checks
-  if (Particle.GetType() == "") {
-    try {
-      this->SetNewParticle();
-    } catch (std::exception e) {
-      throw std::out_of_range("no beam defined");
-    }
-  }
-
   // Calculate trajectory
   this->CalculateTrajectory(Particle);
 
@@ -1597,11 +1564,10 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface,
                                       int const NThreads,
                                       int const GPU)
 {
-  // Calculates the power density
-  // in units of [W / mm^2]
+  // Calculates the power density in units of [W / mm^2]
+  // THIS is the ENTRY POINT typically
   //
   // UPDATE: inputs
-
 
   // How many threads to use.
   int const NThreadsToUse = NThreads < 1 ? fNThreadsGlobal : NThreads;
@@ -1613,7 +1579,6 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface,
   // Should we use the GPU or not?
   bool const UseGPU = GPU == 0 ? false : this->GetUseGPUGlobal() && (this->CheckGPU() > 0) ? true : false;
 
-
   // Check that particle has been set yet.  If fType is "" it has not been set yet
   if (fParticle.GetType() == "") {
     try {
@@ -1623,6 +1588,7 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface,
     }
   }
 
+  // Set the output flux container and with correct dimensions
   if (Dimension == 3) {
     for (int i = 0; i != Surface.GetNPoints(); ++i) {
       PowerDensityContainer.AddPoint(Surface.GetPoint(i).GetPoint(), 0);
@@ -1789,19 +1755,10 @@ void OSCARSSR::CalculatePowerDensityThreads (TParticleA& Particle,
                                              bool const Directional,
                                              double const Weight)
 {
-  // Calculates the single particle spectrum at a given observation point
-  // in units of [photons / second / 0.001% BW / mm^2]
+  // Calculates the single particle power density on surface
+  // in units of [watts / second / mm^2]
   //
-  // Surface - Observation Point
-
-  // Check that particle has been set yet.  If fType is "" it has not been set yet
-  if (Particle.GetType() == "") {
-    try {
-      this->SetNewParticle();
-    } catch (std::exception e) {
-      throw std::out_of_range("no beam defined");
-    }
-  }
+  // Surface - Observation Points
 
   // Calculate the trajectory from scratch
   this->CalculateTrajectory(Particle);
@@ -2003,22 +1960,8 @@ void OSCARSSR::CalculateFlux (TParticleA& Particle,
                               TVector3D const& PropogationDirection,
                               double const Weight)
 {
-  // Calculates the single particle spectrum at a given observation point
+  // Calculates the single particle flux
   // in units of [photons / second / 0.001% BW / mm^2]
-  // Save this in the spectrum container.
-  //
-  // Particle - the Particle.. with a Trajectory structure hopefully
-  // ObservationPoint - Observation Point
-  // Spectrum - Spectrum container
-
-  // Check that particle has been set yet.  If fType is "" it has not been set yet
-  if (Particle.GetType() == "") {
-    try {
-      this->SetNewParticle();
-    } catch (std::exception e) {
-      throw std::out_of_range("no beam defined");
-    }
-  }
 
   // Calculate trajectory
   this->CalculateTrajectory(Particle);
@@ -2061,6 +2004,9 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
                               int const GPU,
                               int const Dimension)
 {
+  // Calculate flux on surface
+  // THIS is the ENTRY POINT typically
+
   // Check that particle has been set yet.  If fType is "" it has not been set yet
   if (fParticle.GetType() == "") {
     try {
@@ -2236,7 +2182,6 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
   TVector3DC const Positive = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) + VerticalDirection * I );
   TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * I );
 
-
   // Angular frequency
   double const Omega = TOSCARSSR::EvToAngularFrequency(Energy_eV);;
 
@@ -2332,19 +2277,10 @@ void OSCARSSR::CalculateFluxThreads (TParticleA& Particle,
                                      int const NThreads,
                                      double const Weight)
 {
-  // Calculates the single particle spectrum at a given observation point
+  // Calculates the single particle flux on a surface
   // in units of [photons / second / 0.001% BW / mm^2]
   //
   // Surface - Observation Point
-
-  // Check that particle has been set yet.  If fType is "" it has not been set yet
-  if (Particle.GetType() == "") {
-    try {
-      this->SetNewParticle();
-    } catch (std::exception e) {
-      throw std::out_of_range("no beam defined");
-    }
-  }
 
   // Calculate the trajectory from scratch
   this->CalculateTrajectory(Particle);
@@ -2417,7 +2353,6 @@ void OSCARSSR::CalculateFluxThreads (TParticleA& Particle,
       AllThreadsFinished = true;
     }
   }
-
 
   // Clear all threads
   Threads.clear();
