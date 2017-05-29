@@ -1135,6 +1135,7 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
   // Number of points in the trajectory
   size_t const NTPoints = T.GetNPoints();
 
+  // Make sure there is a trajectory
   if (NTPoints < 1) {
     throw std::length_error("no points in trajectory.  Is particle or beam defined?");
   }
@@ -1282,17 +1283,17 @@ void OSCARSSR::CalculateSpectrumThreads (TParticleA& Particle,
   size_t const NRemainder = NPoints % NThreadsActual;
 
   // Start threads and keep in vector
-  for (size_t io = 0; io != NThreadsActual; ++io) {
+  for (size_t it = 0; it != NThreadsActual; ++it) {
 
     // First and last points for each thread
-    size_t const iFirst = io < NRemainder ? NPerThread * io + io: NPerThread * io + NRemainder;
-    size_t const iLast  = io < NRemainder ? iFirst + NPerThread : iFirst + NPerThread - 1;
+    size_t const iFirst = it < NRemainder ? NPerThread * it + it: NPerThread * it + NRemainder;
+    size_t const iLast  = it < NRemainder ? iFirst + NPerThread : iFirst + NPerThread - 1;
 
     // Set Done and joined to false for this thread
-    Done[io] = false;
-    Joined[io] = false;
+    Done[it] = false;
+    Joined[it] = false;
 
-    // Start thread for this point
+    // Start thread for these points
     Threads.push_back(std::thread(&OSCARSSR::CalculateSpectrumPoints,
                                   this,
                                   std::ref(Particle),
@@ -1300,7 +1301,7 @@ void OSCARSSR::CalculateSpectrumThreads (TParticleA& Particle,
                                   std::ref(Spectrum),
                                   iFirst,
                                   iLast,
-                                  std::ref(Done[io]),
+                                  std::ref(Done[it]),
                                   std::ref(Polarization),
                                   Angle,
                                   std::ref(HorizontalDirection),
@@ -1554,92 +1555,33 @@ void OSCARSSR::CalculatePowerDensity (TParticleA& Particle,
   // Particle - Particle, contains trajectory (or if not, calculate it)
   // Surface - Observation Point
 
-
   // Check that particle has been set yet.  If fType is "" it has not been set yet
+  // UPDATE: Re-evaluate all of these checks
   if (Particle.GetType() == "") {
-    throw std::out_of_range("no particle defined");
+    try {
+      this->SetNewParticle();
+    } catch (std::exception e) {
+      throw std::out_of_range("no beam defined");
+    }
   }
 
-  // Calculate the trajectory from scratch
+  // Calculate trajectory
   this->CalculateTrajectory(Particle);
 
-  // Grab the Trajectory
-  TParticleTrajectoryPoints& T = Particle.GetTrajectory();
+  // Extra inpts for calculation
+  bool Done = false;
+  size_t const iFirst = 0;
+  size_t const iLast = Surface.GetNPoints() - 1;
 
-  // Number of points in Trajectory
-  size_t const NTPoints = T.GetNPoints();
-
-  // Timestep from trajectory
-  double const DeltaT = T.GetDeltaT();
-
-  // Variables for parts of the numerator and denominator of power density equation
-  TVector3D Numerator;
-  double Denominator;
-
-  //std::cout << "Directional: " << Directional << std::endl;
-
-  // Loop over all points in the given surface
-  for (size_t io = 0; io < Surface.GetNPoints(); ++io) {
-
-    // Get the observation point (on the surface, and its "normal"
-    TVector3D const Obs = Surface.GetPoint(io).GetPoint();
-    TVector3D const Normal = Surface.GetPoint(io).GetNormal();
-
-
-    // For summing power contributions
-    double Sum = 0;
-
-    // Loop over all points in the trajectory
-    for (int iT = 0; iT != NTPoints ; ++iT) {
-
-      // Get current position, Beta, and Acceleration(over c)
-      TVector3D const& X = T.GetX(iT);
-      TVector3D const& B = T.GetB(iT);
-      TVector3D const& AoverC = T.GetAoverC(iT);
-
-      // Define the three normal vectors.  N1 is in the direction of propogation,
-      // N2 and N3 are in a plane perpendicular to N1
-      TVector3D const N1 = (Obs - X).UnitVector();
-      TVector3D const N2 = N1.Orthogonal().UnitVector();
-      TVector3D const N3 = N1.Cross(N2).UnitVector();
-
-      // For computing non-normally incidence
-      double const N1DotNormal = N1.Dot(Normal);
-      // UPDATE: URGENT: Check this
-      if (Directional && N1DotNormal <= 0) {
-        continue;
-      }
-
-      // Compute Numerator and denominator
-      Numerator = N1.Cross( ( (N1 - B).Cross((AoverC)) ) );
-      Denominator = pow(1 - (B).Dot(N1), 5);
-
-      // Add contributions from both N2 and N3
-      Sum += pow(Numerator.Dot(N2), 2) / Denominator / (Obs - X).Mag2() * N1DotNormal;
-      Sum += pow(Numerator.Dot(N3), 2) / Denominator / (Obs - X).Mag2() * N1DotNormal;
-    }
-
-    // Undulators, Wigglers and their applications, p42
-    Sum *= fabs(Particle.GetQ() * Particle.GetCurrent()) / (16 * TOSCARSSR::Pi2() * TOSCARSSR::Epsilon0() * TOSCARSSR::C()) * DeltaT;
-
-    // m^2 to mm^2
-    Sum /= 1e6;
-
-    // Weighting
-    Sum *= Weight;
-
-
-    // If you don't care about the direction of the normal vector
-    // UPDATE: Check
-    if (!Directional) {
-      if (Sum < 0) {
-        Sum *= -1;
-      }
-    }
-
-    // Add to container
-    PowerDensityContainer.AddToPoint(io, Sum);
-  }
+  // Calculate the power density
+  CalculatePowerDensityPoints(Particle,
+                              Surface,
+                              PowerDensityContainer,
+                              iFirst,
+                              iLast,
+                              Done,
+                              Directional,
+                              Weight);
 
   return;
 }
@@ -1734,35 +1676,34 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface,
 
 
 
-void OSCARSSR::CalculatePowerDensityPoint (TParticleA& Particle,
-                                           TSurfacePoints const& Surface,
-                                           T3DScalarContainer& PowerDensityContainer,
-                                           size_t const io,
-                                           bool& Done,
-                                           bool const Directional,
-                                           double const Weight)
+void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
+                                            TSurfacePoints const& Surface,
+                                            T3DScalarContainer& PowerDensityContainer,
+                                            size_t const iFirst,
+                                            size_t const iLast,
+                                            bool& Done,
+                                            bool const Directional,
+                                            double const Weight)
 {
-  // Calculates the single particle spectrum at a given observation point
-  // in units of [photons / second / 0.001% BW / mm^2]
+  // Calculates the single particle power density in a range of points
+  // in units of [watts / second / mm^2]
   //
   // Particle - Particle, contains trajectory (or if not, calculate it)
   // Surface - Observation Point
 
-
-  // Check that particle has been set yet.  If fType is "" it has not been set yet
-  if (Particle.GetType() == "") {
-    throw std::out_of_range("no particle defined");
-  }
-
-
   // Grab the Trajectory
   TParticleTrajectoryPoints& T = Particle.GetTrajectory();
+
+  // Timestep from trajectory
+  double const DeltaT = T.GetDeltaT();
 
   // Number of points in Trajectory
   size_t const NTPoints = T.GetNPoints();
 
-  // Timestep from trajectory
-  double const DeltaT = T.GetDeltaT();
+  // Check number of points
+  if (NTPoints < 1) {
+    throw std::length_error("no points in trajectory.  Is particle or beam defined?");
+  }
 
   // Variables for parts of the numerator and denominator of power density equation
   TVector3D Numerator;
@@ -1770,78 +1711,73 @@ void OSCARSSR::CalculatePowerDensityPoint (TParticleA& Particle,
 
   //std::cout << "Directional: " << Directional << std::endl;
 
+  // Loop over all points in the given surface
+  for (size_t io = iFirst; io <= iLast; ++io) {
 
-  TVector3D const Obs = Surface.GetPoint(io).GetPoint();
-  TVector3D const Normal = Surface.GetPoint(io).GetNormal();
+    // Get the observation point (on the surface, and its "normal"
+    TVector3D const Obs = Surface.GetPoint(io).GetPoint();
+    TVector3D const Normal = Surface.GetPoint(io).GetNormal();
 
+    // For summing power contributions
+    double Sum = 0;
 
-  // For summing power contributions
-  double Sum = 0;
+    // Loop over all points in the trajectory
+    for (int iT = 0; iT != NTPoints ; ++iT) {
 
-  // Loop over all points in the trajectory
-  for (int iT = 0; iT != NTPoints ; ++iT) {
+      // Get current position, Beta, and Acceleration(over c)
+      TVector3D const& X = T.GetX(iT);
+      TVector3D const& B = T.GetB(iT);
+      TVector3D const& AoverC = T.GetAoverC(iT);
 
-    // Get current position, Beta, and Acceleration(over c)
-    TVector3D const& X = T.GetX(iT);
-    TVector3D const& B = T.GetB(iT);
-    TVector3D const& AoverC = T.GetAoverC(iT);
+      // Define the three normal vectors.  N1 is in the direction of propogation,
+      // N2 and N3 are in a plane perpendicular to N1
+      TVector3D const N1 = (Obs - X).UnitVector();
+      TVector3D const N2 = N1.Orthogonal().UnitVector();
+      TVector3D const N3 = N1.Cross(N2).UnitVector();
 
-    // Define the three normal vectors.  N1 is in the direction of propogation,
-    // N2 and N3 are in a plane perpendicular to N1
-    TVector3D const N1 = (Obs - X).UnitVector();
-    TVector3D const N2 = N1.Orthogonal().UnitVector();
-    TVector3D const N3 = N1.Cross(N2).UnitVector();
+      // For computing non-normally incidence
+      double const N1DotNormal = N1.Dot(Normal);
+      // UPDATE: URGENT: Check this
+      if (Directional && N1DotNormal <= 0) {
+        continue;
+      }
 
-    // Speed up here if you want
-    //if (B.Angle(N1) > 5. / (Particle.GetGamma())) {
-    //  continue;
-    //}
+      // Compute Numerator and denominator
+      Numerator = N1.Cross( ( (N1 - B).Cross((AoverC)) ) );
+      Denominator = pow(1 - (B).Dot(N1), 5);
 
-    // For computing non-normally incidence
-    double const N1DotNormal = N1.Dot(Normal);
-    // UPDATE: URGENT: Check this
-    if (Directional && N1DotNormal <= 0) {
-      continue;
+      // Add contributions from both N2 and N3
+      Sum += pow(Numerator.Dot(N2), 2) / Denominator / (Obs - X).Mag2() * N1DotNormal;
+      Sum += pow(Numerator.Dot(N3), 2) / Denominator / (Obs - X).Mag2() * N1DotNormal;
     }
 
-    // Compute Numerator and denominator
-    Numerator = N1.Cross( ( (N1 - B).Cross((AoverC)) ) );
-    Denominator = pow(1 - (B).Dot(N1), 5);
+    // Undulators, Wigglers and their applications, p42
+    Sum *= fabs(Particle.GetQ() * Particle.GetCurrent()) / (16 * TOSCARSSR::Pi2() * TOSCARSSR::Epsilon0() * TOSCARSSR::C()) * DeltaT;
 
-    // Add contributions from both N2 and N3
-    Sum += pow(Numerator.Dot(N2), 2) / Denominator / (Obs - X).Mag2() * N1DotNormal;
-    Sum += pow(Numerator.Dot(N3), 2) / Denominator / (Obs - X).Mag2() * N1DotNormal;
+    // m^2 to mm^2
+    Sum /= 1e6;
 
-  }
-  // Undulators, Wigglers and their applications, p42
-  Sum *= fabs(Particle.GetQ() * Particle.GetCurrent()) / (16 * TOSCARSSR::Pi2() * TOSCARSSR::Epsilon0() * TOSCARSSR::C()) * DeltaT;
+    // Weighting
+    Sum *= Weight;
 
-  // m^2 to mm^2
-  Sum /= 1e6;
 
-  // Weight this event
-  Sum *= Weight;
-
-  // If you don't care about the direction of the normal vector
-  // UPDATE: Check
-  if (!Directional) {
-    if (Sum < 0) {
-      Sum *= -1;
+    // If you don't care about the direction of the normal vector
+    // UPDATE: Check
+    if (!Directional) {
+      if (Sum < 0) {
+        Sum *= -1;
+      }
     }
+
+    // Add to container
+    PowerDensityContainer.AddToPoint(io, Sum);
   }
 
-  // Add to container
-  PowerDensityContainer.AddToPoint(io, Sum);
-
-  // Set the done bit
+  // Set done to true
   Done = true;
 
   return;
 }
-
-
-
-
 
 
 
@@ -1870,6 +1806,10 @@ void OSCARSSR::CalculatePowerDensityThreads (TParticleA& Particle,
   // Calculate the trajectory from scratch
   this->CalculateTrajectory(Particle);
 
+  // Calculate the trajectory from scratch
+  this->CalculateTrajectory(Particle);
+
+  // Vector for storing threads to rejoin
   std::vector<std::thread> Threads;
 
   // Number of points in spectrum
@@ -1878,44 +1818,41 @@ void OSCARSSR::CalculatePowerDensityThreads (TParticleA& Particle,
   // How many threads to start in the first for loop
   size_t const NThreadsActual = (size_t) NPoints > NThreads ? NThreads : NPoints;
 
-  // Keep track of which threads are finished and started
+  // Keep track of which threads are finished and re-joined
   bool Done[NThreadsActual];
-  bool Submitted[NThreadsActual];
+  bool Joined[NThreadsActual];
 
-  // Number of points for which a thread was started so far
-  size_t NPointsStarted = 0;
+  // Number per thread plus remainder to be added to first threads
+  size_t const NPerThread = NPoints / NThreadsActual;
+  size_t const NRemainder = NPoints % NThreadsActual;
 
   // Start threads and keep in vector
   for (size_t it = 0; it != NThreadsActual; ++it) {
 
-    // Set Done to false for this thread
-    Done[it] = false;
+    // First and last points for each thread
+    size_t const iFirst = it < NRemainder ? NPerThread * it + it: NPerThread * it + NRemainder;
+    size_t const iLast  = it < NRemainder ? iFirst + NPerThread : iFirst + NPerThread - 1;
 
-    // Start thread for this point
-    Threads.push_back(std::thread(&OSCARSSR::CalculatePowerDensityPoint,
+    // Set Done and joined to false for this thread
+    Done[it] = false;
+    Joined[it] = false;
+
+    // Start thread for these points
+    Threads.push_back(std::thread(&OSCARSSR::CalculatePowerDensityPoints,
                                   this,
                                   std::ref(Particle),
                                   std::ref(Surface),
                                   std::ref(PowerDensityContainer),
-                                  (int) it,
+                                  iFirst,
+                                  iLast,
                                   std::ref(Done[it]),
                                   Directional,
                                   Weight));
-
-    // Incement the number of points started so far
-    ++NPointsStarted;
-
-    // Set the submitted flag for this thread to true
-    Submitted[it] = true;
   }
 
-
-  // Keep track of how many threads have completed
-  size_t NThreadsFinished = 0;
-
   // Are all of the threads finished or not?  Continue loop until all come back.
-  // UPDATE: Could think about applying a timeout feature here
   bool AllThreadsFinished = false;
+  size_t NThreadsFinished = 0;
   while (!AllThreadsFinished) {
 
     // So as to not use the current thread at 100%
@@ -1924,54 +1861,19 @@ void OSCARSSR::CalculatePowerDensityThreads (TParticleA& Particle,
     // Check all threads
     for (size_t it = 0; it != NThreadsActual; ++it) {
 
-      // If it hasn't reported done leave it alone, otherwise see about creating another thread
-      if (!Done[it]) {
-        continue;
-      } else if (Submitted[it] && Done[it]) {
-
-        // Join the thread
+      if (Done[it] && !Joined[it]) {
         Threads[it].join();
-
-        // Set the submitted bit to false (so it's open)
-        Submitted[it] = false;
-
-        // Increment the number of finished threads
+        Joined[it] = true;
         ++NThreadsFinished;
-
-        // If the number of points started is less than the total number start another point
-        if (NPointsStarted < NPoints) {
-
-          // Set done bit to false for this thread
-          Done[it] = false;
-
-          // Index of the point of interest
-          int const ThisPoint = (int) NPointsStarted;
-
-          // Create a new thread for this point
-          Threads[it] = std::thread(&OSCARSSR::CalculatePowerDensityPoint,
-                                    this,
-                                    std::ref(Particle),
-                                    std::ref(Surface),
-                                    std::ref(PowerDensityContainer),
-                                    ThisPoint,
-                                    std::ref(Done[it]),
-                                    Directional,
-                                    Weight);
-
-          // Increment the number of points that have been started
-          ++NPointsStarted;
-
-          // Set the submitted bit to true
-          Submitted[it] = true;
-        }
       }
     }
 
     // If the number finished is equal to the number of points total then we're done
-    if (NThreadsFinished == NPoints) {
+    if (NThreadsFinished == NThreadsActual) {
       AllThreadsFinished = true;
     }
   }
+
 
   // Clear all threads
   Threads.clear();
@@ -2111,118 +2013,34 @@ void OSCARSSR::CalculateFlux (TParticleA& Particle,
 
   // Check that particle has been set yet.  If fType is "" it has not been set yet
   if (Particle.GetType() == "") {
-    throw std::out_of_range("no particle defined");
+    try {
+      this->SetNewParticle();
+    } catch (std::exception e) {
+      throw std::out_of_range("no beam defined");
+    }
   }
 
   // Calculate trajectory
   this->CalculateTrajectory(Particle);
 
-  // Grab the Trajectory
-  TParticleTrajectoryPoints& T = Particle.GetTrajectory();
+  // Extra inpts for calculation
+  bool Done = false;
+  size_t const iFirst = 0;
+  size_t const iLast = Surface.GetNPoints() - 1;
 
-  // Time step.  Expecting it to be constant throughout calculation
-  double const DeltaT = T.GetDeltaT();
-
-
-  // Number of points in the trajectory
-  size_t const NTPoints = T.GetNPoints();
-
-  if (NTPoints < 1) {
-    throw std::length_error("no points in trajectory.  Is particle or beam defined?");
-  }
-
-  // Number of points in the spectrum container
-  size_t const NSPoints = Surface.GetNPoints();
-
-  // Constant C0 for calculation
-  double const C0 = Particle.GetQ() / (TOSCARSSR::FourPi() * TOSCARSSR::C() * TOSCARSSR::Epsilon0() * TOSCARSSR::Sqrt2Pi());
-
-  // Constant for flux calculation at the end
-  double const C2 = TOSCARSSR::FourPi() * Particle.GetCurrent() / (TOSCARSSR::H() * fabs(Particle.GetQ()) * TOSCARSSR::Mu0() * TOSCARSSR::C()) * 1e-6 * 0.001;
-
-  // Imaginary "i" and complxe 1+0i
-  std::complex<double> const I(0, 1);
-  std::complex<double> const One(1, 0);
-
-  // Photon vertical direction and positive and negative helicity
-  TVector3D const VerticalDirection = PropogationDirection.Cross(HorizontalDirection).UnitVector();
-  TVector3DC const Positive = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) + VerticalDirection * I );
-  TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * I );
-
-
-  // Angular frequency
-  double const Omega = TOSCARSSR::EvToAngularFrequency(Energy_eV);;
-
-  // Constant for field calculation
-  std::complex<double> ICoverOmega = I * TOSCARSSR::C() / Omega;
-
-  // Constant for calculation
-  std::complex<double> const C1(0, C0 * Omega);
-
-  // Loop over all points in the spectrum container
-  for (size_t i = 0; i != NSPoints; ++i) {
-
-    // Obs point
-    TVector3D ObservationPoint = Surface.GetPoint(i).GetPoint();
-
-    // Electric field summation in frequency space
-    TVector3DC SumE(0, 0, 0);
-
-    // Loop over all points in trajectory
-    for (int iT = 0; iT != NTPoints; ++iT) {
-
-      // Particle position
-      TVector3D const& X = T.GetX(iT);
-
-      // Particle "Beta" (velocity over speed of light)
-      TVector3D const& B = T.GetB(iT);
-
-      // Vector pointing from particle to observer
-      TVector3D const R = ObservationPoint - X;
-
-      // Unit vector pointing from particl to observer
-      TVector3D const N = R.UnitVector();
-
-      // Distance from particle to observer
-      double const D = R.Mag();
-
-      // Exponent for fourier transformed field
-      std::complex<double> Exponent(0, Omega * (DeltaT * iT + D / TOSCARSSR::C()));
-
-      // Sum in fourier transformed field (integral)
-      SumE += (TVector3DC(B) - (N * ( One + (ICoverOmega / (D))))) / D * std::exp(Exponent);
-    }
-
-
-    // Multiply field by Constant C1 and time step
-    SumE *= C1 * DeltaT;
-
-    // If a polarization is specified, calculate it
-    if (Polarization == "all") {
-      // Do nothing, it is already ALL
-    } else if (Polarization == "linear-horizontal") {
-      SumE = SumE.Dot(HorizontalDirection) * HorizontalDirection;
-    } else if (Polarization == "linear-vertical") {
-      SumE = SumE.Dot(VerticalDirection) * VerticalDirection;
-    } else if (Polarization == "linear") {
-      TVector3D PolarizationAngle = HorizontalDirection;
-      PolarizationAngle.RotateSelf(Angle, PropogationDirection);
-      SumE = SumE.Dot(PolarizationAngle) * PolarizationAngle;
-    } else if (Polarization == "circular-left") {
-      SumE = SumE.Dot(Positive.CC()) * Positive;
-    } else if (Polarization == "circular-right") {
-      SumE = SumE.Dot(Negative.CC()) * Negative;
-    } else {
-      // Throw invalid argument if polarization is not recognized
-      throw std::invalid_argument("Polarization requested not recognized");
-    }
-
-    // Set the flux for this frequency / energy point
-    double const ThisFlux = C2 *  SumE.Dot( SumE.CC() ).real() * Weight;
-
-    // All point to flux container
-    FluxContainer.AddToPoint(i, ThisFlux);
-  }
+  // Calculate the flux
+  CalculateFluxPoints(Particle,
+                      Surface,
+                      Energy_eV,
+                      FluxContainer,
+                      iFirst,
+                      iLast,
+                      Done,
+                      Polarization,
+                      Angle,
+                      HorizontalDirection,
+                      PropogationDirection,
+                      Weight);
 
   return;
 }
@@ -2368,30 +2186,23 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
 
 
 
-void OSCARSSR::CalculateFluxPoint (TParticleA& Particle,
-                                   TSurfacePoints const& Surface,
-                                   double const Energy_eV,
-                                   T3DScalarContainer& FluxContainer,
-                                   size_t const i,
-                                   bool& Done,
-                                   std::string const& Polarization,
-                                   double const Angle,
-                                   TVector3D const& HorizontalDirection,
-                                   TVector3D const& PropogationDirection,
-                                   double const Weight)
+void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
+                                    TSurfacePoints const& Surface,
+                                    double const Energy_eV,
+                                    T3DScalarContainer& FluxContainer,
+                                    size_t const iFirst,
+                                    size_t const iLast,
+                                    bool& Done,
+                                    std::string const& Polarization,
+                                    double const Angle,
+                                    TVector3D const& HorizontalDirection,
+                                    TVector3D const& PropogationDirection,
+                                    double const Weight)
 {
-  // Calculates the single particle spectrum at a given observation point
+  // Calculates the single particle flux at a given observation point
   // in units of [photons / second / 0.001% BW / mm^2]
-  // Save this in the spectrum container.
   //
   // Particle - the Particle.. with a Trajectory structure hopefully
-  // ObservationPoint - Observation Point
-  // Spectrum - Spectrum container
-
-  // Check that particle has been set yet.  If fType is "" it has not been set yet
-  if (Particle.GetType() == "") {
-    throw std::out_of_range("no particle defined");
-  }
 
   // Grab the Trajectory
   TParticleTrajectoryPoints& T = Particle.GetTrajectory();
@@ -2399,13 +2210,16 @@ void OSCARSSR::CalculateFluxPoint (TParticleA& Particle,
   // Time step.  Expecting it to be constant throughout calculation
   double const DeltaT = T.GetDeltaT();
 
-
   // Number of points in the trajectory
   size_t const NTPoints = T.GetNPoints();
 
+  // Check number of points
   if (NTPoints < 1) {
     throw std::length_error("no points in trajectory.  Is particle or beam defined?");
   }
+
+  // Number of points in the spectrum container
+  size_t const NSPoints = Surface.GetNPoints();
 
   // Constant C0 for calculation
   double const C0 = Particle.GetQ() / (TOSCARSSR::FourPi() * TOSCARSSR::C() * TOSCARSSR::Epsilon0() * TOSCARSSR::Sqrt2Pi());
@@ -2432,72 +2246,77 @@ void OSCARSSR::CalculateFluxPoint (TParticleA& Particle,
   // Constant for calculation
   std::complex<double> const C1(0, C0 * Omega);
 
-  // Obs point
-  TVector3D ObservationPoint = Surface.GetPoint(i).GetPoint();
+  // Loop over all points in the spectrum container
+  for (size_t i = iFirst; i <= iLast; ++i) {
 
-  // Electric field summation in frequency space
-  TVector3DC SumE(0, 0, 0);
+    // Obs point
+    TVector3D ObservationPoint = Surface.GetPoint(i).GetPoint();
 
-  // Loop over all points in trajectory
-  for (int iT = 0; iT != NTPoints; ++iT) {
+    // Electric field summation in frequency space
+    TVector3DC SumE(0, 0, 0);
 
-    // Particle position
-    TVector3D const& X = T.GetX(iT);
+    // Loop over all points in trajectory
+    for (int iT = 0; iT != NTPoints; ++iT) {
 
-    // Particle "Beta" (velocity over speed of light)
-    TVector3D const& B = T.GetB(iT);
+      // Particle position
+      TVector3D const& X = T.GetX(iT);
 
-    // Vector pointing from particle to observer
-    TVector3D const R = ObservationPoint - X;
+      // Particle "Beta" (velocity over speed of light)
+      TVector3D const& B = T.GetB(iT);
 
-    // Unit vector pointing from particl to observer
-    TVector3D const N = R.UnitVector();
+      // Vector pointing from particle to observer
+      TVector3D const R = ObservationPoint - X;
 
-    // Distance from particle to observer
-    double const D = R.Mag();
+      // Unit vector pointing from particl to observer
+      TVector3D const N = R.UnitVector();
 
-    // Exponent for fourier transformed field
-    std::complex<double> Exponent(0, Omega * (DeltaT * iT + D / TOSCARSSR::C()));
+      // Distance from particle to observer
+      double const D = R.Mag();
 
-    // Sum in fourier transformed field (integral)
-    SumE += (TVector3DC(B) - (N * ( One + (ICoverOmega / (D))))) / D * std::exp(Exponent);
+      // Exponent for fourier transformed field
+      std::complex<double> Exponent(0, Omega * (DeltaT * iT + D / TOSCARSSR::C()));
+
+      // Sum in fourier transformed field (integral)
+      SumE += (TVector3DC(B) - (N * ( One + (ICoverOmega / (D))))) / D * std::exp(Exponent);
+    }
+
+
+    // Multiply field by Constant C1 and time step
+    SumE *= C1 * DeltaT;
+
+    // If a polarization is specified, calculate it
+    if (Polarization == "all") {
+      // Do nothing, it is already ALL
+    } else if (Polarization == "linear-horizontal") {
+      SumE = SumE.Dot(HorizontalDirection) * HorizontalDirection;
+    } else if (Polarization == "linear-vertical") {
+      SumE = SumE.Dot(VerticalDirection) * VerticalDirection;
+    } else if (Polarization == "linear") {
+      TVector3D PolarizationAngle = HorizontalDirection;
+      PolarizationAngle.RotateSelf(Angle, PropogationDirection);
+      SumE = SumE.Dot(PolarizationAngle) * PolarizationAngle;
+    } else if (Polarization == "circular-left") {
+      SumE = SumE.Dot(Positive.CC()) * Positive;
+    } else if (Polarization == "circular-right") {
+      SumE = SumE.Dot(Negative.CC()) * Negative;
+    } else {
+      // Throw invalid argument if polarization is not recognized
+      throw std::invalid_argument("Polarization requested not recognized");
+    }
+
+    // Set the flux for this frequency / energy point
+    double const ThisFlux = C2 *  SumE.Dot( SumE.CC() ).real() * Weight;
+
+    // All point to flux container
+    FluxContainer.AddToPoint(i, ThisFlux);
   }
-
-
-  // Multiply field by Constant C1 and time step
-  SumE *= C1 * DeltaT;
-
-  // If a polarization is specified, calculate it
-  if (Polarization == "all") {
-    // Do nothing, it is already ALL
-  } else if (Polarization == "linear-horizontal") {
-    SumE = SumE.Dot(HorizontalDirection) * HorizontalDirection;
-  } else if (Polarization == "linear-vertical") {
-    SumE = SumE.Dot(VerticalDirection) * VerticalDirection;
-  } else if (Polarization == "linear") {
-    TVector3D PolarizationAngle = HorizontalDirection;
-    PolarizationAngle.RotateSelf(Angle, PropogationDirection);
-    SumE = SumE.Dot(PolarizationAngle) * PolarizationAngle;
-  } else if (Polarization == "circular-left") {
-    SumE = SumE.Dot(Positive.CC()) * Positive;
-  } else if (Polarization == "circular-right") {
-    SumE = SumE.Dot(Negative.CC()) * Negative;
-  } else {
-    // Throw invalid argument if polarization is not recognized
-    throw std::invalid_argument("Polarization requested not recognized");
-  }
-
-  // Set the flux for this frequency / energy point
-  double const ThisFlux = C2 *  SumE.Dot( SumE.CC() ).real() * Weight;
-
-  // Add point to flux container
-  FluxContainer.AddToPoint(i, ThisFlux);
 
   // Set done to true
   Done = true;
 
   return;
 }
+
 
 
 
@@ -2530,6 +2349,7 @@ void OSCARSSR::CalculateFluxThreads (TParticleA& Particle,
   // Calculate the trajectory from scratch
   this->CalculateTrajectory(Particle);
 
+  // Vector for storing threads to rejoin
   std::vector<std::thread> Threads;
 
   // Number of points in spectrum
@@ -2538,48 +2358,45 @@ void OSCARSSR::CalculateFluxThreads (TParticleA& Particle,
   // How many threads to start in the first for loop
   size_t const NThreadsActual = (size_t) NPoints > NThreads ? NThreads : NPoints;
 
-  // Keep track of which threads are finished and started
+  // Keep track of which threads are finished and re-joined
   bool Done[NThreadsActual];
-  bool Submitted[NThreadsActual];
+  bool Joined[NThreadsActual];
 
-  // Number of points for which a thread was started so far
-  size_t NPointsStarted = 0;
+  // Number per thread plus remainder to be added to first threads
+  size_t const NPerThread = NPoints / NThreadsActual;
+  size_t const NRemainder = NPoints % NThreadsActual;
 
   // Start threads and keep in vector
   for (size_t it = 0; it != NThreadsActual; ++it) {
 
-    // Set Done to false for this thread
-    Done[it] = false;
+    // First and last points for each thread
+    size_t const iFirst = it < NRemainder ? NPerThread * it + it: NPerThread * it + NRemainder;
+    size_t const iLast  = it < NRemainder ? iFirst + NPerThread : iFirst + NPerThread - 1;
 
-    // Start thread for this point
-    Threads.push_back(std::thread(&OSCARSSR::CalculateFluxPoint,
+    // Set Done and joined to false for this thread
+    Done[it] = false;
+    Joined[it] = false;
+
+    // Start thread for these points
+    Threads.push_back(std::thread(&OSCARSSR::CalculateFluxPoints,
                                   this,
                                   std::ref(Particle),
                                   std::ref(Surface),
                                   Energy_eV,
                                   std::ref(FluxContainer),
-                                  (int) it,
+                                  iFirst,
+                                  iLast,
                                   std::ref(Done[it]),
                                   Polarization,
                                   Angle,
                                   HorizontalDirection,
                                   PropogationDirection,
                                   Weight));
-
-    // Incement the number of points started so far
-    ++NPointsStarted;
-
-    // Set the submitted flag for this thread to true
-    Submitted[it] = true;
   }
 
-
-  // Keep track of how many threads have completed
-  size_t NThreadsFinished = 0;
-
   // Are all of the threads finished or not?  Continue loop until all come back.
-  // UPDATE: Could think about applying a timeout feature here
   bool AllThreadsFinished = false;
+  size_t NThreadsFinished = 0;
   while (!AllThreadsFinished) {
 
     // So as to not use the current thread at 100%
@@ -2588,59 +2405,19 @@ void OSCARSSR::CalculateFluxThreads (TParticleA& Particle,
     // Check all threads
     for (size_t it = 0; it != NThreadsActual; ++it) {
 
-      // If it hasn't reported done leave it alone, otherwise see about creating another thread
-      if (!Done[it]) {
-        continue;
-      } else if (Submitted[it] && Done[it]) {
-
-        // Join the thread
+      if (Done[it] && !Joined[it]) {
         Threads[it].join();
-
-        // Set the submitted bit to false (so it's open)
-        Submitted[it] = false;
-
-        // Increment the number of finished threads
+        Joined[it] = true;
         ++NThreadsFinished;
-
-        // If the number of points started is less than the total number start another point
-        if (NPointsStarted < NPoints) {
-
-          // Set done bit to false for this thread
-          Done[it] = false;
-
-          // Index of the point of interest
-          int const ThisPoint = (int) NPointsStarted;
-
-          // Create a new thread for this point
-          Threads[it] = std::thread(&OSCARSSR::CalculateFluxPoint,
-                                    this,
-                                    std::ref(Particle),
-                                    std::ref(Surface),
-                                    Energy_eV,
-                                    std::ref(FluxContainer),
-                                    ThisPoint,
-                                    std::ref(Done[it]),
-                                    Polarization,
-                                    Angle,
-                                    HorizontalDirection,
-                                    PropogationDirection,
-                                    Weight);
-
-          // Increment the number of points that have been started
-          ++NPointsStarted;
-
-          // Set the submitted bit to true
-          Submitted[it] = true;
-        }
       }
     }
 
     // If the number finished is equal to the number of points total then we're done
-    if (NThreadsFinished == NPoints) {
+    if (NThreadsFinished == NThreadsActual) {
       AllThreadsFinished = true;
     }
-
   }
+
 
   // Clear all threads
   Threads.clear();

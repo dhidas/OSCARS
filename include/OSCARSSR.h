@@ -195,13 +195,14 @@ class OSCARSSR
                                 int const NThreads,
                                 int const GPU);
 
-    void CalculatePowerDensityPoint (TParticleA& Particle,
-                                     TSurfacePoints const& Surface,
-                                     T3DScalarContainer& PowerDensityContainer,
-                                     size_t const io,
-                                     bool& Done,
-                                     bool const Directional,
-                                     double const Weight);
+    void CalculatePowerDensityPoints (TParticleA& Particle,
+                                      TSurfacePoints const& Surface,
+                                      T3DScalarContainer& PowerDensityContainer,
+                                      size_t const iFirst,
+                                      size_t const iLast,
+                                      bool& Done,
+                                      bool const Directional,
+                                      double const Weight);
 
     void CalculatePowerDensityThreads (TParticleA& Particle,
                                        TSurfacePoints const& Surface,
@@ -242,6 +243,19 @@ class OSCARSSR
                         int const NThreads = 0,
                         int const GPU = 0,
                         int const Dimension = 3);
+
+    void CalculateFluxPoints (TParticleA& Particle,
+                              TSurfacePoints const& Surface,
+                              double const Energy_eV,
+                              T3DScalarContainer& FluxContainer,
+                              size_t const iFirst,
+                              size_t const iLast,
+                              bool& Done,
+                              std::string const& Polarization = "all",
+                              double const Angle = 0,
+                              TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
+                              TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
+                              double const Weight = 1);
 
     void CalculateFluxPoint (TParticleA& Particle,
                              TSurfacePoints const& Surface,
