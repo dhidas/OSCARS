@@ -1,5 +1,5 @@
 # How to run this code:
-#   mpirun -n 5 python Example_133_EPUFlux_MultiParticle_MPI.py
+#   mpiexec -n 5 python Example_133_EPUFlux_MultiParticle_MPI.py
 
 
 # In this example MPI is used to calculate the flux in a multi-particle

@@ -1,5 +1,5 @@
 # How to run this code:
-#   mpirun -n 5 python Example_143_EPUPowerDensity_MultiParticle_MPI.py
+#   mpiexec -n 5 python Example_143_EPUPowerDensity_MultiParticle_MPI.py
 
 
 # In this example MPI is used to calculate the power density in a multi-particle
