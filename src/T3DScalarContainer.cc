@@ -213,8 +213,11 @@ void T3DScalarContainer::AverageFromFilesBinary (std::vector<std::string> const&
     }
   }
 
-  // Variables used for writing to file
-  double X, Y, Z, V;
+  // Variables used for reading from file
+  double X;
+  double Y;
+  double Z;
+  double V;
 
   // Are we done reading yet
   bool NotDone = true;

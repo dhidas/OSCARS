@@ -2763,19 +2763,21 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
   int         GPU = -1;
   int         NThreads = 0;
   int         Dim = 2;
-  char*       OutFileName = "";
+  char*       OutFileNameText = "";
+  char*       OutFileNameBinary = "";
 
 
-  static char *kwlist[] = {"npoints", "plane", "width", "x0x1x2", "rotations", "translation", "ofile", "normal", "nparticles", "gpu", "nthreads", "dim",  NULL};
+  static char *kwlist[] = {"npoints", "plane", "width", "x0x1x2", "rotations", "translation", "ofile", "bofile", "normal", "nparticles", "gpu", "nthreads", "dim",  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|sOOOOsiiiii", kwlist,
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|sOOOOssiiiii", kwlist,
                                                                   &List_NPoints,
                                                                   &SurfacePlane,
                                                                   &List_Width,
                                                                   &List_X0X1X2,
                                                                   &List_Rotations,
                                                                   &List_Translation,
-                                                                  &OutFileName,
+                                                                  &OutFileNameText,
+                                                                  &OutFileNameBinary,
                                                                   &NormalDirection,
                                                                   &NParticles,
                                                                   &GPU,
@@ -2939,6 +2941,17 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
   } catch (std::invalid_argument e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
+  }
+
+  // Write the output file if requested
+  // Text output
+  if (std::string(OutFileNameText) != "") {
+    PowerDensityContainer.WriteToFileText(OutFileNameText, Dim);
+  }
+
+  // Binary output
+  if (std::string(OutFileNameBinary) != "") {
+    PowerDensityContainer.WriteToFileBinary(OutFileNameBinary, Dim);
   }
 
 
