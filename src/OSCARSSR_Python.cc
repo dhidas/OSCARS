@@ -2342,38 +2342,53 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
   // Calculate the spectrum given an observation point, and energy range
 
 
-  PyObject* List_Obs = PyList_New(0);
-  int NPoints = 0;
-  PyObject* List_EnergyRange_eV = PyList_New(0);
-  PyObject* List_Points_eV      = PyList_New(0);
-  char const* Polarization = "all";
-  double      Angle = 0;
-  PyObject*   List_HorizontalDirection = PyList_New(0);
+  PyObject*   List_Obs                  = PyList_New(0);
+  int         NPoints                   = 0;
+  PyObject*   List_EnergyRange_eV       = PyList_New(0);
+  PyObject*   List_Points_eV            = PyList_New(0);
+  char const* Polarization              = "all";
+  double      Angle                     = 0;
+  PyObject*   List_HorizontalDirection  = PyList_New(0);
   PyObject*   List_PropogationDirection = PyList_New(0);
-  int NParticles = 0;
-  int NThreads = 0;
-  int GPU = -1;
-  char* OutFileName = "";
-  char* OutFileNameBinary = "";
+  int         NParticles                = 0;
+  int         NThreads                  = 0;
+  int         GPU                       = -1;
+  char*       OutFileName               = "";
+  char*       OutFileNameBinary         = "";
 
+  // Input variable list
+  static char *kwlist[] = {"obs",
+                           "npoints",
+                           "energy_range_eV",
+                           "energy_points_eV",
+                           "points_eV", // UPDATE: REMOVE in v2
+                           "polarization",
+                           "angle",
+                           "horizontal_direction",
+                           "propogation_direction",
+                           "nparticles",
+                           "nthreads",
+                           "gpu",
+                           "ofile",
+                           "bofile",
+                           NULL};
 
-
-  static char *kwlist[] = {"obs", "npoints", "energy_range_eV", "points_eV", "polarization", "angle", "horizontal_direction", "propogation_direction", "nparticles", "nthreads", "gpu", "ofile", "bofile", NULL};
-
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|iOOsdOOiiiss", kwlist,
-                                                               &List_Obs,
-                                                               &NPoints,
-                                                               &List_EnergyRange_eV,
-                                                               &List_Points_eV,
-                                                               &Polarization,
-                                                               &Angle,
-                                                               &List_HorizontalDirection,
-                                                               &List_PropogationDirection,
-                                                               &NParticles,
-                                                               &NThreads,
-                                                               &GPU,
-                                                               &OutFileName,
-                                                               &OutFileNameBinary)) {
+  // Parse inputs
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|iOOOsdOOiiiss", kwlist,
+                                   &List_Obs,
+                                   &NPoints,
+                                   &List_EnergyRange_eV,
+                                   &List_Points_eV,
+                                   &List_Points_eV,
+                                   &Polarization,
+                                   &Angle,
+                                   &List_HorizontalDirection,
+                                   &List_PropogationDirection,
+                                   &NParticles,
+                                   &NThreads,
+                                   &GPU,
+                                   &OutFileName,
+                                   &OutFileNameBinary)) {
     return NULL;
   }
 
