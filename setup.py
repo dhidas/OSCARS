@@ -1,5 +1,4 @@
 import os
-#from distutils.core import setup, Extension
 from setuptools import setup, Extension
 
 os.environ["CC"] = "g++"
@@ -31,7 +30,8 @@ moduleOSCARSSR = Extension('oscars.sr',
                                  'src/TVector3DC.cc',
                                  'src/TVector4D.cc',
                                  'src/TField3D_Quadrupole.cc',
-                                 'src/TOMATH.cc'],
+                                 'src/TOMATH.cc',
+                                 'src/OSCARSPY.cc'],
                       extra_compile_args=['-std=c++11', '-Wno-write-strings', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread']
                      )
 
@@ -62,7 +62,8 @@ moduleOSCARSTH = Extension('oscars.th',
                                  'src/TVector3DC.cc',
                                  'src/TVector4D.cc',
                                  'src/TField3D_Quadrupole.cc',
-                                 'src/TOMATH.cc'],
+                                 'src/TOMATH.cc',
+                                 'src/OSCARSPY.cc'],
                       extra_compile_args=['-std=c++11', '-Wno-write-strings', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread']
                      )
 

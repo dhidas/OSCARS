@@ -74,12 +74,29 @@ double OSCARSTH::DipoleCriticalEnergy (double const BField, double const BeamEne
 
 
 
+
+void OSCARSTH::DipoleSpectrum (double const BField, 
+                               TSpectrumContainer& Spectrum,
+                               double const Angle) const
+{
+  double const BeamEnergy_GeV =  fParticleBeam.GetE0();
+
+  for (size_t i = 0; i < Spectrum.GetNPoints(); ++i) {
+    Spectrum.SetFlux(i, DipoleSpectrum(BField, BeamEnergy_GeV, Angle, Spectrum.GetEnergy(i)));
+  }
+
+  return;
+}
+
+
+
+
 double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_GeV, double const Angle, double const Energy_eV) const
 {
 
   double const R = BeamEnergy_GeV  * 1e9 / (BField * TOSCARSSR::C());
   double const Q = TOSCARSSR::Qe();
-  double const Me = 0.511e6;
+  double const Me = TOSCARSSR::Me();
   long double const v5 = Me * Me;
   double const v6 = (BeamEnergy_GeV * 1e9) * (BeamEnergy_GeV * 1e9);
   double const v7 = v5 / v6;

@@ -11,6 +11,7 @@
 #include "TVector2D.h"
 #include "TOMATH.h"
 #include "TParticleBeamContainer.h"
+#include "TSpectrumContainer.h"
 
 
 class OSCARSTH
@@ -30,6 +31,10 @@ class OSCARSTH
 
     double DipoleCriticalEnergy (double const BField,
                                  double const BeamEnergy_GeV) const;
+
+    void DipoleSpectrum (double const BField, 
+                         TSpectrumContainer& Spectrum,
+                         double const Angle) const;
 
     double DipoleSpectrum (double const BField,
                            double const BeamEnergy_GeV,

@@ -14,6 +14,7 @@
 
 #include "OSCARSSR_Python.h"
 
+#include "OSCARSPY.h"
 #include "OSCARSSR.h"
 #include "Version.h"
 
@@ -81,81 +82,10 @@ static int sr_init(OSCARSSRObject* self, PyObject* args, PyObject* kwds)
 
 
 
-char* GetAsString (PyObject* S)
-{
-  #if PY_MAJOR_VERSION >= 3
-  return PyUnicode_AsUTF8(S);
-  #else
-  return PyString_AsString(S);
-  #endif
-}
 
 
 
 
-
-
-
-
-static TVector2D OSCARSSR_ListAsTVector2D (PyObject* List)
-{
-  TVector2D V;
-  if (PyList_Size(List) == 2) {
-    Py_INCREF(List);
-    V.SetXY(PyFloat_AsDouble(PyList_GetItem(List, 0)),
-             PyFloat_AsDouble(PyList_GetItem(List, 1)));
-    Py_DECREF(List);
-  } else {
-    throw std::length_error("number of elements not 2");
-  }
-
-  // Return the python list
-  return V;
-}
-
-
-
-
-
-
-
-static TVector3D OSCARSSR_ListAsTVector3D (PyObject* List)
-{
-  TVector3D V;
-  if (PyList_Size(List) == 3) {
-    Py_INCREF(List);
-    V.SetXYZ(PyFloat_AsDouble(PyList_GetItem(List, 0)),
-             PyFloat_AsDouble(PyList_GetItem(List, 1)),
-             PyFloat_AsDouble(PyList_GetItem(List, 2)));
-    Py_DECREF(List);
-  } else {
-    throw std::length_error("number of elements not 3");
-  }
-
-  // Return the python list
-  return V;
-}
-
-
-
-
-
-
-
-static PyObject* OSCARSSR_TVector3DAsList (TVector3D const& V)
-{
-  // Turn a TVector3D into a list (like a vector)
-
-  // Create a python list
-  PyObject *PList = PyList_New(0);
-
-  PyList_Append(PList, Py_BuildValue("f", V.GetX()));
-  PyList_Append(PList, Py_BuildValue("f", V.GetY()));
-  PyList_Append(PList, Py_BuildValue("f", V.GetZ()));
-
-  // Return the python list
-  return PList;
-}
 
 
 
@@ -423,7 +353,7 @@ static PyObject* OSCARSSR_AddMagneticField (OSCARSSRObject* self, PyObject* args
   // Check for Rotations in the input
   if (PyList_Size(List_Rotations) != 0) {
     try {
-      Rotations = OSCARSSR_ListAsTVector3D(List_Rotations);
+      Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
       return NULL;
@@ -434,7 +364,7 @@ static PyObject* OSCARSSR_AddMagneticField (OSCARSSRObject* self, PyObject* args
   // Check for Translation in the input
   if (PyList_Size(List_Translation) != 0) {
     try {
-      Translation = OSCARSSR_ListAsTVector3D(List_Translation);
+      Translation = OSCARSPY::ListAsTVector3D(List_Translation);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
       return NULL;
@@ -510,7 +440,7 @@ static PyObject* OSCARSSR_AddMagneticFieldInterpolated (OSCARSSRObject* self, Py
       }
 
       ParameterValue = PyFloat_AsDouble(PyList_GetItem(ThisPair, 0));
-      std::string const FileName = GetAsString(PyList_GetItem(ThisPair, 1));
+      std::string const FileName = OSCARSPY::GetAsString(PyList_GetItem(ThisPair, 1));
 
       Mapping.push_back(std::make_pair(ParameterValue, FileName));
     }
@@ -528,7 +458,7 @@ static PyObject* OSCARSSR_AddMagneticFieldInterpolated (OSCARSSRObject* self, Py
   // Check for Rotations in the input
   if (PyList_Size(List_Rotations) != 0) {
     try {
-      Rotations = OSCARSSR_ListAsTVector3D(List_Rotations);
+      Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
       return NULL;
@@ -539,7 +469,7 @@ static PyObject* OSCARSSR_AddMagneticFieldInterpolated (OSCARSSRObject* self, Py
   // Check for Translation in the input
   if (PyList_Size(List_Translation) != 0) {
     try {
-      Translation = OSCARSSR_ListAsTVector3D(List_Translation);
+      Translation = OSCARSPY::ListAsTVector3D(List_Translation);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
       return NULL;
@@ -638,7 +568,7 @@ static PyObject* OSCARSSR_AddMagneticFieldGaussian (OSCARSSRObject* self, PyObje
 
   // Check BField
   try {
-    BField = OSCARSSR_ListAsTVector3D(List_BField);
+    BField = OSCARSPY::ListAsTVector3D(List_BField);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, "Incorrect format in 'bfield'");
     return NULL;
@@ -646,7 +576,7 @@ static PyObject* OSCARSSR_AddMagneticFieldGaussian (OSCARSSRObject* self, PyObje
 
   // Check Width
   try {
-    Sigma = OSCARSSR_ListAsTVector3D(List_Sigma);
+    Sigma = OSCARSPY::ListAsTVector3D(List_Sigma);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, "Incorrect format in 'sigma'");
     return NULL;
@@ -655,7 +585,7 @@ static PyObject* OSCARSSR_AddMagneticFieldGaussian (OSCARSSRObject* self, PyObje
   // Check for Rotations in the input
   if (PyList_Size(List_Rotations) != 0) {
     try {
-      Rotations = OSCARSSR_ListAsTVector3D(List_Rotations);
+      Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
       return NULL;
@@ -665,7 +595,7 @@ static PyObject* OSCARSSR_AddMagneticFieldGaussian (OSCARSSRObject* self, PyObje
   // Check for Translation in the input
   if (PyList_Size(List_Translation) != 0) {
     try {
-      Translation = OSCARSSR_ListAsTVector3D(List_Translation);
+      Translation = OSCARSPY::ListAsTVector3D(List_Translation);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
       return NULL;
@@ -716,7 +646,7 @@ static PyObject* OSCARSSR_AddMagneticFieldUniform (OSCARSSRObject* self, PyObjec
 
   // Check BField
   try {
-    BField = OSCARSSR_ListAsTVector3D(List_BField);
+    BField = OSCARSPY::ListAsTVector3D(List_BField);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, "Incorrect format in 'bfield'");
     return NULL;
@@ -725,7 +655,7 @@ static PyObject* OSCARSSR_AddMagneticFieldUniform (OSCARSSRObject* self, PyObjec
   // Check Width
   if (PyList_Size(List_Width) != 0) {
     try {
-      Width = OSCARSSR_ListAsTVector3D(List_Width);
+      Width = OSCARSPY::ListAsTVector3D(List_Width);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'width'");
       return NULL;
@@ -735,7 +665,7 @@ static PyObject* OSCARSSR_AddMagneticFieldUniform (OSCARSSRObject* self, PyObjec
   // Check for Rotations in the input
   if (PyList_Size(List_Rotations) != 0) {
     try {
-      Rotations = OSCARSSR_ListAsTVector3D(List_Rotations);
+      Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
       return NULL;
@@ -745,7 +675,7 @@ static PyObject* OSCARSSR_AddMagneticFieldUniform (OSCARSSRObject* self, PyObjec
   // Check for Translation in the input
   if (PyList_Size(List_Translation) != 0) {
     try {
-      Translation = OSCARSSR_ListAsTVector3D(List_Translation);
+      Translation = OSCARSPY::ListAsTVector3D(List_Translation);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
       return NULL;
@@ -837,7 +767,7 @@ static PyObject* OSCARSSR_AddMagneticFieldIdealUndulator (OSCARSSRObject* self, 
 
   // Check Field
   try {
-    Field = OSCARSSR_ListAsTVector3D(List_Field);
+    Field = OSCARSPY::ListAsTVector3D(List_Field);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, "Incorrect format in 'bfield'");
     return NULL;
@@ -845,7 +775,7 @@ static PyObject* OSCARSSR_AddMagneticFieldIdealUndulator (OSCARSSRObject* self, 
 
   // Check Period
   try {
-    Period = OSCARSSR_ListAsTVector3D(List_Period);
+    Period = OSCARSPY::ListAsTVector3D(List_Period);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, "Incorrect format in 'period'");
     return NULL;
@@ -854,7 +784,7 @@ static PyObject* OSCARSSR_AddMagneticFieldIdealUndulator (OSCARSSRObject* self, 
   // Check for Rotations in the input
   if (PyList_Size(List_Rotations) != 0) {
     try {
-      Rotations = OSCARSSR_ListAsTVector3D(List_Rotations);
+      Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
       return NULL;
@@ -864,7 +794,7 @@ static PyObject* OSCARSSR_AddMagneticFieldIdealUndulator (OSCARSSRObject* self, 
   // Check for Translation in the input
   if (PyList_Size(List_Translation) != 0) {
     try {
-      Translation = OSCARSSR_ListAsTVector3D(List_Translation);
+      Translation = OSCARSPY::ListAsTVector3D(List_Translation);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
       return NULL;
@@ -921,7 +851,7 @@ static PyObject* OSCARSSR_AddMagneticFieldQuadrupole (OSCARSSRObject* self, PyOb
   // Check for Rotations in the input
   if (PyList_Size(List_Rotations) != 0) {
     try {
-      Rotations = OSCARSSR_ListAsTVector3D(List_Rotations);
+      Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
       return NULL;
@@ -931,7 +861,7 @@ static PyObject* OSCARSSR_AddMagneticFieldQuadrupole (OSCARSSRObject* self, PyOb
   // Check for Translation in the input
   if (PyList_Size(List_Translation) != 0) {
     try {
-      Translation = OSCARSSR_ListAsTVector3D(List_Translation);
+      Translation = OSCARSPY::ListAsTVector3D(List_Translation);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
       return NULL;
@@ -974,7 +904,7 @@ static PyObject* OSCARSSR_GetBField (OSCARSSRObject* self, PyObject* args)
   // Grab the values
   TVector3D X;
   try {
-    X = OSCARSSR_ListAsTVector3D(List);
+    X = OSCARSPY::ListAsTVector3D(List);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
     return NULL;
@@ -984,7 +914,7 @@ static PyObject* OSCARSSR_GetBField (OSCARSSRObject* self, PyObject* args)
   TVector3D const B = self->obj->GetB(X);
 
   // Create a python list
-  PyObject *PList = OSCARSSR_TVector3DAsList(B);
+  PyObject *PList = OSCARSPY::TVector3DAsList(B);
 
   // Return the python list
   return PList;
@@ -1041,7 +971,7 @@ static PyObject* OSCARSSR_AddElectricField (OSCARSSRObject* self, PyObject* args
   // Check for Rotations in the input
   if (PyList_Size(List_Rotations) != 0) {
     try {
-      Rotations = OSCARSSR_ListAsTVector3D(List_Rotations);
+      Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
       return NULL;
@@ -1052,7 +982,7 @@ static PyObject* OSCARSSR_AddElectricField (OSCARSSRObject* self, PyObject* args
   // Check for Translation in the input
   if (PyList_Size(List_Translation) != 0) {
     try {
-      Translation = OSCARSSR_ListAsTVector3D(List_Translation);
+      Translation = OSCARSPY::ListAsTVector3D(List_Translation);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
       return NULL;
@@ -1151,7 +1081,7 @@ static PyObject* OSCARSSR_AddElectricFieldGaussian (OSCARSSRObject* self, PyObje
 
   // Check Field
   try {
-    Field = OSCARSSR_ListAsTVector3D(List_Field);
+    Field = OSCARSPY::ListAsTVector3D(List_Field);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, "Incorrect format in 'efield'");
     return NULL;
@@ -1159,7 +1089,7 @@ static PyObject* OSCARSSR_AddElectricFieldGaussian (OSCARSSRObject* self, PyObje
 
   // Check Width
   try {
-    Sigma = OSCARSSR_ListAsTVector3D(List_Sigma);
+    Sigma = OSCARSPY::ListAsTVector3D(List_Sigma);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, "Incorrect format in 'sigma'");
     return NULL;
@@ -1168,7 +1098,7 @@ static PyObject* OSCARSSR_AddElectricFieldGaussian (OSCARSSRObject* self, PyObje
   // Check for Rotations in the input
   if (PyList_Size(List_Rotations) != 0) {
     try {
-      Rotations = OSCARSSR_ListAsTVector3D(List_Rotations);
+      Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
       return NULL;
@@ -1178,7 +1108,7 @@ static PyObject* OSCARSSR_AddElectricFieldGaussian (OSCARSSRObject* self, PyObje
   // Check for Translation in the input
   if (PyList_Size(List_Translation) != 0) {
     try {
-      Translation = OSCARSSR_ListAsTVector3D(List_Translation);
+      Translation = OSCARSPY::ListAsTVector3D(List_Translation);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
       return NULL;
@@ -1229,7 +1159,7 @@ static PyObject* OSCARSSR_AddElectricFieldUniform (OSCARSSRObject* self, PyObjec
 
   // Check Field
   try {
-    Field = OSCARSSR_ListAsTVector3D(List_Field);
+    Field = OSCARSPY::ListAsTVector3D(List_Field);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, "Incorrect format in 'efield'");
     return NULL;
@@ -1238,7 +1168,7 @@ static PyObject* OSCARSSR_AddElectricFieldUniform (OSCARSSRObject* self, PyObjec
   // Check Width
   if (PyList_Size(List_Width) != 0) {
     try {
-      Width = OSCARSSR_ListAsTVector3D(List_Width);
+      Width = OSCARSPY::ListAsTVector3D(List_Width);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'width'");
       return NULL;
@@ -1248,7 +1178,7 @@ static PyObject* OSCARSSR_AddElectricFieldUniform (OSCARSSRObject* self, PyObjec
   // Check for Rotations in the input
   if (PyList_Size(List_Rotations) != 0) {
     try {
-      Rotations = OSCARSSR_ListAsTVector3D(List_Rotations);
+      Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
       return NULL;
@@ -1258,7 +1188,7 @@ static PyObject* OSCARSSR_AddElectricFieldUniform (OSCARSSRObject* self, PyObjec
   // Check for Translation in the input
   if (PyList_Size(List_Translation) != 0) {
     try {
-      Translation = OSCARSSR_ListAsTVector3D(List_Translation);
+      Translation = OSCARSPY::ListAsTVector3D(List_Translation);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
       return NULL;
@@ -1315,7 +1245,7 @@ static PyObject* OSCARSSR_AddElectricFieldIdealUndulator (OSCARSSRObject* self, 
 
   // Check Field
   try {
-    Field = OSCARSSR_ListAsTVector3D(List_Field);
+    Field = OSCARSPY::ListAsTVector3D(List_Field);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, "Incorrect format in 'efield'");
     return NULL;
@@ -1323,7 +1253,7 @@ static PyObject* OSCARSSR_AddElectricFieldIdealUndulator (OSCARSSRObject* self, 
 
   // Check Period
   try {
-    Period = OSCARSSR_ListAsTVector3D(List_Period);
+    Period = OSCARSPY::ListAsTVector3D(List_Period);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, "Incorrect format in 'period'");
     return NULL;
@@ -1332,7 +1262,7 @@ static PyObject* OSCARSSR_AddElectricFieldIdealUndulator (OSCARSSRObject* self, 
   // Check for Rotations in the input
   if (PyList_Size(List_Rotations) != 0) {
     try {
-      Rotations = OSCARSSR_ListAsTVector3D(List_Rotations);
+      Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
       return NULL;
@@ -1342,7 +1272,7 @@ static PyObject* OSCARSSR_AddElectricFieldIdealUndulator (OSCARSSRObject* self, 
   // Check for Translation in the input
   if (PyList_Size(List_Translation) != 0) {
     try {
-      Translation = OSCARSSR_ListAsTVector3D(List_Translation);
+      Translation = OSCARSPY::ListAsTVector3D(List_Translation);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
       return NULL;
@@ -1391,7 +1321,7 @@ static PyObject* OSCARSSR_GetEField (OSCARSSRObject* self, PyObject* args)
   // Grab the values
   TVector3D X;
   try {
-    X = OSCARSSR_ListAsTVector3D(List);
+    X = OSCARSPY::ListAsTVector3D(List);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, "Incorrect format in input");
     return NULL;
@@ -1401,7 +1331,7 @@ static PyObject* OSCARSSR_GetEField (OSCARSSRObject* self, PyObject* args)
   TVector3D const F = self->obj->GetE(X);
 
   // Create a python list
-  PyObject *PList = OSCARSSR_TVector3DAsList(F);
+  PyObject *PList = OSCARSPY::TVector3DAsList(F);
 
   // Return the python list
   return PList;
@@ -1510,7 +1440,7 @@ static PyObject* OSCARSSR_WriteMagneticField (OSCARSSRObject* self, PyObject* ar
   // Check for XLim in the input
   if (PyList_Size(List_XLim) != 0) {
     try {
-      XLim = OSCARSSR_ListAsTVector2D(List_XLim);
+      XLim = OSCARSPY::ListAsTVector2D(List_XLim);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'xlim'");
       return NULL;
@@ -1520,7 +1450,7 @@ static PyObject* OSCARSSR_WriteMagneticField (OSCARSSRObject* self, PyObject* ar
   // Check for YLim in the input
   if (PyList_Size(List_YLim) != 0) {
     try {
-      YLim = OSCARSSR_ListAsTVector2D(List_YLim);
+      YLim = OSCARSPY::ListAsTVector2D(List_YLim);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'ylim'");
       return NULL;
@@ -1530,7 +1460,7 @@ static PyObject* OSCARSSR_WriteMagneticField (OSCARSSRObject* self, PyObject* ar
   // Check for ZLim in the input
   if (PyList_Size(List_ZLim) != 0) {
     try {
-      ZLim = OSCARSSR_ListAsTVector2D(List_ZLim);
+      ZLim = OSCARSPY::ListAsTVector2D(List_ZLim);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'zlim'");
       return NULL;
@@ -1601,7 +1531,7 @@ static PyObject* OSCARSSR_WriteElectricField (OSCARSSRObject* self, PyObject* ar
   // Check for XLim in the input
   if (PyList_Size(List_XLim) != 0) {
     try {
-      XLim = OSCARSSR_ListAsTVector2D(List_XLim);
+      XLim = OSCARSPY::ListAsTVector2D(List_XLim);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'xlim'");
       return NULL;
@@ -1611,7 +1541,7 @@ static PyObject* OSCARSSR_WriteElectricField (OSCARSSRObject* self, PyObject* ar
   // Check for YLim in the input
   if (PyList_Size(List_YLim) != 0) {
     try {
-      YLim = OSCARSSR_ListAsTVector2D(List_YLim);
+      YLim = OSCARSPY::ListAsTVector2D(List_YLim);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'ylim'");
       return NULL;
@@ -1621,7 +1551,7 @@ static PyObject* OSCARSSR_WriteElectricField (OSCARSSRObject* self, PyObject* ar
   // Check for ZLim in the input
   if (PyList_Size(List_ZLim) != 0) {
     try {
-      ZLim = OSCARSSR_ListAsTVector2D(List_ZLim);
+      ZLim = OSCARSPY::ListAsTVector2D(List_ZLim);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'zlim'");
       return NULL;
@@ -1801,7 +1731,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   // Initial position
   if (PyList_Size(List_Position) != 0) {
     try {
-      Position = OSCARSSR_ListAsTVector3D(List_Position);
+      Position = OSCARSPY::ListAsTVector3D(List_Position);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'x0'");
       return NULL;
@@ -1816,7 +1746,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   // Initial direction
   if (PyList_Size(List_Direction) != 0) {
     try {
-      Direction = OSCARSSR_ListAsTVector3D(List_Direction);
+      Direction = OSCARSPY::ListAsTVector3D(List_Direction);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'd0'");
       return NULL;
@@ -1843,7 +1773,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   // Check for Rotations in the input
   if (PyList_Size(List_Rotations) != 0) {
     try {
-      Rotations = OSCARSSR_ListAsTVector3D(List_Rotations);
+      Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
       return NULL;
@@ -1854,7 +1784,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   // Check for Translation in the input
   if (PyList_Size(List_Translation) != 0) {
     try {
-      Translation = OSCARSSR_ListAsTVector3D(List_Translation);
+      Translation = OSCARSPY::ListAsTVector3D(List_Translation);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
       return NULL;
@@ -1866,7 +1796,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   // Check for Horizontal_Direction in the input
   if (PyList_Size(List_Horizontal_Direction) != 0) {
     try {
-      Horizontal_Direction = OSCARSSR_ListAsTVector3D(List_Horizontal_Direction);
+      Horizontal_Direction = OSCARSPY::ListAsTVector3D(List_Horizontal_Direction);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'horizontal_direction'");
       return NULL;
@@ -1880,7 +1810,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   // Check for Beta in the input
   if (PyList_Size(List_Beta) != 0) {
     try {
-      Beta = OSCARSSR_ListAsTVector2D(List_Beta);
+      Beta = OSCARSPY::ListAsTVector2D(List_Beta);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'beta'");
       return NULL;
@@ -1891,7 +1821,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   // Check for Emittance in the input
   if (PyList_Size(List_Emittance) != 0) {
     try {
-      Emittance = OSCARSSR_ListAsTVector2D(List_Emittance);
+      Emittance = OSCARSPY::ListAsTVector2D(List_Emittance);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'emittance'");
       return NULL;
@@ -1902,7 +1832,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   // Check for Lattice reference in the input
   if (PyList_Size(List_Lattice_Reference) != 0) {
     try {
-      Lattice_Reference = OSCARSSR_ListAsTVector3D(List_Lattice_Reference);
+      Lattice_Reference = OSCARSPY::ListAsTVector3D(List_Lattice_Reference);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'lattice_reference'");
       return NULL;
@@ -2048,7 +1978,7 @@ static PyObject* OSCARSSR_SetNewParticle (OSCARSSRObject* self, PyObject* args, 
 static PyObject* OSCARSSR_GetParticleX0 (OSCARSSRObject* self)
 {
   // Get the particle position at particle t0
-  return OSCARSSR_TVector3DAsList( self->obj->GetCurrentParticle().GetX0() );
+  return OSCARSPY::TVector3DAsList( self->obj->GetCurrentParticle().GetX0() );
 }
 
 
@@ -2057,7 +1987,7 @@ static PyObject* OSCARSSR_GetParticleX0 (OSCARSSRObject* self)
 static PyObject* OSCARSSR_GetParticleBeta0 (OSCARSSRObject* self)
 {
   // Get the particle beta at particle t0
-  return OSCARSSR_TVector3DAsList( self->obj->GetCurrentParticle().GetB0() );
+  return OSCARSPY::TVector3DAsList( self->obj->GetCurrentParticle().GetB0() );
 }
 
 
@@ -2152,8 +2082,8 @@ static PyObject* OSCARSSR_GetTrajectory (OSCARSSRObject* self)
     PyObject *PList2 = PyList_New(0);
 
     // Add position and Beta to list
-    PyList_Append(PList2, OSCARSSR_TVector3DAsList(T.GetX(iT)));
-    PyList_Append(PList2, OSCARSSR_TVector3DAsList(T.GetB(iT)));
+    PyList_Append(PList2, OSCARSPY::TVector3DAsList(T.GetX(iT)));
+    PyList_Append(PList2, OSCARSPY::TVector3DAsList(T.GetB(iT)));
     PyList_Append(PList, PList2);
   }
 
@@ -2166,36 +2096,6 @@ static PyObject* OSCARSSR_GetTrajectory (OSCARSSRObject* self)
 
 
 
-
-
-
-
-
-
-static PyObject* OSCARSSR_GetSpectrumAsList (OSCARSSRObject* self, TSpectrumContainer const& Spectrum)
-{
-  // Get the spectrum as a list format for python output
-
-  // Create a python list
-  PyObject *PList = PyList_New(0);
-
-  // Number of points in trajectory calculation
-  size_t NSPoints = Spectrum.GetNPoints();
-
-  // Loop over all points in trajectory
-  for (int iS = 0; iS != NSPoints; ++iS) {
-    // Create a python list for X and Beta
-    PyObject *PList2 = PyList_New(0);
-
-    // Add position and Beta to list
-    PyList_Append(PList2, Py_BuildValue("f", Spectrum.GetEnergy(iS)));
-    PyList_Append(PList2, Py_BuildValue("f", Spectrum.GetFlux(iS)));
-    PyList_Append(PList, PList2);
-  }
-
-  // Return the python list
-  return PList;
-}
 
 
 
@@ -2217,7 +2117,7 @@ static PyObject* OSCARSSR_GetT3DScalarAsList (OSCARSSRObject* self, T3DScalarCon
     // Create a python list
     PyObject *PList2 = PyList_New(0);
 
-    PyObject *X = OSCARSSR_TVector3DAsList(C.GetPoint(i).GetX());
+    PyObject *X = OSCARSPY::TVector3DAsList(C.GetPoint(i).GetX());
     double const V = C.GetPoint(i).GetV();
 
     // Add position and Beta to list
@@ -2291,7 +2191,7 @@ T3DScalarContainer OSCARSSR_GetT3DScalarContainerFromList (PyObject* List)
   for (int ip = 0; ip != NPoints; ++ip) {
     PyObject* List_Point = PyList_GetItem(List, ip);
     if (PyList_Size(List_Point) == 2) {
-      F.AddPoint(OSCARSSR_ListAsTVector3D(PyList_GetItem(List_Point, 0)), PyFloat_AsDouble(PyList_GetItem(List_Point, 1)));
+      F.AddPoint(OSCARSPY::ListAsTVector3D(PyList_GetItem(List_Point, 0)), PyFloat_AsDouble(PyList_GetItem(List_Point, 1)));
     } else {
       throw;
     }
@@ -2353,7 +2253,7 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
   int         NParticles                = 0;
   int         NThreads                  = 0;
   int         GPU                       = -1;
-  char*       OutFileName               = "";
+  char*       OutFileNameText           = "";
   char*       OutFileNameBinary         = "";
 
   // Input variable list
@@ -2387,7 +2287,7 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
                                    &NParticles,
                                    &NThreads,
                                    &GPU,
-                                   &OutFileName,
+                                   &OutFileNameText,
                                    &OutFileNameBinary)) {
     return NULL;
   }
@@ -2431,7 +2331,7 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
   // Observation point
   TVector3D Obs(0, 0, 0);
   try {
-    Obs = OSCARSSR_ListAsTVector3D(List_Obs);
+    Obs = OSCARSPY::ListAsTVector3D(List_Obs);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, "Incorrect format in 'obs'");
     return NULL;
@@ -2442,7 +2342,7 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
   TVector3D HorizontalDirection(0, 0, 0);
   if (PyList_Size(List_HorizontalDirection) != 0) {
     try {
-      HorizontalDirection = OSCARSSR_ListAsTVector3D(List_HorizontalDirection);
+      HorizontalDirection = OSCARSPY::ListAsTVector3D(List_HorizontalDirection);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
       return NULL;
@@ -2454,7 +2354,7 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
   TVector3D PropogationDirection(0, 0, 0);
   if (PyList_Size(List_PropogationDirection) != 0) {
     try {
-      PropogationDirection = OSCARSSR_ListAsTVector3D(List_PropogationDirection);
+      PropogationDirection = OSCARSPY::ListAsTVector3D(List_PropogationDirection);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
       return NULL;
@@ -2512,8 +2412,8 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
   }
 
 
-  if (std::string(OutFileName) != "") {
-    SpectrumContainer.WriteToFileText(OutFileName);
+  if (std::string(OutFileNameText) != "") {
+    SpectrumContainer.WriteToFileText(OutFileNameText);
   }
 
   if (std::string(OutFileNameBinary) != "") {
@@ -2521,7 +2421,7 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
   }
 
   // Return the spectrum
-  return OSCARSSR_GetSpectrumAsList(self, SpectrumContainer);
+  return OSCARSPY::GetSpectrumAsList(SpectrumContainer);
 }
 
 
@@ -2625,7 +2525,7 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
   // Check for Rotations in the input
   if (PyList_Size(List_Rotations) != 0) {
     try {
-      Rotations = OSCARSSR_ListAsTVector3D(List_Rotations);
+      Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
       return NULL;
@@ -2636,7 +2536,7 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
   // Check for Translation in the input
   if (PyList_Size(List_Translation) != 0) {
     try {
-      Translation = OSCARSSR_ListAsTVector3D(List_Translation);
+      Translation = OSCARSPY::ListAsTVector3D(List_Translation);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
       return NULL;
@@ -2652,8 +2552,8 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
     if (PyList_Size(LXN) == 2) {
 
       try {
-        X = OSCARSSR_ListAsTVector3D(PyList_GetItem(LXN, 0));
-        N = OSCARSSR_ListAsTVector3D(PyList_GetItem(LXN, 1));
+        X = OSCARSPY::ListAsTVector3D(PyList_GetItem(LXN, 0));
+        N = OSCARSPY::ListAsTVector3D(PyList_GetItem(LXN, 1));
       } catch (std::length_error e) {
         PyErr_SetString(PyExc_ValueError, "Incorrect format in 'points': Point or Normal does not have 3 elements");
         return NULL;
@@ -2742,7 +2642,7 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
 
 
     // Add position and value to list
-    PyList_Append(PList2, OSCARSSR_TVector3DAsList(P.GetX()));
+    PyList_Append(PList2, OSCARSPY::TVector3DAsList(P.GetX()));
     PyList_Append(PList2, Py_BuildValue("f", P.GetV()));
     PyList_Append(PList, PList2);
 
@@ -2841,7 +2741,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
   // Check for Rotations in the input
   if (PyList_Size(List_Rotations) != 0) {
     try {
-      Rotations = OSCARSSR_ListAsTVector3D(List_Rotations);
+      Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
       return NULL;
@@ -2852,7 +2752,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
   // Check for Translation in the input
   if (PyList_Size(List_Translation) != 0) {
     try {
-      Translation = OSCARSSR_ListAsTVector3D(List_Translation);
+      Translation = OSCARSPY::ListAsTVector3D(List_Translation);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
       return NULL;
@@ -2888,7 +2788,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
         PyObject* List_X = PyList_GetItem(List_X0X1X2, i);
 
         try {
-          X0X1X2.push_back(OSCARSSR_ListAsTVector3D(List_X));
+          X0X1X2.push_back(OSCARSPY::ListAsTVector3D(List_X));
         } catch (std::length_error e) {
           PyErr_SetString(PyExc_ValueError, "Incorrect format in 'x0x1x2'");
           return NULL;
@@ -2986,7 +2886,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
 
 
     // Add position and value to list
-    PyList_Append(PList2, OSCARSSR_TVector3DAsList(P.GetX()));
+    PyList_Append(PList2, OSCARSPY::TVector3DAsList(P.GetX()));
     PyList_Append(PList2, Py_BuildValue("f", P.GetV()));
     PyList_Append(PList, PList2);
 
@@ -3070,7 +2970,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
   // Check for Rotations in the input
   if (PyList_Size(List_Rotations) != 0) {
     try {
-      Rotations = OSCARSSR_ListAsTVector3D(List_Rotations);
+      Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
       return NULL;
@@ -3081,7 +2981,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
   // Check for Translation in the input
   if (PyList_Size(List_Translation) != 0) {
     try {
-      Translation = OSCARSSR_ListAsTVector3D(List_Translation);
+      Translation = OSCARSPY::ListAsTVector3D(List_Translation);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
       return NULL;
@@ -3097,8 +2997,8 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
     if (PyList_Size(LXN) == 2) {
 
       try {
-        X = OSCARSSR_ListAsTVector3D(PyList_GetItem(LXN, 0));
-        N = OSCARSSR_ListAsTVector3D(PyList_GetItem(LXN, 1));
+        X = OSCARSPY::ListAsTVector3D(PyList_GetItem(LXN, 0));
+        N = OSCARSPY::ListAsTVector3D(PyList_GetItem(LXN, 1));
       } catch (std::length_error e) {
         PyErr_SetString(PyExc_ValueError, "Incorrect format in 'points': Point or Normal does not have 3 elements");
         return NULL;
@@ -3192,7 +3092,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
 
 
     // Add position and value to list
-    PyList_Append(PList2, OSCARSSR_TVector3DAsList(P.GetX()));
+    PyList_Append(PList2, OSCARSPY::TVector3DAsList(P.GetX()));
     PyList_Append(PList2, Py_BuildValue("f", P.GetV()));
     PyList_Append(PList, PList2);
 
@@ -3304,7 +3204,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   // Check for Rotations in the input
   if (PyList_Size(List_Rotations) != 0) {
     try {
-      Rotations = OSCARSSR_ListAsTVector3D(List_Rotations);
+      Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
       return NULL;
@@ -3315,7 +3215,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   // Check for Translation in the input
   if (PyList_Size(List_Translation) != 0) {
     try {
-      Translation = OSCARSSR_ListAsTVector3D(List_Translation);
+      Translation = OSCARSPY::ListAsTVector3D(List_Translation);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
       return NULL;
@@ -3351,7 +3251,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
         PyObject* List_X = PyList_GetItem(List_X0X1X2, i);
 
         try {
-          X0X1X2.push_back(OSCARSSR_ListAsTVector3D(List_X));
+          X0X1X2.push_back(OSCARSPY::ListAsTVector3D(List_X));
         } catch (std::length_error e) {
           PyErr_SetString(PyExc_ValueError, "Incorrect format in 'x0x1x2'");
           return NULL;
@@ -3377,7 +3277,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   TVector3D HorizontalDirection(0, 0, 0);
   if (PyList_Size(List_HorizontalDirection) != 0) {
     try {
-      HorizontalDirection = OSCARSSR_ListAsTVector3D(List_HorizontalDirection);
+      HorizontalDirection = OSCARSPY::ListAsTVector3D(List_HorizontalDirection);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
       return NULL;
@@ -3389,7 +3289,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   TVector3D PropogationDirection(0, 0, 0);
   if (PyList_Size(List_PropogationDirection) != 0) {
     try {
-      PropogationDirection = OSCARSSR_ListAsTVector3D(List_PropogationDirection);
+      PropogationDirection = OSCARSPY::ListAsTVector3D(List_PropogationDirection);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
       return NULL;
@@ -3480,7 +3380,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
 
 
     // Add position and value to list
-    PyList_Append(PList2, OSCARSSR_TVector3DAsList(P.GetX()));
+    PyList_Append(PList2, OSCARSPY::TVector3DAsList(P.GetX()));
     PyList_Append(PList2, Py_BuildValue("f", P.GetV()));
     PyList_Append(PList, PList2);
 
@@ -3542,10 +3442,10 @@ static PyObject* OSCARSSR_AverageSpectra (OSCARSSRObject* self, PyObject* args, 
   std::vector<std::string> FileNames;
   std::vector<std::string> FileNamesBinary;
   for (size_t i = 0; i != NFilesText; ++i) {
-    FileNames.push_back( GetAsString(PyList_GetItem(List_InFileNamesText, i)) );
+    FileNames.push_back( OSCARSPY::GetAsString(PyList_GetItem(List_InFileNamesText, i)) );
   }
   for (size_t i = 0; i != NFilesBinary; ++i) {
-    FileNamesBinary.push_back( GetAsString(PyList_GetItem(List_InFileNamesBinary, i)) );
+    FileNamesBinary.push_back( OSCARSPY::GetAsString(PyList_GetItem(List_InFileNamesBinary, i)) );
   }
 
   // Container for flux average
@@ -3585,7 +3485,7 @@ static PyObject* OSCARSSR_AverageSpectra (OSCARSSRObject* self, PyObject* args, 
   }
 
 
-  return OSCARSSR_GetSpectrumAsList(self, Container);
+  return OSCARSPY::GetSpectrumAsList(Container);
 }
 
 
@@ -3635,7 +3535,7 @@ static PyObject* OSCARSSR_GetSpectrum (OSCARSSRObject* self)
 {
   // Calculate the flux on a surface given an energy and list of points in 3D
 
-  return OSCARSSR_GetSpectrumAsList(self, self->obj->GetSpectrum());
+  return OSCARSPY::GetSpectrumAsList(self->obj->GetSpectrum());
 }
 
 
@@ -3780,10 +3680,10 @@ static PyObject* OSCARSSR_AverageT3DScalars (OSCARSSRObject* self, PyObject* arg
   // Add file names to vector
   std::vector<std::string> FileNames;
   for (size_t i = 0; i != NFilesText; ++i) {
-    FileNames.push_back( GetAsString(PyList_GetItem(List_InFileNamesText, i)) );
+    FileNames.push_back( OSCARSPY::GetAsString(PyList_GetItem(List_InFileNamesText, i)) );
   }
   for (size_t i = 0; i != NFilesBinary; ++i) {
-    FileNames.push_back( GetAsString(PyList_GetItem(List_InFileNamesBinary, i)) );
+    FileNames.push_back( OSCARSPY::GetAsString(PyList_GetItem(List_InFileNamesBinary, i)) );
   }
 
 
@@ -3822,7 +3722,7 @@ static PyObject* OSCARSSR_AverageT3DScalars (OSCARSSRObject* self, PyObject* arg
 
 
     // Add position and value to list
-    PyList_Append(PList2, OSCARSSR_TVector3DAsList(P.GetX()));
+    PyList_Append(PList2, OSCARSPY::TVector3DAsList(P.GetX()));
     PyList_Append(PList2, Py_BuildValue("f", P.GetV()));
     PyList_Append(PList, PList2);
 
@@ -3878,7 +3778,7 @@ static PyObject* OSCARSSR_CalculateElectricFieldTimeDomain (OSCARSSRObject* self
   // Observation point
   TVector3D Obs(0, 0, 0);
   try {
-      Obs = OSCARSSR_ListAsTVector3D(List_Obs);
+      Obs = OSCARSPY::ListAsTVector3D(List_Obs);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, "Incorrect format in 'obs'");
     return NULL;
@@ -3907,7 +3807,7 @@ static PyObject* OSCARSSR_CalculateElectricFieldTimeDomain (OSCARSSRObject* self
 
     // Add position and value to list
     PyList_Append(PList2, Py_BuildValue("f", P.GetV()));
-    PyList_Append(PList2, OSCARSSR_TVector3DAsList(P.GetX()));
+    PyList_Append(PList2, OSCARSPY::TVector3DAsList(P.GetX()));
     PyList_Append(PList, PList2);
 
   }

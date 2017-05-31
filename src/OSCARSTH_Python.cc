@@ -14,6 +14,7 @@
 
 #include "OSCARSTH_Python.h"
 
+#include "OSCARSPY.h"
 #include "OSCARSTH.h"
 #include "Version.h"
 
@@ -28,46 +29,6 @@
 #include <cstring>
 #include <stdexcept>
 #include <sstream>
-
-
-
-
-
-
-static TVector2D OSCARSTH_ListAsTVector2D (PyObject* List)
-{
-  TVector2D V;
-  if (PyList_Size(List) == 2) {
-    Py_INCREF(List);
-    V.SetXY(PyFloat_AsDouble(PyList_GetItem(List, 0)),
-             PyFloat_AsDouble(PyList_GetItem(List, 1)));
-    Py_DECREF(List);
-  } else {
-    throw std::length_error("number of elements not 2");
-  }
-
-  // Return the python list
-  return V;
-}
-
-
-
-static PyObject* OSCARSTH_TVector2DAsList (TVector2D const& V)
-{
-  // Turn a TVector3D into a list (like a vector)
-
-  // Create a python list
-  PyObject *PList = PyList_New(0);
-
-  PyList_Append(PList, Py_BuildValue("f", V.GetX()));
-  PyList_Append(PList, Py_BuildValue("f", V.GetY()));
-
-  // Return the python list
-  return PList;
-}
-
-
-
 
 
 
@@ -197,6 +158,149 @@ static PyObject* OSCARSTH_UndulatorPeriod (OSCARSTHObject* self, PyObject* args,
 
 
 
+const char* DOC_OSCARSTH_DipoleSpectrum2 = "Get the spectrum from ideal dipole field";
+static PyObject* OSCARSTH_DipoleSpectrum2 (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
+{
+  // Return a list of points corresponding to the flux in a given energy range for a given vertical angle.
+  // This approximation assumes that the particle beam is perpendicular to the magnetic field
+
+  // Require 2 arguments
+  double    BField               = 0;
+  PyObject* List_EnergyRange_eV  = PyList_New(0);
+  PyObject* List_EnergyPoints_eV = PyList_New(0);
+  double    Energy_eV            = 0;
+  PyObject* List_AngleRange      = PyList_New(0);
+  PyObject* List_AnglePoints     = PyList_New(0);
+  double    Angle                = 0;
+  int       NPoints              = 0;
+  double    Minimum              = 0;
+  char*     OutFileNameText      = "";
+  char*     OutFileNameBinary    = "";
+
+  // Input variable list
+  static char *kwlist[] = {"bfield",
+                           "energy_range_eV",
+                           "energy_points_eV",
+                           "energy_eV",
+                           "angle_range",
+                           "angle_points",
+                           "angle",
+                           "npoints",
+                           "minimum",
+                           "ofile",
+                           "bofile",
+                           NULL};
+
+  // Parse inputs
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|OOdOOdidss", kwlist,
+                                   &BField,
+                                   &List_EnergyRange_eV,
+                                   &List_EnergyPoints_eV,
+                                   &Energy_eV,
+                                   &List_AngleRange,
+                                   &List_AnglePoints,
+                                   &Angle,
+                                   &NPoints,
+                                   &Minimum,
+                                   &OutFileNameText,
+                                   &OutFileNameBinary)) {
+    return NULL;
+  }
+
+  // Must have a bfield
+  if (fabs(BField) == 0) {
+    PyErr_SetString(PyExc_ValueError, "'bfield' must not be zero");
+    return NULL;
+  }
+
+  // Must have some combination that makes sense
+  if (PyList_Size(List_EnergyRange_eV) != 0 && PyList_Size(List_AngleRange) != 0) {
+    PyErr_SetString(PyExc_ValueError, "can only specify 'energy_range_eV' or 'angle_range', but not both");
+    return NULL;
+  } else if (PyList_Size(List_EnergyPoints_eV) != 0 && PyList_Size(List_AnglePoints) != 0) {
+    PyErr_SetString(PyExc_ValueError, "cannot specify both energy and angle lists");
+    return NULL;
+  } else if (PyList_Size(List_EnergyRange_eV) != 0 && NPoints == 0) {
+    PyErr_SetString(PyExc_ValueError, "must specify 'npoints' > 0");
+    return NULL;
+  } else if (PyList_Size(List_AngleRange) != 0 && NPoints == 0) {
+    PyErr_SetString(PyExc_ValueError, "must specify 'npoints' > 0");
+    return NULL;
+  }
+
+  // Container for spectrum
+  TSpectrumContainer SpectrumContainer;
+
+  // Grap points if they are there
+  std::vector<double> VEnergyPoints_eV;
+  for (size_t i = 0; i < PyList_Size(List_EnergyPoints_eV); ++i) {
+    VEnergyPoints_eV.push_back(PyFloat_AsDouble(PyList_GetItem(List_EnergyPoints_eV, i)));
+  }
+  std::vector<double> VAnglePoints;
+  for (size_t i = 0; i < PyList_Size(List_AnglePoints); ++i) {
+    VAnglePoints.push_back(PyFloat_AsDouble(PyList_GetItem(List_AnglePoints, i)));
+  }
+
+  // Select on inputs and calculate
+  if (PyList_Size(List_EnergyRange_eV) != 0 && NPoints > 0) {
+    TVector2D const EnergyRange_eV = OSCARSPY::ListAsTVector2D(List_EnergyRange_eV);
+    SpectrumContainer.Init(NPoints, EnergyRange_eV[0], EnergyRange_eV[1]);
+    //self->obj->CalculateSpectrum();
+  } else if (PyList_Size(List_EnergyPoints_eV) != 0) {
+    SpectrumContainer.Init(VEnergyPoints_eV);
+  } else if (PyList_Size(List_AngleRange) != 0 && NPoints > 0) {
+    TVector2D const AngleRange = OSCARSPY::ListAsTVector2D(List_AngleRange);
+    SpectrumContainer.Init(NPoints, AngleRange[0], AngleRange[1]);
+  } else if (PyList_Size(List_AnglePoints) != 0 && Energy_eV > 0) {
+    SpectrumContainer.Init(VAnglePoints);
+  } else {
+    PyErr_SetString(PyExc_ValueError, "Incorrect combination of or missing input parameters.  Please see documentation for this function");
+    return NULL;
+  }
+
+
+
+  TVector2D EnergyRange_eV;
+  TVector2D AngleRange;
+
+  // Check for energy range
+  if (PyList_Size(List_EnergyRange_eV) != 0) {
+    try {
+      EnergyRange_eV = OSCARSPY::ListAsTVector2D(List_EnergyRange_eV);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'energy_range_eV'");
+      return NULL;
+    }
+  }
+
+  // Check for angle range
+  if (PyList_Size(List_AngleRange) != 0) {
+    try {
+      AngleRange = OSCARSPY::ListAsTVector2D(List_AngleRange);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'angle_range'");
+      return NULL;
+    }
+  }
+
+
+  if (std::string(OutFileNameText) != "") {
+    SpectrumContainer.WriteToFileText(OutFileNameText);
+  }
+
+  if (std::string(OutFileNameBinary) != "") {
+    SpectrumContainer.WriteToFileBinary(OutFileNameBinary);
+  }
+
+  // Return the spectrum
+  return OSCARSPY::GetSpectrumAsList(SpectrumContainer);
+}
+
+
+
+
+
+
 const char* DOC_OSCARSTH_DipoleSpectrum = "Get the spectrum from ideal dipole field";
 static PyObject* OSCARSTH_DipoleSpectrum (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {
@@ -222,7 +326,7 @@ static PyObject* OSCARSTH_DipoleSpectrum (OSCARSTHObject* self, PyObject* args, 
     return NULL;
   }
 
-  //TVector2D const EnergyRange = OSCARSTH_ListAsTVector2D(List_EnergyRange);
+  //TVector2D const EnergyRange = OSCARSPY::ListAsTVector2D(List_EnergyRange);
   //if (EnergyRange[0] >= EnergyRange[1] || EnergyRange[0] <= 1 || EnergyRange[1] <= 0) {
   //  PyErr_SetString(PyExc_ValueError, "'energy_range_eV' is incorrect");
   //  return NULL;
@@ -300,7 +404,7 @@ static PyObject* OSCARSTH_DipoleBrightness (OSCARSTHObject* self, PyObject* args
   //  return NULL;
   //}
 
-  //TVector2D const EnergyRange = OSCARSTH_ListAsTVector2D(List_EnergyRange);
+  //TVector2D const EnergyRange = OSCARSPY::ListAsTVector2D(List_EnergyRange);
   //if (EnergyRange[0] >= EnergyRange[1] || EnergyRange[0] <= 1 || EnergyRange[1] <= 0) {
   //  PyErr_SetString(PyExc_ValueError, "'energy_range_eV' is incorrect");
   //  return NULL;
@@ -313,59 +417,6 @@ static PyObject* OSCARSTH_DipoleBrightness (OSCARSTHObject* self, PyObject* args
   // Must return python object None in a special way
   //Py_INCREF(Py_None);
   //return Py_None;
-}
-
-
-
-
-
-
-
-const char* DOC_OSCARSTH_UndulatorFlux = "Get the flux for an ideal undulator";
-static PyObject* OSCARSTH_UndulatorFlux (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
-{
-  // Return the flux [gamma/s/mrad^2/0.1%bw] at a given angle
-  // This approximation assumes that the particle beam is perpendicular to the magnetic field
-
-  // Require 2 arguments
-  double BField = 0;
-  double NPeriods = 0;
-  double Period = 0;
-  double BeamEnergy = 0;
-  double AngleV = 0;
-  double AngleH = 0;
-  double Energy_eV = 0;
-
-  // Input variables and parsing
-  static char *kwlist[] = {"bfield", "period", "nperiods", "beam_energy_GeV", "angle_vertical", "angle_horizontal", "energy_eV", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ddddddd", kwlist, &BField, &Period, &NPeriods, &BeamEnergy, &AngleV, &AngleH, &Energy_eV)) {
-    return NULL;
-  }
-
-  // Check that beam energy makes sense
-  if (BeamEnergy <= 0) {
-    PyErr_SetString(PyExc_ValueError, "'beam_energy_GeV' must be > 0");
-    return NULL;
-  }
-
-  // Check period and nperiods
-  if (Period <= 0 || NPeriods <= 0) {
-    PyErr_SetString(PyExc_ValueError, "'period' and 'nperiods' must be > 0");
-    return NULL;
-  }
-
-  // Check that photon energy is > 0
-  if (Energy_eV <= 0) {
-    PyErr_SetString(PyExc_ValueError, "'energy_eV' must be > 0");
-    return NULL;
-  }
-
-
-
-  // Calculate the spectrum
-  double const Result = self->obj->UndulatorFlux(BField, Period, NPeriods, BeamEnergy, AngleV, AngleH, Energy_eV);
-
-  return Py_BuildValue("d", Result);
 }
 
 
@@ -446,75 +497,7 @@ static PyObject* OSCARSTH_UndulatorFluxOnAxis (OSCARSTHObject* self, PyObject* a
     return NULL;
   }
 
-  return OSCARSTH_TVector2DAsList(Result);
-}
-
-
-
-
-
-
-
-
-
-const char* DOC_OSCARSTH_UndulatorFluxWeak = "Undulator flux weak approx";
-static PyObject* OSCARSTH_UndulatorFluxWeak (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
-{
-  // Return the flux [gamma/s/mrad^2/0.1%bw] at a given K for a given harmonic
-
-  // Require some arguments
-  double K = 0;
-  int    NPeriods = 0;
-  double Period = 0;
-  double BeamEnergy = 0;
-  int    Harmonic = 0;
-
-  // Input variables and parsing
-  static char *kwlist[] = {"k", "period", "nperiods", "beam_energy_GeV", "harmonic", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ddidi", kwlist, 
-                                                          &K,
-                                                          &Period,
-                                                          &NPeriods,
-                                                          &BeamEnergy,
-                                                          &Harmonic)) {
-    std::cout << "K             " << K << std::endl;
-    std::cout << "Period:       " << Period << std::endl;
-    std::cout << "NPeriods:     " << NPeriods << std::endl;
-    std::cout << "BeamEnergy:   " << BeamEnergy << std::endl;
-    std::cout << "Harmonic      " << Harmonic << std::endl;
-    std::cout << "Cannot parse for some reason" << std::endl;
-    return NULL;
-  }
-
-  // Check that K is > 0
-  if (K <= 0) {
-    PyErr_SetString(PyExc_ValueError, "'k' must be > 0");
-    return NULL;
-  }
-
-
-  // Check that beam energy makes sense
-  if (BeamEnergy <= 0) {
-    PyErr_SetString(PyExc_ValueError, "'beam_energy_GeV' must be > 0");
-    return NULL;
-  }
-
-  // Check period and nperiods
-  if (Period <= 0 || NPeriods <= 0) {
-    PyErr_SetString(PyExc_ValueError, "'period' and 'nperiods' must be > 0");
-    return NULL;
-  }
-
-  // Check that photon energy is > 0
-  if (Harmonic <= 0) {
-    PyErr_SetString(PyExc_ValueError, "'harmonic' must be > 0");
-    return NULL;
-  }
-
-  // Calculate the spectrum
-  double const Result = self->obj->UndulatorFluxWeak(K, Period, NPeriods, BeamEnergy, Harmonic);
-
-  return Py_BuildValue("d", Result);
+  return OSCARSPY::TVector2DAsList(Result);
 }
 
 
@@ -588,7 +571,7 @@ static PyObject* OSCARSTH_UndulatorBrightness (OSCARSTHObject* self, PyObject* a
   }
 
 
-  return OSCARSTH_TVector2DAsList(Result);
+  return OSCARSPY::TVector2DAsList(Result);
 }
 
 
@@ -847,7 +830,7 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
   // Check for Beta in the input
   if (PyList_Size(List_Beta) != 0) {
     try {
-      Beta = OSCARSTH_ListAsTVector2D(List_Beta);
+      Beta = OSCARSPY::ListAsTVector2D(List_Beta);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'beta'");
       return NULL;
@@ -858,7 +841,7 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
   // Check for Emittance in the input
   if (PyList_Size(List_Emittance) != 0) {
     try {
-      Emittance = OSCARSTH_ListAsTVector2D(List_Emittance);
+      Emittance = OSCARSPY::ListAsTVector2D(List_Emittance);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'emittance'");
       return NULL;
@@ -961,14 +944,15 @@ static PyMethodDef OSCARSTH_methods[] = {
   {"undulator_bfield",                           (PyCFunction) OSCARSTH_UndulatorBField,                         METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorBField},
   {"undulator_period",                           (PyCFunction) OSCARSTH_UndulatorPeriod,                         METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorPeriod},
 
+  {"test",                            (PyCFunction) OSCARSTH_DipoleSpectrum2,                          METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleSpectrum2},
   {"dipole_spectrum",                            (PyCFunction) OSCARSTH_DipoleSpectrum,                          METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleSpectrum},
   {"dipole_critical_energy",                     (PyCFunction) OSCARSTH_DipoleCriticalEnergy,                    METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleCriticalEnergy},
   {"dipole_brightness",                          (PyCFunction) OSCARSTH_DipoleBrightness,                        METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleBrightness},
-  {"undulator_flux",                             (PyCFunction) OSCARSTH_UndulatorFlux,                           METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorFlux},
+
   {"undulator_flux_onaxis",                      (PyCFunction) OSCARSTH_UndulatorFluxOnAxis,                     METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorFluxOnAxis},
-  {"undulator_flux_weak",                        (PyCFunction) OSCARSTH_UndulatorFluxWeak,                       METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorFluxWeak},
   {"undulator_brightness",                       (PyCFunction) OSCARSTH_UndulatorBrightness,                     METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorBrightness},
   {"undulator_energy_harmonic",                  (PyCFunction) OSCARSTH_UndulatorEnergyHarmonic,                 METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorEnergyHarmonic},
+
   {"bessel_j",                                   (PyCFunction) OSCARSTH_BesselJ,                                 METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_BesselK},
   {"bessel_k",                                   (PyCFunction) OSCARSTH_BesselK,                                 METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_BesselK},
 
