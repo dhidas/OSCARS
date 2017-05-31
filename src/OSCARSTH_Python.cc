@@ -158,8 +158,8 @@ static PyObject* OSCARSTH_UndulatorPeriod (OSCARSTHObject* self, PyObject* args,
 
 
 
-const char* DOC_OSCARSTH_DipoleSpectrum2 = "Get the spectrum from ideal dipole field";
-static PyObject* OSCARSTH_DipoleSpectrum2 (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
+const char* DOC_OSCARSTH_DipoleSpectrum = "Get the spectrum from ideal dipole field";
+static PyObject* OSCARSTH_DipoleSpectrum (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {
   // Return a list of points corresponding to the flux in a given energy range for a given vertical angle.
   // This approximation assumes that the particle beam is perpendicular to the magnetic field
@@ -207,6 +207,12 @@ static PyObject* OSCARSTH_DipoleSpectrum2 (OSCARSTHObject* self, PyObject* args,
     return NULL;
   }
 
+  // CHeck if beam is ok
+  if (!self->obj->CheckBeam()) {
+    PyErr_SetString(PyExc_ValueError, "particle beam not correctly defined");
+    return NULL;
+  }
+
   // Must have a bfield
   if (fabs(BField) == 0) {
     PyErr_SetString(PyExc_ValueError, "'bfield' must not be zero");
@@ -245,12 +251,13 @@ static PyObject* OSCARSTH_DipoleSpectrum2 (OSCARSTHObject* self, PyObject* args,
   if (PyList_Size(List_EnergyRange_eV) != 0 && NPoints > 0) {
     TVector2D const EnergyRange_eV = OSCARSPY::ListAsTVector2D(List_EnergyRange_eV);
     SpectrumContainer.Init(NPoints, EnergyRange_eV[0], EnergyRange_eV[1]);
-    //self->obj->CalculateSpectrum();
+    self->obj->DipoleSpectrumEnergy(BField, SpectrumContainer, Angle);
   } else if (PyList_Size(List_EnergyPoints_eV) != 0) {
     SpectrumContainer.Init(VEnergyPoints_eV);
   } else if (PyList_Size(List_AngleRange) != 0 && NPoints > 0) {
     TVector2D const AngleRange = OSCARSPY::ListAsTVector2D(List_AngleRange);
     SpectrumContainer.Init(NPoints, AngleRange[0], AngleRange[1]);
+    self->obj->DipoleSpectrumAngle(BField, SpectrumContainer, Energy_eV);
   } else if (PyList_Size(List_AnglePoints) != 0 && Energy_eV > 0) {
     SpectrumContainer.Init(VAnglePoints);
   } else {
@@ -301,8 +308,8 @@ static PyObject* OSCARSTH_DipoleSpectrum2 (OSCARSTHObject* self, PyObject* args,
 
 
 
-const char* DOC_OSCARSTH_DipoleSpectrum = "Get the spectrum from ideal dipole field";
-static PyObject* OSCARSTH_DipoleSpectrum (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
+const char* DOC_OSCARSTH_DipoleSpectrumPoint = "Get the spectrum from ideal dipole field";
+static PyObject* OSCARSTH_DipoleSpectrumPoint (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {
   // Return a list of points corresponding to the flux in a given energy range for a given vertical angle.
   // This approximation assumes that the particle beam is perpendicular to the magnetic field
@@ -317,6 +324,12 @@ static PyObject* OSCARSTH_DipoleSpectrum (OSCARSTHObject* self, PyObject* args, 
   // Input variables and parsing
   static char *kwlist[] = {"bfield", "beam_energy_GeV", "angle", "energy_eV", NULL};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "dddd", kwlist, &BField, &BeamEnergy, &Angle, &Energy_eV)) {
+    return NULL;
+  }
+
+  // CHeck if beam is ok
+  if (!self->obj->CheckBeam()) {
+    PyErr_SetString(PyExc_ValueError, "particle beam not correctly defined");
     return NULL;
   }
 
@@ -349,27 +362,53 @@ static PyObject* OSCARSTH_DipoleSpectrum (OSCARSTHObject* self, PyObject* args, 
 const char* DOC_OSCARSTH_DipoleCriticalEnergy = "Get the critical energy for bending magnet in [eV]";
 static PyObject* OSCARSTH_DipoleCriticalEnergy (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {
-  // Return a list of points corresponding to the flux in a given energy range for a given vertical angle.
-  // This approximation assumes that the particle beam is perpendicular to the magnetic field
-
-  // Require 2 arguments
+  // Require 1 arguments
   double BField = 0;
-  double BeamEnergy = 0;
 
   // Input variables and parsing
-  static char *kwlist[] = {"bfield", "beam_energy_GeV", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dd", kwlist, &BField, &BeamEnergy)) {
+  static char *kwlist[] = {"bfield", NULL};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d", kwlist, &BField)) {
     return NULL;
   }
 
-  // Check that beam energy makes sense
-  if (BeamEnergy <= 0) {
-    PyErr_SetString(PyExc_ValueError, "'beam_energy_GeV' must be > 0");
+  // CHeck if beam is ok
+  if (!self->obj->CheckBeam()) {
+    PyErr_SetString(PyExc_ValueError, "particle beam not correctly defined");
     return NULL;
   }
 
   // Calculate the spectrum
-  double const Result = self->obj->DipoleCriticalEnergy(BField, BeamEnergy);
+  double const Result = self->obj->DipoleCriticalEnergy(BField);
+
+  return Py_BuildValue("d", Result);
+}
+
+
+
+
+
+
+const char* DOC_OSCARSTH_DipoleCriticalWavelength = "Get the critical wavelength for bending magnet in [m]";
+static PyObject* OSCARSTH_DipoleCriticalWavelength (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
+{
+
+  // Require 1 arguments
+  double BField = 0;
+
+  // Input variables and parsing
+  static char *kwlist[] = {"bfield", NULL};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d", kwlist, &BField)) {
+    return NULL;
+  }
+
+  // CHeck if beam is ok
+  if (!self->obj->CheckBeam()) {
+    PyErr_SetString(PyExc_ValueError, "particle beam not correctly defined");
+    return NULL;
+  }
+
+  // Calculate the spectrum
+  double const Result = TOSCARSSR::EvToWavelength(self->obj->DipoleCriticalEnergy(BField));
 
   return Py_BuildValue("d", Result);
 }
@@ -747,7 +786,7 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
 
   // Lists and variables some with initial values
   char const* Type                       = "";
-  char const* Name                       = "";
+  char const* Name                       = "default_name";
   double      Energy_GeV                 = 0;
   double      Sigma_Energy_GeV           = 0;
   double      T0                         = 0;
@@ -775,27 +814,47 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
   TVector3D Lattice_Reference(0, 0, 0);
 
 
-  // Input variables and parsing
-  static char *kwlist[] = {"type", "name", "energy_GeV", "d0", "x0", "beam", "sigma_energy_GeV", "t0", "current", "weight", "rotations", "translation", "horizontal_direction", "beta", "emittance", "lattice_reference", "mass", "charge", NULL};
+  // Input variables
+  static char *kwlist[] = {"type",
+                           "name",
+                           "energy_GeV",
+                           "d0",
+                           "x0",
+                           "beam",
+                           "sigma_energy_GeV",
+                           "t0",
+                           "current",
+                           "weight",
+                           "rotations",
+                           "translation",
+                           "horizontal_direction",
+                           "beta",
+                           "emittance",
+                           "lattice_reference",
+                           "mass",
+                           "charge",
+                           NULL};
+
+  // Parse inputs
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ssdOOsddddOOOOOOdd", kwlist,
-                                                                        &Type,
-                                                                        &Name,
-                                                                        &Energy_GeV,
-                                                                        &List_Direction,
-                                                                        &List_Position,
-                                                                        &Beam,
-                                                                        &Sigma_Energy_GeV,
-                                                                        &T0,
-                                                                        &Current,
-                                                                        &Weight,
-                                                                        &List_Rotations,
-                                                                        &List_Translation,
-                                                                        &List_Horizontal_Direction,
-                                                                        &List_Beta,
-                                                                        &List_Emittance,
-                                                                        &List_Lattice_Reference,
-                                                                        &Mass,
-                                                                        &Charge)) {
+                                   &Type,
+                                   &Name,
+                                   &Energy_GeV,
+                                   &List_Direction,
+                                   &List_Position,
+                                   &Beam,
+                                   &Sigma_Energy_GeV,
+                                   &T0,
+                                   &Current,
+                                   &Weight,
+                                   &List_Rotations,
+                                   &List_Translation,
+                                   &List_Horizontal_Direction,
+                                   &List_Beta,
+                                   &List_Emittance,
+                                   &List_Lattice_Reference,
+                                   &Mass,
+                                   &Charge)) {
     return NULL;
   }
 
@@ -806,9 +865,9 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
   // Check if beam is defined (for predefined beams)
   if (HasPredefinedBeam) {
     try {
-      self->obj->SetParticleBeam(Beam);
-    } catch (...) {
-      PyErr_SetString(PyExc_ValueError, "Error in predefined beam name");
+      self->obj->SetParticleBeam(Beam, Name);
+    } catch (std::invalid_argument e) {
+      PyErr_SetString(PyExc_ValueError, e.what());
       return NULL;
     }
   }
@@ -860,10 +919,10 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
         PyErr_SetString(PyExc_ValueError, "type must be electron");
         return NULL;
       } else {
-        self->obj->SetParticleBeam(Energy_GeV, Current, Beta, Emittance, Sigma_Energy_GeV);
+        self->obj->SetParticleBeam(Energy_GeV, Current, Beta, Emittance, Sigma_Energy_GeV, Name);
       }
     } catch (std::invalid_argument e) {
-      PyErr_SetString(PyExc_ValueError, "invalid argument in adding particle beam.  possibly 'name' already exists");
+      PyErr_SetString(PyExc_ValueError, e.what());
       return NULL;
     }
   }
@@ -944,9 +1003,10 @@ static PyMethodDef OSCARSTH_methods[] = {
   {"undulator_bfield",                           (PyCFunction) OSCARSTH_UndulatorBField,                         METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorBField},
   {"undulator_period",                           (PyCFunction) OSCARSTH_UndulatorPeriod,                         METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorPeriod},
 
-  {"test",                            (PyCFunction) OSCARSTH_DipoleSpectrum2,                          METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleSpectrum2},
   {"dipole_spectrum",                            (PyCFunction) OSCARSTH_DipoleSpectrum,                          METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleSpectrum},
+  //{"dipole_spectrum_point",                      (PyCFunction) OSCARSTH_DipoleSpectrumPoint,                       METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleSpectrumPoint},
   {"dipole_critical_energy",                     (PyCFunction) OSCARSTH_DipoleCriticalEnergy,                    METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleCriticalEnergy},
+  {"dipole_critical_wavelength",                 (PyCFunction) OSCARSTH_DipoleCriticalWavelength,                METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleCriticalWavelength},
   {"dipole_brightness",                          (PyCFunction) OSCARSTH_DipoleBrightness,                        METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleBrightness},
 
   {"undulator_flux_onaxis",                      (PyCFunction) OSCARSTH_UndulatorFluxOnAxis,                     METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorFluxOnAxis},

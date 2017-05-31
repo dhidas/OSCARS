@@ -42,7 +42,7 @@ PyObject* GetSpectrumAsList (TSpectrumContainer const& Spectrum)
   size_t NSPoints = Spectrum.GetNPoints();
 
   // Loop over all points in trajectory
-  for (int iS = 0; iS != NSPoints; ++iS) {
+  for (size_t iS = 0; iS != NSPoints; ++iS) {
     // Create a python list for X and Beta
     PyObject *PList2 = PyList_New(0);
 
@@ -82,7 +82,7 @@ TVector2D ListAsTVector2D (PyObject* List)
 
 TVector3D ListAsTVector3D (PyObject* List)
 {
-  // Get a list as a TVector2D
+  // Get a list as a TVector3D
 
   TVector3D V;
   if (PyList_Size(List) == 3) {
@@ -104,7 +104,7 @@ TVector3D ListAsTVector3D (PyObject* List)
 
 PyObject* TVector2DAsList (TVector2D const& V)
 {
-  // Turn a TVector3D into a list (like a vector)
+  // Turn a TVector2D into a list (like a vector)
 
   // Create a python list
   PyObject *PList = PyList_New(0);

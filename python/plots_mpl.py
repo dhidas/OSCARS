@@ -218,7 +218,7 @@ def plot_flux(V, title='Flux [$\gamma / mm^2 / 0.1\%bw / s]$', xlabel='X1 Axis [
     return
 
 
-def plot_spectrum(S, log=False, show=True, ofile='', title='Spectrum', figsize=None, ylim=None, xlim=None, transparent=True, ret=False, xticks=None, **kwargs):
+def plot_spectrum(S, log=False, show=True, ofile='', title='Spectrum', xlabel='Energy [eV]', ylabel='$\gamma / mm^2 / 0.1\%bw / s$', figsize=None, ylim=None, xlim=None, transparent=True, ret=False, xticks=None, **kwargs):
     """Plot the spectrum"""
 
     # Size and limits
@@ -231,8 +231,8 @@ def plot_spectrum(S, log=False, show=True, ofile='', title='Spectrum', figsize=N
     plt.plot(X, Y, **kwargs)
     if log:
         plt.yscale('log')
-    plt.xlabel('Energy [eV]')
-    plt.ylabel('$\gamma / mm^2 / 0.1\%bw / s$')
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
     plt.title(title)
 
     if xticks is not None:

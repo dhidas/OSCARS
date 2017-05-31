@@ -29,12 +29,15 @@ class OSCARSTH
     double UndulatorPeriod (double const BField,
                             double const K) const;
 
-    double DipoleCriticalEnergy (double const BField,
-                                 double const BeamEnergy_GeV) const;
+    double DipoleCriticalEnergy (double const BField) const;
 
-    void DipoleSpectrum (double const BField, 
-                         TSpectrumContainer& Spectrum,
-                         double const Angle) const;
+    void DipoleSpectrumEnergy (double const BField, 
+                               TSpectrumContainer& Spectrum,
+                               double const Angle) const;
+
+    void DipoleSpectrumAngle (double const BField, 
+                              TSpectrumContainer& Spectrum,
+                              double const Energy_eV) const;
 
     double DipoleSpectrum (double const BField,
                            double const BeamEnergy_GeV,
@@ -89,13 +92,19 @@ class OSCARSTH
 
 
     // Functions related to the particle beam
-    void SetParticleBeam (std::string const& Beam);
+    void SetParticleBeam (std::string const& Beam,
+                          std::string const& Name = "default_name");
+
     void SetParticleBeam (double const Energy_GeV,
                           double const Current,
                           TVector2D const& Beta = TVector2D(0, 0),
                           TVector2D const& Emittance = TVector2D(0, 0),
-                          double const SigmaEnergyGeV = 0);
+                          double const SigmaEnergyGeV = 0,
+                          std::string const& Name = "default_name");
+
     TParticleBeam& GetParticleBeam ();
+
+    bool CheckBeam () const;
 
   private:
     TParticleBeam fParticleBeam;

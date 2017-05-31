@@ -63,9 +63,11 @@ double OSCARSTH::UndulatorPeriod (double const BFieldMax, double const K) const
 
 
 
-double OSCARSTH::DipoleCriticalEnergy (double const BField, double const BeamEnergy_GeV) const
+double OSCARSTH::DipoleCriticalEnergy (double const BField) const
 {
+
   // Return the critical energy in eV for dipole and electron beam
+  double const BeamEnergy_GeV = fParticleBeam.GetE0();
   double const Gamma = BeamEnergy_GeV / TOSCARSSR::kgToGeV( TOSCARSSR::Me());
   double const OmegaC = 3. * Gamma * Gamma * Gamma * TOSCARSSR::C() / (2. * BeamEnergy_GeV * 1e9 * TOSCARSSR::Qe() / (TOSCARSSR::Qe() * TOSCARSSR::C() * fabs(BField)));
 
@@ -75,14 +77,36 @@ double OSCARSTH::DipoleCriticalEnergy (double const BField, double const BeamEne
 
 
 
-void OSCARSTH::DipoleSpectrum (double const BField, 
-                               TSpectrumContainer& Spectrum,
-                               double const Angle) const
+void OSCARSTH::DipoleSpectrumEnergy (double const BField, 
+                                     TSpectrumContainer& Spectrum,
+                                     double const Angle) const
 {
+  // Beam energy from internal beam
   double const BeamEnergy_GeV =  fParticleBeam.GetE0();
 
+  // Calculate flux for each point
   for (size_t i = 0; i < Spectrum.GetNPoints(); ++i) {
     Spectrum.SetFlux(i, DipoleSpectrum(BField, BeamEnergy_GeV, Angle, Spectrum.GetEnergy(i)));
+  }
+
+  return;
+}
+
+
+
+
+void OSCARSTH::DipoleSpectrumAngle (double const BField, 
+                                    TSpectrumContainer& Spectrum,
+                                    double const Energy_eV) const
+{
+  // Beam energy from internal beam
+  double const BeamEnergy_GeV =  fParticleBeam.GetE0();
+
+  // Calculate flux for each point
+  for (size_t i = 0; i < Spectrum.GetNPoints(); ++i) {
+
+    // Here Spectrum.GetEnergy is really getting the angle
+    Spectrum.SetFlux(i, DipoleSpectrum(BField, BeamEnergy_GeV, Spectrum.GetEnergy(i), Energy_eV));
   }
 
   return;
@@ -424,12 +448,14 @@ TVector2D OSCARSTH::UndulatorBrightnessB (double const BField,
 
 
 
-void OSCARSTH::SetParticleBeam (std::string const& Beam)
+void OSCARSTH::SetParticleBeam (std::string const& Beam, std::string const& Name)
 {
   // Add a particle beam
   // Beam - The name of the predefined particle beam to add
 
   fParticleBeam.SetPredefinedBeam(Beam);
+  fParticleBeam.SetName(Name);
+  fParticleBeam.SetWeight(1);
   return;
 }
 
@@ -440,13 +466,15 @@ void OSCARSTH::SetParticleBeam (double const Energy_GeV,
                                 double const Current,
                                 TVector2D const& Beta,
                                 TVector2D const& Emittance,
-                                double const SigmaEnergyGeV)
+                                double const SigmaEnergyGeV,
+                                std::string const& Name)
 {
   // Add a particle beam
   // Energy_GeV  - Energy of particle beam in GeV
   // Current     - Beam current in Amperes
 
-  fParticleBeam = TParticleBeam("electron", "beam", Energy_GeV, Current);
+  fParticleBeam = TParticleBeam("electron", Name, Energy_GeV, Current);
+  fParticleBeam.SetWeight(1);
   fParticleBeam.SetBetaEmittance(TVector3D(1, 0, 0), Beta, Emittance, TVector3D(0, 0, 0), SigmaEnergyGeV);
 
   return;
@@ -463,4 +491,12 @@ TParticleBeam& OSCARSTH::GetParticleBeam ()
 
 
 
+bool OSCARSTH::CheckBeam () const
+{
+  // Check the beam exists and meets some minimum criteria
+  if (fParticleBeam.GetE0() <= 0) {
+    return false;
+  }
 
+  return true;
+}

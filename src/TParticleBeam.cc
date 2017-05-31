@@ -160,6 +160,8 @@ void TParticleBeam::SetPredefinedBeam (std::string const& Beam)
     this->SetT0(0);
     this->SetX0(0);
     this->SetBetaEmittance(TVector3D(1, 0, 0), TVector2D(1.5, 0.8), TVector2D(0.55e-9, 0.008e-9), TVector3D(0, 0, 0), 3 * 0.001);
+  } else {
+    throw std::invalid_argument("no beam by that name found");
   }
 
   return;
