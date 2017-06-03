@@ -4,6 +4,8 @@ from setuptools import setup, Extension
 os.environ["CC"] = "g++"
 os.environ["CXX"] = "g++"
 
+
+
 moduleOSCARSSR = Extension('oscars.sr',
                       include_dirs = ['include'],
                       sources = ['src/OSCARSSR.cc',
@@ -32,7 +34,7 @@ moduleOSCARSSR = Extension('oscars.sr',
                                  'src/TField3D_Quadrupole.cc',
                                  'src/TOMATH.cc',
                                  'src/OSCARSPY.cc'],
-                      extra_compile_args=['-std=c++11', '-Wno-write-strings', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread']
+                      extra_compile_args=['-std=c++11', '-Wno-write-strings', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread'],
                      )
 
 
@@ -64,7 +66,7 @@ moduleOSCARSTH = Extension('oscars.th',
                                  'src/TField3D_Quadrupole.cc',
                                  'src/TOMATH.cc',
                                  'src/OSCARSPY.cc'],
-                      extra_compile_args=['-std=c++11', '-Wno-write-strings', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread']
+                      extra_compile_args=['-std=c++11', '-Wno-write-strings', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread'],
                      )
 
 
@@ -83,5 +85,6 @@ setup(
   data_files=[('oscars', ['LICENSE.txt', 'COPYRIGHT.txt'])],
   package_data = {'' : ['LICENSE.txt']},
   package_dir = {'oscars': 'python'},
-  py_modules = ['oscars.plots_mpl', 'oscars.plots3d_mpl', 'oscars.parametric_surfaces']
+  py_modules = ['oscars.plots_mpl', 'oscars.plots3d_mpl', 'oscars.parametric_surfaces'],
+  #install_requires=['gcc>=4']
 )

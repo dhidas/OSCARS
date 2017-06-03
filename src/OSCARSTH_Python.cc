@@ -158,7 +158,11 @@ static PyObject* OSCARSTH_UndulatorPeriod (OSCARSTHObject* self, PyObject* args,
 
 
 
-const char* DOC_OSCARSTH_DipoleSpectrum = "Get the spectrum from ideal dipole field";
+const char* DOC_OSCARSTH_DipoleSpectrum =
+R"docstring(
+Get the spectrum from ideal dipole field.
+Output is in [photons / s / mrad^2 / 0.1\%bw]
+)docstring";
 static PyObject* OSCARSTH_DipoleSpectrum (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {
   // Return a list of points corresponding to the flux in a given energy range for a given vertical angle.
@@ -172,7 +176,7 @@ static PyObject* OSCARSTH_DipoleSpectrum (OSCARSTHObject* self, PyObject* args, 
   PyObject* List_AngleRange      = PyList_New(0);
   PyObject* List_AnglePoints     = PyList_New(0);
   double    Angle                = 0;
-  int       NPoints              = 0;
+  int       NPoints              = 500;
   double    Minimum              = 0;
   char*     OutFileNameText      = "";
   char*     OutFileNameBinary    = "";
@@ -308,7 +312,7 @@ static PyObject* OSCARSTH_DipoleSpectrum (OSCARSTHObject* self, PyObject* args, 
 
 
 
-const char* DOC_OSCARSTH_DipoleSpectrumPoint = "Get the spectrum from ideal dipole field";
+const char* DOC_OSCARSTH_DipoleSpectrumPoint = "Get the spectrum from ideal dipole field.";
 static PyObject* OSCARSTH_DipoleSpectrumPoint (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {
   // Return a list of points corresponding to the flux in a given energy range for a given vertical angle.

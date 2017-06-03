@@ -12,3 +12,4 @@ dependencies:
   - pip:
     - recommonmark
     - sphinx_rtd_theme
+    - numpydoc
