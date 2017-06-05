@@ -531,10 +531,7 @@ Examples
 --------
 Add a magnetic field from a data file where the data is in columns in the order Z Bx By Bz
 
-.. code-block:: py
-
-    # Add a magnetic field from a file
-    osr.add_bfield_file(ifile='file.txt', iformat='OSCARS1D Z Bx By Bz')
+    >>> osr.add_bfield_file(ifile='file.txt', iformat='OSCARS1D Z Bx By Bz')
 )docstring";
 static PyObject* OSCARSSR_AddMagneticField (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
 {
@@ -620,7 +617,7 @@ static PyObject* OSCARSSR_AddMagneticField (OSCARSSRObject* self, PyObject* args
 const char* DOC_OSCARSSR_AddMagneticFieldInterpolated = R"docstring(
 add_bfield_interpolated(mapping, iformat, parameter [, rotations, translation, scale])
 
-Add a magnetic field given a paramater and a mapping between known parameters and magnetic field data files where the field is interpolated from the known data points.
+Add field given a paramater and a mapping between known parameters and field data files where the field is interpolated from the known data points.
 
 Parameters
 ----------
@@ -650,18 +647,13 @@ Examples
 --------
 Undulator gap interpolation between known magnetic measurement points
 
-.. code-block:: py
-
-    # Create a mapping between known parameters and field files
-    file_list = [
-        [10.9, 'file_10.9.dat'],
-        [11.0, 'file_11.0.dat'],
-        [13.2, 'file_13.2.dat'],
-        [16.9, 'file_16.9.dat']
-    ]
-
-    # Add a magnetic field at a parameter point to be interpolated from known data
-    osr.add_bfield_interpolated(mapping=file_list, iformat='OSCARS1D Z Bx By Bz', parameter=12.123)
+    >>> file_list = [
+    ...     [10.9, 'file_10.9.dat'],
+    ...     [11.0, 'file_11.0.dat'],
+    ...     [13.2, 'file_13.2.dat'],
+    ...     [16.9, 'file_16.9.dat']
+    ... ]
+    >>> osr.add_bfield_interpolated(mapping=file_list, iformat='OSCARS1D Z Bx By Bz', parameter=12.123)
 )docstring";
 static PyObject* OSCARSSR_AddMagneticFieldInterpolated (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
 {
@@ -768,13 +760,15 @@ static PyObject* OSCARSSR_AddMagneticFieldInterpolated (OSCARSSRObject* self, Py
 
 
 const char* DOC_OSCARSSR_AddMagneticFieldFunction = R"docstring(
-Adds a magnetic field in the form of a user defined python function.  The input for this function must be (x, y, z, t).
+add_bfield_function(func)
+
+Adds field in the form of a user defined python function.  The input for this function must be (x, y, z, t) and return [Fx, Fy, Fz]
 
 Parameters
 ----------
 
 function : func
-    A python function with input [x, y, z, t] and return of [Bx, By, Bz]
+    A python function with input [x, y, z, t] and return of [Fx, Fy, Fz]
 
 Returns
 -------
@@ -782,11 +776,11 @@ None
 
 Examples
 --------
-    Create a function in python and use it as a magnetic field in OSCARS
+Create a function in python and use it as a field in OSCARS
 
     >>> def myfunc(x, y, z, t):
     ...     "Do not forget to write a docstring"
-    ...     if (z > 0):
+    ...     if z > 0:
     ...         return 1
     ...     return 0
     >>> osr.add_bfield_function(myfunc)
@@ -827,35 +821,40 @@ static PyObject* OSCARSSR_AddMagneticFieldFunction (OSCARSSRObject* self, PyObje
 
 
 const char* DOC_OSCARSSR_AddMagneticFieldGaussian = R"docstring(
-   Add a gaussian magnetic field in 3D with the peak field magnitude and direction given by *bfield*, centered about a point with a given sigma in each coordinate.  If any component of *sigma* is less than or equal to zero it is ignored (ie. spatial extent is infinite).
+add_bfield_gaussian(bfield, sigma [, rotations, translation])
+
+Add a gaussian field in 3D with the peak field magnitude and direction given by *bfield*, centered about a point with a given sigma in each coordinate.  If any component of *sigma* is less than or equal to zero it is ignored (ie. spatial extent is infinite).
+
+The functional form for this is :math:`\exp(-(x - x_0)^2 / \sigma_x^2)`
 
 
-   The functional form for this is the following:
-   :math:`\\exp(-(x - x_0)^2 / \\sigma_x^2)`
+Parameters
+----------
+bfield : list
+    A list representing the peak field [Fx, Fy, Fz]
 
-   :param bfield: A list representing the peak field [Bx, By, Bz]
-   :type  bfield: list[3]
-   :param center: A list representing the coordinates of the center point [X0, Y0, Z0]
-   :type  center: list[3]
-   :param sigma: A list representing the sigma in each coordinate [S0, S0, S0]
-   :type  sigma: list[3]
-   :returns: None
+sigma : list
+    A list representing the sigma in each coordinate :math:`[\sigma_x, \sigma_y, \sigma_z]`
 
-   :Example: Add a magnetic field of 0.5 [T] in the X-direction centered at X=0, Y=0, Z=0 [in meters], with a sigma of 0.1 [m] in the Z-direction
+rotations : list, optional
+    3-element list representing rotations around x, y, and z axes: [:math:`\theta_x, \theta_y, \theta_z`]
 
-   .. code-block:: py
+translation : list, optional
+    3-element list representing a translation in space [x, y, z]
 
-      # Will add a magnetic field of 1 Tesla in the Y-direction centered
-      # at X=0, Y=0, Z=0 [in meters], with a sigma of 0.1 in the Z-direction
-      osr.add_bfield_gaussian(bfield=[1, 0, 0], sigma=[0, 0, 0.10])
+Returns
+-------
+None
 
-   :Example: Add a magnetic field of 1 Tesla in the Y-direction centered at X=1, Y=1, Z=1 [in meters], with a sigma of 0.05 in the Z-direction
+Examples
+--------
+Add a field of 0.5 [T] in the X-direction centered at X=0, Y=0, Z=0 [m], with a sigma of 0.1 [m] in the Z-direction
 
-   .. code-block:: py
+    >>> osr.add_bfield_gaussian(bfield=[1, 0, 0], sigma=[0, 0, 0.10])
 
-      # Will add a magnetic field of 1 Tesla in the Y-direction centered
-      # at X=1, Y=1, Z=1 [in meters], with a sigma of 0.05 in the Z-direction
-      osr.add_bfield_gaussian(bfield=[0, 1, 0], sigma=[0, 0, 0.05], translation=[1, 1, 1])
+Add a field of 1 [T] in the Y-direction centered at X=1, Y=1, Z=1 [m], with a sigma of 0.05 in the Z-direction
+
+    >>> osr.add_bfield_gaussian(bfield=[0, 1, 0], sigma=[0, 0, 0.05], translation=[1, 1, 1])
 )docstring";
 static PyObject* OSCARSSR_AddMagneticFieldGaussian (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
 {
@@ -936,40 +935,41 @@ static PyObject* OSCARSSR_AddMagneticFieldGaussian (OSCARSSRObject* self, PyObje
 
 
 const char* DOC_OSCARSSR_AddMagneticFieldUniform = R"docstring(
-   Add a uniform magnetic field in a given range or for all space.  The *bfield* is given as a 3D vector representing the field magnitude and direction.  *width* is an optional parameters, if not present the field permeates all space.  If a component of the 3D list *width* is less than or equal to zero, that coordinate will be ignored when calculating the field.
+add_bfield_uniform(bfield, width [, rotations, translation])
 
+Add a uniform field in a given range or for all space.  The *bfield* is given as a 3D vector representing the field magnitude and direction.  *width* is an optional parameters, if not present the field permeates all space.  If a component of the 3D list *width* is less than or equal to zero, that coordinate will be ignored when calculating the field.
 
-   :param bfield: A list representing the magnetic field [Bx, By, Bz]
-   :type  bfield: list[3]
-   :param width: A list representing the spetial extent of the field [Wx, Wy, Wz]
-   :type  width: list[3]
-   :param rotations: A list representing the rotations of this object about the X, Y amd Z axis (in that order)
-   :type  rotations: list[3]
-   :param translation: A list representing the translation of the center of this object
-   :type  translation: list[3]
-   :returns: None
+Parameters
+----------
+bfield : list
+    A list representing the field [Fx, Fy, Fz]
 
-   :Example: Add a magnetic field of 0.0001 [T] in the X-direction for all space
+width : list
+    A list representing the spetial extent of the field [Wx, Wy, Wz]
 
-   .. code-block:: py
+rotations : list, optional
+    3-element list representing rotations around x, y, and z axes: [:math:`\theta_x, \theta_y, \theta_z`]
 
-      # Will add a magnetic field of 0.0001 [T] in the X-direction over all space
-      osr.add_bfield_uniform(bfield=[0.0001, 0, 0])
+translation : list, optional
+    3-element list representing a translation in space [x, y, z]
 
-   :Example: Add a magnetic field of 0.0005 [T] in the Y-direction with a width in the Z-direction of 1.5 [m] (the other directions are ignored) centered at X=0, Y=0, Z=0.75 [m].
+Returns
+-------
+None
 
-   .. code-block:: py
+Examples
+--------
+Add a field of 0.0001 [T] in the X-direction for all space
 
-      # Will add a magnetic field of 1 Tesla in the Y-direction centered
-      # at X=0, Y=0, Z=0.75 [in meters], extending in Z a width of 1.5 [m]
-      osr.add_bfield_uniform(bfield=[0, 1, 0], width=[0, 0, 1.5], translation=[0, 0, 0.75])
+    >>> osr.add_bfield_uniform(bfield=[0.0001, 0, 0])
 
-   :Example: Add a magnetic field of 1 [T] in the X-direction in a volume of dimensions 1m x 1m x 1m.
+Add a field of 0.0005 [T] in the Y-direction with a width in the Z-direction of 1.5 [m] (the other directions are ignored) centered at X=0, Y=0, Z=0.75 [m].
 
-   .. code-block:: py
+    >>> osr.add_bfield_uniform(bfield=[0, 1, 0], width=[0, 0, 1.5], translation=[0, 0, 0.75])
 
-      # Will add a magnetic field of 1 Tesla in the X-direction in a 1x1x1 volume
-      osr.add_bfield_uniform(bfield=[1, 0, 0], width=[1, 1, 1])
+Add a field of 1 [T] in the X-direction in a volume of dimensions 1m x 1m x 1m.
+
+    >>> osr.add_bfield_uniform(bfield=[1, 0, 0], width=[1, 1, 1])
 )docstring";
 static PyObject* OSCARSSR_AddMagneticFieldUniform (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
 {
@@ -1048,21 +1048,42 @@ static PyObject* OSCARSSR_AddMagneticFieldUniform (OSCARSSRObject* self, PyObjec
 
 
 const char* DOC_OSCARSSR_AddMagneticFieldIdealUndulator = R"docstring(
-   Adds an ideal sinusoidal undulator field with a given maximum bfield amplitude, period, and number of periods.  Optionally one can specify the phase offset (in [rad]), rotations and translation.  The number of periods given is the full number of fields not counting the terminating fields.
+add_bfield_undulator(bfield, period, nperiods [, phase, rotations, translation, taper])
 
-   :param bfield: A list representing the peak field [Bx, By, Bz] in [T]
-   :type  bfield: list[3]
-   :param period: Length of one period
-   :type  period: float
-   :param nperiods: Number of periods
-   :type  nperiods: int
-   :param phase: Phase offset in [rad].
-   :type  phase: float
-   :param rotations: A list representing the rotations of this object about the X, Y amd Z axis (in that order)
-   :type  rotations: list[3]
-   :param translation: A list representing the translation of the center of this object
-   :type  translation: list[3]
-   :returns: None
+Adds an ideal sinusoidal undulator field with a given maximum bfield amplitude, period, and number of periods.  Optionally one can specify the phase offset (in [rad]), rotations and translation.  The number of periods given is the full number of fields not counting the terminating fields.
+
+Parameters
+----------
+bfield : list
+    A list representing the peak field [Bx, By, Bz] in [T]
+
+period : list
+    Length of one period
+
+nperiods : int
+    Number of periods
+
+phase : float
+    Phase offset in [rad]
+
+rotations : list, optional
+    3-element list representing rotations around x, y, and z axes: [:math:`\theta_x, \theta_y, \theta_z`]
+
+translation : list, optional
+    3-element list representing a translation in space [x, y, z]
+
+taper : float
+    The fractional change of the bfield per meter along the magnetic axis
+
+Returns
+-------
+None
+
+Examples
+--------
+Add an idealized undulator with 41 periods having a period of 0.050 [m] with a maximum field of 1 [T] in the y-direction where the magnetic axis is along the z-axis
+
+    >>> osr.add_bfield_undulator(bfield=[0, 1, 0], period=[0, 0, 0.050], nperiods=41)
 )docstring";
 static PyObject* OSCARSSR_AddMagneticFieldIdealUndulator (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
 {
@@ -1155,28 +1176,43 @@ static PyObject* OSCARSSR_AddMagneticFieldIdealUndulator (OSCARSSRObject* self, 
 
 
 const char* DOC_OSCARSSR_AddMagneticFieldQuadrupole = R"docstring(
-   Adds a quadrupole field in a given volume according to
-   .. math::
-      Bx = K * y
-      By = K * x
-      Bz = 0
+add_bfield_quadrupole(K, width [, rotations, translation])
 
-   For other directions or rotated skew quad fields one can use the *rotatios* parameter
+Adds a quadrupole field in a given volume according to:
 
-   :param K: given in [T/m]
-   :type  K: float
-   :param width: length in z direction (quadrupole axis direction)
-   :type  width: float
-   :param rotations: A list representing the rotations of this object about the X, Y amd Z axis (in that order)
-   :type  rotations: list[3]
-   :param translation: A list representing the translation of the center of this object
-   :type  translation: list[3]
-   :returns: None
+.. math::
+
+    Bx = K * y
+
+    By = K * x
+
+    Bz = 0
+
+For other directions or rotated skew quad fields one can use the *rotations* parameter
+
+Parameters
+----------
+K : float
+    Quadrupole strength given in [T/m]
+
+width : float
+    length in z direction (quadrupole axis direction)
+
+rotations : list, optional
+    3-element list representing rotations around x, y, and z axes: [:math:`\theta_x, \theta_y, \theta_z`]
+
+translation : list, optional
+    3-element list representing a translation in space [x, y, z]
+
+Returns
+-------
+None
 )docstring";
 static PyObject* OSCARSSR_AddMagneticFieldQuadrupole (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
 {
   // Add a magnetic field for undulator
 
+  // UPDATE: Add axis [x, y, z] to be like others
   // Lists and variables
   double K = 0;
   double Width = 0;
@@ -1234,11 +1270,19 @@ static PyObject* OSCARSSR_AddMagneticFieldQuadrupole (OSCARSSRObject* self, PyOb
 
 
 const char* DOC_OSCARSSR_GetBField = R"docstring(
-   Get the 3D field at any point in space.  This is the sum of all fields added to this OSCARS object.
+get_bfield(x)
 
-   :param x: A 3D list representing a point in space [x, y, z]
-   :type  x: list[3]
-   :returns: [float, float, float] - list representing the B-field [Bx, By, Bz]
+Get the 3D field at any point in space.  This is the sum of all fields added to this OSCARS object.
+
+Parameters
+----------
+x : list
+    A 3D list representing a point in space [x, y, z]
+
+Returns
+-------
+bfield : [float, float, float]
+    list representing the field [Fx, Fy, Fz]
 )docstring";
 static PyObject* OSCARSSR_GetBField (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
 {
@@ -1275,9 +1319,17 @@ static PyObject* OSCARSSR_GetBField (OSCARSSRObject* self, PyObject* args, PyObj
 
 
 const char* DOC_OSCARSSR_ClearMagneticFields = R"docstring(
-   Remove all of the existing magnetic fields.
+clear_bfields()
 
-   :returns: None
+Remove all of the existing magnetic fields
+
+Parameters
+----------
+None
+
+Returns
+-------
+None
 )docstring";
 static PyObject* OSCARSSR_ClearMagneticFields (OSCARSSRObject* self)
 {
@@ -1293,9 +1345,17 @@ static PyObject* OSCARSSR_ClearMagneticFields (OSCARSSRObject* self)
 
 
 const char* DOC_OSCARSSR_PrintMagneticFields = R"docstring(
-   Print information about all magnetic fields to standard out
+print_bfields()
 
-   :returns: None
+Print information about all magnetic fields to standard out
+
+Parameters
+----------
+None
+
+Returns
+-------
+None
 )docstring";
 static PyObject* OSCARSSR_PrintMagneticFields (OSCARSSRObject* self)
 {
@@ -1330,44 +1390,54 @@ static PyObject* OSCARSSR_PrintMagneticFields (OSCARSSRObject* self)
 
 
 const char* DOC_OSCARSSR_AddElectricField = R"docstring(
-   Add an electric field from a text file *ifile* according to the format *iformat*.
-   
-   Currently OSCARS accepts the following file formats for iformat
-      * 'OSCARS'
-      * 'OSCARS1D [plus format string]'
-      * 'SPECTRA'
-      * 'SRW'
+add_efield_file(ifile, iformat [, rotations, translation, scale])
 
-   For the OSCARS1D format you must also include the order of the data columns, which would typically look something like: 'OSCARS1D Z Bx By Bz'.  You may use X or Y instead of Z and the order and number of B[xyz] does not matter.  This mode also accepts non-uniformly distributed data.
+Add a electric field from a text file *ifile* according to the format *iformat*.
 
-   Optionally you can rotate and translate the field in space.  You can use an input *scale* list to scale the input (which must be in SI units of [m] for distances/positions and [T] for electric field values.
+Currently OSCARS accepts the following file formats for iformat
+    * 'OSCARS'
+    * 'OSCARS1D [plus format string]'
+    * 'SPECTRA'
+    * 'SRW'
 
-   The rotation is performed first in the order: :math:`\theta_x, \theta_y, \theta_z`
+For the OSCARS1D format you must also include the order of the data columns, which would typically look something like: 'OSCARS1D Z Ex Ey Ez'.  You may use X or Y instead of Z and the order and number of E[xyz] does not matter.  This mode also accepts non-uniformly distributed data.
 
-   *scale* is a list of less than or equal length to the number of elements in *iformat* when OSCARS1D is selected.  This will scale the input values of the i-th column before any rotation or translation.  This is useful if your data file is not in [T] and [m]
+Optionally you can rotate and translate the field in space.  You can use an input *scale* list to scale the input (which must be in SI units of [m] for distances/positions and [V/m] for electric field values.
 
-   :param ifile: Name of input file
-   :type  ifile: str
-   :param iformat: Format of the input file
-   :type  iformat: str
-   :param rotation: [:math:`\theta_x, \theta_y, \theta_z`]
-   :type  rotation: list[3]
-   :param translation: Translation in space [x, y, z]
-   :type  translation: list[3]
-   :param scale: Scaling of input parameters
-   :type  scale: list
-   :returns: None
+The rotation is performed first in the order: :math:`\theta_x, \theta_y, \theta_z`
 
-   :example:
+*scale* is a list of less than or equal length to the number of elements in *iformat* when OSCARS1D is selected.  This will scale the input values of the i-th column before any rotation or translation.  This is useful if your data file is not in [V/m] and [m]
 
-   .. code-block:: py
+Parameters
+----------
+ifile : str
+    Name of input file
 
-      # Add electric field from a file where the columns are in the order Z, Bx, By, Bz where Z is in [m] and Bx, By, Bz are in [T].
-      osr.add_efield_file(ifile='file.txt', iformat='OSCARS1D Z Bx By Bz')
+iformat : str
+    Format of the input file
+
+rotations : list, optional
+    3-element list representing rotations around x, y, and z axes: [:math:`\theta_x, \theta_y, \theta_z`]
+
+translation : list, optional
+    3-element list representing a translation in space [x, y, z]
+
+scale : list, optional
+    List of scale factors to be used for multiplying the inputs in the order of iformat (equal in length or less than the number of input parameters)
+
+Returns
+-------
+None
+
+Examples
+--------
+Add a field from a data file where the data is in columns in the order Z Ex Ey Ez
+
+    >>> osr.add_bfield_file(ifile='file.txt', iformat='OSCARS1D Z Bx By Bz')
 )docstring";
 static PyObject* OSCARSSR_AddElectricField (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
 {
-  // Add a magnetic field from a file.
+  // Add a field from a file.
   // UPDATE: add binary file reading
 
 
@@ -1446,26 +1516,168 @@ static PyObject* OSCARSSR_AddElectricField (OSCARSSRObject* self, PyObject* args
 
 
 
+const char* DOC_OSCARSSR_AddElectricFieldInterpolated = R"docstring(
+add_efield_interpolated(mapping, iformat, parameter [, rotations, translation, scale])
+
+Add field given a paramater and a mapping between known parameters and field data files where the field is interpolated from the known data points.
+
+Parameters
+----------
+mapping : list [[float, str], [float, str], ...]
+    List of parameters and associated filenames [[p1, file1], [p2, file2], ...]
+
+iformat : str
+    Which input format to use (see add_efield_file() for formats)
+
+parameter : float
+    Value of parameter you are interested in
+
+rotations : list, optional
+    3-element list representing rotations around x, y, and z axes: [:math:`\theta_x, \theta_y, \theta_z`]
+
+translation : list, optional
+    3-element list representing a translation in space [x, y, z]
+
+scale : list, optional
+    List of scale factors to be used for multiplying the inputs in the order of iformat (equal in length or less than the number of input parameters)
+
+Returns
+-------
+None
+
+Examples
+--------
+See add_bfield_interpolated() for examples
+)docstring";
+static PyObject* OSCARSSR_AddElectricFieldInterpolated (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
+{
+  // Add a magnetic field from a file.
+  // UPDATE: add binary file reading
+
+  // Grab the values
+  PyObject*   List_Mapping     = PyList_New(0);
+  char const* FileFormat       = "";
+  double      Parameter        = 0;
+  PyObject*   List_Rotations   = PyList_New(0);
+  PyObject*   List_Translation = PyList_New(0);
+  PyObject*   List_Scaling     = PyList_New(0);
+
+  TVector3D Rotations(0, 0, 0);
+  TVector3D Translation(0, 0, 0);
+  std::vector<double> Scaling;
+
+  // Mapping that is passed in for field interpolation
+  std::vector<std::pair<double, std::string> > Mapping;
+
+  // Input variables and parsing
+  static char *kwlist[] = {"mapping", "iformat", "parameter", "rotations", "translation", "scale", NULL};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "Osd|OOO", kwlist,
+                                                            &List_Mapping,
+                                                            &FileFormat,
+                                                            &Parameter,
+                                                            &List_Rotations,
+                                                            &List_Translation,
+                                                            &List_Scaling)) {
+    return NULL;
+  }
+
+  // Grab mapping from input
+  if (PyList_Size(List_Mapping) != 0) {
+    double ParameterValue;
+    for (size_t i = 0; i != PyList_Size(List_Mapping); ++i) {
+      PyObject* ThisPair = PyList_GetItem(List_Mapping, i);
+      if (PyList_Size(ThisPair) != 2) {
+        PyErr_SetString(PyExc_ValueError, "Incorrect format in 'mapping'");
+        return NULL;
+      }
+
+      ParameterValue = PyFloat_AsDouble(PyList_GetItem(ThisPair, 0));
+      std::string const FileName = OSCARSPY::GetAsString(PyList_GetItem(ThisPair, 1));
+
+      Mapping.push_back(std::make_pair(ParameterValue, FileName));
+    }
+  }
+
+
+  // Check that filename and format exist
+  if (std::strlen(FileFormat) == 0) {
+    PyErr_SetString(PyExc_ValueError, "'iformat' is blank");
+    return NULL;
+  }
+
+  // Parameter value is what it is...
+
+  // Check for Rotations in the input
+  if (PyList_Size(List_Rotations) != 0) {
+    try {
+      Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
+      return NULL;
+    }
+  }
+
+
+  // Check for Translation in the input
+  if (PyList_Size(List_Translation) != 0) {
+    try {
+      Translation = OSCARSPY::ListAsTVector3D(List_Translation);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
+      return NULL;
+    }
+  }
+
+  // Get any scaling factors
+  // UPDATE: Check against fileformat number of strings
+  for (size_t i = 0; i < PyList_Size(List_Scaling); ++i) {
+    Scaling.push_back(PyFloat_AsDouble(PyList_GetItem(List_Scaling, i)));
+  }
+
+  // Add the magnetic field to the OSCARSSR object
+  try {
+    self->obj->AddMagneticFieldInterpolated(Mapping, FileFormat, Parameter, Rotations, Translation, Scaling);
+  } catch (...) {
+    PyErr_SetString(PyExc_ValueError, "Could not import magnetic field.  Check filenames and 'iformat' are correct");
+    return NULL;
+  }
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
+
 const char* DOC_OSCARSSR_AddElectricFieldFunction = R"docstring(
-   Adds electric field in the form of a user defined python function.  The input for this function must be (x, y, z, t).
+add_efield_function(func)
 
-   :param function: Python function
-   :type  function: func
-   :returns: None
+Adds field in the form of a user defined python function.  The input for this function must be (x, y, z, t) and return [Fx, Fy, Fz]
 
-   :example:
+Parameters
+----------
 
-   .. code-block:: py
+function : func
+    A python function with input [x, y, z, t] and return of [Fx, Fy, Fz]
 
-      # Create a function in python and use it as a electric field in OSCARS
+Returns
+-------
+None
 
-      def myfunc(x, y, z, t):
-          "Do not forget to write a docstring"
-          if (z > 0):
-              return 1
-          return 0
+Examples
+--------
+Create a function in python and use it as a field in OSCARS
 
-      osr.add_efield_function(myfunc)
+    >>> def myfunc(x, y, z, t):
+    ...     "Do not forget to write a docstring"
+    ...     if z > 0:
+    ...         return 1
+    ...     return 0
+    >>> osr.add_efield_function(myfunc)
 )docstring";
 static PyObject* OSCARSSR_AddElectricFieldFunction (OSCARSSRObject* self, PyObject* args)
 {
@@ -1503,35 +1715,39 @@ static PyObject* OSCARSSR_AddElectricFieldFunction (OSCARSSRObject* self, PyObje
 
 
 const char* DOC_OSCARSSR_AddElectricFieldGaussian = R"docstring(
-   Add a gaussian electric field in 3D with the peak field magnitude and direction given by *efield*, centered about a point with a given sigma in each coordinate.  If any component of *sigma* is less than or equal to zero it is ignored (ie. spatial extent is infinite).
+add_efield_gaussian(efield, sigma [, rotations, translation])
 
+Add a gaussian field in 3D with the peak field magnitude and direction given by *efield*, centered about a point with a given sigma in each coordinate.  If any component of *sigma* is less than or equal to zero it is ignored (ie. spatial extent is infinite).
 
-   The functional form for this is the following:
-   :math:`\\exp(-(x - x_0)^2 / \\sigma_x^2)`
+The functional form for this is :math:`\exp(-(x - x_0)^2 / \sigma_x^2)`
 
-   :param efield: A list representing the peak field [Bx, By, Bz]
-   :type  efield: list[3]
-   :param center: A list representing the coordinates of the center point [X0, Y0, Z0]
-   :type  center: list[3]
-   :param sigma: A list representing the sigma in each coordinate [S0, S0, S0]
-   :type  sigma: list[3]
-   :returns: None
+Parameters
+----------
+efield : list
+    A list representing the peak field [Fx, Fy, Fz]
 
-   :Example: Add a electric field of 0.5 [T] in the X-direction centered at X=0, Y=0, Z=0 [in meters], with a sigma of 0.1 [m] in the Z-direction
+sigma : list
+    A list representing the sigma in each coordinate :math:`[\sigma_x, \sigma_y, \sigma_z]`
 
-   .. code-block:: py
+rotations : list, optional
+    3-element list representing rotations around x, y, and z axes: [:math:`\theta_x, \theta_y, \theta_z`]
 
-      # Will add a electric field of 1 Tesla in the Y-direction centered
-      # at X=0, Y=0, Z=0 [in meters], with a sigma of 0.1 in the Z-direction
-      osr.add_efield_gaussian(efield=[1, 0, 0], sigma=[0, 0, 0.10])
+translation : list, optional
+    3-element list representing a translation in space [x, y, z]
 
-   :Example: Add a electric field of 1 Tesla in the Y-direction centered at X=1, Y=1, Z=1 [in meters], with a sigma of 0.05 in the Z-direction
+Returns
+-------
+None
 
-   .. code-block:: py
+Examples
+--------
+Add a field of 0.5 [V/m] in the X-direction centered at X=0, Y=0, Z=0 [m], with a sigma of 0.1 [m] in the Z-direction
 
-      # Will add a electric field of 1 Tesla in the Y-direction centered
-      # at X=1, Y=1, Z=1 [in meters], with a sigma of 0.05 in the Z-direction
-      osr.add_efield_gaussian(efield=[0, 1, 0], sigma=[0, 0, 0.05], translation=[1, 1, 1])
+    >>> osr.add_efield_gaussian(efield=[1, 0, 0], sigma=[0, 0, 0.10])
+
+Add a field of 1 [V/m] in the Y-direction centered at X=1, Y=1, Z=1 [m], with a sigma of 0.05 in the Z-direction
+
+    >>> osr.add_efield_gaussian(efield=[0, 1, 0], sigma=[0, 0, 0.05], translation=[1, 1, 1])
 )docstring";
 static PyObject* OSCARSSR_AddElectricFieldGaussian (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
 {
@@ -1612,40 +1828,41 @@ static PyObject* OSCARSSR_AddElectricFieldGaussian (OSCARSSRObject* self, PyObje
 
 
 const char* DOC_OSCARSSR_AddElectricFieldUniform = R"docstring(
-   Add a uniform electrinc field in a given range or for all space.  The *efield* is given as a 3D vector representing the field magnitude and direction.  *width* is an optional parameters, if not present the field permeates all space.  If a component of the 3D list *width* is less than or equal to zero, that coordinate will be ignored when calculating the field.
+add_efield_uniform(efield, width [, rotations, translation])
 
+Add a uniform field in a given range or for all space.  The *efield* is given as a 3D vector representing the field magnitude and direction.  *width* is an optional parameters, if not present the field permeates all space.  If a component of the 3D list *width* is less than or equal to zero, that coordinate will be ignored when calculating the field.
 
-   :param efield: A list representing the magnetic field [Ex, Ey, Ez]
-   :type  efield: list[3]
-   :param width: A list representing the spetial extent of the field [Wx, Wy, Wz]
-   :type  width: list[3]
-   :param rotations: A list representing the rotations of this object about the X, Y amd Z axis (in that order)
-   :type  rotations: list[3]
-   :param translation: A list representing the translation of the center of this object
-   :type  translation: list[3]
-   :returns: None
+Parameters
+----------
+efield : list
+    A list representing the field [Fx, Fy, Fz]
 
-   :Example: Add a electric field of 1e6 [V/m] in the X-direction for all space
+width : list
+    A list representing the spetial extent of the field [Wx, Wy, Wz]
 
-   .. code-block:: py
+rotations : list, optional
+    3-element list representing rotations around x, y, and z axes: [:math:`\theta_x, \theta_y, \theta_z`]
 
-      # Will add an electric field of 1e6 [V/m] in the X-direction over all space
-      osr.add_efield_uniform(efield=[1e6, 0, 0])
+translation : list, optional
+    3-element list representing a translation in space [x, y, z]
 
-   :Example: Add an electric field of 5e5 [V/m] in the Y-direction with a width in the Z-direction of 1.5 [m] (the other directions are ignored) centered at X=0, Y=0, Z=0.75 [m].
+Returns
+-------
+None
 
-   .. code-block:: py
+Examples
+--------
+Add a field of 0.0001 [V/m] in the X-direction for all space
 
-      # Will add a magnetic field of 5e5 [V/m] in the Y-direction centered
-      # at X=0, Y=0, Z=0.75 [in meters], extending in Z a width of 1.5 [m]
-      osr.edd_bfield_uniform(bfield=[0, 5e5, 0], width=[0, 0, 1.5], translation=[0, 0, 0.75])
+    >>> osr.add_efield_uniform(efield=[0.0001, 0, 0])
 
-   :Example: Add an electric field of 1e4 [V/m] in the X-direction in a volume of dimensions 1m x 1m x 1m.
+Add a field of 0.0005 [V/m] in the Y-direction with a width in the Z-direction of 1.5 [m] (the other directions are ignored) centered at X=0, Y=0, Z=0.75 [m].
 
-   .. code-block:: py
+    >>> osr.add_efield_uniform(efield=[0, 1, 0], width=[0, 0, 1.5], translation=[0, 0, 0.75])
 
-      # Will add an electric field of 1e4 [V/m] in the X-direction in a 1x1x1 volume
-      osr.add_efield_uniform(bfield=[1e4, 0, 0], width=[1, 1, 1])
+Add a field of 1 [V/m] in the X-direction in a volume of dimensions 1m x 1m x 1m.
+
+    >>> osr.add_efield_uniform(efield=[1, 0, 0], width=[1, 1, 1])
 )docstring";
 static PyObject* OSCARSSR_AddElectricFieldUniform (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
 {
@@ -1730,29 +1947,42 @@ static PyObject* OSCARSSR_AddElectricFieldUniform (OSCARSSRObject* self, PyObjec
 
 
 const char* DOC_OSCARSSR_AddElectricFieldIdealUndulator = R"docstring(
-   Adds an ideal sinusoidal undulator field with a given maximum efield amplitude, period, and number of periods.  Optionally one can specify the phase offset (in [rad]), rotations and translation.  The number of periods given is the full number of fields not counting the terminating fields.
+add_efield_undulator(efield, period, nperiods [, phase, rotations, translation, taper])
 
-   :param efield: A list representing the peak field [Ex, Ey, Ez] in [V/m]
-   :type  efield: list[3]
-   :param period: Length of one period
-   :type  period: float
-   :param nperiods: Number of periods
-   :type  nperiods: int
-   :param phase: Phase offset in [rad].
-   :type  phase: float
-   :param rotations: A list representing the rotations of this object about the X, Y amd Z axis (in that order)
-   :type  rotations: list[3]
-   :param translation: A list representing the translation of the center of this object
-   :type  translation: list[3]
-   :returns: None
+Adds an ideal sinusoidal undulator field with a given maximum efield amplitude, period, and number of periods.  Optionally one can specify the phase offset (in [rad]), rotations and translation.  The number of periods given is the full number of fields not counting the terminating fields.
 
-   :Example: Add the electric field for an undulator of length 3 [m] with a period of 0.050 [m] (60 periods) having a peak electric field in the Y direction of 1e4 [V/m]
+Parameters
+----------
+efield : list
+    A list representing the peak field [Fx, Fy, Fz] in [V/m]
 
-   .. code-block:: py
+period : list
+    Length of one period
 
-      # Will add electric field 3 [m] undulaotor having 1e4 [V/m] peak field
-      # in the Y-direction with a period of 0.050 [m]
-      osr.add_efield_undulator(efield=[0, 1e4, 0], period=0.050, nperiods=60)
+nperiods : int
+    Number of periods
+
+phase : float
+    Phase offset in [rad]
+
+rotations : list, optional
+    3-element list representing rotations around x, y, and z axes: [:math:`\theta_x, \theta_y, \theta_z`]
+
+translation : list, optional
+    3-element list representing a translation in space [x, y, z]
+
+taper : float
+    The fractional change of the efield per meter along the magnetic axis
+
+Returns
+-------
+None
+
+Examples
+--------
+Add an idealized undulator with 41 periods having a period of 0.050 [m] with a maximum field of 1 [T] in the y-direction where the magnetic axis is along the z-axis
+
+    >>> osr.add_efield_undulator(efield=[0, 1, 0], period=[0, 0, 0.050], nperiods=41)
 )docstring";
 static PyObject* OSCARSSR_AddElectricFieldIdealUndulator (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
 {
@@ -1842,11 +2072,19 @@ static PyObject* OSCARSSR_AddElectricFieldIdealUndulator (OSCARSSRObject* self, 
 
 
 const char* DOC_OSCARSSR_GetEField = R"docstring(
-   Get the 3D field at any point in space.  This is the sum of all fields added to this OSCARS object.
+get_efield(x)
 
-   :param x: A 3D list representing a point in space [x, y, z]
-   :type  x: list[3]
-   :returns: [float, float, float] - list representing the E-field [Ex, Ey, Ez]
+Get the 3D field at any point in space.  This is the sum of all fields added to this OSCARS object.
+
+Parameters
+----------
+x : list
+    A 3D list representing a point in space [x, y, z]
+
+Returns
+-------
+bfield : [float, float, float]
+    list representing the field [Fx, Fy, Fz]
 )docstring";
 static PyObject* OSCARSSR_GetEField (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
 {
@@ -1883,9 +2121,17 @@ static PyObject* OSCARSSR_GetEField (OSCARSSRObject* self, PyObject* args, PyObj
 
 
 const char* DOC_OSCARSSR_ClearElectricFields = R"docstring(
-   Remove all of the existing electric fields.
+clear_efields()
 
-   :returns: None
+Remove all of the existing electric fields.
+
+Parameters
+----------
+None
+
+Returns
+-------
+None
 )docstring";
 static PyObject* OSCARSSR_ClearElectricFields (OSCARSSRObject* self)
 {
@@ -1901,9 +2147,17 @@ static PyObject* OSCARSSR_ClearElectricFields (OSCARSSRObject* self)
 
 
 const char* DOC_OSCARSSR_PrintElectricFields = R"docstring(
-   Print information about all electric fields to the standard out
+print_efields()
 
-   :returns: None
+Print information about all electric fields to the standard out
+
+Parameters
+----------
+None
+
+Returns
+-------
+None
 )docstring";
 static PyObject* OSCARSSR_PrintElectricFields (OSCARSSRObject* self)
 {
@@ -1941,29 +2195,42 @@ static PyObject* OSCARSSR_PrintElectricFields (OSCARSSRObject* self)
 
 
 const char* DOC_OSCARSSR_WriteMagneticField = R"docstring(
-   Write the magnetic field to ofile in the format described in oformat.  You must specify at least one limits and one number of points (e.g. zlim and nz).  All output is in SI units.
+write_bfield(ofile, oformat [, xlim, nx, ylim, ny, zlim, nz, comment])
 
-   The formats (*oformat*) available are:
-   * OSCARS
-   * OSCARS1D
-   * SPECTRA
-   * SRW
+Write the field to ofile in the format described in oformat.  You must specify at least one limits and one number of points (e.g. zlim and nz).  All output is in SI units.
 
-   For OSCARS1D you also must specify what you want in the output.  One spatial dimension must be specified along with at least one field dimension (in any order you like).  For examples theses are all valid: 'OSCARS1D Z Bx By Bz', 'OSCARS1D By Bx Z Bz'.
+The formats (*oformat*) available are:
+* OSCARS
+* OSCARS1D
+* SPECTRA
+* SRW
 
-   :param ofile: Name of output file
-   :type  ofile: str
-   :param oformat: format of output file
-   :type  oformat: str
-   :param xlim: min and max for x dimension
-   :type  xlim: list[min, max]
-   :param ylim: min and max for y dimension
-   :type  ylim: list[min, max]
-   :param zlim: min and max for z dimension
-   :type  zlim: list[min, max]
-   :param comment: comment string to be added to file header.  LF and CR are removed.
-   :type  comment: str
-   :returns: None
+For OSCARS1D you also must specify what you want in the output.  One spatial dimension must be specified along with at least one field dimension (in any order you like).  For examples theses are all valid: 'OSCARS1D Z Bx By Bz', 'OSCARS1D By Bx Z Bz'.
+
+Parameters
+----------
+
+ofile : str
+    Name of output file
+
+oformat : str
+    Format of output file
+
+xlim : list
+    [min, max] for x dimension
+
+ylim : list
+    [min, max] for y dimension
+
+zlim : list
+    [min, max] for z dimension
+
+comment : str
+    Comment string to be added to file header.  LF and CR are removed.
+
+Returns
+-------
+None
 )docstring";
 static PyObject* OSCARSSR_WriteMagneticField (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
 {
@@ -2061,7 +2328,42 @@ static PyObject* OSCARSSR_WriteMagneticField (OSCARSSRObject* self, PyObject* ar
 
 
 const char* DOC_OSCARSSR_WriteElectricField = R"docstring(
-   Same as write_bfield, but writes the electric field.
+write_efield(ofile, oformat [, xlim, nx, ylim, ny, zlim, nz, comment])
+
+Write the field to ofile in the format described in oformat.  You must specify at least one limits and one number of points (e.g. zlim and nz).  All output is in SI units.
+
+The formats (*oformat*) available are:
+* OSCARS
+* OSCARS1D
+* SPECTRA
+* SRW
+
+For OSCARS1D you also must specify what you want in the output.  One spatial dimension must be specified along with at least one field dimension (in any order you like).  For examples theses are all valid: 'OSCARS1D Z Ex Ey Ez', 'OSCARS1D Ey Ex Z Ez'.
+
+Parameters
+----------
+
+ofile : str
+    Name of output file
+
+oformat : str
+    Format of output file
+
+xlim : list
+    [min, max] for x dimension
+
+ylim : list
+    [min, max] for y dimension
+
+zlim : list
+    [min, max] for z dimension
+
+comment : str
+    Comment string to be added to file header.  LF and CR are removed.
+
+Returns
+-------
+None
 )docstring";
 static PyObject* OSCARSSR_WriteElectricField (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
 {
@@ -2206,7 +2508,9 @@ static PyObject* OSCARSSR_WriteElectricField (OSCARSSRObject* self, PyObject* ar
 
 
 const char* DOC_OSCARSSR_SetParticleBeam = R"docstring(
-   This function is the same as oscars.sr.add_particle_beam(), but it clears all particle beams before the 'add'.
+set_particle_beam([, type, name, energy_GeV, d0, x0, beam, sigma_energy_GeV, t0, current, weight, rotations, translation, horizontal_direction, beta, emittance, lattice_reference, mass, charge])
+
+This function is the same as add_particle_beam(), but it clears all particle beams before the 'add'.
 )docstring";
 static PyObject* OSCARSSR_SetParticleBeam (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
 {
@@ -2228,86 +2532,101 @@ static PyObject* OSCARSSR_SetParticleBeam (OSCARSSRObject* self, PyObject* args,
 
 
 const char* DOC_OSCARSSR_AddParticleBeam = R"docstring(
-   Add a particle beam to the OSCARS object with a name given by *name*.  There is no limit to the number of different particle beams one can add.  They are added with a *weight* which is by default 1.  The weight is used in random sampling when asking for a new particle, for example in oscars.sr.set_new_particle().  If the *beam* parameter is given you only need to specify *name* and *x0*.
+add_particle_beam([, type, name, energy_GeV, d0, x0, beam, sigma_energy_GeV, t0, current, weight, rotations, translation, horizontal_direction, beta, emittance, lattice_reference, mass, charge])
 
-   Supported particle types for *type* are:
-      * electron
-      * positron
-      * muon
-      * anti-muon
-      * proton
-      * anti-proton
-      * pi+
-      * pi-
+Add a particle beam to the OSCARS object with a name given by *name*.  There is no limit to the number of different particle beams one can add.  They are added with a *weight* which is by default 1.  The weight is used in random sampling when asking for a new particle, for example in oscars.sr.set_new_particle().  If the *beam* parameter is given you only need to specify *name* and *x0*.
 
-   :param type: one of the built-in types of particle beams, or 'custom'.  If you use custom you must also specify *mass* and *charge*.
-   :type  type: str
-   :param name: User identified of this beam
-   :type  name: str
-   :param energy_GeV: Beam energy in [GeV]
-   :type  energy_GeV: float
-   :param d0: Vector representing the default direction of the beam at the initial position.  The normalization of this vector does not matter.
-   :type  d0: [float, float, float]
-   :param x0: Coordinates of the initial position in [m]
-   :type  x0: [float, float, float]
-   :param beam: name of predefined beam
-   :type  beam: str
-   :param sigma_energy_GeV: Beam energy in [GeV]
-   :type  sigma_energy_GeV: float
-   :param t0: Initial time in [m] at the initial_position.  Time here is in terms of ct.
-   :type  t0: float
-   :param current: Beam current in [A].  If this parameter is 0, the current defaults to the single particle charge
-   :type  current: float
-   :param weight: Weight to give this beam for random sampling when there are multiple beams
-   :type  weight: float
-   :param rotations: A list representing the rotations of this beam about the X, Y amd Z axis (in that order)
-   :type  rotations: list[3]
-   :param translation: A list representing the translation of the x0 of this object
-   :type  translation: list[3]
-   :param horizontal_direction: A list representing the *horizontal* beam direction.  This must be perpendicular to the beam *direction*.  The vertical direction is defined internally as :math:`[direction] \times [horizontal\_direction]`.
-   :type  horizontal_direction: list[3]
-   :param beta: values of the horizontal and vertical beta funtion at the point *lattice_center* [beta_x, beta_y]
-   :type  beat: [float, float]
-   :param emittance: values of the horizontal and vertical emittance [emittance_x, emittance_y]
-   :type  emittance: [float, float]
-   :param lattice_reference: Coordinates of the lattice center (must be on-axis with respect to the beam)
-   :type  lattice_reference: list[3]
-   :param mass: mass of a *custom* particle.  This is only used if *type* = 'custom'.  Must be non-zero.
-   :type  mass: float
-   :param charge: Charge of a *custom* particle.  This is only used if *type* = 'custom'.  Must be non-zero.
-   :type  charge: float
-   :returns: None
+Supported particle types for *type* are:
+    * electron
+    * positron
+    * muon
+    * anti-muon
+    * proton
+    * anti-proton
+    * pi+
+    * pi-
 
-   Currently the predefined beam types are:
-   * NSLSII
-   * NSLSII-ShortStraight
-   * NSLSII-LongStraight
+Parameters
+----------
 
+type : str
+    One of the built-in types of particle beams, or 'custom'.  If you use custom you must also specify *mass* and *charge*.
 
-   :Example: Add an electron beam with 0.500 [A] current at an initial position of [0, 0, 0] in the Y direction with energy of 3 [GeV]
+name : str
+    User identified of this beam
 
-   .. code-block:: py
+energy_GeV : float
+    Beam energy in [GeV]
 
-      # Will add an electron beam called beam_0 starting at [0, 0, 0] headed in the
-      # direction of +Y [0, 1, 0], with an energy of 3 [GeV] at time T0 = 0 [m] having a
-      # current of 0.500 [A] and a weight 1
-      osr.add_particle_beam(type='electron', name='beam_0', x0=[0, 0, 0], d0=[0, 1, 0], energy_GeV=3, current=0.500)
+d0 : list
+    Vector [float, float, float] representing the default direction of the beam at the initial position.  The normalization of this vector does not matter.
 
-   :Example: Add a positron beam with 0.500 [A] current at an initial position of [-2, 0, 0] in the direction given by theta in the X-Y plane with energy of 3 [GeV]
+x0 : list
+    Coordinates of the initial position in [m] [x, y, z]
 
-   .. code-block:: py
+beam : str
+    Name of predefined beam
 
-      # Create a positron beam in the X-Y plane at an angle theta
-      from math import sin, cos
-      theta = 0.25 * osr.pi()
-      osr.add_particle_beam(type='positron', name='beam_0', x0=[-2, 0, 0], d0=[sin(theta), cos(theta), 0], energy_GeV=3, current=0.500)
+sigma_energy_GeV : float
+    Beam energy spread in [GeV]
 
-   :Example: Add a predefined beam
+t0 : float
+    Initial time in [m] at the initial_position.  Time here is in terms of ct.
 
-   .. code-block:: py
+current : float
+    Beam current in [A].  If this parameter is 0, the current defaults to the single particle charge
 
-      # Add the NSLSII beam in a short straight section
-      osr.add_particle_beam(beam='NSLSII-ShortStraight', name='beam_0', x0=[-2, 0, 0])
+weight : float
+    Weight to give this beam for random sampling when there are multiple beams
+
+rotations : list, optional
+    3-element list representing rotations around x, y, and z axes: [:math:`\theta_x, \theta_y, \theta_z`]
+
+translation : list, optional
+    3-element list representing a translation in space [x, y, z]
+
+horizontal_direction : list
+    A list representing the *horizontal* beam direction.  This must be perpendicular to the beam *direction*.  The vertical direction is defined internally as :math:`[direction] \times [horizontal\_direction]`.
+
+beta : list
+    Values of the horizontal and vertical beta funtion at the point *lattice_center* [beta_x, beta_y]
+
+emittance : list
+    values of the horizontal and vertical emittance [emittance_x, emittance_y]
+
+lattice_reference : list
+    Coordinates of the lattice center [x, y, z] (must be on-axis with respect to the beam)
+
+mass : float
+    mass of a *custom* particle.  This is only used if *type* = 'custom'.  Must be non-zero.
+
+charge : float
+    Charge of a *custom* particle.  This is only used if *type* = 'custom'.  Must be non-zero.
+
+Returns
+-------
+None
+
+Currently the predefined beam types are:
+* NSLSII
+* NSLSII-ShortStraight
+* NSLSII-LongStraight
+
+Examples
+--------
+Add an electron beam with 0.500 [A] current at an initial position of [0, 0, 0] in the Y direction with energy of 3 [GeV]
+
+    >>> osr.add_particle_beam(type='electron', name='beam_0', x0=[0, 0, 0], d0=[0, 1, 0], energy_GeV=3, current=0.500)
+
+Add a positron beam with 0.500 [A] current at an initial position of [-2, 0, 0] in the direction given by theta in the X-Y plane with energy of 3 [GeV]
+
+    >>> from math import sin, cos
+    >>> theta = 0.25 * osr.pi()
+    >>> osr.add_particle_beam(type='positron', name='beam_0', x0=[-2, 0, 0], d0=[sin(theta), cos(theta), 0], energy_GeV=3, current=0.500)
+
+Add a predefined beam for the NSLSII short straight section
+
+    >>> osr.add_particle_beam(beam='NSLSII-ShortStraight', name='beam_0', x0=[-2, 0, 0])
 )docstring";
 static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
 {
@@ -2454,7 +2773,6 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   }
 
 
-
   // Check for Horizontal_Direction in the input
   if (PyList_Size(List_Horizontal_Direction) != 0) {
     try {
@@ -2568,9 +2886,17 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
 
 
 const char* DOC_OSCARSSR_ClearParticleBeams = R"docstring(
-   Remove all of the existing particle beams
+clear_particle_beams()
 
-   :returns: None
+Remove all of the existing particle beams
+
+Parameters
+----------
+None
+
+Returns
+-------
+None
 )docstring";
 static PyObject* OSCARSSR_ClearParticleBeams (OSCARSSRObject* self)
 {
@@ -2587,9 +2913,17 @@ static PyObject* OSCARSSR_ClearParticleBeams (OSCARSSRObject* self)
 
 
 const char* DOC_OSCARSSR_PrintParticleBeams = R"docstring(
-   Print information for all internal particle beams
+print_particle_beams()
 
-   :returns: None
+Print information for all internal particle beams
+
+Parameters
+----------
+None
+
+Returns
+-------
+None
 )docstring";
 static PyObject* OSCARSSR_PrintParticleBeams (OSCARSSRObject* self)
 {
@@ -2629,13 +2963,22 @@ static PyObject* OSCARSSR_PrintParticleBeams (OSCARSSRObject* self)
 
 
 const char* DOC_OSCARSSR_SetNewParticle = R"docstring(
-   If no arguments are given sets the current internal particle to a random new particle.  The randomization is based on the weights given for each beam.  This also sets the initial conditions for the particle used in trajectory calculations based on the beam parameters within the randomly sepected beam.  You can specify which beam you want a random particle from using the *beam* parameter.  The *particle* parameter can be 'ideal' if you want the ideal initial conditions for a particle without randomization.
+set_new_particle([, beam, particle])
 
-   :param beam: The name of the beam from which to get a particle from
-   :type  beam: str
-   :param particle: 'ideal' or 'random', for random, you may omit this.
-   :type  particle: str
-   :returns: None
+If no arguments are given sets the current internal particle to a random new particle.  The randomization is based on the weights given for each beam.  This also sets the initial conditions for the particle used in trajectory calculations based on the beam parameters within the randomly sepected beam.  You can specify which beam you want a random particle from using the *beam* parameter.  The *particle* parameter can be 'ideal' if you want the ideal initial conditions for a particle without randomization.
+
+Parameters
+----------
+
+beam : str
+    The name of the beam from which to get a particle from
+
+particle : str
+    'ideal' or 'random', for random, you may omit this.
+
+Returns
+-------
+None
 )docstring";
 static PyObject* OSCARSSR_SetNewParticle (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
 {
@@ -2691,9 +3034,14 @@ static PyObject* OSCARSSR_SetNewParticle (OSCARSSRObject* self, PyObject* args, 
 
 
 const char* DOC_OSCARSSR_GetParticleX0 = R"docstring(
-   Get the initial position for the current particle in [m]
+get_particle_x0()
 
-   :returns: [float, float, float]
+Get the initial position for the current particle in [m]
+
+Returns
+-------
+x0 : [float, float, float]
+    Initial particle position
 )docstring";
 static PyObject* OSCARSSR_GetParticleX0 (OSCARSSRObject* self)
 {
@@ -2705,9 +3053,14 @@ static PyObject* OSCARSSR_GetParticleX0 (OSCARSSRObject* self)
 
 
 const char* DOC_OSCARSSR_GetParticleBeta0 = R"docstring(
-   Get the initial :math:`\vec \beta` for the current particle
+get_particle_beta0()
 
-   :returns: [float, float, float]
+Get the initial :math:`\vec \beta` for the current particle
+
+Returns
+-------
+b0 : [float, float, float]
+    Initial beta of particle
 )docstring";
 static PyObject* OSCARSSR_GetParticleBeta0 (OSCARSSRObject* self)
 {
@@ -2719,9 +3072,14 @@ static PyObject* OSCARSSR_GetParticleBeta0 (OSCARSSRObject* self)
 
 
 const char* DOC_OSCARSSR_GetParticleE0 = R"docstring(
-   Get the initial energy for the current particle in [GeV]
+get_particle_e0()
 
-   :returns: float
+Get the initial energy for the current particle in [GeV]
+
+Returns
+-------
+e0 : float
+    Initial energy of current particle
 )docstring";
 static PyObject* OSCARSSR_GetParticleE0 (OSCARSSRObject* self)
 {
@@ -2735,13 +3093,22 @@ static PyObject* OSCARSSR_GetParticleE0 (OSCARSSRObject* self)
 
 
 const char* DOC_OSCARSSR_CalculateTrajectory = R"docstring(
-   Calculates the trajectory for the current internal particle.  This calculates the trajectory in 3D from the time set by oscars.sr.set_ctstart() to the time set by oscars.sr.set_ctstop() beginning at the *t0* given by the particle beam from which this particle comes from.  It first does a forward propogation to the stop time, then a backward propogation to the start time.
+calculate_trajectory()
 
-   It is not necessary to call this method before other calculations such as spectrum, power density, or flux calculation methods.
+Calculates the trajectory for the current internal particle.  This calculates the trajectory in 3D from the time set by oscars.sr.set_ctstart() to the time set by oscars.sr.set_ctstop() beginning at the *t0* given by the particle beam from which this particle comes from.  It first does a forward propogation to the stop time, then a backward propogation to the start time.
 
-   If you have a current particle loaded using *SetNewParticle* this method will calculate the trajectory for that particle.  If no particle is defined one will be randomly selected based on the beam weights and beam parameters.
+It is not necessary to call this method before other calculations such as spectrum, power density, or flux calculation methods.
 
-   :returns: A list of points of the form [[[x, y, z], [Beta_x, Beta_y, Beta_z]], ...]
+If you have a current particle loaded using *SetNewParticle* this method will calculate the trajectory for that particle.  If no particle is defined one will be randomly selected based on the beam weights and beam parameters.
+
+Parameters
+----------
+None
+
+Returns
+-------
+trajectory : list
+    A list of points of the form [[[x, y, z], [Beta_x, Beta_y, Beta_z]], ...]
 )docstring";
 static PyObject* OSCARSSR_CalculateTrajectory (OSCARSSRObject* self)
 {
@@ -2766,9 +3133,18 @@ static PyObject* OSCARSSR_CalculateTrajectory (OSCARSSRObject* self)
 
 
 const char* DOC_OSCARSSR_GetTrajectory = R"docstring(
-   Get the current trajectory.  If the trajectory has not been calculated this will return an empty list.  The format of the returned list consists of a list of lists giving you the position and beta (v/c) of the particle at each position.  For a trajectory returnned is of the form: [[[x, y, z], [Beta_x, Beta_y, Beta_z]], ...]
+get_trajectory()
 
-   :returns: A list of points of the form [[[x, y, z], [Beta_x, Beta_y, Beta_z]], ...]
+Get the current trajectory.  If the trajectory has not been calculated this will return an empty list.  The format of the returned list consists of a list of lists giving you the position and beta (v/c) of the particle at each position.  For a trajectory returnned is of the form: [[[x, y, z], [Beta_x, Beta_y, Beta_z]], ...]
+
+Parameters
+----------
+None
+
+Returns
+-------
+trajectory : list
+    A list of points of the form [[[x, y, z], [Beta_x, Beta_y, Beta_z]], ...]
 )docstring";
 static PyObject* OSCARSSR_GetTrajectory (OSCARSSRObject* self)
 {
@@ -2831,58 +3207,65 @@ static PyObject* OSCARSSR_GetTrajectory (OSCARSSRObject* self)
 
 
 const char* DOC_OSCARSSR_CalculateSpectrum = R"docstring(
-   Calculate the spectrum given a point in space, the range in energy, and the number of points.  The calculation uses the current particle and its initial conditions.  If the trajectory has not been calculated it is calculated first.  The units of this calculation are [:math:`photons / mm^2 / 0.1% bw / s`]
+calculate_spectrum(obs [, npoints, energy_range_eV, energy_points_eV, points_eV, polarization, angle, horizontal_direction, propogation_direction, nparticles, nthreads, gpu, ofile, bofile])
 
-   Previously to calling this function you must define a particle beam and define start and stop times at very minimum.
+Calculate the spectrum given a point in space, the range in energy, and the number of points.  The calculation uses the current particle and its initial conditions.  If the trajectory has not been calculated it is calculated first.  The units of this calculation are [:math:`photons / mm^2 / 0.1% bw / s`]
 
-   You **must** provide either (*npoints* and *energy_range_eV*) or *points_eV*.
+Previously to calling this function you must define a particle beam and define start and stop times at very minimum.
 
-   :param obs: Point where you wish to calculate the spectrum
-   :type  obs: [float, float, float]
-   :param npoints: Number of points to calculate in the given energy range
-   :type  npoints: int
-   :param energy_range_eV: energy range in eV as a list of length 2
-   :type  energy_range_eV: [float, float]
-   :param points_eV: A list of points to calculate the flux at
-   :type  points_eV: [float, ...]
-   :param polarization: Which polarization mode to calculate.  Can be 'all', 'linear-horizontal', 'linear-vertical', 'circular-left', 'circular-right', or 'linear' (if linear you must specify the angle parameter)
-   :type  polarization: str
-   :param horizontal_direction: The direction you consider to be horizontal.  Should be perpendicular to the photon beam propogation direction
-   :type  horizontal_direction: [x, y, z]
-   :param vertical_direction: Same as horizontal_direction but the vertical direction
-   :type  verticall_direction: [x, y, z]
-   :param angle: Only used if polarization='linear' is specified.  The 'angle' is that from the horizontal_direction for the polarization directino you are interested in
-   :type  angle: float
-   :param nparticles: The number of particles you wish to run for a multi-particle simulation
-   :type  nparticles: int
-   :param ofile: File name you would like to output this data to
-   :type  ofile: str
-   :param nthreads: Number of threads to use
-   :type  nthreads: int
-   :param gpu: Use the gpu or not
-   :type  gpu: int
-   :returns: A list of 2D lists, each of which is a pair representing the energy [eV] and flux [:math:`photons / mm^2 / 0.1% bw / s`] at that energy.  eg [[energy_0, flux_0], [energy_1, flux_1], ...]
+You **must** provide either (*npoints* and *energy_range_eV*) or *points_eV*.
 
-   :Example: Calculate the spectrum at a point 30 [m] downstream (assuming beam direction is in the Z direction) in the energy range 100 to 1000 [eV] with 900 points.
+Parameters
+----------
+obs : list
+    Point [x, y, z] where you wish to calculate the spectrum
 
-   .. code-block:: py
+npoints : int
+    Number of points to calculate in the given energy range
 
-      # 0.4 [T] 2 [m] long dipole centered at Z=0 [m]
-      osr.add_bfield_uniform(bfield=[0, 0.4, 0], width=[0, 0, 2])
+energy_range_eV : list
+    energy range [min, max] in eV as a list of length 2
 
-      # NSLS2 electron beam
-      osr.add_particle_beam(type='electron', name='beam_0', x0=[0, 0, 0], direction=[0, 0, 1], t0=0, energy_GeV=3, current=0.500)
+points_eV : list
+    A list of points to calculate the flux at ie [12.3, 45.6, 78.9, 123.4]
 
-      # Set start and stop time for calculation
-      osr.set_ctstartstop(-0.5, 0.5)
+polarization : str
+    Which polarization mode to calculate.  Can be 'all', 'linear-horizontal', 'linear-vertical', 'circular-left', 'circular-right', or 'linear' (if linear you must specify the angle parameter)
 
+horizontal_direction : list
+    The direction you consider to be horizontal.  Should be perpendicular to the photon beam propogation direction
 
-      # Set number of points for trajectory calculation (hight for dipole)
-      osr.set_npoints_trajectory(20000)
+vertical_direction : list
+    Same as horizontal_direction but the vertical direction
 
-      # Calculate spectrum zt Z=30 [m] in the energy range of 100 to
-      # 1000 [eV] at 900 equally spaced points
-      osr.calculate_spectrum(obs=[0, 0, 30], energy_range_eV=[100, 1000], npoints=900)
+angle : float
+    Only used if polarization='linear' is specified.  The 'angle' is that from the horizontal_direction for the polarization directino you are interested in
+
+nparticles : int
+    The number of particles you wish to run for a multi-particle simulation
+
+nthreads : int
+    Number of threads to use
+
+gpu : int
+    Use the gpu or not (0 or 1)
+
+ofile : str
+    Output file name
+
+bofile : str
+    Binary output file name
+
+Returns
+-------
+spectrum : list
+    A list of 2D lists, each of which is a pair representing the energy [eV] and flux [:math:`photons / mm^2 / 0.1% bw / s`] at that energy.  eg [[energy_0, flux_0], [energy_1, flux_1], ...]
+
+Examples
+--------
+Calculate the spectrum at a point 30 [m] downstream (assuming beam direction is in the Z direction) in the energy range 100 to 1000 [eV] with 900 points.
+
+    >>> osr.calculate_spectrum(obs=[0, 0, 30], energy_range_eV=[100, 1000], npoints=900)
 )docstring";
 static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
 {
@@ -3087,11 +3470,17 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
 
 
 const char* DOC_OSCARSSR_CalculateTotalPower = R"docstring(
-   Calculate the total radiated power based on the current particle and that particle's beam current.
+calculate_total_power()
 
-   See the :doc:`MathematicalNotes` section for the expression used in this calculation.
+Calculate the total radiated power based on the current particle and that particle's beam current.
 
-   :returns: float - Total power in [W]
+See the :doc:`MathematicalNotes` section for the expression used in this calculation.
+
+
+Returns
+-------
+power : float
+    Total power in [W]
 )docstring";
 static PyObject* OSCARSSR_CalculateTotalPower (OSCARSSRObject* self)
 {
@@ -3127,25 +3516,43 @@ static PyObject* OSCARSSR_CalculateTotalPower (OSCARSSRObject* self)
 
 
 const char* DOC_OSCARSSR_CalculatePowerDensity = R"docstring(
-   Calculate the power density for each point in the list *points*.
+calculate_power_density(points [, normal, rotations, translation, nparticles, gpu, nthreads, ofile])
 
-   See the :doc:`MathematicalNotes` section for the expression used in this calculation.
+Calculate the power density for each point in the list *points*.
 
-   :param points: A list of points, each point containing a position in 3D (as a list) and a normal vector at that position (also as a 3D list).
-   :type  points: list[ list[list[float, float, float], list[float, float, float]], ...]
-   :param normal: -1 if you wish to reverse the normal vector, 0 if you wish to ignore the +/- direction in computations, 1 if you with to use the direction of the normal vector as given. 
-   :type  normal: int
-   :param rotations: A list representing the rotations of this beam about the X, Y amd Z axis (in that order)
-   :type  rotations: list[3]
-   :param translation: A list representing the translation of the x0 of this object
-   :type  translation: list[3]
-   :param ofile: Output file name
-   :type  ofile: str
-   :param nthreads: Number of threads to use
-   :type  nthreads: int
-   :param gpu: Use the gpu or not
-   :type  gpu: int
-   :returns: A list, each element of which is a pair representing the position (2D relative (default) or 3D absolute) and power density [:math:`W / mm^2`] at that position.  eg [[[x1_0, x2_0, x3_0], pd_0], [[x1_1, x2_1, x3_1], pd_1]],  ...].  The position is always given as a list of length 3.  For the default (dim=2) the third element is always zero.
+See the :doc:`MathematicalNotes` section for the expression used in this calculation.
+
+Parameters
+----------
+
+points : list
+    A list of points, each point containing a position in 3D (as a list) and a normal vector at that position (also as a 3D list): [[[x, y, z], [nx. ny. nz]], [...], ...]
+
+normal : int
+    -1 if you wish to reverse the normal vector, 0 if you wish to ignore the +/- direction in computations, 1 if you with to use the direction of the normal vector as given. 
+
+rotations : list, optional
+    3-element list representing rotations around x, y, and z axes: [:math:`\theta_x, \theta_y, \theta_z`]
+
+translation : list, optional
+    3-element list representing a translation in space [x, y, z]
+
+nparticles : int
+    Number of particles to use for multi-particle calculations
+
+gpu : int
+    Use the gpu or not (0 or 1)
+
+nthreads : int
+    Number of threads to use
+
+ofile : str
+    Output file name
+
+Returns
+-------
+power_density : list
+    A list, each element of which is a pair representing the position (2D relative (default) or 3D absolute) and power density [:math:`W / mm^2`] at that position.  eg [[[x1_0, x2_0, x3_0], pd_0], [[x1_1, x2_1, x3_1], pd_1]],  ...].  The position is always given as a list of length 3.  For the default (dim=2) the third element is always zero.
 )docstring";
 static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject* args, PyObject *keywds)
 {
@@ -3332,62 +3739,73 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
 
 
 const char* DOC_OSCARSSR_CalculatePowerDensityRectangle = R"docstring(
-   Calculate the power density in a rectangle either defined by three points, or by defining the plane the rectangle is in and the width, and then rotating and translating it to where it needs be.  The simplest is outlined in the first example below.  By default (dim=2) this returns a list whose position coordinates are in the local coordinate space x1 and x2 (*ie* they do not include the rotations and translation).  if dim=3 the coordinates in the return list are in absolute 3D space.
+calculate_power_density_rectangle(npoints [, plane, width, x0x1x2, rotations, translation, ofile, bofile, normal, nparticles, gpu, nthreads, dim])
 
-   See the :doc:`MathematicalNotes` section for the expression used in this calculation.
+Calculate the power density in a rectangle either defined by three points, or by defining the plane the rectangle is in and the width, and then rotating and translating it to where it needs be.  The simplest is outlined in the first example below.  By default (dim=2) this returns a list whose position coordinates are in the local coordinate space x1 and x2 (*ie* they do not include the rotations and translation).  if dim=3 the coordinates in the return list are in absolute 3D space.
 
-   You **must** specify either both (*plane* and *width*) or *x0x1x2*
+See the :doc:`MathematicalNotes` section for the expression used in this calculation.
 
-   :param npoints: number of in each dimension for surface
-   :type  npoints: [int, int]
-   :param plane: The plane to start in (XY, XZ, YZ, YX, ZX, ZY).  The normal to the surface is defined using the right handed cross product (ie the last three have opposite normal vectors from the first three)
-   :type  plane: str
-   :param width: Width if rectangle in X1 and X2
-   :type  width: [float, float]
-   :param x0x1x2: List of three points [[x0, y0, z0], [x1, y1, z1], [x2, y2, z2]]
-   :type  x0x1x2: [[float, float, float], [float, float, float], [float, float, float]]
-   :param rotations: A list representing the rotations of this beam about the X, Y amd Z axis (in that order)
-   :type  rotations: list[3]
-   :param translation: A list representing the translation of the x0 of this object
-   :type  translation: list[3]
-   :param ofile: Output file name
-   :type  ofile: str
-   :param normal: -1 if you wish to reverse the normal vector, 0 if you wish to ignore the +/- direction in computations, 1 if you with to use the direction of the normal vector as given. 
-   :type  normal: int
-   :param dim: Defaults to 2 where output is in the local plane coordinates X1 and X2.  If you want the return to be given in 3D set dim=3 which will return with X, Y, and Z in absolute coordinates.
-   :type  dim: int
-   :param nthreads: Number of threads to use
-   :type  nthreads: int
-   :param gpu: Use the gpu or not
-   :type  gpu: int
-   :returns: A list, each element of which is a pair representing the position (2D relative or 3D absolute) and power density [:math:`W / mm^2`] at that position.  eg [[x1_0, x2_0], pd_0, [x1_1, x2_1], pd_1],  ...]
+You **must** specify either both (*plane* and *width*) or *x0x1x2*
 
-   :Example: Calculate the power density within a simple rectangle 1 [cm] x 1 [cm], 30 [m] downstream
+Parameters
+----------
+npoints: int
+    number of in each dimension for surface
 
-   .. code-block:: py
+plane : str
+    The plane to start in (XY, XZ, YZ, YX, ZX, ZY).  The normal to the surface is defined using the right handed cross product (ie the last three have opposite normal vectors from the first three)
 
-      # Calculate power density in rectangle in the XY plane 30 [m] downstream
-      # from a photon beam in the +Z direction
-      power_density = osr.calculate_power_density(plane='XY', width=[0.01, 0.01], npoints=[51, 51], translation=[0, 0, 30])
+width : list
+    Width of rectangle in X1 and X2: [w1, w2]
 
+x0x1x2 : list
+    List of three points [[x0, y0, z0], [x1, y1, z1], [x2, y2, z2]] defining a parallelogram (vectors 0->1, and 0->2)
 
-   :Example: Calculate the power density within a simple rectangle 1 [cm] x 1 [cm], 30 [m] downstream defined using the three-point method
+rotations : list, optional
+    3-element list representing rotations around x, y, and z axes: [:math:`\theta_x, \theta_y, \theta_z`]
 
-   .. code-block:: py
+translation : list, optional
+    3-element list representing a translation in space [x, y, z]
 
-      # Calculate power density in rectangle in the XY plane 30 [m] downstream
-      # from a photon beam in the +Z direction
-      power_density = osr.calculate_power_density(x0x1x2=[[-0.005, -0.005, 30], [+0.005, -0.005, 30], [-0.005, +0.005, 30]], npoints=[51, 51])
+ofile : str
+    Output file name
 
+bofile : str
+    Binary output file name
 
-   :Example: Calculate the power density on a flat surface close to and parallel to the beam direction
+normal : int
+    -1 if you wish to reverse the normal vector, 0 if you wish to ignore the +/- direction in computations, 1 if you with to use the direction of the normal vector as given. 
 
-   .. code-block:: py
+nparticles : int
+    Number of particles to use for multi-particle calculations
 
-      # Calculate power density in rectangle on the upper flat portion of a beampipe in the middle
-      # of an undulator.  Here the 'normal' is reversed to get the correct sign
-      osr.add_undulator(bfield=[0, 1, 0], period=0.050, nperiods=40)
-      power_density = osr.calculate_power_density(plane='XZ', width=[0.008, 2], npoints=[51, 101], normal=-1)
+gpu : int
+    Use the gpu or not (0 or 1)
+
+nthreads : int
+    Number of threads to use
+
+dim : int
+    Defaults to 2 where output is in the local plane coordinates X1 and X2.  If you want the return to be given in 3D set dim=3 which will return with X, Y, and Z in absolute coordinates.
+
+Returns
+-------
+power_density : list
+    A list, each element of which is a pair representing the position (2D relative or 3D absolute) and power density [:math:`W / mm^2`] at that position.  eg [[x1_0, x2_0], pd_0, [x1_1, x2_1], pd_1],  ...]
+
+Examples
+--------
+Calculate the power density within a simple rectangle 1 [cm] x 1 [cm], 30 [m] downstream
+
+    >>> osr.calculate_power_density(plane='XY', width=[0.01, 0.01], npoints=[51, 51], translation=[0, 0, 30])
+
+Calculate the power density within a simple rectangle 1 [cm] x 1 [cm], 30 [m] downstream defined using the three-point method
+
+    >>> osr.calculate_power_density(x0x1x2=[[-0.005, -0.005, 30], [+0.005, -0.005, 30], [-0.005, +0.005, 30]], npoints=[51, 51])
+
+Calculate the power density on a flat surface close to and parallel to the beam direction (beam in z-direction)
+
+    >>> power_density = osr.calculate_power_density(plane='XZ', width=[0.008, 2], npoints=[51, 101], normal=-1)
 )docstring";
 static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, PyObject* args, PyObject *keywds)
 {
@@ -3638,7 +4056,49 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
 
 
 const char* DOC_OSCARSSR_CalculateFlux = R"docstring(
-   Calculates the flux at a given set of points
+calculate_flux(energy_eV, points [, normal, rotations, translation, nparticles, nthreads, gpu, ofile, bofile])
+
+Calculates the flux at a given set of points
+
+See the :doc:`MathematicalNotes` section for the expression used in this calculation.
+
+Parameters
+----------
+
+energy_eV : float
+    Photon energy of interest
+
+points : list
+    A list of points, each point containing a position in 3D (as a list) and a normal vector at that position (also as a 3D list): [[[x, y, z], [nx. ny. nz]], [...], ...]
+
+normal : int
+    -1 if you wish to reverse the normal vector, 0 if you wish to ignore the +/- direction in computations, 1 if you with to use the direction of the normal vector as given. 
+
+rotations : list, optional
+    3-element list representing rotations around x, y, and z axes: [:math:`\theta_x, \theta_y, \theta_z`]
+
+translation : list, optional
+    3-element list representing a translation in space [x, y, z]
+
+nparticles : int
+    Number of particles to use for multi-particle calculations
+
+nthreads : int
+    Number of threads to use
+
+gpu : int
+    Use the gpu or not (0 or 1)
+
+ofile : str
+    Output file name
+
+bofile : str
+    Binary output file name
+
+Returns
+-------
+power_density : list
+    A list, each element of which is a pair representing the position (2D relative (default) or 3D absolute) and power density [:math:`W / mm^2`] at that position.  eg [[[x1_0, x2_0, x3_0], pd_0], [[x1_1, x2_1, x3_1], pd_1]],  ...].  The position is always given as a list of length 3.  For the default (dim=2) the third element is always zero.
 )docstring";
 static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, PyObject *keywds)
 {
@@ -3831,46 +4291,74 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
 
 
 const char* DOC_OSCARSSR_CalculateFluxRectangle = R"docstring(
-   Calculate the flux density in a rectangle either defined by three points, or by defining the plane the rectangle is in and the width, and then rotating and translating it to where it needs be.  The simplest is outlined in the first example below.  By default (dim=2) this returns a list whose position coordinates are in the local coordinate space x1 and x2 (*ie* they do not include the rotations and translation).  if dim=3 the coordinates in the return list are in absolute 3D space.
+calculate_flux_rectangle(energy_eV, npoints [, plane, normal, dim, width, rotations, translation, x0x1x2, polarization, angle, horizontal_direction, propogation_direction, nparticles, nthreads, gpu, ofile, bofile])
 
-   You **must** specify either both (*plane* and *width*) or *x0x1x2*
+Calculate the flux density in a rectangle either defined by three points, or by defining the plane the rectangle is in and the width, and then rotating and translating it to where it needs be.  The simplest is outlined in the first example below.  By default (dim=2) this returns a list whose position coordinates are in the local coordinate space x1 and x2 (*ie* they do not include the rotations and translation).  if dim=3 the coordinates in the return list are in absolute 3D space.
 
-   See the :doc:`MathematicalNotes` section for the expression used in this calculation.
+You **must** specify either both (*plane* and *width*) or *x0x1x2*
 
+See the :doc:`MathematicalNotes` section for the expression used in this calculation.
 
-   :param energy_eV: The photon energy you are interested in
-   :type  energy_eV: float
-   :param npoints: number of in each dimension for surface
-   :type  npoints: [int, int]
-   :param plane: The plane to start in (XY, XZ, YZ, YX, ZX, ZY).  The normal to the surface is defined using the right handed cross product (ie the last three have opposite normal vectors from the first three)
-   :type  plane: str
-   :param width: Width if rectangle in X1 and X2
-   :type  width: [float, float]
-   :param x0x1x2: List of three points [[x0, y0, z0], [x1, y1, z1], [x2, y2, z2]]
-   :type  x0x1x2: [[float, float, float], [float, float, float], [float, float, float]]
-   :param rotations: A list representing the rotations of this beam about the X, Y amd Z axis (in that order)
-   :type  rotations: list[3]
-   :param translation: A list representing the translation of the x0 of this object
-   :type  translation: list[3]
-   :param polarization: Which polarization mode to calculate.  Can be 'all', 'linear-horizontal', 'linear-vertical', 'circular-left', 'circular-right', or 'linear' (if linear you must specify the angle parameter)
-   :type  polarization: str
-   :param horizontal_direction: The direction you consider to be horizontal.  Should be perpendicular to the photon beam propogation direction
-   :type  horizontal_direction: [x, y, z]
-   :param vertical_direction: Same as horizontal_direction but the vertical direction
-   :type  verticall_direction: [x, y, z]
-   :param angle: Only used if polarization='linear' is specified.  The 'angle' is that from the horizontal_direction for the polarization directino you are interested in
-   :type  angle: float
-   :param ofile: Output file name
-   :type  ofile: str
-   :param normal: -1 if you wish to reverse the normal vector, 0 if you wish to ignore the +/- direction in computations, 1 if you with to use the direction of the normal vector as given. 
-   :type  normal: int
-   :param dim: Defaults to 2 where output is in the local plane coordinates X1 and X2.  If you want the return to be given in 3D set dim=3 which will return with X, Y, and Z in absolute coordinates.
-   :type  dim: int
-   :param nthreads: Number of threads to use
-   :type  nthreads: int
-   :param gpu: Use the gpu or not
-   :type  gpu: int
-   :returns: A list, each element of which is a pair representing the position (2D relative (default) or 3D absolute) and flux [:math:`W / mm^2`] at that position.  eg [[[x1_0, x2_0, x3_0], f_0], [[x1_1, x2_1, x3_1], f_1]],  ...].  The position is always given as a list of length 3.  For the default (dim=2) the third element is always zero.
+Parameters
+----------
+energy_eV : float
+    Photon energy of interest
+
+npoints : list [int, int]
+    Number of points in X1 and X2 dimension [n1, n2]
+
+plane : str
+    The plane to start in (XY, XZ, YZ, YX, ZX, ZY).  The normal to the surface is defined using the right handed cross product (ie the last three have opposite normal vectors from the first three)
+
+normal : int
+    -1 if you wish to reverse the normal vector, 0 if you wish to ignore the +/- direction in computations, 1 if you with to use the direction of the normal vector as given. 
+
+dim : int
+    Defaults to 2 where output is in the local plane coordinates X1 and X2.  If you want the return to be given in 3D set dim=3 which will return with X, Y, and Z in absolute coordinates.
+
+width : list
+    Width of rectangle in X1 and X2: [w1, w2]
+
+rotations : list, optional
+    3-element list representing rotations around x, y, and z axes: [:math:`\theta_x, \theta_y, \theta_z`]
+
+translation : list, optional
+    3-element list representing a translation in space [x, y, z]
+
+x0x1x2 : list
+    List of three points [[x0, y0, z0], [x1, y1, z1], [x2, y2, z2]] defining a parallelogram (vectors 0->1, and 0->2)
+
+polarization : str
+    Which polarization mode to calculate.  Can be 'all', 'linear-horizontal', 'linear-vertical', 'circular-left', 'circular-right', or 'linear' (if linear you must specify the angle parameter)
+
+angle : float
+    Only used if polarization='linear' is specified.  The 'angle' is that from the horizontal_direction for the polarization directino you are interested in
+
+horizontal_direction : list
+    The direction you consider to be horizontal.  Should be perpendicular to the photon beam propogation direction
+
+propogation_direction : list
+    Propogation direction of photon beam
+
+nparticles : int
+    The number of particles you wish to run for a multi-particle simulation
+
+nthreads : int
+    Number of threads to use
+
+gpu : int
+    Use the gpu or not (0 or 1)
+
+ofile : str
+    Output file name
+
+bofile : str
+    Binary output file name
+
+Returns
+-------
+flux : list
+    A list, each element of which is a pair representing the position (2D relative (default) or 3D absolute) and flux [:math:`W / mm^2`] at that position.  eg [[[x1_0, x2_0, x3_0], f_0], [[x1_1, x2_1, x3_1], f_1]],  ...].  The position is always given as a list of length 3.  For the default (dim=2) the third element is always zero.
 )docstring";
 static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject* args, PyObject *keywds)
 {
@@ -4150,18 +4638,28 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
 
 
 const char* DOC_OSCARSSR_AverageSpectra = R"docstring(
-   Average spectra from different files.  The input files must have the same format.
+average_spectra([, ifiles, bifiles, ofile, bofile])
 
+Average spectra from different files.  The input files must have the same format.
 
-   :param ifiles: The input file names
-   :type  ifiles: list
-   :param ofile: The output file name
-   :type  ofile: str
-   :param bifiles: The binary input file names
-   :type  bifiles: list
-   :param bofile: The binary output file name
-   :type  bofile: str
-   :returns: A list of 2D lists, each of which is a pair representing the energy and flux at that energy.  eg [[energy_0, flux_0], [energy_1, flux_1], ...]
+Parameters
+----------
+ifiles : list
+    The input file names as strings: ['f0.txt', 'f1.txt', ...]
+
+bifiles : list
+    The binary input file names as strings: ['f0.dat', 'f1.dat', ...]
+
+ofile : str
+    The output file name
+
+bofile : str
+    The binary output file name
+
+Returns
+-------
+spectrum : list
+    A list of 2D lists, each of which is a pair representing the energy and flux at that energy.  eg [[energy_0, flux_0], [energy_1, flux_1], ...]
 )docstring";
 static PyObject* OSCARSSR_AverageSpectra (OSCARSSRObject* self, PyObject* args, PyObject *keywds)
 {
@@ -4257,13 +4755,21 @@ static PyObject* OSCARSSR_AverageSpectra (OSCARSSRObject* self, PyObject* args, 
 
 
 const char* DOC_OSCARSSR_AddToSpectrum = R"docstring(
-   Add a spectrum to the current spectrum with a given weight.
+add_to_spectrum(spectrum [, weight])
 
-   :param spectrum: a list of pairs of numbers (spectrum format)
-   :type  spectrum: list
-   :param weight: Weight for *this* spectrum
-   :type  weight: float
-   :returns: None
+Add a spectrum to the current spectrum with a given weight.
+
+Parameters
+----------
+spectrum : list
+    A list of pairs of numbers (spectrum format)
+
+weight : float
+    Weight for *this* spectrum
+
+Returns
+-------
+None
 )docstring";
 static PyObject* OSCARSSR_AddToSpectrum (OSCARSSRObject* self, PyObject* args, PyObject *keywds)
 {
@@ -4301,9 +4807,18 @@ static PyObject* OSCARSSR_AddToSpectrum (OSCARSSRObject* self, PyObject* args, P
 
 
 const char* DOC_OSCARSSR_GetSpectrum = R"docstring(
-   Get the current spectrum stored in memory
+get_spectrum()
 
-   :returns: A list of 2D lists, each of which is a pair representing the energy and flux at that energy.  eg [[energy_0, flux_0], [energy_1, flux_1], ...]
+Get the current spectrum
+
+Parameters
+----------
+None
+
+Returns
+-------
+spectrum : list
+    A list of 2D lists, each of which is a pair representing the energy and flux at that energy.  eg [[energy_0, flux_0], [energy_1, flux_1], ...]
 )docstring";
 static PyObject* OSCARSSR_GetSpectrum (OSCARSSRObject* self)
 {
@@ -4316,20 +4831,59 @@ static PyObject* OSCARSSR_GetSpectrum (OSCARSSRObject* self)
 
 
 
-const char* DOC_OSCARSSR_AverageT3DScalars = R"docstring(
-   Average from different files and output to specified file.  The input files must have the same format.
+const char* DOC_OSCARSSR_AverageT3DScalars_Flux = R"docstring(
+average_flux([, ifiles, bifiles, ofile, bofile, dim])
 
-   :param ifiles: The input file names
-   :type  ifiles: list
-   :param ofile: The output file name
-   :type  ofile: str
-   :param bifiles: The binary input file names
-   :type  bifiles: list
-   :param bofile: The binary output file name
-   :type  bofile: str
-   :param dim: in 2 or 3 dimensions (default is 2)
-   :type  dim: integer
-   :returns: A list, each element of which is a pair representing the position (x) and value (v) at that position.  eg [[[x1_0, x2_0, x3_0], v_0], [[x1_1, x2_1, x3_1], v_1]],  ...].  The position is always given as a list of length 3.
+Average from different files and output to specified file.  The input files must have the same format.
+
+Parameters
+----------
+ifiles : list
+    The input file names as strings: ['f0.txt', 'f1.txt', ...]
+
+bifiles : list
+    The binary input file names as strings: ['f0.dat', 'f1.dat', ...]
+
+ofile : str
+    The output file name
+
+bofile : str
+    The binary output file name
+
+dim : int
+    in 2 or 3 dimensions (default is 2)
+
+Returns
+-------
+flux : list
+    A list, each element of which is a pair representing the position (x) and value (v) at that position.  eg [[[x1_0, x2_0, x3_0], v_0], [[x1_1, x2_1, x3_1], v_1]],  ...].  The position is always given as a list of length 3.
+)docstring";
+const char* DOC_OSCARSSR_AverageT3DScalars_PowerDensity = R"docstring(
+average_power_density([, ifiles, bifiles, ofile, bofile, dim])
+
+Average from different files and output to specified file.  The input files must have the same format.
+
+Parameters
+----------
+ifiles : list
+    The input file names as strings: ['f0.txt', 'f1.txt', ...]
+
+bifiles : list
+    The binary input file names as strings: ['f0.dat', 'f1.dat', ...]
+
+ofile : str
+    The output file name
+
+bofile : str
+    The binary output file name
+
+dim : int
+    in 2 or 3 dimensions (default is 2)
+
+Returns
+-------
+power_density : list
+    A list, each element of which is a pair representing the position (x) and value (v) at that position.  eg [[[x1_0, x2_0, x3_0], v_0], [[x1_1, x2_1, x3_1], v_1]],  ...].  The position is always given as a list of length 3.
 )docstring";
 static PyObject* OSCARSSR_AverageT3DScalars (OSCARSSRObject* self, PyObject* args, PyObject *keywds)
 {
@@ -4437,13 +4991,21 @@ static PyObject* OSCARSSR_AverageT3DScalars (OSCARSSRObject* self, PyObject* arg
 
 
 const char* DOC_OSCARSSR_AddToFlux = R"docstring(
-   Add a flux to the current flux with a given weight.
+add_to_flux(flux [, weight])
 
-   :param spectrum: a list of [[x, y, z], flux] pairs (flux format)
-   :type  spectrum: list
-   :param weight: Weight for *this* flux
-   :type  weight: float
-   :returns: None
+Add flux map to the current flux map with a given weight.
+
+Parameters
+----------
+flux : list
+    A list of points and fluxes (in flux format)
+
+weight : float
+    Weight for *this* flux map
+
+Returns
+-------
+None
 )docstring";
 static PyObject* OSCARSSR_AddToFlux (OSCARSSRObject* self, PyObject* args, PyObject *keywds)
 {
@@ -4481,9 +5043,18 @@ static PyObject* OSCARSSR_AddToFlux (OSCARSSRObject* self, PyObject* args, PyObj
 
 
 const char* DOC_OSCARSSR_GetFlux = R"docstring(
-   Get the current flux map stored in memory
+get_flux()
 
-   :returns: list of [[[x, y, z], flux], ...]
+Get the current flux map stored in memory
+
+Parameters
+----------
+None
+
+Returns
+-------
+flux : list
+    list of [[[x, y, z], flux], ...]
 )docstring";
 static PyObject* OSCARSSR_GetFlux (OSCARSSRObject* self)
 {
@@ -4497,13 +5068,21 @@ static PyObject* OSCARSSR_GetFlux (OSCARSSRObject* self)
 
 
 const char* DOC_OSCARSSR_AddToPowerDensity = R"docstring(
-   Add a power density to the current power density with a given weight.
+add_to_power_density(power_density [, weight])
 
-   :param spectrum: a list of [[x, y, z], power_density] pairs (power density format)
-   :type  spectrum: list
-   :param weight: Weight for *this* power density
-   :type  weight: float
-   :returns: None
+Add power_density map to the current power_density map with a given weight.
+
+Parameters
+----------
+power_density : list
+    A list of points and power_densities (in power_density format)
+
+weight : float
+    Weight for *this* power_density map
+
+Returns
+-------
+None
 )docstring";
 static PyObject* OSCARSSR_AddToPowerDensity (OSCARSSRObject* self, PyObject* args, PyObject *keywds)
 {
@@ -4541,9 +5120,18 @@ static PyObject* OSCARSSR_AddToPowerDensity (OSCARSSRObject* self, PyObject* arg
 
 
 const char* DOC_OSCARSSR_GetPowerDensity = R"docstring(
-   Get the current power_density map stored in memory
+get_power_density()
 
-   :returns: list of [[[x, y, z], power_density], ...]
+Get the current power_density map stored in memory
+
+Parameters
+----------
+None
+
+Returns
+-------
+power_density : list
+    list of [[[x, y, z], power_density], ...]
 )docstring";
 static PyObject* OSCARSSR_GetPowerDensity (OSCARSSRObject* self)
 {
@@ -4565,15 +5153,24 @@ static PyObject* OSCARSSR_GetPowerDensity (OSCARSSRObject* self)
 
 
 const char* DOC_OSCARSSR_CalculateElectricFieldTimeDomain = R"docstring(
-   Calculate the electric field in the time domain for a single particle
+calculate_efield_vs_time(obs [, ofile])
 
-   See the :doc:`MathematicalNotes` section for the expression used in this calculation.
+Calculate the electric field in the time domain for a single particle
 
-   :param obs: Point where you wish to calculate the electric field
-   :type  obs: [float, float, float]
-   :param ofile: Output file name
-   :type  ofile: str
-   :returns: A list, each element of which has a time (in [s]) and a 3-dimensional list representing the x, y, and z componemts of the electric field at that time: [[t, [Ex, Ey, Ez]], ...]
+See the :doc:`MathematicalNotes` section for the expression used in this calculation.
+
+Parameters
+----------
+obs : lsit
+    Point where you wish to calculate the electric field [x, y, z]
+
+ofile : str
+    Output file name
+
+Returns
+-------
+efield : list
+    A list, each element of which has a time (in [s]) and a 3-dimensional list representing the x, y, and z componemts of the electric field at that time: [[t, [Ex, Ey, Ez]], ...]
 )docstring";
 static PyObject* OSCARSSR_CalculateElectricFieldTimeDomain (OSCARSSRObject* self, PyObject* args, PyObject *keywds)
 {
@@ -4645,9 +5242,17 @@ static PyObject* OSCARSSR_CalculateElectricFieldTimeDomain (OSCARSSRObject* self
 
 
 const char* DOC_OSCARSSR_PrintAll = R"docstring(
-   Print all internal information related to beams and fields
+print_all()
 
-   :returns: None
+Print all internal information related to beams and fields
+
+Parameters
+----------
+None
+
+Returns
+-------
+None
 )docstring";
 static PyObject* OSCARSSR_PrintAll (OSCARSSRObject* self)
 {
@@ -4755,8 +5360,8 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   {"add_to_spectrum",                   (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddToSpectrum},
   {"get_spectrum",                      (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetSpectrum},
 
-  {"average_flux",                      (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AverageT3DScalars},
-  {"average_power_density",             (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AverageT3DScalars},
+  {"average_flux",                      (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AverageT3DScalars_Flux},
+  {"average_power_density",             (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AverageT3DScalars_PowerDensity},
 
   {"add_to_flux",                       (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddToFlux},
   {"get_flux",                          (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetFlux},
@@ -4768,7 +5373,8 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
 
   {"print_all",                         (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_PrintAll},
 
-  {NULL}  /* Sentinel */
+  //{NULL}  /* Sentinel */
+  {NULL, NULL, 0, NULL}  /* Sentinel */
 };
 
 
@@ -4805,6 +5411,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"print_bfields",                     (PyCFunction) OSCARSSR_PrintMagneticFields,             METH_NOARGS,                  DOC_OSCARSSR_PrintMagneticFields},
 
   {"add_efield_file",                   (PyCFunction) OSCARSSR_AddElectricField,                METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricField},
+  {"add_efield_interpolated",           (PyCFunction) OSCARSSR_AddElectricFieldInterpolated,    METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldInterpolated},
   {"add_efield_function",               (PyCFunction) OSCARSSR_AddElectricFieldFunction,        METH_VARARGS,                 DOC_OSCARSSR_AddElectricFieldFunction},
   {"add_efield_gaussian",               (PyCFunction) OSCARSSR_AddElectricFieldGaussian,        METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldGaussian},
   {"add_efield_uniform",                (PyCFunction) OSCARSSR_AddElectricFieldUniform,         METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldUniform},
@@ -4844,8 +5451,8 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"add_to_spectrum",                   (PyCFunction) OSCARSSR_AddToSpectrum,                   METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddToSpectrum},
   {"get_spectrum",                      (PyCFunction) OSCARSSR_GetSpectrum,                     METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetSpectrum},
 
-  {"average_flux",                      (PyCFunction) OSCARSSR_AverageT3DScalars,               METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AverageT3DScalars},
-  {"average_power_density",             (PyCFunction) OSCARSSR_AverageT3DScalars,               METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AverageT3DScalars},
+  {"average_flux",                      (PyCFunction) OSCARSSR_AverageT3DScalars,               METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AverageT3DScalars_Flux},
+  {"average_power_density",             (PyCFunction) OSCARSSR_AverageT3DScalars,               METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AverageT3DScalars_PowerDensity},
 
   {"add_to_flux",                       (PyCFunction) OSCARSSR_AddToFlux,                       METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddToFlux},
   {"get_flux",                          (PyCFunction) OSCARSSR_GetFlux,                         METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetFlux},
@@ -4857,7 +5464,7 @@ static PyMethodDef OSCARSSR_methods[] = {
 
   {"print_all",                         (PyCFunction) OSCARSSR_PrintAll,                           METH_NOARGS,                  DOC_OSCARSSR_PrintAll},
 
-  {NULL}  /* Sentinel */
+  {NULL, NULL, 0, NULL}  /* Sentinel */
 };
 
 
@@ -4975,54 +5582,55 @@ static PyModuleDef OSCARSSRmodule = {
   "sr",
   "OSCARSSR module extension.",
   -1,
-  OSCARSSR_methods_fake,
+  OSCARSSR_methods,
   NULL, NULL, NULL, NULL
 };
 #endif
 
 
+
 #if PY_MAJOR_VERSION >= 3
 PyMODINIT_FUNC PyInit_sr(void)
-#else
-PyMODINIT_FUNC initsr(OSCARSSRObject* self, PyObject* args, PyObject* kwds)
-#endif
 {
   if (PyType_Ready(&OSCARSSRType) < 0) {
-#if PY_MAJOR_VERSION >= 3
     return NULL;
-#else
-    return;
-#endif
   }
-
-#if PY_MAJOR_VERSION >= 3
   PyObject* m = PyModule_Create(&OSCARSSRmodule);
-#else
-  PyObject *m = Py_InitModule("oscars.sr", OSCARSSR_methods);
-#endif
   if (m == NULL) {
-#if PY_MAJOR_VERSION >= 3
     return NULL;
-#else
-    return;
-#endif
   }
-
   Py_INCREF(&OSCARSSRType);
   PyModule_AddObject(m, "sr", (PyObject *)&OSCARSSRType);
-
   // Print copyright notice
   PyObject* sys = PyImport_ImportModule( "sys");
   PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
   std::string Message = "OSCARS v" + OSCARS::GetVersionString() + " - Open Source Code for Advanced Radiation Simulation\nBrookhaven National Laboratory, Upton NY, USA\nhttp://oscars.bnl.gov\noscars@bnl.gov\n";
   PyObject_CallMethod(s_out, "write", "s", Message.c_str());
-
-#if PY_MAJOR_VERSION >= 3
   return m;
-#else
-  return;
-#endif
 }
+#else
+PyMODINIT_FUNC initsr(OSCARSSRObject* self, PyObject* args, PyObject* kwds)
+{
+  if (PyType_Ready(&OSCARSSRType) < 0) {
+    return;
+  }
+  PyObject *m = Py_InitModule("oscars.sr", OSCARSSR_methods);
+  if (m == NULL) {
+    return;
+  }
+  Py_INCREF(&OSCARSSRType);
+  PyModule_AddObject(m, "sr", (PyObject *)&OSCARSSRType);
+  // Print copyright notice
+  PyObject* sys = PyImport_ImportModule( "sys");
+  PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
+  std::string Message = "OSCARS v" + OSCARS::GetVersionString() + " - Open Source Code for Advanced Radiation Simulation\nBrookhaven National Laboratory, Upton NY, USA\nhttp://oscars.bnl.gov\noscars@bnl.gov\n";
+  PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+  return;
+}
+#endif
+
+
+
 
 
 
