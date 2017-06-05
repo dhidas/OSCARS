@@ -5289,9 +5289,6 @@ static PyObject* OSCARSSR_Fake (OSCARSSRObject* self, PyObject* args, PyObject *
 
 
 static PyMethodDef OSCARSSR_methods_fake[] = {
-  // We must tell python about the function we allow access as well as give them nice
-  // python names, and tell python the method of input parameters.
-
   {"pi",                                (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_Pi},
   {"qe",                                (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_Qe},
   {"me",                                (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_Me},
@@ -5321,6 +5318,7 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   {"print_bfields",                     (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_PrintMagneticFields},
 
   {"add_efield_file",                   (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricField},
+  {"add_efield_interpolated",           (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldInterpolated},
   {"add_efield_function",               (PyCFunction) OSCARSSR_Fake, METH_VARARGS,                 DOC_OSCARSSR_AddElectricFieldFunction},
   {"add_efield_gaussian",               (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldGaussian},
   {"add_efield_uniform",                (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldUniform},
@@ -5373,7 +5371,6 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
 
   {"print_all",                         (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_PrintAll},
 
-  //{NULL}  /* Sentinel */
   {NULL, NULL, 0, NULL}  /* Sentinel */
 };
 
@@ -5582,7 +5579,7 @@ static PyModuleDef OSCARSSRmodule = {
   "sr",
   "OSCARSSR module extension.",
   -1,
-  OSCARSSR_methods,
+  OSCARSSR_methods_fake,
   NULL, NULL, NULL, NULL
 };
 #endif
