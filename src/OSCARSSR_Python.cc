@@ -2195,7 +2195,7 @@ static PyObject* OSCARSSR_PrintElectricFields (OSCARSSRObject* self)
 
 
 const char* DOC_OSCARSSR_WriteMagneticField = R"docstring(
-write_bfield(ofile, oformat [, xlim, nx, ylim, ny, zlim, nz, comment])
+write_bfield(oformat [, ofile, bofile, xlim, nx, ylim, ny, zlim, nz, comment, version])
 
 Write the field to ofile in the format described in oformat.  You must specify at least one limits and one number of points (e.g. zlim and nz).  All output is in SI units.
 
@@ -2205,16 +2205,19 @@ The formats (*oformat*) available are:
 * SPECTRA
 * SRW
 
-For OSCARS1D you also must specify what you want in the output.  One spatial dimension must be specified along with at least one field dimension (in any order you like).  For examples theses are all valid: 'OSCARS1D Z Bx By Bz', 'OSCARS1D By Bx Z Bz'.
+For OSCARS1D you also must specify what you want in the output.  One spatial dimension must be specified along with at least one field dimension (in any order you like).  For examples theses are all valid: 'OSCARS1D Z Fx Fy Fz', 'OSCARS1D Fy Fx Z Fz'.
 
 Parameters
 ----------
 
+oformat : str
+    Format of output file
+
 ofile : str
     Name of output file
 
-oformat : str
-    Format of output file
+bofile : str
+    Name of binary output file
 
 xlim : list
     [min, max] for x dimension
@@ -2228,6 +2231,9 @@ zlim : list
 comment : str
     Comment string to be added to file header.  LF and CR are removed.
 
+version : int
+    Which version of output format (you should use the default unless you have good reason)
+
 Returns
 -------
 None
@@ -2236,9 +2242,10 @@ static PyObject* OSCARSSR_WriteMagneticField (OSCARSSRObject* self, PyObject* ar
 {
   // Add a magnetic field that is a gaussian
 
-  const char* OutFileName = "";
-  const char* OutFormat   = "";
-  const char* Comment     = "";
+  const char* OutFileName       = "";
+  const char* OutFileNameBinary = "";
+  const char* OutFormat         = "";
+  const char* Comment           = "";
 
   // Lists and variables
   PyObject* List_XLim = PyList_New(0);
@@ -2253,19 +2260,23 @@ static PyObject* OSCARSSR_WriteMagneticField (OSCARSSRObject* self, PyObject* ar
   TVector2D YLim;
   TVector2D ZLim;
 
+  int Version = 0;
+
 
   // Input variables and parsing
-  static char *kwlist[] = {"ofile", "oformat", "xlim", "nx", "ylim", "ny", "zlim", "nz", "comment", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ss|OiOiOis", kwlist,
-                                                               &OutFileName,
-                                                               &OutFormat,
-                                                               &List_XLim,
-                                                               &NX,
-                                                               &List_YLim,
-                                                               &NY,
-                                                               &List_ZLim,
-                                                               &NZ,
-                                                               &Comment)) {
+  static char *kwlist[] = {"oformat", "ofile", "bofile", "xlim", "nx", "ylim", "ny", "zlim", "nz", "comment", "version", NULL};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|ssOiOiOis", kwlist,
+                                   &OutFormat,
+                                   &OutFileName,
+                                   &OutFileNameBinary,
+                                   &List_XLim,
+                                   &NX,
+                                   &List_YLim,
+                                   &NY,
+                                   &List_ZLim,
+                                   &NZ,
+                                   &Comment,
+                                   &Version)) {
     return NULL;
   }
 
@@ -2276,8 +2287,8 @@ static PyObject* OSCARSSR_WriteMagneticField (OSCARSSRObject* self, PyObject* ar
 
 
   // Check that filename and format exist
-  if (std::strlen(OutFileName) == 0 || std::strlen(OutFormat) == 0) {
-    PyErr_SetString(PyExc_ValueError, "'ofile' or 'oformat' is blank");
+  if (std::strlen(OutFormat) == 0) {
+    PyErr_SetString(PyExc_ValueError, "'oformat' is blank");
     return NULL;
   }
 
@@ -2311,12 +2322,22 @@ static PyObject* OSCARSSR_WriteMagneticField (OSCARSSRObject* self, PyObject* ar
     }
   }
 
+  if (std::strlen(OutFileName) > 0) {
+    try {
+      self->obj->WriteField("B", OutFileName, OutFormat, XLim, NX, YLim, NY, ZLim, NZ, Comment);
+    } catch (...) {
+      PyErr_SetString(PyExc_ValueError, "could not write output file");
+      return NULL;
+    }
+  }
 
-  try {
-    self->obj->WriteField("B", OutFileName, OutFormat, XLim, NX, YLim, NY, ZLim, NZ, Comment);
-  } catch (...) {
-    PyErr_SetString(PyExc_ValueError, "could not write output file");
-    return NULL;
+  if (std::strlen(OutFileNameBinary) > 0) {
+    try {
+      self->obj->WriteFieldBinary("B", OutFileNameBinary, OutFormat, XLim, NX, YLim, NY, ZLim, NZ, Comment, Version);
+    } catch (...) {
+      PyErr_SetString(PyExc_ValueError, "could not write output file");
+      return NULL;
+    }
   }
 
   // Must return python object None in a special way
@@ -2328,7 +2349,7 @@ static PyObject* OSCARSSR_WriteMagneticField (OSCARSSRObject* self, PyObject* ar
 
 
 const char* DOC_OSCARSSR_WriteElectricField = R"docstring(
-write_efield(ofile, oformat [, xlim, nx, ylim, ny, zlim, nz, comment])
+write_efield(oformat [, ofile, bofile, xlim, nx, ylim, ny, zlim, nz, comment, version])
 
 Write the field to ofile in the format described in oformat.  You must specify at least one limits and one number of points (e.g. zlim and nz).  All output is in SI units.
 
@@ -2338,16 +2359,19 @@ The formats (*oformat*) available are:
 * SPECTRA
 * SRW
 
-For OSCARS1D you also must specify what you want in the output.  One spatial dimension must be specified along with at least one field dimension (in any order you like).  For examples theses are all valid: 'OSCARS1D Z Ex Ey Ez', 'OSCARS1D Ey Ex Z Ez'.
+For OSCARS1D you also must specify what you want in the output.  One spatial dimension must be specified along with at least one field dimension (in any order you like).  For examples theses are all valid: 'OSCARS1D Z Fx Fy Fz', 'OSCARS1D Fy Fx Z Fz'.
 
 Parameters
 ----------
 
+oformat : str
+    Format of output file
+
 ofile : str
     Name of output file
 
-oformat : str
-    Format of output file
+bofile : str
+    Name of binary output file
 
 xlim : list
     [min, max] for x dimension
@@ -2361,6 +2385,9 @@ zlim : list
 comment : str
     Comment string to be added to file header.  LF and CR are removed.
 
+version : int
+    Which version of output format (you should use the default unless you have good reason)
+
 Returns
 -------
 None
@@ -2369,9 +2396,10 @@ static PyObject* OSCARSSR_WriteElectricField (OSCARSSRObject* self, PyObject* ar
 {
   // Add a magnetic field that is a gaussian
 
-  const char* OutFileName = "";
-  const char* OutFormat   = "";
-  const char* Comment     = "";
+  const char* OutFileName       = "";
+  const char* OutFileNameBinary = "";
+  const char* OutFormat         = "";
+  const char* Comment           = "";
 
   // Lists and variables
   PyObject* List_XLim = PyList_New(0);
@@ -2386,26 +2414,35 @@ static PyObject* OSCARSSR_WriteElectricField (OSCARSSRObject* self, PyObject* ar
   TVector2D YLim;
   TVector2D ZLim;
 
+  int Version = 0;
+
 
   // Input variables and parsing
-  static char *kwlist[] = {"ofile", "oformat", "xlim", "nx", "ylim", "ny", "zlim", "nz", "comment", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ss|OiOiOis", kwlist,
-                                                               &OutFileName,
-                                                               &OutFormat,
-                                                               &List_XLim,
-                                                               &NX,
-                                                               &List_YLim,
-                                                               &NY,
-                                                               &List_ZLim,
-                                                               &NZ,
-                                                               &Comment)) {
+  static char *kwlist[] = {"oformat", "ofile", "bofile", "xlim", "nx", "ylim", "ny", "zlim", "nz", "comment", "version", NULL};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|ssOiOiOis", kwlist,
+                                   &OutFormat,
+                                   &OutFileName,
+                                   &OutFileNameBinary,
+                                   &List_XLim,
+                                   &NX,
+                                   &List_YLim,
+                                   &NY,
+                                   &List_ZLim,
+                                   &NZ,
+                                   &Comment,
+                                   &Version)) {
     return NULL;
   }
 
+  // Initial values for limits are all 0
+  XLim.SetXY(0, 0);
+  YLim.SetXY(0, 0);
+  ZLim.SetXY(0, 0);
+
 
   // Check that filename and format exist
-  if (std::strlen(OutFileName) == 0 || std::strlen(OutFormat) == 0) {
-    PyErr_SetString(PyExc_ValueError, "'ofile' or 'oformat' is blank");
+  if (std::strlen(OutFormat) == 0) {
+    PyErr_SetString(PyExc_ValueError, "'oformat' is blank");
     return NULL;
   }
 
@@ -2439,12 +2476,22 @@ static PyObject* OSCARSSR_WriteElectricField (OSCARSSRObject* self, PyObject* ar
     }
   }
 
+  if (std::strlen(OutFileName) > 0) {
+    try {
+      self->obj->WriteField("E", OutFileName, OutFormat, XLim, NX, YLim, NY, ZLim, NZ, Comment);
+    } catch (...) {
+      PyErr_SetString(PyExc_ValueError, "could not write output file");
+      return NULL;
+    }
+  }
 
-  try {
-    self->obj->WriteField("E", OutFileName, OutFormat, XLim, NX, YLim, NY, ZLim, NZ, Comment);
-  } catch (...) {
-    PyErr_SetString(PyExc_ValueError, "could not write output file");
-    return NULL;
+  if (std::strlen(OutFileNameBinary) > 0) {
+    try {
+      self->obj->WriteFieldBinary("E", OutFileNameBinary, OutFormat, XLim, NX, YLim, NY, ZLim, NZ, Comment, Version);
+    } catch (...) {
+      PyErr_SetString(PyExc_ValueError, "could not write output file");
+      return NULL;
+    }
   }
 
   // Must return python object None in a special way

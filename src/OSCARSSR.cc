@@ -266,6 +266,33 @@ void OSCARSSR::WriteField (std::string const& BorE,
 
 
 
+void OSCARSSR::WriteFieldBinary (std::string const& BorE,
+                                 std::string const& OutFileName,
+                                 std::string const& OutFormat,
+                                 TVector2D const& XLim,
+                                 int const NX,
+                                 TVector2D const& YLim,
+                                 int const NY,
+                                 TVector2D const& ZLim,
+                                 int const NZ,
+                                 std::string const& Comment,
+                                 int const Version)
+{
+  if (BorE == "B") {
+    fBFieldContainer.WriteToFileBinary(OutFileName, OutFormat, XLim, NX, YLim, NY, ZLim, NZ, Comment, Version);
+  } else if (BorE == "E") {
+    fEFieldContainer.WriteToFileBinary(OutFileName, OutFormat, XLim, NX, YLim, NY, ZLim, NZ, Comment, Version);
+  } else {
+    std::cerr << "Write failure because not B or E" << std::endl;
+    throw;
+  }
+
+  return;
+}
+
+
+
+
 double OSCARSSR::GetEx (double const X, double const Y, double const Z) const
 {
   // Return summed Ex from container
