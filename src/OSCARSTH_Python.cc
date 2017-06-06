@@ -1144,7 +1144,7 @@ static PyMethodDef OSCARSTH_methods[] = {
   {"set_particle_beam",                          (PyCFunction) OSCARSTH_SetParticleBeam,                         METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_SetParticleBeam},
   {"add_particle_beam",                          (PyCFunction) OSCARSTH_SetParticleBeam,                         METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_SetParticleBeam},
 
-  {"print",                                      (PyCFunction) OSCARSTH_Print,                                   METH_NOARGS,                                   DOC_OSCARSTH_Print},
+  {"print_all",                                  (PyCFunction) OSCARSTH_Print,                                   METH_NOARGS,                                   DOC_OSCARSTH_Print},
   {"print_particle_beams",                       (PyCFunction) OSCARSTH_Print,                                   METH_NOARGS,                                   DOC_OSCARSTH_Print},
 
   {NULL}  /* Sentinel */
@@ -1271,31 +1271,17 @@ static PyModuleDef OSCARSTHmodule = {
 #endif
 
 
-#if PY_MAJOR_VERSION >= 3
-PyMODINIT_FUNC PyInit_th(void)
-#else
-PyMODINIT_FUNC initth(OSCARSTHObject* self, PyObject* args, PyObject* kwds)
-#endif
-{
-  if (PyType_Ready(&OSCARSTHType) < 0) {
-#if PY_MAJOR_VERSION >= 3
-    return NULL;
-#else
-    return;
-#endif
-  }
+
 
 #if PY_MAJOR_VERSION >= 3
-  PyObject* m = PyModule_Create(&OSCARSTHmodule);
-#else
-  PyObject *m = Py_InitModule("oscars.th", OSCARSTH_methods);
-#endif
-  if (m == NULL) {
-#if PY_MAJOR_VERSION >= 3
+PyMODINIT_FUNC PyInit_th(void)
+{
+  if (PyType_Ready(&OSCARSTHType) < 0) {
     return NULL;
-#else
-    return;
-#endif
+  }
+  PyObject* m = PyModule_Create(&OSCARSTHmodule);
+  if (m == NULL) {
+    return NULL;
   }
 
   Py_INCREF(&OSCARSTHType);
@@ -1307,12 +1293,35 @@ PyMODINIT_FUNC initth(OSCARSTHObject* self, PyObject* args, PyObject* kwds)
   std::string Message = "OSCARS v" + OSCARS::GetVersionString() + " - Open Source Code for Advanced Radiation Simulation\nBrookhaven National Laboratory, Upton NY, USA\nhttp://oscars.bnl.gov\noscars@bnl.gov\n";
   PyObject_CallMethod(s_out, "write", "s", Message.c_str());
 
-#if PY_MAJOR_VERSION >= 3
   return m;
-#else
-  return;
-#endif
 }
+#else
+PyMODINIT_FUNC initth(OSCARSTHObject* self, PyObject* args, PyObject* kwds)
+{
+  if (PyType_Ready(&OSCARSTHType) < 0) {
+    return;
+  }
+  PyObject *m = Py_InitModule("oscars.th", OSCARSTH_methods);
+  if (m == NULL) {
+    return;
+  }
+
+  Py_INCREF(&OSCARSTHType);
+  PyModule_AddObject(m, "th", (PyObject *)&OSCARSTHType);
+
+  // Print copyright notice
+  PyObject* sys = PyImport_ImportModule( "sys");
+  PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
+  std::string Message = "OSCARS v" + OSCARS::GetVersionString() + " - Open Source Code for Advanced Radiation Simulation\nBrookhaven National Laboratory, Upton NY, USA\nhttp://oscars.bnl.gov\noscars@bnl.gov\n";
+  PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+
+  return;
+}
+#endif
+
+
+
+
 
 
 
