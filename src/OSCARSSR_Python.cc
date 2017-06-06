@@ -74,10 +74,10 @@ static PyObject* OSCARSSR_new (PyTypeObject* type, PyObject* args, PyObject* kwd
 
 
 
-static int sr_init(OSCARSSRObject* self, PyObject* args, PyObject* kwds)
-{
-  return 0;
-}
+//static int sr_init(OSCARSSRObject* self, PyObject* args, PyObject* kwds)
+//{
+//  return 0;
+//}
 
 
 
@@ -601,7 +601,7 @@ static PyObject* OSCARSSR_AddMagneticField (OSCARSSRObject* self, PyObject* args
 
   // Get any scaling factors
   // UPDATE: Check against fileformat number of strings
-  for (size_t i = 0; i < PyList_Size(List_Scaling); ++i) {
+  for (int i = 0; i < PyList_Size(List_Scaling); ++i) {
     Scaling.push_back(PyFloat_AsDouble(PyList_GetItem(List_Scaling, i)));
   }
 
@@ -704,7 +704,7 @@ static PyObject* OSCARSSR_AddMagneticFieldInterpolated (OSCARSSRObject* self, Py
   // Grab mapping from input
   if (PyList_Size(List_Mapping) != 0) {
     double ParameterValue;
-    for (size_t i = 0; i != PyList_Size(List_Mapping); ++i) {
+    for (int i = 0; i != PyList_Size(List_Mapping); ++i) {
       PyObject* ThisPair = PyList_GetItem(List_Mapping, i);
       if (PyList_Size(ThisPair) != 2) {
         PyErr_SetString(PyExc_ValueError, "Incorrect format in 'mapping'");
@@ -750,7 +750,7 @@ static PyObject* OSCARSSR_AddMagneticFieldInterpolated (OSCARSSRObject* self, Py
 
   // Get any scaling factors
   // UPDATE: Check against fileformat number of strings
-  for (size_t i = 0; i < PyList_Size(List_Scaling); ++i) {
+  for (int i = 0; i < PyList_Size(List_Scaling); ++i) {
     Scaling.push_back(PyFloat_AsDouble(PyList_GetItem(List_Scaling, i)));
   }
 
@@ -1507,7 +1507,7 @@ static PyObject* OSCARSSR_AddElectricField (OSCARSSRObject* self, PyObject* args
 
   // Get any scaling factors
   // UPDATE: Check against fileformat number of strings
-  for (size_t i = 0; i < PyList_Size(List_Scaling); ++i) {
+  for (int i = 0; i < PyList_Size(List_Scaling); ++i) {
     Scaling.push_back(PyFloat_AsDouble(PyList_GetItem(List_Scaling, i)));
   }
 
@@ -1598,7 +1598,7 @@ static PyObject* OSCARSSR_AddElectricFieldInterpolated (OSCARSSRObject* self, Py
   // Grab mapping from input
   if (PyList_Size(List_Mapping) != 0) {
     double ParameterValue;
-    for (size_t i = 0; i != PyList_Size(List_Mapping); ++i) {
+    for (int i = 0; i != PyList_Size(List_Mapping); ++i) {
       PyObject* ThisPair = PyList_GetItem(List_Mapping, i);
       if (PyList_Size(ThisPair) != 2) {
         PyErr_SetString(PyExc_ValueError, "Incorrect format in 'mapping'");
@@ -1644,7 +1644,7 @@ static PyObject* OSCARSSR_AddElectricFieldInterpolated (OSCARSSRObject* self, Py
 
   // Get any scaling factors
   // UPDATE: Check against fileformat number of strings
-  for (size_t i = 0; i < PyList_Size(List_Scaling); ++i) {
+  for (int i = 0; i < PyList_Size(List_Scaling); ++i) {
     Scaling.push_back(PyFloat_AsDouble(PyList_GetItem(List_Scaling, i)));
   }
 
@@ -3221,7 +3221,7 @@ static PyObject* OSCARSSR_GetTrajectory (OSCARSSRObject* self)
   size_t NTPoints = T.GetNPoints();
 
   // Loop over all points in trajectory
-  for (int iT = 0; iT != NTPoints; ++iT) {
+  for (size_t iT = 0; iT != NTPoints; ++iT) {
     // Create a python list for X and Beta
     PyObject *PList2 = PyList_New(0);
 
@@ -3399,12 +3399,12 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
 
   // Add all values to a vector
   std::vector<double> VPoints_eV;
-  for (size_t i = 0; i < PyList_Size(List_Points_eV); ++i) {
+  for (int i = 0; i < PyList_Size(List_Points_eV); ++i) {
     VPoints_eV.push_back(PyFloat_AsDouble(PyList_GetItem(List_Points_eV, i)));
   }
 
-  double EStart;
-  double EStop;
+  double EStart = 0;
+  double EStop = 0;
 
   if (PyList_Size(List_EnergyRange_eV) != 0) {
     if (PyList_Size(List_EnergyRange_eV) == 2) {
@@ -3652,7 +3652,7 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
 
 
   // Check requested dimension
-  if (Dim != 2 & Dim != 3) {
+  if (Dim != 2 && Dim != 3) {
     PyErr_SetString(PyExc_ValueError, "'dim' must be 2 or 3");
     return NULL;
   }
@@ -3686,7 +3686,7 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
 
   // Look for arbitrary shape 3D points
   TSurfacePoints_3D Surface;
-  for (size_t i = 0; i < PyList_Size(List_Points); ++i) {
+  for (int i = 0; i < PyList_Size(List_Points); ++i) {
     PyObject* LXN = PyList_GetItem(List_Points, i);
     TVector3D X;
     TVector3D N;
@@ -3918,7 +3918,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
 
 
   // Check requested dimension
-  if (Dim != 2 & Dim != 3) {
+  if (Dim != 2 && Dim != 3) {
     PyErr_SetString(PyExc_ValueError, "'dim' must be 2 or 3");
     return NULL;
   }
@@ -4202,7 +4202,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
 
 
   // Check requested dimension
-  if (Dim != 2 & Dim != 3) {
+  if (Dim != 2 && Dim != 3) {
     PyErr_SetString(PyExc_ValueError, "'dim' must be 2 or 3");
     return NULL;
   }
@@ -4236,7 +4236,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
 
   // Look for arbitrary shape 3D points
   TSurfacePoints_3D Surface;
-  for (size_t i = 0; i < PyList_Size(List_Points); ++i) {
+  for (int i = 0; i < PyList_Size(List_Points); ++i) {
     PyObject* LXN = PyList_GetItem(List_Points, i);
     TVector3D X;
     TVector3D N;
@@ -4481,7 +4481,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
 
 
   // Check requested dimension
-  if (Dim != 2 & Dim != 3) {
+  if (Dim != 2 && Dim != 3) {
     PyErr_SetString(PyExc_ValueError, "'dim' must be 2 or 3");
     return NULL;
   }
@@ -5628,10 +5628,10 @@ static PyTypeObject OSCARSSRType = {
 
 
 
-static PyMethodDef module_methods[] = {
-  // I do not need
-  {NULL}  /* Sentinel */
-};
+//static PyMethodDef module_methods[] = {
+//  // I do not need
+//  {NULL}  /* Sentinel */
+//};
 
 
 #if PY_MAJOR_VERSION >= 3
@@ -5709,7 +5709,7 @@ static PyObject* OSCARSSR_GetT3DScalarAsList (T3DScalarContainer const& C)
   size_t NPoints = C.GetNPoints();
 
   // Loop over all points
-  for (int i = 0; i != NPoints; ++i) {
+  for (size_t i = 0; i != NPoints; ++i) {
     // Create a python list
     PyObject *PList2 = PyList_New(0);
 
@@ -5739,14 +5739,14 @@ TSpectrumContainer OSCARSSR_GetSpectrumFromList (PyObject* List)
   Py_INCREF(List);
 
   // Get size of input list
-  size_t const NPoints = PyList_Size(List);
+  int const NPoints = PyList_Size(List);
   if (NPoints <= 0) {
     throw;
   }
 
   TSpectrumContainer S;
 
-  for (size_t ip = 0; ip != NPoints; ++ip) {
+  for (int ip = 0; ip != NPoints; ++ip) {
     PyObject* List_Point = PyList_GetItem(List, ip);
     if (PyList_Size(List_Point) == 2) {
       S.AddPoint(PyFloat_AsDouble(PyList_GetItem(List_Point, 0)), PyFloat_AsDouble(PyList_GetItem(List_Point, 1)));
@@ -5777,7 +5777,7 @@ T3DScalarContainer OSCARSSR_GetT3DScalarContainerFromList (PyObject* List)
   Py_INCREF(List);
 
   // Get size of input list
-  size_t const NPoints = PyList_Size(List);
+  int const NPoints = PyList_Size(List);
   if (NPoints <= 0) {
     throw;
   }

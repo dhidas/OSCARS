@@ -704,7 +704,7 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
   ParticleTrajectory.SetDeltaT(DeltaT);
 
   // Loop over points in the forward direction
-  for (int i = 0; i != NPointsForward; ++i) {
+  for (size_t i = 0; i != NPointsForward; ++i) {
 
     // This time
     double t = P.GetT0() + DeltaT * i;
@@ -734,7 +734,7 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
   double const DeltaTReversed = -DeltaT;
 
   // Loop over all points "before" the initial point
-  for (int i = 0; i != NPointsBackward; ++i) {
+  for (size_t i = 0; i != NPointsBackward; ++i) {
 
     // This time
     double t = P.GetT0() + DeltaTReversed * (i + 1);
@@ -1198,7 +1198,7 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
     TVector3DC SumE(0, 0, 0);
 
     // Loop over all points in trajectory
-    for (int iT = 0; iT != NTPoints; ++iT) {
+    for (size_t iT = 0; iT != NTPoints; ++iT) {
 
       // Particle position
       TVector3D const& X = T.GetX(iT);
@@ -1284,7 +1284,7 @@ void OSCARSSR::CalculateSpectrumThreads (TParticleA& Particle,
   size_t const NPoints = Spectrum.GetNPoints();
 
   // How many threads to start in the first for loop
-  size_t const NThreadsActual = NPoints > NThreads ? NThreads : NPoints;
+  size_t const NThreadsActual = NPoints > (size_t) NThreads ? NThreads : NPoints;
 
   // Keep track of which threads are finished and re-joined
   bool Done[NThreadsActual];
@@ -1617,11 +1617,11 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface,
 
   // Set the output flux container and with correct dimensions
   if (Dimension == 3) {
-    for (int i = 0; i != Surface.GetNPoints(); ++i) {
+    for (size_t i = 0; i != Surface.GetNPoints(); ++i) {
       PowerDensityContainer.AddPoint(Surface.GetPoint(i).GetPoint(), 0);
     }
   } else if (Dimension == 2) {
-    for (int i = 0; i != Surface.GetNPoints(); ++i) {
+    for (size_t i = 0; i != Surface.GetNPoints(); ++i) {
       PowerDensityContainer.AddPoint( TVector3D(Surface.GetX1(i), Surface.GetX2(i), 0), 0);
     }
   } else {
@@ -1715,7 +1715,7 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
     double Sum = 0;
 
     // Loop over all points in the trajectory
-    for (int iT = 0; iT != NTPoints ; ++iT) {
+    for (size_t iT = 0; iT != NTPoints ; ++iT) {
 
       // Get current position, Beta, and Acceleration(over c)
       TVector3D const& X = T.GetX(iT);
@@ -1800,7 +1800,7 @@ void OSCARSSR::CalculatePowerDensityThreads (TParticleA& Particle,
   size_t const NPoints = Surface.GetNPoints();
 
   // How many threads to start in the first for loop
-  size_t const NThreadsActual = (size_t) NPoints > NThreads ? NThreads : NPoints;
+  size_t const NThreadsActual = NPoints > (size_t) NThreads ? NThreads : NPoints;
 
   // Keep track of which threads are finished and re-joined
   bool Done[NThreadsActual];
@@ -1954,7 +1954,7 @@ double OSCARSSR::CalculateTotalPower (TParticleA& Particle)
 
 
   // Loop over all points in trajectory
-  for (int i = 0; i != NTPoints; ++i) {
+  for (size_t i = 0; i != NTPoints; ++i) {
     TVector3D const& B = T.GetB(i);
     TVector3D const& AoverC = T.GetAoverC(i);
 
@@ -2054,11 +2054,11 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
   bool const UseGPU = GPU == 0 ? false : this->GetUseGPUGlobal() && (this->CheckGPU() > 0) ? true : false;
 
   if (Dimension == 3) {
-    for (int i = 0; i != Surface.GetNPoints(); ++i) {
+    for (size_t i = 0; i != Surface.GetNPoints(); ++i) {
       FluxContainer.AddPoint(Surface.GetPoint(i).GetPoint(), 0);
     }
   } else if (Dimension == 2) {
-    for (int i = 0; i != Surface.GetNPoints(); ++i) {
+    for (size_t i = 0; i != Surface.GetNPoints(); ++i) {
       FluxContainer.AddPoint( TVector3D(Surface.GetX1(i), Surface.GetX2(i), 0), 0);
     }
   } else {
@@ -2191,9 +2191,6 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
     throw std::length_error("no points in trajectory.  Is particle or beam defined?");
   }
 
-  // Number of points in the spectrum container
-  size_t const NSPoints = Surface.GetNPoints();
-
   // Constant C0 for calculation
   double const C0 = Particle.GetQ() / (TOSCARSSR::FourPi() * TOSCARSSR::C() * TOSCARSSR::Epsilon0() * TOSCARSSR::Sqrt2Pi());
 
@@ -2228,7 +2225,7 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
     TVector3DC SumE(0, 0, 0);
 
     // Loop over all points in trajectory
-    for (int iT = 0; iT != NTPoints; ++iT) {
+    for (size_t iT = 0; iT != NTPoints; ++iT) {
 
       // Particle position
       TVector3D const& X = T.GetX(iT);
@@ -2319,7 +2316,7 @@ void OSCARSSR::CalculateFluxThreads (TParticleA& Particle,
   size_t const NPoints = Surface.GetNPoints();
 
   // How many threads to start in the first for loop
-  size_t const NThreadsActual = (size_t) NPoints > NThreads ? NThreads : NPoints;
+  size_t const NThreadsActual = NPoints > (size_t) NThreads ? NThreads : NPoints;
 
   // Keep track of which threads are finished and re-joined
   bool Done[NThreadsActual];
