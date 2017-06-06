@@ -549,7 +549,7 @@ static PyObject* OSCARSTH_DipoleCriticalWavelength (OSCARSTHObject* self, PyObje
 
 
 
-const char* DOC_OSCARSTH_DipoleBrightness = "Get the spectrum from ideal dipole field";
+const char* DOC_OSCARSTH_DipoleBrightness = "Not Implemented";
 static PyObject* OSCARSTH_DipoleBrightness (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {
   // Return a list of points corresponding to the flux in a given energy range for a given vertical angle.
@@ -599,7 +599,43 @@ static PyObject* OSCARSTH_DipoleBrightness (OSCARSTHObject* self, PyObject* args
 
 
 
-const char* DOC_OSCARSTH_UndulatorFluxOnAxis = "Get the on-axis flux for an ideal undulator given K for a specific harmonic";
+const char* DOC_OSCARSTH_UndulatorFluxOnAxis = R"docstring(
+undulator_flux_onaxis(period, nperiods, harmonic [, K, bfield])
+
+Get the on-axis flux for an ideal undulator given K for a specific harmonic.  Should specify either K or bfield, but not both.
+
+Parameters
+----------
+period : float
+    Undulator period length [m]
+
+nperiods : int
+    Number of periods
+
+harmonic : int
+    Harmonic number of interest
+
+K : float
+    Undulator deflection parameter
+
+bfield : float
+    Magnetic field of interest [T]
+
+Returns
+-------
+[energy_eV, flux] : list[float, float]
+    Photon energy [eV] and flux [photons/s/0.1%bw/mrad^2] for the given parameters
+
+Examples
+--------
+Get the photon energy and flux for a undulator with a period of 0.050 [m] having 41 periods and a field of 0.4 [T] from the 1st harmonic
+
+    >>> oth.undulator_flux_onaxis(period=0.050, nperiods=41, harmonic=1, bfield=0.4)
+
+Get the photon energy and flux for a undulator with a period of 0.050 [m] having 41 periods and K value of 1.8674577 from the 1st harmonic
+
+    >>> oth.undulator_flux_onaxis(period=0.050, nperiods=41, harmonic=1, K=1.8674577)
+)docstring";
 static PyObject* OSCARSTH_UndulatorFluxOnAxis (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {
   // Return the flux [gamma/s/mrad^2/0.1%bw] at a given K for a given harmonic
@@ -672,7 +708,43 @@ static PyObject* OSCARSTH_UndulatorFluxOnAxis (OSCARSTHObject* self, PyObject* a
 
 
 
-const char* DOC_OSCARSTH_UndulatorBrightness = "Undulator brightness calculation";
+const char* DOC_OSCARSTH_UndulatorBrightness = R"docstring(
+undulator_brightness(period, nperiods, harmonic [, K, bfield])
+
+Calculate undulator brightness.  You should either specify K or bfield, but not both.  You must have alreay setup a beam with the emittance and beta function values.
+
+Parameters
+----------
+period : float
+    Undulator period length [m]
+
+nperiods : int
+    Number of periods
+
+harmonic : int
+    Harmonic number of interest
+
+K : float
+    Undulator deflection parameter
+
+bfield : float
+    Magnetic field of interest [T]
+
+Returns
+-------
+[energy_eV, brightness] : list[float, float]
+    Photon energy [eV] and brightness [photons/s/0.1%bw/mm^2/mrad^2] for the given parameters
+
+Examples
+--------
+Get the photon energy and brightness for a undulator with a period of 0.050 [m] having 41 periods and a field of 0.4 [T] from the 1st harmonic
+
+    >>> oth.undulator_brightness(period=0.050, nperiods=41, harmonic=1, bfield=0.4)
+
+Get the photon energy and brightness for a undulator with a period of 0.050 [m] having 41 periods and K value of 1.8674577 from the 1st harmonic
+
+    >>> oth.undulator_brightness(period=0.050, nperiods=41, harmonic=1, K=1.8674577)
+)docstring";
 static PyObject* OSCARSTH_UndulatorBrightness (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {
   // Return the brightness [gamma/s/mrad^2/mm^2/0.1%bw] at a given K for a given harmonic
@@ -681,17 +753,17 @@ static PyObject* OSCARSTH_UndulatorBrightness (OSCARSTHObject* self, PyObject* a
   double Period   = 0;
   int    NPeriods = 0;
   int    Harmonic = 0;
-  double BField   = 0;
   double K        = 0;
+  double BField   = 0;
 
   // Input variables and parsing
-  static char *kwlist[] = {"period", "nperiods", "harmonic", "bfield", "K", NULL};
+  static char *kwlist[] = {"period", "nperiods", "harmonic", "K", "bfield", NULL};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "dii|dd", kwlist, 
                                                          &Period,
                                                          &NPeriods,
                                                          &Harmonic,
-                                                         &BField,
-                                                         &K
+                                                         &K,
+                                                         &BField
                                                          )) {
     return NULL;
   }
@@ -746,7 +818,38 @@ static PyObject* OSCARSTH_UndulatorBrightness (OSCARSTHObject* self, PyObject* a
 
 
 
-const char* DOC_OSCARSTH_UndulatorEnergyHarmonic = "Undulator photon energy at particular harmonic";
+const char* DOC_OSCARSTH_UndulatorEnergyHarmonic = R"docstring(
+undulator_energy_harmonic(period, harmonic [, K, bfield])
+
+Get the undulator photon energy at particular harmonic.  Specify either K or bfield, but not both.
+
+period : float
+    Undulator period length [m]
+
+harmonic : int
+    Harmonic number of interest
+
+K : float
+    Undulator deflection parameter
+
+bfield : float
+    Magnetic field of interest [T]
+
+Returns
+-------
+energy : float
+    Photon energy [eV]
+
+Examples
+--------
+Find the energy of the 5th harmonic for an undulator of period 0.050 [m] and magnetic field of 0.4 [T]
+
+    >>> oth.undulator_energy_harmonic(period=0.050, harmonic=5, bfield=0.4)
+
+Find the energy of the 5th harmonic for an undulator of period 0.050 [m] and K value of 1.8674577
+
+    >>> oth.undulator_energy_harmonic(period=0.050, harmonic=5, K=1.8674577)
+)docstring";
 static PyObject* OSCARSTH_UndulatorEnergyHarmonic (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {
   // Return the brightness [gamma/s/mrad^2/mm^2/0.1%bw] at a given K for a given harmonic
@@ -755,16 +858,16 @@ static PyObject* OSCARSTH_UndulatorEnergyHarmonic (OSCARSTHObject* self, PyObjec
   double Period = 0;
   int    Harmonic = 0;
   double BeamEnergy_GeV = 0;
-  double BField = 0;
   double K = 0;
+  double BField = 0;
 
   // Input variables and parsing
-  static char *kwlist[] = {"period", "harmonic", "bfield", "K", NULL};
+  static char *kwlist[] = {"period", "harmonic", "K", "bfield", NULL};
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "di|dd", kwlist, 
                                                            &Period,
                                                            &Harmonic,
-                                                           &BField,
-                                                           &K
+                                                           &K,
+                                                           &BField
                                                            )) {
     return NULL;
   }
@@ -845,7 +948,22 @@ static PyObject* OSCARSTH_UndulatorEnergyHarmonic (OSCARSTHObject* self, PyObjec
 
 
 
-const char* DOC_OSCARSTH_BesselJ = "Get the value of the modified bessel function J_nu for integer nu";
+const char* DOC_OSCARSTH_BesselJ = R"docstring(
+bessel_j(nu, x)
+
+Get the value of the bessel function of the first kind J_nu for integer nu
+
+Parameters
+----------
+nu : int
+
+x : float
+
+Returns
+-------
+besselj : float
+    Value of the bessel function for nu at x
+)docstring";
 static PyObject* OSCARSTH_BesselJ (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {
   // Return Bessel J_nu(x)
@@ -874,7 +992,22 @@ static PyObject* OSCARSTH_BesselJ (OSCARSTHObject* self, PyObject* args, PyObjec
 
 
 
-const char* DOC_OSCARSTH_BesselK = "Get the value of the modified bessel function K_nu";
+const char* DOC_OSCARSTH_BesselK = R"docstring(
+bessel_k(nu, x)
+
+Get the value of the modified bessel function of the second kind K_nu
+
+Parameters
+----------
+nu : float
+
+x : float
+
+Returns
+-------
+besselk : float
+    Value of the bessel function for nu at x
+)docstring";
 static PyObject* OSCARSTH_BesselK (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {
   // Return Bessel K_nu(x)
@@ -904,7 +1037,64 @@ static PyObject* OSCARSTH_BesselK (OSCARSTHObject* self, PyObject* args, PyObjec
 
 
 
-const char* DOC_OSCARSTH_SetParticleBeam = "Set the particle beam parameters";
+const char* DOC_OSCARSTH_SetParticleBeam = R"docstring(
+set_particle_beam([, type, name, energy_GeV, beam, sigma_energy_GeV, current, beta, emittance])
+
+Add a particle beam to the oscars.th object.
+
+Supported particle types for *type* are:
+    * electron
+
+Parameters
+----------
+
+type : str
+    One of the built-in types of particle beams, or 'custom'.  If you use custom you must also specify *mass* and *charge*.
+
+name : str
+    User identified of this beam
+
+energy_GeV : float
+    Beam energy in [GeV]
+
+beam : str
+    Name of predefined beam
+
+sigma_energy_GeV : float
+    Beam energy spread in [GeV]
+
+current : float
+    Beam current in [A].  If this parameter is 0, the current defaults to the single particle charge
+
+beta : list
+    Values of the horizontal and vertical beta funtion at the point *lattice_center* [beta_x, beta_y]
+
+emittance : list
+    values of the horizontal and vertical emittance [emittance_x, emittance_y]
+
+Returns
+-------
+None
+
+Currently the predefined beam types are:
+* NSLSII
+* NSLSII-ShortStraight
+* NSLSII-LongStraight
+
+Examples
+--------
+Set an electron beam with 0.500 [A] current with energy of 3 [GeV]
+
+    >>> oth.set_particle_beam(type='electron', energy_GeV=3, current=0.500)
+
+Set an electron beam with 0.500 [A] current with energy of 3 [GeV] with beta and emittance
+
+    >>> oth.set_particle_beam(type='electron', energy_GeV=3, current=0.500, beta=[1.5, 0.8], emittance=[5.5e-10, 8e-12])
+
+Set a predefined beam for the NSLSII short straight section
+
+    >>> oth.set_particle_beam(beam='NSLSII-ShortStraight', name='beam_0', x0=[-2, 0, 0])
+)docstring";
 static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {
   // Add a particle beam to the experiment
@@ -1066,8 +1256,25 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
 
 
 
-const char* DOC_OSCARSTH_Print = "Print beam information";
-static PyObject* OSCARSTH_Print (OSCARSTHObject* self)
+const char* DOC_OSCARSTH_PrintParticleBeams = R"docstring(
+print_particle_beams()
+
+Print information about what is stored in the th object
+
+Returns
+-------
+None
+)docstring";
+const char* DOC_OSCARSTH_PrintAll = R"docstring(
+print_all()
+
+Print information about what is stored in the th object
+
+Returns
+-------
+None
+)docstring";
+static PyObject* OSCARSTH_PrintAll (OSCARSTHObject* self)
 {
   // Print all particle beams stored in OSCARSSR
 
@@ -1118,6 +1325,11 @@ static PyObject* OSCARSTH_Print (OSCARSTHObject* self)
 
 
 
+static PyObject* OSCARSTH_Fake (OSCARSTHObject* self, PyObject* args, PyObject *keywds)
+{
+    PyErr_SetString(PyExc_RuntimeError, "You must create an object to use this function: oth = oscars.th.th()");
+    return NULL;
+}
 
 
 static PyMethodDef OSCARSTH_methods[] = {
@@ -1138,18 +1350,48 @@ static PyMethodDef OSCARSTH_methods[] = {
   {"undulator_brightness",                       (PyCFunction) OSCARSTH_UndulatorBrightness,                     METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorBrightness},
   {"undulator_energy_harmonic",                  (PyCFunction) OSCARSTH_UndulatorEnergyHarmonic,                 METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorEnergyHarmonic},
 
-  {"bessel_j",                                   (PyCFunction) OSCARSTH_BesselJ,                                 METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_BesselK},
+  {"bessel_j",                                   (PyCFunction) OSCARSTH_BesselJ,                                 METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_BesselJ},
   {"bessel_k",                                   (PyCFunction) OSCARSTH_BesselK,                                 METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_BesselK},
 
   {"set_particle_beam",                          (PyCFunction) OSCARSTH_SetParticleBeam,                         METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_SetParticleBeam},
   {"add_particle_beam",                          (PyCFunction) OSCARSTH_SetParticleBeam,                         METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_SetParticleBeam},
 
-  {"print_all",                                  (PyCFunction) OSCARSTH_Print,                                   METH_NOARGS,                                   DOC_OSCARSTH_Print},
-  {"print_particle_beams",                       (PyCFunction) OSCARSTH_Print,                                   METH_NOARGS,                                   DOC_OSCARSTH_Print},
+  {"print_all",                                  (PyCFunction) OSCARSTH_PrintAll,                                METH_NOARGS,                                   DOC_OSCARSTH_PrintAll},
+  {"print_particle_beams",                       (PyCFunction) OSCARSTH_PrintAll,                                METH_NOARGS,                                   DOC_OSCARSTH_PrintParticleBeams},
 
   {NULL}  /* Sentinel */
 };
 
+
+static PyMethodDef OSCARSTH_methods_fake[] = {
+  // We must tell python about the function we allow access as well as give them nice
+  // python names, and tell python the method of input parameters.
+
+  {"undulator_K",                                (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorK},
+  {"undulator_bfield",                           (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorBField},
+  {"undulator_period",                           (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorPeriod},
+
+  {"dipole_spectrum",                            (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleSpectrum},
+  //{"dipole_spectrum_point",                      (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleSpectrumPoint},
+  {"dipole_critical_energy",                     (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleCriticalEnergy},
+  {"dipole_critical_wavelength",                 (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleCriticalWavelength},
+  //{"dipole_brightness",                          (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleBrightness},
+
+  {"undulator_flux_onaxis",                      (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorFluxOnAxis},
+  {"undulator_brightness",                       (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorBrightness},
+  {"undulator_energy_harmonic",                  (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorEnergyHarmonic},
+
+  {"bessel_j",                                   (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_BesselK},
+  {"bessel_k",                                   (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_BesselK},
+
+  {"set_particle_beam",                          (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_SetParticleBeam},
+  {"add_particle_beam",                          (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_SetParticleBeam},
+
+  {"print_all",                                  (PyCFunction) OSCARSTH_Fake, METH_NOARGS,                                   DOC_OSCARSTH_PrintAll},
+  {"print_particle_beams",                       (PyCFunction) OSCARSTH_Fake, METH_NOARGS,                                   DOC_OSCARSTH_PrintParticleBeams},
+
+  {NULL}  /* Sentinel */
+};
 
 #if PY_MAJOR_VERSION >= 3
 PyMODINIT_FUNC PyInit_th(void);
@@ -1265,8 +1507,8 @@ static PyModuleDef OSCARSTHmodule = {
   "th",
   "OSCARSTH module extension.",
   -1,
-  OSCARSTH_methods,
-  NULL, NULL, NULL, NULL
+  OSCARSTH_methods_fake,
+  NULL, NULL, NULL
 };
 #endif
 
