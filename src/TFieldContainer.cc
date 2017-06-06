@@ -188,7 +188,7 @@ void TFieldContainer::WriteToFile (std::string const& OutFileName,
 
     // If no comment print default comment
     if (CommentNoCRLF == "") {
-      of << "# OSCARS" << std::endl;
+      of << "# " << OutFormat << std::endl;
     } else {
       of << "# " << CommentNoCRLF << std::endl;
     }
@@ -327,7 +327,7 @@ void TFieldContainer::WriteToFile (std::string const& OutFileName,
 
     // If no comment print default comment
     if (CommentNoCRLF == "") {
-      of << "# OSCARS1D" << std::endl;
+      of << "# " << OutFormat << std::endl;
     } else {
       of << "# " << CommentNoCRLF << std::endl;
     }
@@ -506,7 +506,7 @@ void TFieldContainer::WriteToFileBinary_v1 (std::string const& OutFileName,
   // Open file for output
   std::ofstream of(OutFileName.c_str(), std::ios::binary);
   if (!of.is_open()) {
-    throw;
+    throw std::ofstream::failure("cannot open file for writing binary format");
   }
 
   std::string CommentNoCRLF = Comment;
@@ -517,18 +517,19 @@ void TFieldContainer::WriteToFileBinary_v1 (std::string const& OutFileName,
     CommentNoCRLF = "OSCARS";
   }
 
-  // Header 0: Version number
-  of.write((char*) FileVersionNumber, sizeof(int));
-
-  // Header 1: Formatting
-  int const NFormatChars = (int) OutFormat.size();
-  of.write((char*) &NFormatChars, sizeof(int));
-  of.write(OutFormat.c_str() , OutFormat.size());
-
-  // Header 2: Number of characters in comment, then comment
+  // Header 0: Number of characters in comment, then comment
   int const NCommentChars = (int) CommentNoCRLF.size();
   of.write((char*) &NCommentChars, sizeof(int));
   of.write(CommentNoCRLF.c_str() , CommentNoCRLF.size());
+
+
+  // Header 1: Version number
+  of.write((char*) &FileVersionNumber, sizeof(int));
+
+  // Header 2: Formatting
+  int const NFormatChars = (int) OutFormat.size();
+  of.write((char*) &NFormatChars, sizeof(int));
+  of.write(OutFormat.c_str() , OutFormat.size() * sizeof(char));
 
 
   // OSCARS format is text by default
@@ -537,23 +538,23 @@ void TFieldContainer::WriteToFileBinary_v1 (std::string const& OutFileName,
     int const MyNY = NY == 0 ? 1 : NY;
     int const MyNZ = NZ == 0 ? 1 : NZ;
 
-    double const XStep = MyNX == 1 ? 0 : (XLim[1] - XLim[0]) / (NX - 1);
-    double const YStep = MyNY == 1 ? 0 : (YLim[1] - YLim[0]) / (NY - 1);
-    double const ZStep = MyNZ == 1 ? 0 : (ZLim[1] - ZLim[0]) / (NZ - 1);
+    float const XStep = MyNX == 1 ? 0 : (XLim[1] - XLim[0]) / (NX - 1);
+    float const YStep = MyNY == 1 ? 0 : (YLim[1] - YLim[0]) / (NY - 1);
+    float const ZStep = MyNZ == 1 ? 0 : (ZLim[1] - ZLim[0]) / (NZ - 1);
 
-    double const XStart = XLim[0];
-    double const YStart = YLim[0];
-    double const ZStart = ZLim[0];
+    float const XStart = XLim[0];
+    float const YStart = YLim[0];
+    float const ZStart = ZLim[0];
 
     // Header 3: start, step, n for x, y, z
-    of.write((char*) &XStart,  sizeof(double));
-    of.write((char*) &XStep,   sizeof(double));
+    of.write((char*) &XStart,  sizeof(float));
+    of.write((char*) &XStep,   sizeof(float));
     of.write((char*) &MyNX,    sizeof(int));
-    of.write((char*) &YStart,  sizeof(double));
-    of.write((char*) &YStep,   sizeof(double));
+    of.write((char*) &YStart,  sizeof(float));
+    of.write((char*) &YStep,   sizeof(float));
     of.write((char*) &MyNY,    sizeof(int));
-    of.write((char*) &ZStart,  sizeof(double));
-    of.write((char*) &ZStep,   sizeof(double));
+    of.write((char*) &ZStart,  sizeof(float));
+    of.write((char*) &ZStep,   sizeof(float));
     of.write((char*) &MyNZ,    sizeof(int));
 
     // Loop over all points and output
@@ -567,14 +568,14 @@ void TFieldContainer::WriteToFileBinary_v1 (std::string const& OutFileName,
           // Get B Field
           B = this->GetF(X);
 
-          double const Bx = B.GetX();
-          double const By = B.GetY();
-          double const Bz = B.GetZ();
+          float const Bx = B.GetX();
+          float const By = B.GetY();
+          float const Bz = B.GetZ();
 
           // Print field to file
-          of.write((char*) &Bx, sizeof(double));
-          of.write((char*) &By, sizeof(double));
-          of.write((char*) &Bz, sizeof(double));
+          of.write((char*) &Bx, sizeof(float));
+          of.write((char*) &By, sizeof(float));
+          of.write((char*) &Bz, sizeof(float));
         }
       }
     }
@@ -670,13 +671,13 @@ void TFieldContainer::WriteToFileBinary_v1 (std::string const& OutFileName,
 
 
     // Vector of outputs
-    std::vector<double> Outputs(6, 0);
+    std::vector<float> Outputs(6, 0);
 
     // Loop over all points and output
     for (int i = 0; i < N; ++i) {
 
       // Set current position
-      X = StartPoint + Step * (double) i;
+      X = StartPoint + Step * (float) i;
 
       // Get B Field
       B = this->GetF(X);
@@ -690,7 +691,7 @@ void TFieldContainer::WriteToFileBinary_v1 (std::string const& OutFileName,
 
       for (int i = 0; i != 6; ++i) {
         if (Order[i] != -1) {
-          of.write((char*) &(Outputs[Order[i]]), sizeof(double));
+          of.write((char*) &(Outputs[Order[i]]), sizeof(float));
         }
       }
     }

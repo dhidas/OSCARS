@@ -65,6 +65,18 @@ class OSCARSSR
                      int const NZ,
                      std::string const& Comment);
 
+    void WriteFieldBinary (std::string const& BorE,
+                           std::string const& OutFileName,
+                           std::string const& OutFormat,
+                           TVector2D const& XLim,
+                           int const NX,
+                           TVector2D const& YLim,
+                           int const NY,
+                           TVector2D const& ZLim,
+                           int const NZ,
+                           std::string const& Comment,
+                           int const Version);
+
 
     double    GetBx (double const, double const, double const) const;
     double    GetBy (double const, double const, double const) const;

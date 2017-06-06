@@ -488,7 +488,7 @@ static PyObject* OSCARSSR_SetNPointsPerMeterTrajectory (OSCARSSRObject* self, Py
 
 
 const char* DOC_OSCARSSR_AddMagneticField = R"docstring(
-add_bfield_file(ifile, iformat [, rotations, translation, scale])
+add_bfield_file([, ifile, bifile, iformat, rotations, translation, scale])
 
 Add a magnetic field from a text file *ifile* according to the format *iformat*.
 
@@ -511,8 +511,11 @@ Parameters
 ifile : str
     Name of input file
 
+bifile : str
+    Name of binary input file
+
 iformat : str
-    Format of the input file
+    Format of the input file.  Must be specified with ifile, but not with bifile
 
 rotations : list, optional
     3-element list representing rotations around x, y, and z axes: [:math:`\theta_x, \theta_y, \theta_z`]
@@ -540,8 +543,9 @@ static PyObject* OSCARSSR_AddMagneticField (OSCARSSRObject* self, PyObject* args
 
 
   // Grab the values
-  char const* FileName = "";
-  char const* FileFormat = "";
+  char const* FileNameText   = "";
+  char const* FileNameBinary = "";
+  char const* FileFormat     = "";
   PyObject*   List_Rotations   = PyList_New(0);
   PyObject*   List_Translation = PyList_New(0);
   PyObject*   List_Scaling     = PyList_New(0);
@@ -552,9 +556,10 @@ static PyObject* OSCARSSR_AddMagneticField (OSCARSSRObject* self, PyObject* args
 
 
   // Input variables and parsing
-  static char *kwlist[] = {"ifile", "iformat", "rotations", "translation", "scale", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ss|OOO", kwlist,
-                                                           &FileName,
+  static char *kwlist[] = {"ifile", "bifile", "iformat", "rotations", "translation", "scale", NULL};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sssOOO", kwlist,
+                                                           &FileNameText,
+                                                           &FileNameBinary,
                                                            &FileFormat,
                                                            &List_Rotations,
                                                            &List_Translation,
@@ -562,9 +567,15 @@ static PyObject* OSCARSSR_AddMagneticField (OSCARSSRObject* self, PyObject* args
     return NULL;
   }
 
+  // Check that ifile and bifile both not input
+  if (std::strlen(FileNameText) != 0 && std::strlen(FileNameBinary) != 0) {
+    PyErr_SetString(PyExc_ValueError, "cannot specify both 'ifile' and 'bifile'");
+    return NULL;
+  }
+
   // Check that filename and format exist
-  if (std::strlen(FileName) == 0 || std::strlen(FileFormat) == 0) {
-    PyErr_SetString(PyExc_ValueError, "'ifile' or 'iformat' is blank");
+  if (std::strlen(FileNameText) != 0 && std::strlen(FileFormat) == 0) {
+    PyErr_SetString(PyExc_ValueError, "'iformat' is blank");
     return NULL;
   }
 
@@ -577,7 +588,6 @@ static PyObject* OSCARSSR_AddMagneticField (OSCARSSRObject* self, PyObject* args
       return NULL;
     }
   }
-
 
   // Check for Translation in the input
   if (PyList_Size(List_Translation) != 0) {
@@ -597,7 +607,11 @@ static PyObject* OSCARSSR_AddMagneticField (OSCARSSRObject* self, PyObject* args
 
   // Add the magnetic field to the OSCARSSR object
   try {
-    self->obj->AddMagneticField(FileName, FileFormat, Rotations, Translation, Scaling);
+    if (std::strlen(FileNameBinary) != 0) {
+      self->obj->AddMagneticField(FileNameBinary, "BINARY", Rotations, Translation, Scaling);
+    } else {
+      self->obj->AddMagneticField(FileNameText, FileFormat, Rotations, Translation, Scaling);
+    }
   } catch (...) {
     PyErr_SetString(PyExc_ValueError, "Could not import magnetic field.  Check 'ifile' and 'iformat' are correct");
     return NULL;

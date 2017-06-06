@@ -86,7 +86,24 @@ static int th_init(OSCARSTHObject* self, PyObject* args, PyObject* kwds)
 
 
 
-const char* DOC_OSCARSTH_UndulatorK = "Get the undulator K parameter vaule";
+const char* DOC_OSCARSTH_UndulatorK = R"docstring(
+undulator_K(bfield, period)
+
+Get the undulator K parameter vaule
+
+Parameters
+----------
+bfield : float
+    Peak magnetic field in [T]
+
+period : float
+    Magnetic period in [m]
+
+Returns
+-------
+K : float
+    Undulator deflectrion parameter
+)docstring";
 static PyObject* OSCARSTH_UndulatorK (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {
   // Return the undulator K parameter given peak bfield and period
@@ -110,7 +127,24 @@ static PyObject* OSCARSTH_UndulatorK (OSCARSTHObject* self, PyObject* args, PyOb
 
 
 
-const char* DOC_OSCARSTH_UndulatorBField = "Get the undulator BFieldMax parameter value";
+const char* DOC_OSCARSTH_UndulatorBField = R"docstring(
+undulator_bfield(K, period)
+
+Get the undulator BFieldMax parameter value given K and the period
+
+Parameters
+----------
+K : float
+    Undulator deflection parameters
+
+period : float
+    Magnetic period in [m]
+
+Returns
+-------
+bfield : float
+    Peak bfield
+)docstring";
 static PyObject* OSCARSTH_UndulatorBField (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {
   // Return the undulator BFieldMax parameter give the K and period
@@ -125,7 +159,6 @@ static PyObject* OSCARSTH_UndulatorBField (OSCARSTHObject* self, PyObject* args,
     return NULL;
   }
 
-
   // Return the BField Max value
   return Py_BuildValue("d", self->obj->UndulatorBField(K, Period));
 }
@@ -134,7 +167,25 @@ static PyObject* OSCARSTH_UndulatorBField (OSCARSTHObject* self, PyObject* args,
 
 
 
-const char* DOC_OSCARSTH_UndulatorPeriod = "Get the undulator Period parameter vaule";
+const char* DOC_OSCARSTH_UndulatorPeriod = R"docstring(
+undulator_period(bfield, K)
+
+Get the undulator Period parameter vaule given this bfield and K
+
+Parameters
+----------
+
+K : float
+    Undulator deflection parameters
+
+bfield : float
+    Peak magnetic field in [T]
+
+Returns
+-------
+period : float
+    Magnetic period
+)docstring";
 static PyObject* OSCARSTH_UndulatorPeriod (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {
   // Return the undulator Period parameter given peak bfield and K
@@ -158,10 +209,61 @@ static PyObject* OSCARSTH_UndulatorPeriod (OSCARSTHObject* self, PyObject* args,
 
 
 
-const char* DOC_OSCARSTH_DipoleSpectrum =
-R"docstring(
-Get the spectrum from ideal dipole field.
-Output is in [photons / s / mrad^2 / 0.1\%bw]
+const char* DOC_OSCARSTH_DipoleSpectrum = R"docstring(
+dipole_spectrum(bfield [, energy_range_eV, energy_points_eV, energy_eV, angle_range, angle_points, angle, npoints, minimum, ofile, bofile])
+
+Get the spectrum from ideal dipole field.  One can calculate the spectrum as a function of photon energy at a given angle or the angular dependence for a particular energy.
+
+Parameters
+----------
+bfield : float
+    Magnetic field of the dipole in [T]
+
+energy_range_eV : list
+    [min, max] photon energy of interest in [eV]
+
+energy_points_eV : list
+    List of energy points in [eV]
+
+energy_eV : float
+    Photon energy of interest
+
+angle_range : list
+    [min, max] angle of interest in [rad]
+
+angle_points : list
+    List of angle points in [rad]
+
+angle : float
+    Angle of interest in [rad]
+
+npoints : int
+    Number of points for _range requests
+
+ofile : str
+    Output file name
+
+bofile : str
+    Binary output file name
+
+Returns
+-------
+flux : list
+    A list of flux values for given points [[p0, f0], [p1, f1], ...].  The points can be in energy or angle depending on the input parameters.  Output is in [photons / s / mrad^2 / 0.1\%bw]
+
+Examples
+--------
+Calculate the spectrum in a given energy range
+
+    >>> oth.dipole_spectrum(bfield=0.4, energy_range_eV=[10, 30000], npoints=1000)
+
+Calculate the spectrum in a given energy range at a vertical angle of 0.0005 [rad]
+
+    >>> oth.dipole_spectrum(bfield=0.4, energy_range_eV=[10, 30000], npoints=1000, angle=0.0005)
+
+Calculate the flux in a given angle range at an energy of 2394 [eV]
+
+    >>> oth.dipole_spectrum(bfield=0.4, angle_range=[-0.0005, 0.0005], npoints=1000, energy_eV=2394)
 )docstring";
 static PyObject* OSCARSTH_DipoleSpectrum (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {
@@ -177,7 +279,6 @@ static PyObject* OSCARSTH_DipoleSpectrum (OSCARSTHObject* self, PyObject* args, 
   PyObject* List_AnglePoints     = PyList_New(0);
   double    Angle                = 0;
   int       NPoints              = 500;
-  double    Minimum              = 0;
   char*     OutFileNameText      = "";
   char*     OutFileNameBinary    = "";
 
@@ -190,13 +291,12 @@ static PyObject* OSCARSTH_DipoleSpectrum (OSCARSTHObject* self, PyObject* args, 
                            "angle_points",
                            "angle",
                            "npoints",
-                           "minimum",
                            "ofile",
                            "bofile",
                            NULL};
 
   // Parse inputs
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|OOdOOdidss", kwlist,
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|OOdOOdiss", kwlist,
                                    &BField,
                                    &List_EnergyRange_eV,
                                    &List_EnergyPoints_eV,
@@ -205,7 +305,6 @@ static PyObject* OSCARSTH_DipoleSpectrum (OSCARSTHObject* self, PyObject* args, 
                                    &List_AnglePoints,
                                    &Angle,
                                    &NPoints,
-                                   &Minimum,
                                    &OutFileNameText,
                                    &OutFileNameBinary)) {
     return NULL;
@@ -363,7 +462,21 @@ static PyObject* OSCARSTH_DipoleSpectrumPoint (OSCARSTHObject* self, PyObject* a
 
 
 
-const char* DOC_OSCARSTH_DipoleCriticalEnergy = "Get the critical energy for bending magnet in [eV]";
+const char* DOC_OSCARSTH_DipoleCriticalEnergy = R"docstring(
+dipole_critical_energy(bfield)
+
+Get the critical energy for bending magnet in [eV]
+
+Parameters
+----------
+bfield : float
+    Magnetic field of dipole in [T]
+
+Returns
+-------
+energy : float
+    Dipole critical energy in [eV]
+)docstring";
 static PyObject* OSCARSTH_DipoleCriticalEnergy (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {
   // Require 1 arguments
@@ -392,7 +505,21 @@ static PyObject* OSCARSTH_DipoleCriticalEnergy (OSCARSTHObject* self, PyObject* 
 
 
 
-const char* DOC_OSCARSTH_DipoleCriticalWavelength = "Get the critical wavelength for bending magnet in [m]";
+const char* DOC_OSCARSTH_DipoleCriticalWavelength = R"docstring(
+dipole_critical_wavelength(bfield)
+
+Get the critical wavelength for bending magnet in [m]
+
+Parameters
+----------
+bfield : float
+    Magnetic field of dipole in [T]
+
+Returns
+-------
+energy : float
+    Dipole critical wavelength in [m]
+)docstring";
 static PyObject* OSCARSTH_DipoleCriticalWavelength (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {
 
@@ -440,12 +567,6 @@ static PyObject* OSCARSTH_DipoleBrightness (OSCARSTHObject* self, PyObject* args
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "|dddd", kwlist, &BField, &BeamEnergy, &Angle, &Energy_eV)) {
     return NULL;
   }
-
-  // Check that beam energy makes sense
-  //if (BeamEnergy <= 0) {
-  //  PyErr_SetString(PyExc_ValueError, "'beam_energy_GeV' must be > 0");
-  //  return NULL;
-  //}
 
   //TVector2D const EnergyRange = OSCARSPY::ListAsTVector2D(List_EnergyRange);
   //if (EnergyRange[0] >= EnergyRange[1] || EnergyRange[0] <= 1 || EnergyRange[1] <= 0) {
@@ -1011,7 +1132,7 @@ static PyMethodDef OSCARSTH_methods[] = {
   //{"dipole_spectrum_point",                      (PyCFunction) OSCARSTH_DipoleSpectrumPoint,                       METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleSpectrumPoint},
   {"dipole_critical_energy",                     (PyCFunction) OSCARSTH_DipoleCriticalEnergy,                    METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleCriticalEnergy},
   {"dipole_critical_wavelength",                 (PyCFunction) OSCARSTH_DipoleCriticalWavelength,                METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleCriticalWavelength},
-  {"dipole_brightness",                          (PyCFunction) OSCARSTH_DipoleBrightness,                        METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleBrightness},
+  //{"dipole_brightness",                          (PyCFunction) OSCARSTH_DipoleBrightness,                        METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleBrightness},
 
   {"undulator_flux_onaxis",                      (PyCFunction) OSCARSTH_UndulatorFluxOnAxis,                     METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorFluxOnAxis},
   {"undulator_brightness",                       (PyCFunction) OSCARSTH_UndulatorBrightness,                     METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorBrightness},
@@ -1144,7 +1265,8 @@ static PyModuleDef OSCARSTHmodule = {
   "th",
   "OSCARSTH module extension.",
   -1,
-  NULL, NULL, NULL, NULL, NULL
+  OSCARSTH_methods,
+  NULL, NULL, NULL, NULL
 };
 #endif
 

@@ -276,8 +276,7 @@ void TSpectrumContainer::WriteToFileBinary (std::string const FileName, std::str
   // Check if file is open
   // UPDATE: try a more robust check
   if (!f.is_open()) {
-    std::cout << "ERROR opening file" << std::endl;
-    throw;
+    throw std::ifstream::failure("cannot open file for binary write");
   }
 
 

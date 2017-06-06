@@ -44,6 +44,8 @@ TField3D_Grid::TField3D_Grid (std::string         const& InFileName,
     this->ReadFile_SPECTRA(InFileName, Rotations, Translation, CommentChar);
   } else if (format == "SRW") {
     this->ReadFile_SRW(InFileName, Rotations, Translation, CommentChar);
+  } else if (format == "BINARY") {
+    this->ReadFile_Binary(InFileName, Rotations, Translation, Scaling);
   } else {
     std::cerr << "TField3D_Grid::TField3D_Grid format error format: " << FileFormat << std::endl;
     throw std::invalid_argument("incorrect format given");
@@ -78,6 +80,9 @@ TField3D_Grid::TField3D_Grid (std::vector<std::pair<double, std::string> > Mappi
     //this->ReadFile_SPECTRA(InFileName, Rotations, Translation, CommentChar);
   } else if (format == "SRW") {
     this->InterpolateFromFiles_SRW(Mapping, Parameter, Rotations, Translation, Scaling);
+  } else if (format == "BINARY") {
+    // UPDATE: Interpolated from binary
+    throw;
   } else {
     std::cerr << "TField3D_Grid::TField3D_Grid format error format: " << FileFormat << std::endl;
     throw std::invalid_argument("incorrect format given");
@@ -845,6 +850,487 @@ void TField3D_Grid::ReadFile_OSCARS1D (std::string         const& InFileName,
 
 
 
+void TField3D_Grid::ReadFile_Binary (std::string const& InFileName,
+                                     TVector3D   const& Rotations,
+                                     TVector3D   const& Translation,
+                                     std::vector<double> const& Scaling)
+{
+  // Read file with the best binary format in the world
+
+  // Input file
+  std::ifstream fi(InFileName.c_str(), std::ios::binary);
+  if (!fi.is_open()) {
+    throw std::ifstream::failure("cannot open file for reading binary format");
+  }
+
+  // Header 0: Number of characters in comment, then comment
+  int NCommentChars;
+  fi.read((char*) &NCommentChars, sizeof(int));
+  char Comment[NCommentChars];
+  fi.read(Comment, NCommentChars * sizeof(char));
+
+
+  // Header 1: Version number
+  int Version;
+  fi.read((char*) &Version, sizeof(int));
+
+  // Header 2: Number of chars in format string, then format string
+  int NFormatChars;
+  fi.read((char*) &NFormatChars, sizeof(int));
+  char Format[NFormatChars+1];
+  fi.read(Format, NFormatChars * sizeof(char));
+  Format[NFormatChars] = '\0';
+
+
+  // Check version number
+  if (Version == 1) {
+    this->ReadFile_Binary_v1(fi, Format, Rotations, Translation, Scaling);
+  } else {
+    throw std::invalid_argument("File Version number incorrect");
+  }
+
+  return;
+}
+
+
+
+
+
+void TField3D_Grid::ReadFile_Binary_v1 (std::ifstream& fi,
+                                        std::string const& InFormat,
+                                        TVector3D const& Rotations,
+                                        TVector3D const& Translation,
+                                        std::vector<double> const& Scaling)
+{
+  // Read file in binary format version 1
+
+  // Decode based on format string
+  if (InFormat == "OSCARS") {
+    // Standard oscars 3d uniform in each spatial dimension grid
+
+    // Header Values
+    float  XStartIN;
+    float  XStepIN;
+    int    NX;
+    float  YStartIN;
+    float  YStepIN;
+    int    NY;
+    float  ZStartIN;
+    float  ZStepIN;
+    int    NZ;
+
+    // Read Header values
+    fi.read((char*) &XStartIN, sizeof(XStartIN));
+    fi.read((char*) &XStepIN,  sizeof(XStepIN));
+    fi.read((char*) &NX,       sizeof(NX));
+    fi.read((char*) &YStartIN, sizeof(YStartIN));
+    fi.read((char*) &YStepIN,  sizeof(YStepIN));
+    fi.read((char*) &NY,       sizeof(NY));
+    fi.read((char*) &ZStartIN, sizeof(ZStartIN));
+    fi.read((char*) &ZStepIN,  sizeof(ZStepIN));
+    fi.read((char*) &NZ,       sizeof(NZ));
+
+    // If we're doing any scaling, scale spatial dimensions and fields.  Start with stepsize change
+    double const XStep = Scaling.size() > 0 ? XStepIN * Scaling[0] : XStepIN;
+    double const YStep = Scaling.size() > 1 ? YStepIN * Scaling[1] : YStepIN;
+    double const ZStep = Scaling.size() > 2 ? ZStepIN * Scaling[2] : ZStepIN;
+
+    // Get field scaling if it exists
+    double const FxScaling = Scaling.size() > 3 ? Scaling[3] : 1;
+    double const FyScaling = Scaling.size() > 4 ? Scaling[4] : 1;
+    double const FzScaling = Scaling.size() > 5 ? Scaling[5] : 1;
+
+    // Calculate new start point
+    double const MiddleX = XStartIN + XStepIN * (NX - 1) / 2.;
+    double const XStart  = MiddleX - XStep * (NX - 1) / 2.;
+    double const MiddleY = YStartIN + YStepIN * (NY - 1) / 2.;
+    double const YStart  = MiddleY - YStep * (NY -1) / 2.;
+    double const MiddleZ = ZStartIN + ZStepIN * (NZ - 1) / 2.;
+    double const ZStart  = MiddleZ - ZStep * (NZ - 1) / 2.;
+
+    // Check Number of points is > 0 for all
+    if (NX < 1 || NY < 1 || NY < 1) {
+      std::cerr << "ERROR: invalid npoints" << std::endl;
+      throw std::out_of_range("invalid number of points in at least one dimension");
+    }
+
+    // Save position data to object variables
+    fNX = NX;
+    fNY = NY;
+    fNZ = NZ;
+    fXStart = XStart;
+    fYStart = YStart;
+    fZStart = ZStart;
+    fXStep  = XStep;
+    fYStep  = YStep;
+    fZStep  = ZStep;
+    fXStop  = fXStart + (fNX - 1) * fXStep;
+    fYStop  = fYStart + (fNY - 1) * fYStep;
+    fZStop  = fZStart + (fNZ - 1) * fZStep;
+
+    fHasX = NX > 1 ? true : false;
+    fHasY = NY > 1 ? true : false;
+    fHasZ = NZ > 1 ? true : false;
+
+    if (fHasX && fHasY && fHasZ) {
+      fDIMX = kDIMX_XYZ;
+    } else if (fHasX && fHasY) {
+      fDIMX = kDIMX_XY;
+    } else if (fHasX && fHasZ) {
+      fDIMX = kDIMX_XZ;
+    } else if (fHasY && fHasZ) {
+      fDIMX = kDIMX_YZ;
+    } else if (fHasX) {
+      fDIMX = kDIMX_X;
+    } else if (fHasY) {
+      fDIMX = kDIMX_Y;
+    } else if (fHasZ) {
+      fDIMX = kDIMX_Z;
+    } else {
+      std::cerr << "ERROR: error in file header format" << std::endl;
+      throw std::out_of_range("invalid dimensions");
+    }
+
+    fXDIM = 0;
+    if (fHasX) {
+      ++fXDIM;
+    }
+    if (fHasY) {
+      ++fXDIM;
+    }
+    if (fHasZ) {
+      ++fXDIM;
+    }
+
+    // Reserve correct number of points in vector (slightly faster)
+    fData.reserve(fNX * fNY * fNZ);
+
+    // Temp variables for field
+    float  fx;
+    float  fy;
+    float  fz;
+
+    // Loop over all points
+    for (int ix = 0; ix != NX; ++ix) {
+      for (int iy = 0; iy != NY; ++iy) {
+        for (int iz = 0; iz != NZ; ++iz) {
+
+          // Grab a line from input file
+          fi.read((char*) &fx, sizeof(fx));
+          fi.read((char*) &fy, sizeof(fy));
+          fi.read((char*) &fz, sizeof(fz));
+
+          // Check we did not hit an EOF
+          if (fi.eof()) {
+            std::cerr << "ERROR: bad input file" << std::endl;
+            throw std::ifstream::failure("error reading file.  Check format");
+          }
+
+          // Scale values?
+          if (FxScaling != 1) {
+            fx *= FxScaling;
+          }
+          if (FyScaling != 1) {
+            fy *= FyScaling;
+          }
+          if (FzScaling != 1) {
+            fz *= FzScaling;
+          }
+
+          // Check the stream did not hit an EOF
+          if (fi.fail()) {
+            std::cerr << "ERRROR: input stream bad" << std::endl;
+            throw std::ifstream::failure("error reading file.  Check format");
+          }
+
+          // Push data to storage
+          TVector3D F(fx, fy, fz);
+          F.RotateSelfXYZ(Rotations);
+          fData.push_back(F);
+        }
+      }
+    }
+
+    // Close file
+    fi.close();
+
+    // Store Rotations and Translation
+    fRotated = Rotations;
+    fTranslation = Translation;
+
+    return;
+
+
+
+
+  } else if (std::string(InFormat.begin(), InFormat.begin() + 8) == "OSCARS1D") {
+    // OSCARS1D non-uniform steps of 3d field in 1 dimension
+
+    // And this is for which order they come in
+    std::vector<int> Order(4, -1);
+
+    // Make it a stream and set it to the format string minus the OSCARS1D
+    std::string const FormatString(InFormat.begin() + 8, InFormat.end());
+    std::istringstream s;
+    s.str(FormatString);
+
+    // String for identifier
+    std::string c;
+
+    // Counts
+    int index = 0;
+    int XDIM = 0;
+    int FDIM = 0;
+
+    // Which fields we have
+    bool HasFx = false;
+    bool HasFy = false;
+    bool HasFz = false;
+
+    // Which axis is used
+    std::string Axis = "";
+
+    // Look at format string
+    while (s >> c) {
+
+      if (index > 3) {
+        std::cerr << "ERROR: spatial or B-field dimensions are too large(index>3)" << std::endl;
+        throw std::out_of_range("spatial or B-field dimensions are too large(index>3)");
+      }
+
+      // Check if it is XYZBxByBz and in which order
+      if (c == "X" || c == "Y" || c == "Z") {
+        Axis = c;
+        ++XDIM;
+        Order[index] = 0;
+        ++index;
+      } else if (c == "Bx" || c == "Ex" || c == "Fx") {
+        HasFx = true;
+        ++FDIM;
+        Order[index] = 1;
+        ++index;
+      } else if (c == "By" || c == "Ey" || c == "Fy") {
+        HasFy = true;
+        ++FDIM;
+        Order[index] = 2;
+        ++index;
+      } else if (c == "Bz" || c == "Ez" || c == "Fz") {
+        HasFz = true;
+        ++FDIM;
+        Order[index] = 3;
+        ++index;
+      } else {
+        std::cerr << "ERROR: Incorrect format" << std::endl;
+        throw std::invalid_argument("only excepts X Y Z Bx By Bz");
+      }
+    }
+
+    // How many cols to ouout
+    int InputCount = XDIM + FDIM;
+
+    // At the moment only support 1D irregular grid
+    if (XDIM != 1) {
+      std::cerr << "ERROR: spatial or B-field dimensions are too large(>3)" << std::endl;
+      throw std::out_of_range("spatial or B-field dimensions are too large");
+    }
+
+    // Vector for the data inputs
+    std::vector<std::array<double, 4> > InputData;
+
+    // Value for one read
+    float OneValue;
+
+    // Loop over all data in file
+    while (!fi.eof() && fi.peek() != EOF) {
+
+      // Vector for this line of input
+      std::vector<double> Value(4, 0);
+
+      // Read this line of data
+      for (int i = 0; i < InputCount; ++i) {
+        fi.read((char*) &OneValue, sizeof(OneValue));
+        Value[Order[i]] = (double) OneValue;
+        if (fi.fail()) {
+          throw std::length_error("something is incorrect with data format or iformat string");
+        }
+      }
+
+      // Scale the input as requested
+      for (size_t iscale = 0; iscale != Scaling.size() && iscale < 4; ++iscale) {
+        Value[Order[iscale]] *= Scaling[iscale];
+      }
+
+      // Add to data array.
+      std::array<double, 4> a = { {Value[0], Value[1], Value[2], Value[3]} };
+      InputData.push_back(a);
+    }
+
+    // Close file
+    fi.close();
+
+    // Sort the field
+    std::sort(InputData.begin(), InputData.end(), this->CompareField1D);
+
+
+    // Now we need to make a regular 3D grid...
+
+    // Check to see there are at least 2 data points
+    if (InputData.size() < 2) {
+      std::cerr << "ERROR: not enough data points" << std::endl;
+      throw std::length_error("not enough data points");
+    }
+
+    // Grab the first and last Z
+    double const First = InputData[0][0];
+    double const Last  = InputData[InputData.size() - 1][0];
+
+
+    // UPDATE: VAR
+    int const NPointsPerMeter = 10000;
+
+    // Get the number of points and the step size
+    size_t const NPoints  = (Last - First) * NPointsPerMeter;
+    double const StepSize = (Last - First) / (double) (NPoints - 1);
+
+    // Set all to default values
+    fNX = 1;
+    fNY = 1;
+    fNZ = 1;
+    fXStart = 0;
+    fYStart = 0;
+    fZStart = 0;
+    fXStep = 0;
+    fYStep = 0;
+    fZStep = 0;
+    fXStop = 0;
+    fYStop = 0;
+    fZStop = 0;
+
+    // Set correct one for limits based on which axis was given
+    if (Axis == "X") {
+      fNX = NPoints;
+      fXStart = First;
+      fXStop = Last;
+      fXStep = StepSize;
+    } else if  (Axis == "Y") {
+      fNY = NPoints;
+      fYStart = First;
+      fYStop = Last;
+      fYStep = StepSize;
+    } else if  (Axis == "Z") {
+      fNZ = NPoints;
+      fZStart = First;
+      fZStop = Last;
+      fZStep = StepSize;
+    }
+
+
+    // Get dimensions correct
+    fHasX = fNX > 1 ? true : false;
+    fHasY = fNY > 1 ? true : false;
+    fHasZ = fNZ > 1 ? true : false;
+
+    if (fHasX && fHasY && fHasZ) {
+      fDIMX = kDIMX_XYZ;
+    } else if (fHasX && fHasY) {
+      fDIMX = kDIMX_XY;
+    } else if (fHasX && fHasZ) {
+      fDIMX = kDIMX_XZ;
+    } else if (fHasY && fHasZ) {
+      fDIMX = kDIMX_YZ;
+    } else if (fHasX) {
+      fDIMX = kDIMX_X;
+    } else if (fHasY) {
+      fDIMX = kDIMX_Y;
+    } else if (fHasZ) {
+      fDIMX = kDIMX_Z;
+    } else {
+      std::cerr << "ERROR: error in file header format" << std::endl;
+      throw std::out_of_range("invalid dimensions");
+    }
+
+    fXDIM = 0;
+    if (fHasX) {
+      ++fXDIM;
+    }
+    if (fHasY) {
+      ++fXDIM;
+    }
+    if (fHasZ) {
+      ++fXDIM;
+    }
+
+
+
+    // Clear the internal data and reserve the number of points
+    fData.clear();
+    fData.reserve(NPoints);
+
+
+    // Variables to hold the slope between two real points and new By (linear interpolated)
+    double SlopeX;
+    double SlopeY;
+    double SlopeZ;
+    double NewBx;
+    double NewBy;
+    double NewBz;
+
+    // I only initialize to avoid compile-time warnings.  These are for finding the
+    // adj bins for linear interpolation
+    size_t MinBin    = 0;
+    size_t AfterBin  = 0;
+    size_t BeforeBin = 0;
+
+    // Variable to hold new calculated Z position
+    double ThisZ;
+
+    // For each desired point find the bin before and after the desired Z position
+    for (size_t i = 0; i != NPoints; ++i) {
+      ThisZ = i * StepSize + First;
+      for (size_t j = MinBin + 1; j != InputData.size(); ++j) {
+        if (InputData[j][0] > ThisZ) {
+          AfterBin  = j;
+          BeforeBin = j - 1;
+          MinBin = j - 1;
+          break;
+        }
+      }
+
+
+      // Calculate the By at desired position based on linear interpolation
+      SlopeX = !HasFx ? 0 : (InputData[AfterBin][1] - InputData[BeforeBin][1]) /  (InputData[AfterBin][0] - InputData[BeforeBin][0]);
+      SlopeY = !HasFy ? 0 : (InputData[AfterBin][2] - InputData[BeforeBin][2]) /  (InputData[AfterBin][0] - InputData[BeforeBin][0]);
+      SlopeZ = !HasFz ? 0 : (InputData[AfterBin][3] - InputData[BeforeBin][3]) /  (InputData[AfterBin][0] - InputData[BeforeBin][0]);
+      NewBx = !HasFx ? 0 : InputData[BeforeBin][1] + (ThisZ - InputData[BeforeBin][0]) * SlopeX;
+      NewBy = !HasFy ? 0 : InputData[BeforeBin][2] + (ThisZ - InputData[BeforeBin][0]) * SlopeY;
+      NewBz = !HasFz ? 0 : InputData[BeforeBin][3] + (ThisZ - InputData[BeforeBin][0]) * SlopeZ;
+
+
+      // Append the new BxByBz to the output vector
+      TVector3D F(NewBx, NewBy, NewBz);
+      F.RotateSelfXYZ(Rotations);
+      fData.push_back(F);
+    }
+
+    // Clear array data
+    InputData.clear();
+
+    // Store Rotations and Translation
+    fRotated = Rotations;
+    fTranslation = Translation;
+
+    return;
+
+
+
+  } else {
+    throw std::invalid_argument("This binary format is not supported, or file is incorrect for this system");
+  }
+
+
+
+  return;
+}
 
 
 

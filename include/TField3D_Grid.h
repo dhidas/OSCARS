@@ -63,6 +63,17 @@ class TField3D_Grid : public TField
                              std::vector<double> const& Scaling = std::vector<double>(),
                              char                const  CommentChar = '#');
 
+    void ReadFile_Binary (std::string const& InFileName,
+                          TVector3D   const& Rotations = TVector3D(0, 0, 0),
+                          TVector3D   const& Translation = TVector3D(0, 0, 0),
+                          std::vector<double> const& Scaling = std::vector<double>());
+
+    void ReadFile_Binary_v1 (std::ifstream& fi,
+                             std::string const& InFormat,
+                             TVector3D const& Rotations = TVector3D(0, 0, 0),
+                             TVector3D const& Translation = TVector3D(0, 0, 0),
+                             std::vector<double> const& Scaling = std::vector<double>());
+
     void ReadFile_SRW       (std::string const& InFileName,
                              TVector3D   const& Rotations = TVector3D(0, 0, 0),
                              TVector3D   const& Translation = TVector3D(0, 0, 0),
