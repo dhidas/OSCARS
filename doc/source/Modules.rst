@@ -76,7 +76,7 @@ oscars.parametric_surfaces
 --------------------------
 
 .. automodule:: oscars.parametric_surfaces
-   :amembers:
+   :members:
 
 
 
