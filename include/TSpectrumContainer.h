@@ -22,12 +22,13 @@ class TSpectrumContainer
     void Init (size_t const, double const, double const);
     void Init (std::vector<double> const&);
 
-    void   SetFlux   (size_t const, double const);
-    void   SetPoint  (size_t const, double const, double const);
-    void   AddPoint  (double const, double const Flux = 0);
-    void   AddToFlux (size_t const, double const);
-    double GetFlux   (size_t const) const;
-    double GetEnergy (size_t const) const;
+    void   SetFlux     (size_t const, double const);
+    void   SetPoint    (size_t const, double const, double const);
+    size_t AddPoint    (double const, double const Flux = 0);
+    size_t RemovePoint (size_t const);
+    void   AddToFlux   (size_t const, double const);
+    double GetFlux     (size_t const) const;
+    double GetEnergy   (size_t const) const;
     double GetAngularFrequency (size_t const) const;
     size_t GetNPoints () const;
 

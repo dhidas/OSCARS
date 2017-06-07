@@ -70,7 +70,7 @@ void TSpectrumContainer::Init (size_t const N, double const EFirst, double const
 
   // If you have zero elements I don't see the point of this
   if (N < 1) {
-    throw;
+    throw std::length_error("no points specified");
   }
 
   // If only one point just set it to the 'First' energy
@@ -115,7 +115,7 @@ void TSpectrumContainer::SetFlux (size_t const i, double const Flux)
 
   // Simple check
   if (i >= fSpectrumPoints.size()) {
-    throw;
+    throw std::out_of_range("index beyond fSpectrum points range");
   }
 
   fSpectrumPoints[i].second = Flux;
@@ -132,7 +132,7 @@ void TSpectrumContainer::SetPoint (size_t const i, double const Energy, double c
 
   // I can't decide if I want to be nice and resize or just throw...
   if (i >= fSpectrumPoints.size()) {
-    throw;
+    throw std::out_of_range("index beyond fSpectrum points range");
   }
 
   fSpectrumPoints[i].first  = Energy;
@@ -144,15 +144,37 @@ void TSpectrumContainer::SetPoint (size_t const i, double const Energy, double c
 
 
 
-void TSpectrumContainer::AddPoint (double const Energy, double const Flux)
+size_t TSpectrumContainer::AddPoint (double const Energy, double const Flux)
 {
   // Add an energy point to the end of the vector.
   fSpectrumPoints.push_back( std::make_pair(Energy, Flux) );
   fCompensation.push_back(0);
 
-  return;
+  return fSpectrumPoints.size();
 }
 
+
+
+
+size_t TSpectrumContainer::RemovePoint (size_t const i)
+{
+  // Remove a point from the spectrum container.  Be careful if you do this
+  // as it potentially changes memory locations and definitely changes
+  // indexing
+  //
+  // Return: Number of spectrum points remaining after Removal, or -1
+  // in the case you have input an invalid index
+
+  // Check that this is inside of the existing range
+  if (i < 0 || i >= fSpectrumPoints.size()) {
+    return -1;
+  }
+
+  fSpectrumPoints.erase(fSpectrumPoints.begin() + i);
+  fCompensation.erase(fCompensation.begin() + i);
+
+  return fSpectrumPoints.size();
+}
 
 
 
@@ -164,7 +186,7 @@ void TSpectrumContainer::AddToFlux (size_t const i, double const Flux)
 
   // Simple check
   if (i >= fSpectrumPoints.size()) {
-    throw;
+    throw std::out_of_range("index beyond fSpectrum points range");
   }
 
   double Sum = fSpectrumPoints[i].second;
@@ -235,7 +257,7 @@ void TSpectrumContainer::WriteToFileText (std::string const FileName, std::strin
   // Check if file is open
   // UPDATE: try a more robust check
   if (!f.is_open()) {
-    throw;
+    throw std::ifstream::failure("cannot open file for writing");
   }
 
   // If the header is specified, write one!
@@ -324,7 +346,7 @@ void TSpectrumContainer::AverageFromFilesText (std::vector<std::string> const& F
 
   // Check that we have at least one file!
   if (Files.size() < 1) {
-    throw;
+    throw std::length_error("no files specified");
   }
 
   // Double number of files for averaging
@@ -371,7 +393,7 @@ void TSpectrumContainer::AverageFromFilesText (std::vector<std::string> const& F
 
         // This must be file index 0
         if (i != 0) {
-          throw;
+          throw std::length_error("files are not the same length");
         }
 
         break;
@@ -412,7 +434,7 @@ void TSpectrumContainer::AverageFromFilesBinary (std::vector<std::string> const&
 
   // Check that we have at least one file!
   if (Files.size() < 1) {
-    throw;
+    throw std::length_error("no files specified");
   }
 
   // Double number of files for averaging
@@ -466,7 +488,7 @@ void TSpectrumContainer::AverageFromFilesBinary (std::vector<std::string> const&
 
         // This must be file index 0
         if (i != 0) {
-          throw;
+          throw std::length_error("files are not the same length");
         }
 
         break;
