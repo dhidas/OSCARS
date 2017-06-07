@@ -203,24 +203,26 @@ void TParticleTrajectoryPoints::WriteToFileBinary (std::string const& FileName) 
     throw;
   }
 
+  // For writing data
+  float v = 0;
+
   // Loop over all points and print to file
   for (size_t i = 0; i != fB.size(); ++i) {
-    double value;
 
-    value = fDeltaT;
-    f.write((char*) &value, sizeof(double));
-    value = fX[i].GetX();
-    f.write((char*) &value, sizeof(double));
-    value = fX[i].GetY();
-    f.write((char*) &value, sizeof(double));
-    value = fX[i].GetZ();
-    f.write((char*) &value, sizeof(double));
-    value = fB[i].GetX();
-    f.write((char*) &value, sizeof(double));
-    value = fB[i].GetY();
-    f.write((char*) &value, sizeof(double));
-    value = fB[i].GetZ();
-    f.write((char*) &value, sizeof(double));
+    v = (float) fDeltaT;
+    f.write((char*) &v, sizeof(float));
+    v = (float) fX[i].GetX();
+    f.write((char*) &v, sizeof(float));
+    v = (float) fX[i].GetY();
+    f.write((char*) &v, sizeof(float));
+    v = (float) fX[i].GetZ();
+    f.write((char*) &v, sizeof(float));
+    v = (float) fB[i].GetX();
+    f.write((char*) &v, sizeof(float));
+    v = (float) fB[i].GetY();
+    f.write((char*) &v, sizeof(float));
+    v = (float) fB[i].GetZ();
+    f.write((char*) &v, sizeof(float));
   }
 
   // Close file
@@ -296,21 +298,26 @@ void TParticleTrajectoryPoints::ReadFromFileBinary (std::string const& FileName)
   }
 
   // Variables to read from file
-  double t;
-  double x, y, z;
-  double bx, by, bz;
+  float t  = 0;
+  float x  = 0;
+  float y  = 0;
+  float z  = 0;
+  float bx = 0;
+  float by = 0;
+  float bz = 0;
 
   while (!f.eof()) {
 
-    f.read( (char*)  &t, sizeof(double));
-    f.read( (char*)  &x, sizeof(double));
-    f.read( (char*)  &y, sizeof(double));
-    f.read( (char*)  &z, sizeof(double));
-    f.read( (char*) &bx, sizeof(double));
-    f.read( (char*) &by, sizeof(double));
-    f.read( (char*) &bz, sizeof(double));
+    // Read data
+    f.read( (char*)  &t, sizeof(float));
+    f.read( (char*)  &x, sizeof(float));
+    f.read( (char*)  &y, sizeof(float));
+    f.read( (char*)  &z, sizeof(float));
+    f.read( (char*) &bx, sizeof(float));
+    f.read( (char*) &by, sizeof(float));
+    f.read( (char*) &bz, sizeof(float));
 
-
+    // If end of file, stop, otherwise add to trajectory
     if (f.eof()) {
       break;
     } else {

@@ -66,10 +66,10 @@ static PyObject* OSCARSTH_new (PyTypeObject* type, PyObject* args, PyObject* kwd
 
 
 
-static int th_init(OSCARSTHObject* self, PyObject* args, PyObject* kwds)
-{
-  return 0;
-}
+//static int th_init(OSCARSTHObject* self, PyObject* args, PyObject* kwds)
+//{
+//  return 0;
+//}
 
 
 
@@ -342,11 +342,11 @@ static PyObject* OSCARSTH_DipoleSpectrum (OSCARSTHObject* self, PyObject* args, 
 
   // Grap points if they are there
   std::vector<double> VEnergyPoints_eV;
-  for (size_t i = 0; i < PyList_Size(List_EnergyPoints_eV); ++i) {
+  for (int i = 0; i < PyList_Size(List_EnergyPoints_eV); ++i) {
     VEnergyPoints_eV.push_back(PyFloat_AsDouble(PyList_GetItem(List_EnergyPoints_eV, i)));
   }
   std::vector<double> VAnglePoints;
-  for (size_t i = 0; i < PyList_Size(List_AnglePoints); ++i) {
+  for (int i = 0; i < PyList_Size(List_AnglePoints); ++i) {
     VAnglePoints.push_back(PyFloat_AsDouble(PyList_GetItem(List_AnglePoints, i)));
   }
 
@@ -410,7 +410,7 @@ static PyObject* OSCARSTH_DipoleSpectrum (OSCARSTHObject* self, PyObject* args, 
 
 
 
-
+/*
 const char* DOC_OSCARSTH_DipoleSpectrumPoint = "Get the spectrum from ideal dipole field.";
 static PyObject* OSCARSTH_DipoleSpectrumPoint (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {
@@ -456,7 +456,7 @@ static PyObject* OSCARSTH_DipoleSpectrumPoint (OSCARSTHObject* self, PyObject* a
   //Py_INCREF(Py_None);
   //return Py_None;
 }
-
+*/
 
 
 
@@ -548,7 +548,7 @@ static PyObject* OSCARSTH_DipoleCriticalWavelength (OSCARSTHObject* self, PyObje
 
 
 
-
+/*
 const char* DOC_OSCARSTH_DipoleBrightness = "Not Implemented";
 static PyObject* OSCARSTH_DipoleBrightness (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {
@@ -582,6 +582,7 @@ static PyObject* OSCARSTH_DipoleBrightness (OSCARSTHObject* self, PyObject* args
   //Py_INCREF(Py_None);
   //return Py_None;
 }
+*/
 
 
 
@@ -857,7 +858,6 @@ static PyObject* OSCARSTH_UndulatorEnergyHarmonic (OSCARSTHObject* self, PyObjec
   // Require some arguments
   double Period = 0;
   int    Harmonic = 0;
-  double BeamEnergy_GeV = 0;
   double K = 0;
   double BField = 0;
 
@@ -1495,10 +1495,10 @@ static PyTypeObject OSCARSTHType = {
 
 
 
-static PyMethodDef module_methods[] = {
-  // I do not need
-  {NULL}  /* Sentinel */
-};
+//static PyMethodDef module_methods[] = {
+//  // I do not need
+//  {NULL}  /* Sentinel */
+//};
 
 
 #if PY_MAJOR_VERSION >= 3

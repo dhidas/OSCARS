@@ -225,6 +225,12 @@ void T3DScalarContainer::AverageFromFilesBinary (std::vector<std::string> const&
   // Keep track of which point we are on
   size_t ip = 0;
 
+  // For reading data
+  float a = 0;
+  float b = 0;
+  float c = 0;
+  float d = 0;
+
   // Must be 2 or 3 D at the moment
   if (Dimension == 2) {
 
@@ -235,9 +241,13 @@ void T3DScalarContainer::AverageFromFilesBinary (std::vector<std::string> const&
       for (size_t i = 0; i != f.size(); ++i) {
 
         // Read data from current file
-        f[i].read( (char*)  &X, sizeof(double));
-        f[i].read( (char*)  &Y, sizeof(double));
-        f[i].read( (char*)  &V, sizeof(double));
+        f[i].read( (char*)  &a, sizeof(float));
+        f[i].read( (char*)  &b, sizeof(float));
+        f[i].read( (char*)  &d, sizeof(float));
+
+        X = (double) a;
+        Y = (double) b;
+        V = (double) d;
 
         // If we hit an eof we are done.
         if (f[i].fail()) {
@@ -273,10 +283,15 @@ void T3DScalarContainer::AverageFromFilesBinary (std::vector<std::string> const&
       for (size_t i = 0; i != f.size(); ++i) {
 
         // Read data from current file
-        f[i].read( (char*)  &X, sizeof(double));
-        f[i].read( (char*)  &Y, sizeof(double));
-        f[i].read( (char*)  &Z, sizeof(double));
-        f[i].read( (char*)  &V, sizeof(double));
+        f[i].read( (char*)  &a, sizeof(float));
+        f[i].read( (char*)  &b, sizeof(float));
+        f[i].read( (char*)  &c, sizeof(float));
+        f[i].read( (char*)  &d, sizeof(float));
+
+        X = (double) a;
+        Y = (double) b;
+        Z = (double) c;
+        V = (double) d;
 
         // If we hit an eof we are done.
         if (f[i].fail()) {
@@ -362,34 +377,34 @@ void T3DScalarContainer::WriteToFileBinary (std::string const& OutFileName, int 
   }
 
   // Variables for writing
-  double X;
-  double Y;
-  double Z;
-  double V;
+  float X = 0;
+  float Y = 0;
+  float Z = 0;
+  float V = 0;
 
   if (Dimension == 2) {
     for (size_t i = 0; i != this->GetNPoints(); ++i) {
       TVector3D const& Obs = this->GetPoint(i).GetX();
-      X = Obs.GetX();
-      Y = Obs.GetY();
-      V = this->GetPoint(i).GetV();
+      X = (float) Obs.GetX();
+      Y = (float) Obs.GetY();
+      V = (float) this->GetPoint(i).GetV();
 
-      of.write((char*) &X, sizeof(double));
-      of.write((char*) &Y, sizeof(double));
-      of.write((char*) &V, sizeof(double));
+      of.write((char*) &X, sizeof(float));
+      of.write((char*) &Y, sizeof(float));
+      of.write((char*) &V, sizeof(float));
     }
   } else if (Dimension == 3) {
     for (size_t i = 0; i != this->GetNPoints(); ++i) {
       TVector3D const& Obs = this->GetPoint(i).GetX();
-      X = Obs.GetX();
-      Y = Obs.GetY();
-      Z = Obs.GetZ();
-      V = this->GetPoint(i).GetV();
+      X = (float) Obs.GetX();
+      Y = (float) Obs.GetY();
+      Z = (float) Obs.GetZ();
+      V = (float) this->GetPoint(i).GetV();
 
-      of.write((char*) &X, sizeof(double));
-      of.write((char*) &Y, sizeof(double));
-      of.write((char*) &Z, sizeof(double));
-      of.write((char*) &V, sizeof(double));
+      of.write((char*) &X, sizeof(float));
+      of.write((char*) &Y, sizeof(float));
+      of.write((char*) &Z, sizeof(float));
+      of.write((char*) &V, sizeof(float));
     }
   } else {
     throw std::out_of_range("incorrect dimensions");

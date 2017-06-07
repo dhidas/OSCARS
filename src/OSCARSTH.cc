@@ -124,13 +124,13 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
   long double const v5 = Me * Me;
   double const v6 = (BeamEnergy_GeV * 1e9) * (BeamEnergy_GeV * 1e9);
   double const v7 = v5 / v6;
-  long double const v1 = ((TOSCARSSR::Me() * TOSCARSSR::Me()) * (TOSCARSSR::C() * TOSCARSSR::C() * TOSCARSSR::C() * TOSCARSSR::C())) / ((BeamEnergy_GeV * TOSCARSSR::Qe() * (1e-9)) * (BeamEnergy_GeV * TOSCARSSR::Qe() * (1e-9)));
+  //long double const v1 = ((TOSCARSSR::Me() * TOSCARSSR::Me()) * (TOSCARSSR::C() * TOSCARSSR::C() * TOSCARSSR::C() * TOSCARSSR::C())) / ((BeamEnergy_GeV * TOSCARSSR::Qe() * (1e-9)) * (BeamEnergy_GeV * TOSCARSSR::Qe() * (1e-9)));
   double const v2 = 1 - v7;
   double const v3 = sqrt(v2);
   double const v = TOSCARSSR::C() * v3;
   long double const gamma = BeamEnergy_GeV / TOSCARSSR::kgToGeV( TOSCARSSR::Me());
-  long double const beta_sqr = 1 - (1 / (gamma * gamma));
-  long double const beta = sqrt(beta_sqr);
+  //long double const beta_sqr = 1 - (1 / (gamma * gamma));
+  //long double const beta = sqrt(beta_sqr);
   double const w0 = v / R;
   double const w01 = TOSCARSSR::AngularFrequencyToEv(w0);
   long double const wc1 = gamma * gamma * gamma;
@@ -147,10 +147,10 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
   double const pi = TOSCARSSR::Pi();
   double const Epsilon0 = TOSCARSSR::Epsilon0();
   double const c = TOSCARSSR::C();
-  double const d2I1 = (3./4.) * ((Q*Q*gamma*gamma) / (4. * (pi*pi*pi) * Epsilon0 * c));
+  //double const d2I1 = (3./4.) * ((Q*Q*gamma*gamma) / (4. * (pi*pi*pi) * Epsilon0 * c));
   double const d2I2 = myK2 + (((gamma*gamma*psi*psi) / (1 + (gamma*gamma*psi*psi))) * myK1);
   double const d2I3 = ((w / wc4) * (w / wc4)) * ((1 + (gamma*gamma)*(psi*psi))*(1 + (gamma*gamma)*(psi*psi)));
-  double const d2I = d2I1 * d2I2 * d2I3;
+  //double const d2I = d2I1 * d2I2 * d2I3;
   double const Hbar = TOSCARSSR::Hbar();
   double const alpha = (Q*Q) / (4. * (pi*pi*pi) * Epsilon0 * c * Hbar);
   double const I = 0.5;
@@ -210,17 +210,17 @@ TVector2D OSCARSTH::UndulatorFluxOnAxisK (double const K, double const Period, d
   double const nu = (n + 1.) / 2.;
   double const nu2 = (n - 1.) / 2.;
   double const JB = (n * K * K) / (4. + (2. * K * K));
-  double const E = BeamEnergyGeV * 1e9;
+  //double const E = BeamEnergyGeV * 1e9;
   double const gamma = BeamEnergyGeV / TOSCARSSR::kgToGeV( TOSCARSSR::Me());
   double const JBessel1 = TOMATH::BesselJ(nu, JB);
   double const JBessel3 = TOMATH::BesselJ(nu2, JB);
   double const Q = TOSCARSSR::Qe();
   double const c = TOSCARSSR::C();
-  double const Me_eV = TOSCARSSR::kgToGeV(TOSCARSSR::Me()) * 1e9;
+  //double const Me_eV = TOSCARSSR::kgToGeV(TOSCARSSR::Me()) * 1e9;
   double const pi = TOSCARSSR::Pi();
-  double const K_1 = Q * 1. * Period;
-  double const K_2 = 2. * pi * Me_eV * c * c;
-  double const K_0 = K_1 / K_2;
+  //double const K_1 = Q * 1. * Period;
+  //double const K_2 = 2. * pi * Me_eV * c * c;
+  //double const K_0 = K_1 / K_2;
   double const z1 = n * K;
   double const z2 = 1. + ((K * K)/2.);
   double const z3 = z1 / z2;
@@ -288,6 +288,7 @@ double OSCARSTH::UndulatorFluxWeak (double const K, double const Period, double 
 
 double OSCARSTH::DipoleBrightness () const
 {
+  /*
   double const BField = 0.4;
   double const BeamEnergy_GeV = 3;
   double const Energy_eV = 123;
@@ -326,6 +327,8 @@ double OSCARSTH::DipoleBrightness () const
 
   return TOSCARSSR::AngularFrequencyToEv(OmegaC);
   return TOMATH::BesselK_IntegralToInfty(2./3., 1);
+  */
+  return 0;
 }
 
 

@@ -653,10 +653,6 @@ void TFieldContainer::WriteToFileBinary_v1 (std::string const& OutFileName,
       }
     }
 
-
-    // How many cols to ouout
-    int OutputCount = XDIM + BDIM;
-
     // At the moment only support 1D irregular grid
     if (XDIM != 1) {
       std::cerr << "ERROR: spatial or B-field dimensions are too large(>3)" << std::endl;
@@ -668,7 +664,6 @@ void TFieldContainer::WriteToFileBinary_v1 (std::string const& OutFileName,
       std::cerr << "ERROR: limits or npoints not correctly defined" << std::endl;
       throw std::out_of_range("limits or npoints not correctly defined");
     }
-
 
     // Vector of outputs
     std::vector<float> Outputs(6, 0);

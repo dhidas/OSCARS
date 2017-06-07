@@ -279,11 +279,16 @@ void TSpectrumContainer::WriteToFileBinary (std::string const FileName, std::str
     throw std::ifstream::failure("cannot open file for binary write");
   }
 
+  // I suspect there is only a need for float precision for saved data
+  float a = 0;
+  float b = 0;
 
   // Loop over spectrum and print to file
   for (std::vector<std::pair<double, double> >::const_iterator it = fSpectrumPoints.begin(); it != fSpectrumPoints.end(); ++it) {
-    f.write((char*) &(it->first), sizeof(double));
-    f.write((char*) &(it->second), sizeof(double));
+    a = (float) it->first;
+    b = (float) it->second;
+    f.write((char*) &a, sizeof(float));
+    f.write((char*) &b, sizeof(float));
   }
 
   // Close file
@@ -427,7 +432,8 @@ void TSpectrumContainer::AverageFromFilesBinary (std::vector<std::string> const&
   }
 
   // Variables used for writing to file
-  double X, V;
+  double X = 0;
+  double V = 0;
 
   // Are we done reading yet
   bool NotDone = true;
@@ -435,15 +441,22 @@ void TSpectrumContainer::AverageFromFilesBinary (std::vector<std::string> const&
   // Keep track of which point we are on
   size_t ip = 0;
 
-    // Loop over all points until done
+  // For reading data
+  float a = 0;
+  float b = 0;
+
+  // Loop over all points until done
   while (NotDone) {
 
     // For each point loop over files and average
     for (size_t i = 0; i != f.size(); ++i) {
 
       // Read data from current file
-      f[i].read( (char*)  &X, sizeof(double));
-      f[i].read( (char*)  &V, sizeof(double));
+      f[i].read( (char*)  &a, sizeof(float));
+      f[i].read( (char*)  &b, sizeof(float));
+
+      X = (double) a;
+      V = (double) b;
 
       // If we hit an eof we are done.
       if (f[i].fail()) {
