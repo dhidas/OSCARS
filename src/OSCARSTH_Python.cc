@@ -113,8 +113,14 @@ static PyObject* OSCARSTH_UndulatorK (OSCARSTHObject* self, PyObject* args, PyOb
   double Period = 0;
 
   // Input variables and parsing
-  static char *kwlist[] = {"bfield", "period", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dd", kwlist, &BFieldMax, &Period)) {
+  static const char *kwlist[] = {"bfield",
+                                 "period",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dd",
+                                   const_cast<char **>(kwlist),
+                                   &BFieldMax,
+                                   &Period)) {
     return NULL;
   }
 
@@ -154,8 +160,14 @@ static PyObject* OSCARSTH_UndulatorBField (OSCARSTHObject* self, PyObject* args,
   double Period = 0;
 
   // Input variables and parsing
-  static char *kwlist[] = {"K", "period", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dd", kwlist, &K, &Period)) {
+  static const char *kwlist[] = {"K",
+                                 "period",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dd",
+                                   const_cast<char **>(kwlist),
+                                   &K,
+                                   &Period)) {
     return NULL;
   }
 
@@ -195,8 +207,14 @@ static PyObject* OSCARSTH_UndulatorPeriod (OSCARSTHObject* self, PyObject* args,
   double K = 0;
 
   // Input variables and parsing
-  static char *kwlist[] = {"bfield", "K", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dd", kwlist, &BFieldMax, &K)) {
+  static const char *kwlist[] = {"bfield",
+                                 "K",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dd",
+                                   const_cast<char **>(kwlist),
+                                   &BFieldMax,
+                                   &K)) {
     return NULL;
   }
 
@@ -271,32 +289,33 @@ static PyObject* OSCARSTH_DipoleSpectrum (OSCARSTHObject* self, PyObject* args, 
   // This approximation assumes that the particle beam is perpendicular to the magnetic field
 
   // Require 2 arguments
-  double    BField               = 0;
-  PyObject* List_EnergyRange_eV  = PyList_New(0);
-  PyObject* List_EnergyPoints_eV = PyList_New(0);
-  double    Energy_eV            = 0;
-  PyObject* List_AngleRange      = PyList_New(0);
-  PyObject* List_AnglePoints     = PyList_New(0);
-  double    Angle                = 0;
-  int       NPoints              = 500;
-  char*     OutFileNameText      = "";
-  char*     OutFileNameBinary    = "";
+  double      BField               = 0;
+  PyObject*   List_EnergyRange_eV  = PyList_New(0);
+  PyObject*   List_EnergyPoints_eV = PyList_New(0);
+  double      Energy_eV            = 0;
+  PyObject*   List_AngleRange      = PyList_New(0);
+  PyObject*   List_AnglePoints     = PyList_New(0);
+  double      Angle                = 0;
+  int         NPoints              = 500;
+  const char* OutFileNameText      = "";
+  const char* OutFileNameBinary    = "";
 
   // Input variable list
-  static char *kwlist[] = {"bfield",
-                           "energy_range_eV",
-                           "energy_points_eV",
-                           "energy_eV",
-                           "angle_range",
-                           "angle_points",
-                           "angle",
-                           "npoints",
-                           "ofile",
-                           "bofile",
-                           NULL};
+  static const char *kwlist[] = {"bfield",
+                                 "energy_range_eV",
+                                 "energy_points_eV",
+                                 "energy_eV",
+                                 "angle_range",
+                                 "angle_points",
+                                 "angle",
+                                 "npoints",
+                                 "ofile",
+                                 "bofile",
+                                 NULL};
 
   // Parse inputs
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|OOdOOdiss", kwlist,
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|OOdOOdiss",
+                                   const_cast<char **>(kwlist),
                                    &BField,
                                    &List_EnergyRange_eV,
                                    &List_EnergyPoints_eV,
@@ -393,11 +412,10 @@ static PyObject* OSCARSTH_DipoleSpectrum (OSCARSTHObject* self, PyObject* args, 
     }
   }
 
-
+  // Write to file if output is requested
   if (std::string(OutFileNameText) != "") {
     SpectrumContainer.WriteToFileText(OutFileNameText);
   }
-
   if (std::string(OutFileNameBinary) != "") {
     SpectrumContainer.WriteToFileBinary(OutFileNameBinary);
   }
@@ -425,8 +443,8 @@ static PyObject* OSCARSTH_DipoleSpectrumPoint (OSCARSTHObject* self, PyObject* a
   //PyObject* List_EnergyRange = PyList_New(0);
 
   // Input variables and parsing
-  static char *kwlist[] = {"bfield", "beam_energy_GeV", "angle", "energy_eV", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dddd", kwlist, &BField, &BeamEnergy, &Angle, &Energy_eV)) {
+  static const char *kwlist[] = {"bfield", "beam_energy_GeV", "angle", "energy_eV", NULL};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dddd", const_cast<char **>(kwlist), &BField, &BeamEnergy, &Angle, &Energy_eV)) {
     return NULL;
   }
 
@@ -483,8 +501,12 @@ static PyObject* OSCARSTH_DipoleCriticalEnergy (OSCARSTHObject* self, PyObject* 
   double BField = 0;
 
   // Input variables and parsing
-  static char *kwlist[] = {"bfield", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d", kwlist, &BField)) {
+  static const char *kwlist[] = {"bfield",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d",
+                                   const_cast<char **>(kwlist),
+                                   &BField)) {
     return NULL;
   }
 
@@ -527,8 +549,12 @@ static PyObject* OSCARSTH_DipoleCriticalWavelength (OSCARSTHObject* self, PyObje
   double BField = 0;
 
   // Input variables and parsing
-  static char *kwlist[] = {"bfield", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d", kwlist, &BField)) {
+  static const char *kwlist[] = {"bfield",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d",
+                                   const_cast<char **>(kwlist),
+                                   &BField)) {
     return NULL;
   }
 
@@ -563,8 +589,8 @@ static PyObject* OSCARSTH_DipoleBrightness (OSCARSTHObject* self, PyObject* args
   //PyObject* List_EnergyRange = PyList_New(0);
 
   // Input variables and parsing
-  static char *kwlist[] = {"bfield", "beam_energy_GeV", "angle", "energy_eV", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|dddd", kwlist, &BField, &BeamEnergy, &Angle, &Energy_eV)) {
+  static const char *kwlist[] = {"bfield", "beam_energy_GeV", "angle", "energy_eV", NULL};
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|dddd", const_cast<char **>(kwlist), &BField, &BeamEnergy, &Angle, &Energy_eV)) {
     return NULL;
   }
 
@@ -601,9 +627,9 @@ static PyObject* OSCARSTH_DipoleBrightness (OSCARSTHObject* self, PyObject* args
 
 
 const char* DOC_OSCARSTH_UndulatorFluxOnAxis = R"docstring(
-undulator_flux_onaxis(period, nperiods, harmonic [, K, bfield])
+undulator_flux_onaxis(period, nperiods, harmonic, [, bfield_range, K_range, npoints, bfield_points, K_points, minimum, ofile, bofile])
 
-Get the on-axis flux for an ideal undulator given K for a specific harmonic.  Should specify either K or bfield, but not both.
+Get the on-axis flux for an ideal undulator given K for a specific harmonic.  Should specify either K or bfield, but not both.  You *must* have previously defined a beam.
 
 Parameters
 ----------
@@ -616,22 +642,40 @@ nperiods : int
 harmonic : int
     Harmonic number of interest
 
-K : float
-    Undulator deflection parameter
+bfield_range : list
+    [min, max] of bfield range of interest
 
-bfield : float
-    Magnetic field of interest [T]
+K_range : list
+    [min, max] of K range of interest
+
+npoints : int
+    number of points to use when bfield_range or K_range is specified
+
+bfield_points : list
+    List of bfield points to calculate flux at
+
+K_points : list
+    List of K points to calculate flux at
+
+minimum : float
+    Any flux below the minimum will not be included in the return list
+
+ofile : str
+    Output file name
+
+bofile : str
+    Binary output file name
 
 Returns
 -------
-[energy_eV, flux] : list[float, float]
+[energy_eV, flux]s : list[[float, float], ...]
     Photon energy [eV] and flux [photons/s/0.1%bw/mrad^2] for the given parameters
 
 Examples
 --------
-Get the photon energy and flux for a undulator with a period of 0.050 [m] having 41 periods and a field of 0.4 [T] from the 1st harmonic
+Get the harmonic peak spectrum for a undulator with a period of 0.050 [m] having 41 periods and a bfield ranging from 0.05 to 0.8 [T] from the 1st harmonic
 
-    >>> oth.undulator_flux_onaxis(period=0.050, nperiods=41, harmonic=1, bfield=0.4)
+    >>> oth.undulator_flux_onaxis(period=0.050, nperiods=41, harmonic=1, bfield_range=[0.05, 0.8], npoints=1000)
 
 Get the photon energy and flux for a undulator with a period of 0.050 [m] having 41 periods and K value of 1.8674577 from the 1st harmonic
 
@@ -639,71 +683,412 @@ Get the photon energy and flux for a undulator with a period of 0.050 [m] having
 )docstring";
 static PyObject* OSCARSTH_UndulatorFluxOnAxis (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {
-  // Return the flux [gamma/s/mrad^2/0.1%bw] at a given K for a given harmonic
+  // Return a list of points corresponding to the flux in a given energy range for a given vertical angle.
+  // This approximation assumes that the particle beam is perpendicular to the magnetic field
 
-  // Require some arguments
-  int    NPeriods = 0;
-  double Period = 0;
-  int    Harmonic = 0;
-  double K = 0;
-  double BField = 0;
+  // Require 2 arguments
+  double       Period            = 0;
+  int          NPeriods          = 0;
+  int          Harmonic          = 0;
+  PyObject*    List_BFieldRange  = PyList_New(0);
+  PyObject*    List_KRange       = PyList_New(0);
+  int          NPoints           = 0;
+  PyObject*    List_BFieldPoints = PyList_New(0);
+  PyObject*    List_KPoints      = PyList_New(0);
+  double       Minimum           = 0;
+  const char*  OutFileNameText   = "";
+  const char*  OutFileNameBinary = "";
 
-  // Input variables and parsing
-  static char *kwlist[] = {"period", "nperiods", "harmonic", "K", "bfield", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dii|dd", kwlist, 
-                                                           &Period,
-                                                           &NPeriods,
-                                                           &Harmonic,
-                                                           &K,
-                                                           &BField
-                                                           )) {
+  // Input variable list
+  static const char *kwlist[] = {"period",
+                                 "nperiods",
+                                 "harmonic",
+                                 "bfield_range",
+                                 "K_range",
+                                 "npoints",
+                                 "bfield_points",
+                                 "K_points",
+                                 "minimum",
+                                 "ofile",
+                                 "bofile",
+                                 NULL};
+
+  // Parse inputs
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dii|OOiOOdss",
+                                   const_cast<char **>(kwlist),
+                                   &Period,
+                                   &NPeriods,
+                                   &Harmonic,
+                                   &List_BFieldRange,
+                                   &List_KRange,
+                                   &NPoints,
+                                   &List_BFieldPoints,
+                                   &List_KPoints,
+                                   &Minimum,
+                                   &OutFileNameText,
+                                   &OutFileNameBinary)) {
     return NULL;
   }
 
-  // Check that bfield is > 0 or K > 0
-  if (BField <= 0 && K <= 0) {
-    PyErr_SetString(PyExc_ValueError, "'bfield' or 'K' must be > 0");
+  // CHeck if beam is ok
+  if (!self->obj->CheckBeam()) {
+    PyErr_SetString(PyExc_ValueError, "particle beam not correctly defined");
     return NULL;
   }
 
-  // Check that bfield and K not both defined
-  if (BField > 0 && K > 0) {
-    PyErr_SetString(PyExc_ValueError, "use 'bfield' or 'K' but not both");
-    return NULL;
-  }
-
-
-  // Check period and nperiods
-  if (Period <= 0 || NPeriods <= 0) {
-    PyErr_SetString(PyExc_ValueError, "'period' and 'nperiods' must be > 0");
-    return NULL;
-  }
-
-  // Check that photon energy is > 0
+  // Check harmonic number is > 0
   if (Harmonic <= 0) {
     PyErr_SetString(PyExc_ValueError, "'harmonic' must be > 0");
     return NULL;
   }
 
-
-  // Calculate the spectrum
-  TVector2D Result;
-
-  if (K > 0) {
-    Result = self->obj->UndulatorFluxOnAxisK(K, Period, NPeriods, Harmonic);
-  } else if (BField > 0) {
-    Result = self->obj->UndulatorFluxOnAxisB(BField, Period, NPeriods, Harmonic);
-  } else {
-    PyErr_SetString(PyExc_ValueError, "not B nor K.  please report this bug");
+  // Check period
+  if (Period <= 0) {
+    PyErr_SetString(PyExc_ValueError, "'period' must be > 0");
     return NULL;
   }
 
-  return OSCARSPY::TVector2DAsList(Result);
+  // Check nperiods
+  if (NPeriods <= 0) {
+    PyErr_SetString(PyExc_ValueError, "'nperiod' must be > 0");
+    return NULL;
+  }
+
+  // Check not overlapping definitions
+  int const SizeSumLists =  PyList_Size(List_BFieldRange)
+                          + PyList_Size(List_KRange)
+                          + PyList_Size(List_BFieldPoints)
+                          + PyList_Size(List_KPoints);
+  if (!(PyList_Size(List_BFieldRange)  == SizeSumLists ||
+        PyList_Size(List_KRange)       == SizeSumLists ||
+        PyList_Size(List_BFieldPoints) == SizeSumLists ||
+        PyList_Size(List_KPoints)      == SizeSumLists)) {
+    PyErr_SetString(PyExc_ValueError, "May only specify one of: 'bfield_range', 'K_range', 'bfield_points', 'K_points'");
+    return NULL;
+  }
+
+  // Container for spectrum
+  TSpectrumContainer SpectrumContainer;
+
+  TVector2D Range;
+  std::vector<double> Points;
+
+  // Init container based on inputs
+  if (PyList_Size(List_BFieldRange) > 0 && NPoints > 1) {
+    try {
+      Range = OSCARSPY::ListAsTVector2D(List_BFieldRange);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'bfield_range'");
+      return NULL;
+    }
+
+    // Add each point
+    for (int i = 0; i < NPoints; ++i) {
+      double BField = Range[0] + (Range[1] - Range[0]) / (double) (NPoints - 1) * (double) i;
+      TVector2D const Result = self->obj->UndulatorFluxOnAxisB(BField, Period, NPeriods, Harmonic);
+      if (Result[1] >= Minimum) {
+        SpectrumContainer.AddPoint(Result[0], Result[1]);
+      }
+    }
+
+  } else if (PyList_Size(List_KRange) > 0 && NPoints > 1) {
+    try {
+      Range = OSCARSPY::ListAsTVector2D(List_KRange);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'K_range'");
+      return NULL;
+    }
+
+    // Add each point
+    for (int i = 0; i < NPoints; ++i) {
+      double K = Range[0] + (Range[1] - Range[0]) / (double) (NPoints - 1) * (double) i;
+      TVector2D const Result = self->obj->UndulatorFluxOnAxisK(K, Period, NPeriods, Harmonic);
+      if (Result[1] >= Minimum) {
+        SpectrumContainer.AddPoint(Result[0], Result[1]);
+      }
+    }
+
+  } else if (PyList_Size(List_BFieldPoints) > 0) {
+    for (int i = 0; i < PyList_Size(List_BFieldPoints); ++i) {
+      Points.push_back(PyFloat_AsDouble(PyList_GetItem(List_BFieldPoints, i)));
+    }
+
+    // Add each point
+    for (size_t i = 0; i < Points.size(); ++i) {
+      TVector2D const Result = self->obj->UndulatorFluxOnAxisB(Points[i], Period, NPeriods, Harmonic);
+      if (Result[1] >= Minimum) {
+        SpectrumContainer.AddPoint(Result[0], Result[1]);
+      }
+    }
+
+  } else if (PyList_Size(List_KPoints) > 0) {
+    for (int i = 0; i < PyList_Size(List_KPoints); ++i) {
+      Points.push_back(PyFloat_AsDouble(PyList_GetItem(List_KPoints, i)));
+    }
+
+    // Add each point
+    for (size_t i = 0; i < Points.size(); ++i) {
+      TVector2D const Result = self->obj->UndulatorFluxOnAxisK(Points[i], Period, NPeriods, Harmonic);
+      if (Result[1] >= Minimum) {
+        SpectrumContainer.AddPoint(Result[0], Result[1]);
+      }
+    }
+
+  } else {
+    PyErr_SetString(PyExc_ValueError, "Incorrect input format in input, possibly check that npoints > 1?");
+    return NULL;
+  }
+
+  // Don't need to hold on to this any longer
+  Points.clear();
+
+  // Write to file if output is requested
+  if (std::string(OutFileNameText) != "") {
+    SpectrumContainer.WriteToFileText(OutFileNameText);
+  }
+  if (std::string(OutFileNameBinary) != "") {
+    SpectrumContainer.WriteToFileBinary(OutFileNameBinary);
+  }
+
+  // Return the spectrum
+  return OSCARSPY::GetSpectrumAsList(SpectrumContainer);
 }
 
 
 
 
+
+const char* DOC_OSCARSTH_UndulatorBrightness2 = R"docstring(
+undulator_brightness(period, nperiods, harmonic, [, bfield_range, K_range, npoints, bfield_points, K_points, minimum, ofile, bofile])
+
+Get the brightness for an ideal undulator given K for a specific harmonic.  Should specify either K or bfield, but not both.  You must have previously defined a beam, including the beta and emittance values.
+
+Parameters
+----------
+period : float
+    Undulator period length [m]
+
+nperiods : int
+    Number of periods
+
+harmonic : int
+    Harmonic number of interest
+
+bfield_range : list
+    [min, max] of bfield range of interest
+
+K_range : list
+    [min, max] of K range of interest
+
+npoints : int
+    number of points to use when bfield_range or K_range is specified
+
+bfield_points : list
+    List of bfield points to calculate brightness at
+
+K_points : list
+    List of K points to calculate brightness at
+
+minimum : float
+    Any brightness below the minimum will not be included in the return list
+
+ofile : str
+    Output file name
+
+bofile : str
+    Binary output file name
+
+Returns
+-------
+[energy_eV, brightness]s : list[[float, float], ...]
+    Photon energy [eV] and brightness [photons/s/0.1%bw/mrad^2/mm] for the given parameters
+
+Examples
+--------
+Get the harmonic peak spectrum for a undulator with a period of 0.050 [m] having 41 periods and a bfield ranging from 0.05 to 0.8 [T] from the 1st harmonic
+
+    >>> oth.undulator_flux_onaxis(period=0.050, nperiods=41, harmonic=1, bfield_range=[0.05, 0.8], npoints=1000)
+
+Get the photon energy and flux for a undulator with a period of 0.050 [m] having 41 periods and K value of 1.8674577 from the 1st harmonic
+
+    >>> oth.undulator_flux_onaxis(period=0.050, nperiods=41, harmonic=1, K=1.8674577)
+)docstring";
+static PyObject* OSCARSTH_UndulatorBrightness2 (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
+{
+  // Return a list of points corresponding to the brightness.
+
+  // Require 2 arguments
+  double      Period            = 0;
+  int         NPeriods          = 0;
+  int         Harmonic          = 0;
+  PyObject*   List_BFieldRange  = PyList_New(0);
+  PyObject*   List_KRange       = PyList_New(0);
+  int         NPoints           = 0;
+  PyObject*   List_BFieldPoints = PyList_New(0);
+  PyObject*   List_KPoints      = PyList_New(0);
+  double      Minimum           = 0;
+  const char* OutFileNameText   = "";
+  const char* OutFileNameBinary = "";
+
+  // Input variable list
+  static const char *kwlist[] = {"period",
+                                 "nperiods",
+                                 "harmonic",
+                                 "bfield_range",
+                                 "K_range",
+                                 "npoints",
+                                 "bfield_points",
+                                 "K_points",
+                                 "minimum",
+                                 "ofile",
+                                 "bofile",
+                                 NULL};
+
+  // Parse inputs
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dii|OOiOOdss",
+                                   const_cast<char **>(kwlist),
+                                   &Period,
+                                   &NPeriods,
+                                   &Harmonic,
+                                   &List_BFieldRange,
+                                   &List_KRange,
+                                   &NPoints,
+                                   &List_BFieldPoints,
+                                   &List_KPoints,
+                                   &Minimum,
+                                   &OutFileNameText,
+                                   &OutFileNameBinary)) {
+    return NULL;
+  }
+
+  // CHeck if beam is ok
+  if (!self->obj->CheckBeam()) {
+    PyErr_SetString(PyExc_ValueError, "particle beam not correctly defined");
+    return NULL;
+  }
+
+  // Check harmonic number is > 0
+  if (Harmonic <= 0) {
+    PyErr_SetString(PyExc_ValueError, "'harmonic' must be > 0");
+    return NULL;
+  }
+
+  // Check period
+  if (Period <= 0) {
+    PyErr_SetString(PyExc_ValueError, "'period' must be > 0");
+    return NULL;
+  }
+
+  // Check nperiods
+  if (NPeriods <= 0) {
+    PyErr_SetString(PyExc_ValueError, "'nperiod' must be > 0");
+    return NULL;
+  }
+
+  // Check not overlapping definitions
+  int const SizeSumLists =  PyList_Size(List_BFieldRange)
+                          + PyList_Size(List_KRange)
+                          + PyList_Size(List_BFieldPoints)
+                          + PyList_Size(List_KPoints);
+  if (!(PyList_Size(List_BFieldRange)  == SizeSumLists ||
+        PyList_Size(List_KRange)       == SizeSumLists ||
+        PyList_Size(List_BFieldPoints) == SizeSumLists ||
+        PyList_Size(List_KPoints)      == SizeSumLists)) {
+    PyErr_SetString(PyExc_ValueError, "May only specify one of: 'bfield_range', 'K_range', 'bfield_points', 'K_points'");
+    return NULL;
+  }
+
+  // Container for spectrum
+  TSpectrumContainer SpectrumContainer;
+
+  TVector2D Range;
+  std::vector<double> Points;
+
+  // Init container based on inputs
+  try {
+    if (PyList_Size(List_BFieldRange) > 0 && NPoints > 1) {
+      try {
+        Range = OSCARSPY::ListAsTVector2D(List_BFieldRange);
+      } catch (std::length_error e) {
+        PyErr_SetString(PyExc_ValueError, "Incorrect format in 'bfield_range'");
+        return NULL;
+      }
+
+      // Add each point
+      for (int i = 0; i < NPoints; ++i) {
+        double BField = Range[0] + (Range[1] - Range[0]) / (double) (NPoints - 1) * (double) i;
+        TVector2D const Result = self->obj->UndulatorBrightnessB(BField, Period, NPeriods, Harmonic);
+        if (Result[1] >= Minimum) {
+          SpectrumContainer.AddPoint(Result[0], Result[1]);
+        }
+      }
+
+    } else if (PyList_Size(List_KRange) > 0 && NPoints > 1) {
+      try {
+        Range = OSCARSPY::ListAsTVector2D(List_KRange);
+      } catch (std::length_error e) {
+        PyErr_SetString(PyExc_ValueError, "Incorrect format in 'K_range'");
+        return NULL;
+      }
+
+      // Add each point
+      for (int i = 0; i < NPoints; ++i) {
+        double K = Range[0] + (Range[1] - Range[0]) / (double) (NPoints - 1) * (double) i;
+        TVector2D const Result = self->obj->UndulatorBrightnessK(K, Period, NPeriods, Harmonic);
+        if (Result[1] >= Minimum) {
+          SpectrumContainer.AddPoint(Result[0], Result[1]);
+        }
+      }
+
+    } else if (PyList_Size(List_BFieldPoints) > 0) {
+      for (int i = 0; i < PyList_Size(List_BFieldPoints); ++i) {
+        Points.push_back(PyFloat_AsDouble(PyList_GetItem(List_BFieldPoints, i)));
+      }
+
+      // Add each point
+      for (size_t i = 0; i < Points.size(); ++i) {
+        TVector2D const Result = self->obj->UndulatorBrightnessB(Points[i], Period, NPeriods, Harmonic);
+        if (Result[1] >= Minimum) {
+          SpectrumContainer.AddPoint(Result[0], Result[1]);
+        }
+      }
+
+    } else if (PyList_Size(List_KPoints) > 0) {
+      for (int i = 0; i < PyList_Size(List_KPoints); ++i) {
+        Points.push_back(PyFloat_AsDouble(PyList_GetItem(List_KPoints, i)));
+      }
+
+      // Add each point
+      for (size_t i = 0; i < Points.size(); ++i) {
+        TVector2D const Result = self->obj->UndulatorBrightnessK(Points[i], Period, NPeriods, Harmonic);
+        if (Result[1] >= Minimum) {
+          SpectrumContainer.AddPoint(Result[0], Result[1]);
+        }
+      }
+
+    } else {
+      PyErr_SetString(PyExc_ValueError, "Incorrect input format in input, possibly check that npoints > 1?");
+      return NULL;
+    }
+  } catch (std::invalid_argument e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
+  }
+
+  // Don't need to hold on to this any longer
+  Points.clear();
+
+  // Write to file if output is requested
+  if (std::string(OutFileNameText) != "") {
+    SpectrumContainer.WriteToFileText(OutFileNameText);
+  }
+  if (std::string(OutFileNameBinary) != "") {
+    SpectrumContainer.WriteToFileBinary(OutFileNameBinary);
+  }
+
+  // Return the spectrum
+  return OSCARSPY::GetSpectrumAsList(SpectrumContainer);
+}
 
 
 
@@ -758,14 +1143,21 @@ static PyObject* OSCARSTH_UndulatorBrightness (OSCARSTHObject* self, PyObject* a
   double BField   = 0;
 
   // Input variables and parsing
-  static char *kwlist[] = {"period", "nperiods", "harmonic", "K", "bfield", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dii|dd", kwlist, 
-                                                         &Period,
-                                                         &NPeriods,
-                                                         &Harmonic,
-                                                         &K,
-                                                         &BField
-                                                         )) {
+  static const char *kwlist[] = {"period",
+                                 "nperiods",
+                                 "harmonic",
+                                 "K",
+                                 "bfield",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dii|dd",
+                                   const_cast<char **>(kwlist),
+                                   &Period,
+                                   &NPeriods,
+                                   &Harmonic,
+                                   &K,
+                                   &BField
+                                   )) {
     return NULL;
   }
 
@@ -862,13 +1254,19 @@ static PyObject* OSCARSTH_UndulatorEnergyHarmonic (OSCARSTHObject* self, PyObjec
   double BField = 0;
 
   // Input variables and parsing
-  static char *kwlist[] = {"period", "harmonic", "K", "bfield", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "di|dd", kwlist, 
-                                                           &Period,
-                                                           &Harmonic,
-                                                           &K,
-                                                           &BField
-                                                           )) {
+  static const char *kwlist[] = {"period",
+                                 "harmonic",
+                                 "K",
+                                 "bfield",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "di|dd",
+                                   const_cast<char **>(kwlist),
+                                   &Period,
+                                   &Harmonic,
+                                   &K,
+                                   &BField
+                                   )) {
     return NULL;
   }
 
@@ -973,8 +1371,14 @@ static PyObject* OSCARSTH_BesselJ (OSCARSTHObject* self, PyObject* args, PyObjec
   double X  = 0;
 
   // Input variables and parsing
-  static char *kwlist[] = {"nu", "x", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "id", kwlist, &Nu, &X)) {
+  static const char *kwlist[] = {"nu",
+                                 "x",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "id",
+                                   const_cast<char **>(kwlist),
+                                   &Nu,
+                                   &X)) {
     return NULL;
   }
 
@@ -1017,8 +1421,14 @@ static PyObject* OSCARSTH_BesselK (OSCARSTHObject* self, PyObject* args, PyObjec
   double X = 0;
 
   // Input variables and parsing
-  static char *kwlist[] = {"nu", "x", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dd", kwlist, &Nu, &X)) {
+  static const char *kwlist[] = {"nu",
+                                 "x",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dd",
+                                   const_cast<char **>(kwlist),
+                                   &Nu,
+                                   &X)) {
     return NULL;
   }
 
@@ -1130,28 +1540,29 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
 
 
   // Input variables
-  static char *kwlist[] = {"type",
-                           "name",
-                           "energy_GeV",
-                           "d0",
-                           "x0",
-                           "beam",
-                           "sigma_energy_GeV",
-                           "t0",
-                           "current",
-                           "weight",
-                           "rotations",
-                           "translation",
-                           "horizontal_direction",
-                           "beta",
-                           "emittance",
-                           "lattice_reference",
-                           "mass",
-                           "charge",
-                           NULL};
+  static const char *kwlist[] = {"type",
+                                 "name",
+                                 "energy_GeV",
+                                 "d0",
+                                 "x0",
+                                 "beam",
+                                 "sigma_energy_GeV",
+                                 "t0",
+                                 "current",
+                                 "weight",
+                                 "rotations",
+                                 "translation",
+                                 "horizontal_direction",
+                                 "beta",
+                                 "emittance",
+                                 "lattice_reference",
+                                 "mass",
+                                 "charge",
+                                 NULL};
 
   // Parse inputs
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ssdOOsddddOOOOOOdd", kwlist,
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ssdOOsddddOOOOOOdd",
+                                   const_cast<char **>(kwlist),
                                    &Type,
                                    &Name,
                                    &Energy_GeV,
@@ -1347,7 +1758,7 @@ static PyMethodDef OSCARSTH_methods[] = {
   //{"dipole_brightness",                          (PyCFunction) OSCARSTH_DipoleBrightness,                        METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleBrightness},
 
   {"undulator_flux_onaxis",                      (PyCFunction) OSCARSTH_UndulatorFluxOnAxis,                     METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorFluxOnAxis},
-  {"undulator_brightness",                       (PyCFunction) OSCARSTH_UndulatorBrightness,                     METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorBrightness},
+  {"undulator_brightness",                       (PyCFunction) OSCARSTH_UndulatorBrightness2,                     METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorBrightness2},
   {"undulator_energy_harmonic",                  (PyCFunction) OSCARSTH_UndulatorEnergyHarmonic,                 METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorEnergyHarmonic},
 
   {"bessel_j",                                   (PyCFunction) OSCARSTH_BesselJ,                                 METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_BesselJ},
