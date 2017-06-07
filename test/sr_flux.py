@@ -32,7 +32,7 @@ osr.set_particle_beam(type='electron',
 osr.set_ctstartstop(0, 2)
 
 # Print info
-osr.print()
+osr.print_all()
 
 
 # Calculate spectrum zoom
@@ -43,17 +43,17 @@ flux = osr.calculate_flux_rectangle(plane='XY',
                                     translation=[0, 0, 30],
                                     ofile='sr_flux.txt',
                                     bofile='sr_flux.dat')
-plot_flux(flux, ofile='sr_flux.png')
+plot_flux(flux, ofile='sr_flux.png', title='Flux: Calculated')
 
 
 
 # Create a new OSCARS object
 osr = oscars.sr.sr()
 flux = osr.average_flux(ifiles=['sr_flux.txt'])
-plot_flux(flux)
+plot_flux(flux, title='Flux: From text input')
 
 
 # Create a new OSCARS object
 osr = oscars.sr.sr()
 flux = osr.average_flux(bifiles=['sr_flux.dat'])
-plot_flux(flux)
+plot_flux(flux, title='Flux: From binary input')

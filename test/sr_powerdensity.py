@@ -32,7 +32,7 @@ osr.set_particle_beam(type='electron',
 osr.set_ctstartstop(0, 2)
 
 # Print info
-osr.print()
+osr.print_all()
 
 
 # Calculate power density
@@ -44,17 +44,17 @@ power_density = osr.calculate_power_density_rectangle(plane='XY',
                                                       bofile='sr_powerdensity.dat')
 
 # Plot power density
-plot_power_density(power_density, ofile='sr_powerdensity.png')
+plot_power_density(power_density, ofile='sr_powerdensity.png', title='Power Density: Calculated')
 
 
 
 # Get new sr object
 osr = oscars.sr.sr()
 power_density = osr.average_power_density(ifiles=['sr_powerdensity.txt'])
-plot_power_density(power_density)
+plot_power_density(power_density, title='Power Density: From text input')
 
 # Get new sr object
 osr = oscars.sr.sr()
 power_density = osr.average_power_density(bifiles=['sr_powerdensity.dat'])
-plot_power_density(power_density)
+plot_power_density(power_density, title='Power Density: From binary input')
 

@@ -30,7 +30,7 @@ osr.set_particle_beam(type='electron',
 osr.set_ctstartstop(0, 2)
 
 # Print settings
-osr.print()
+osr.print_all()
 
 
 # Calculate spectrum
@@ -41,18 +41,18 @@ spectrum = osr.calculate_spectrum(obs=[0, 0, 30],
                                   bofile='sr_spectrum.dat')
 
 # Plot spectrum
-plot_spectrum(spectrum, ofile='sr_spectrum.png')
+plot_spectrum(spectrum, ofile='sr_spectrum.png', title='Spectrum: Calculated')
 
 
 
 # Get new sr object, plot txt output
 osr = oscars.sr.sr()
 spectrum = osr.average_spectra(ifiles=['sr_spectrum.txt'])
-plot_spectrum(spectrum)
+plot_spectrum(spectrum, title='Spectrum: From text input')
 
 
 
 # Get new sr object, plot binary output
 osr = oscars.sr.sr()
 spectrum = osr.average_spectra(bifiles=['sr_spectrum.dat'])
-plot_spectrum(spectrum)
+plot_spectrum(spectrum, title='Spectrum: From binary input')
