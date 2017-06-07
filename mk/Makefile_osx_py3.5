@@ -13,10 +13,12 @@ EXEOBJS  = $(patsubst exe/%.cc,lib/%.o,$(wildcard exe/*.cc))
 
 OBJSSR = lib/OSCARSSR.o \
          lib/OSCARSSR_Python.o \
+				 lib/OSCARSPY.o \
          lib/T3DScalarContainer.o \
          lib/TField3D_Gaussian.o \
          lib/TField3D_Grid.o \
          lib/TField3D_IdealUndulator.o \
+				 lib/TField3D_Quadrupole.o \
          lib/TField3D_UniformBox.o \
          lib/TFieldContainer.o \
          lib/TFieldPythonFunction.o \
@@ -38,6 +40,7 @@ OBJSSR = lib/OSCARSSR.o \
 
 OBJSTH = lib/OSCARSTH.o \
          lib/OSCARSTH_Python.o \
+				 lib/OSCARSPY.o \
          lib/TOMATH.o \
          lib/TParticleA.o \
          lib/TParticleBeamContainer.o \
