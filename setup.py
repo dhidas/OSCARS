@@ -34,7 +34,7 @@ moduleOSCARSSR = Extension('oscars.sr',
                                  'src/TField3D_Quadrupole.cc',
                                  'src/TOMATH.cc',
                                  'src/OSCARSPY.cc'],
-                      extra_compile_args=['-std=c++11', '-Wno-write-strings', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread'],
+                      extra_compile_args=['-std=c++11', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread'],
                      )
 
 
@@ -66,7 +66,7 @@ moduleOSCARSTH = Extension('oscars.th',
                                  'src/TField3D_Quadrupole.cc',
                                  'src/TOMATH.cc',
                                  'src/OSCARSPY.cc'],
-                      extra_compile_args=['-std=c++11', '-Wno-write-strings', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread'],
+                      extra_compile_args=['-std=c++11', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread'],
                      )
 
 
