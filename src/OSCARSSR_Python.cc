@@ -556,14 +556,22 @@ static PyObject* OSCARSSR_AddMagneticField (OSCARSSRObject* self, PyObject* args
 
 
   // Input variables and parsing
-  static char *kwlist[] = {"ifile", "bifile", "iformat", "rotations", "translation", "scale", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sssOOO", kwlist,
-                                                           &FileNameText,
-                                                           &FileNameBinary,
-                                                           &FileFormat,
-                                                           &List_Rotations,
-                                                           &List_Translation,
-                                                           &List_Scaling)) {
+  static const char *kwlist[] = {"ifile",
+                                 "bifile",
+                                 "iformat",
+                                 "rotations",
+                                 "translation",
+                                 "scale",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sssOOO",
+                                   const_cast<char **>(kwlist),
+                                   &FileNameText,
+                                   &FileNameBinary,
+                                   &FileFormat,
+                                   &List_Rotations,
+                                   &List_Translation,
+                                   &List_Scaling)) {
     return NULL;
   }
 
@@ -690,14 +698,22 @@ static PyObject* OSCARSSR_AddMagneticFieldInterpolated (OSCARSSRObject* self, Py
   std::vector<std::pair<double, std::string> > Mapping;
 
   // Input variables and parsing
-  static char *kwlist[] = {"mapping", "iformat", "parameter", "rotations", "translation", "scale", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "Osd|OOO", kwlist,
-                                                            &List_Mapping,
-                                                            &FileFormat,
-                                                            &Parameter,
-                                                            &List_Rotations,
-                                                            &List_Translation,
-                                                            &List_Scaling)) {
+  static const char *kwlist[] = {"mapping",
+                                 "iformat",
+                                 "parameter",
+                                 "rotations",
+                                 "translation",
+                                 "scale",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "Osd|OOO",
+                                   const_cast<char **>(kwlist),
+                                   &List_Mapping,
+                                   &FileFormat,
+                                   &Parameter,
+                                   &List_Rotations,
+                                   &List_Translation,
+                                   &List_Scaling)) {
     return NULL;
   }
 
@@ -887,12 +903,18 @@ static PyObject* OSCARSSR_AddMagneticFieldGaussian (OSCARSSRObject* self, PyObje
 
 
   // Input variables and parsing
-  static char *kwlist[] = {"bfield", "sigma", "rotations", "translation", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OO|OO", kwlist,
-                                                          &List_BField,
-                                                          &List_Sigma,
-                                                          &List_Rotations,
-                                                          &List_Translation)) {
+  static const char *kwlist[] = {"bfield",
+                                 "sigma",
+                                 "rotations",
+                                 "translation",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OO|OO",
+                                   const_cast<char **>(kwlist),
+                                   &List_BField,
+                                   &List_Sigma,
+                                   &List_Rotations,
+                                   &List_Translation)) {
     return NULL;
   }
 
@@ -1002,12 +1024,18 @@ static PyObject* OSCARSSR_AddMagneticFieldUniform (OSCARSSRObject* self, PyObjec
 
 
   // Input variables and parsing
-  static char *kwlist[] = {"bfield", "width", "rotations", "translation", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOO", kwlist,
-                                                          &List_BField,
-                                                          &List_Width,
-                                                          &List_Rotations,
-                                                          &List_Translation)) {
+  static const char *kwlist[] = {"bfield",
+                                 "width",
+                                 "rotations",
+                                 "translation",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOO",
+                                   const_cast<char **>(kwlist),
+                                   &List_BField,
+                                   &List_Width,
+                                   &List_Rotations,
+                                   &List_Translation)) {
     return NULL;
   }
 
@@ -1118,16 +1146,25 @@ static PyObject* OSCARSSR_AddMagneticFieldIdealUndulator (OSCARSSRObject* self, 
   TVector3D Translation(0, 0, 0);
 
   // Input variables and parsing
-  static char *kwlist[] = {"bfield", "period", "nperiods", "phase", "rotations", "translation", "taper", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOi|dOOd", kwlist,
-                                                             &List_Field,
-                                                             &List_Period,
-                                                             &NPeriods,
-                                                             &Phase,
-                                                             &List_Rotations,
-                                                             &List_Translation,
-                                                             &Taper
-                                                             )) {
+  static const char *kwlist[] = {"bfield",
+                                 "period",
+                                 "nperiods",
+                                 "phase",
+                                 "rotations",
+                                 "translation",
+                                 "taper",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOi|dOOd",
+                                   const_cast<char **>(kwlist),
+                                   &List_Field,
+                                   &List_Period,
+                                   &NPeriods,
+                                   &Phase,
+                                   &List_Rotations,
+                                   &List_Translation,
+                                   &Taper
+                                   )) {
     return NULL;
   }
 
@@ -1237,13 +1274,19 @@ static PyObject* OSCARSSR_AddMagneticFieldQuadrupole (OSCARSSRObject* self, PyOb
   TVector3D Translation(0, 0, 0);
 
   // Input variables and parsing
-  static char *kwlist[] = {"K", "width", "rotations", "translation", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dd|OO", kwlist,
-                                                          &K,
-                                                          &Width,
-                                                          &List_Rotations,
-                                                          &List_Translation
-                                                          )) {
+  static const char *kwlist[] = {"K",
+                                 "width",
+                                 "rotations",
+                                 "translation",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dd|OO",
+                                   const_cast<char **>(kwlist),
+                                   &K,
+                                   &Width,
+                                   &List_Rotations,
+                                   &List_Translation
+                                   )) {
     return NULL;
   }
 
@@ -1305,8 +1348,12 @@ static PyObject* OSCARSSR_GetBField (OSCARSSRObject* self, PyObject* args, PyObj
   // Python list object
   PyObject * List = PyList_New(0);;
 
-  static char *kwlist[] = {"x", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O", kwlist, &List)) {
+  static const char *kwlist[] = {"x",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
+                                   const_cast<char **>(kwlist),
+                                   &List)) {
     return NULL;
   }
 
@@ -1468,13 +1515,20 @@ static PyObject* OSCARSSR_AddElectricField (OSCARSSRObject* self, PyObject* args
 
 
   // Input variables and parsing
-  static char *kwlist[] = {"ifile", "iformat", "rotations", "translation", "scale", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ss|OOO", kwlist,
-                                                           &FileName,
-                                                           &FileFormat,
-                                                           &List_Rotations,
-                                                           &List_Translation,
-                                                           &List_Scaling)) {
+  static const char *kwlist[] = {"ifile",
+                                 "iformat",
+                                 "rotations",
+                                 "translation",
+                                 "scale",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ss|OOO",
+                                   const_cast<char **>(kwlist),
+                                   &FileName,
+                                   &FileFormat,
+                                   &List_Rotations,
+                                   &List_Translation,
+                                   &List_Scaling)) {
     return NULL;
   }
 
@@ -1584,14 +1638,22 @@ static PyObject* OSCARSSR_AddElectricFieldInterpolated (OSCARSSRObject* self, Py
   std::vector<std::pair<double, std::string> > Mapping;
 
   // Input variables and parsing
-  static char *kwlist[] = {"mapping", "iformat", "parameter", "rotations", "translation", "scale", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "Osd|OOO", kwlist,
-                                                            &List_Mapping,
-                                                            &FileFormat,
-                                                            &Parameter,
-                                                            &List_Rotations,
-                                                            &List_Translation,
-                                                            &List_Scaling)) {
+  static const char *kwlist[] = {"mapping",
+                                 "iformat",
+                                 "parameter",
+                                 "rotations",
+                                 "translation",
+                                 "scale",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "Osd|OOO",
+                                   const_cast<char **>(kwlist),
+                                   &List_Mapping,
+                                   &FileFormat,
+                                   &Parameter,
+                                   &List_Rotations,
+                                   &List_Translation,
+                                   &List_Scaling)) {
     return NULL;
   }
 
@@ -1780,12 +1842,18 @@ static PyObject* OSCARSSR_AddElectricFieldGaussian (OSCARSSRObject* self, PyObje
 
 
   // Input variables and parsing
-  static char *kwlist[] = {"efield", "sigma", "rotations", "translation", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OO|OO", kwlist,
-                                                          &List_Field,
-                                                          &List_Sigma,
-                                                          &List_Rotations,
-                                                          &List_Translation)) {
+  static const char *kwlist[] = {"efield",
+                                 "sigma",
+                                 "rotations",
+                                 "translation",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OO|OO",
+                                   const_cast<char **>(kwlist),
+                                   &List_Field,
+                                   &List_Sigma,
+                                   &List_Rotations,
+                                   &List_Translation)) {
     return NULL;
   }
 
@@ -1895,12 +1963,18 @@ static PyObject* OSCARSSR_AddElectricFieldUniform (OSCARSSRObject* self, PyObjec
 
 
   // Input variables and parsing
-  static char *kwlist[] = {"efield", "width", "rotations", "translation", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOO", kwlist,
-                                                          &List_Field,
-                                                          &List_Width,
-                                                          &List_Rotations,
-                                                          &List_Translation)) {
+  static const char *kwlist[] = {"efield",
+                                 "width",
+                                 "rotations",
+                                 "translation",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOO",
+                                   const_cast<char **>(kwlist),
+                                   &List_Field,
+                                   &List_Width,
+                                   &List_Rotations,
+                                   &List_Translation)) {
     return NULL;
   }
 
@@ -2016,14 +2090,22 @@ static PyObject* OSCARSSR_AddElectricFieldIdealUndulator (OSCARSSRObject* self, 
   TVector3D Translation(0, 0, 0);
 
   // Input variables and parsing
-  static char *kwlist[] = {"efield", "period", "nperiods", "phase", "rotations", "translation", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOi|dOO", kwlist,
-                                                            &List_Field,
-                                                            &List_Period,
-                                                            &NPeriods,
-                                                            &Phase,
-                                                            &List_Rotations,
-                                                            &List_Translation)) {
+  static const char *kwlist[] = {"efield",
+                                 "period",
+                                 "nperiods",
+                                 "phase",
+                                 "rotations",
+                                 "translation",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOi|dOO",
+                                   const_cast<char **>(kwlist),
+                                   &List_Field,
+                                   &List_Period,
+                                   &NPeriods,
+                                   &Phase,
+                                   &List_Rotations,
+                                   &List_Translation)) {
     return NULL;
   }
 
@@ -2107,8 +2189,12 @@ static PyObject* OSCARSSR_GetEField (OSCARSSRObject* self, PyObject* args, PyObj
   // Python list object
   PyObject * List;
 
-  static char *kwlist[] = {"x", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O", kwlist, &List)) {
+  static const char *kwlist[] = {"x",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
+                                   const_cast<char **>(kwlist),
+                                   &List)) {
     return NULL;
   }
 
@@ -2278,8 +2364,21 @@ static PyObject* OSCARSSR_WriteMagneticField (OSCARSSRObject* self, PyObject* ar
 
 
   // Input variables and parsing
-  static char *kwlist[] = {"oformat", "ofile", "bofile", "xlim", "nx", "ylim", "ny", "zlim", "nz", "comment", "version", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|ssOiOiOis", kwlist,
+  static const char *kwlist[] = {"oformat",
+                                 "ofile",
+                                 "bofile",
+                                 "xlim",
+                                 "nx",
+                                 "ylim",
+                                 "ny",
+                                 "zlim",
+                                 "nz",
+                                 "comment",
+                                 "version",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|ssOiOiOis",
+                                   const_cast<char **>(kwlist),
                                    &OutFormat,
                                    &OutFileName,
                                    &OutFileNameBinary,
@@ -2432,8 +2531,21 @@ static PyObject* OSCARSSR_WriteElectricField (OSCARSSRObject* self, PyObject* ar
 
 
   // Input variables and parsing
-  static char *kwlist[] = {"oformat", "ofile", "bofile", "xlim", "nx", "ylim", "ny", "zlim", "nz", "comment", "version", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|ssOiOiOis", kwlist,
+  static const char *kwlist[] = {"oformat",
+                                 "ofile",
+                                 "bofile",
+                                 "xlim",
+                                 "nx",
+                                 "ylim",
+                                 "ny",
+                                 "zlim",
+                                 "nz",
+                                 "comment",
+                                 "version",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|ssOiOiOis",
+                                   const_cast<char **>(kwlist),
                                    &OutFormat,
                                    &OutFileName,
                                    &OutFileNameBinary,
@@ -2724,26 +2836,46 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
 
 
   // Input variables and parsing
-  static char *kwlist[] = {"type", "name", "energy_GeV", "d0", "x0", "beam", "sigma_energy_GeV", "t0", "current", "weight", "rotations", "translation", "horizontal_direction", "beta", "emittance", "lattice_reference", "mass", "charge", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ssdOOsddddOOOOOOdd", kwlist,
-                                                                        &Type,
-                                                                        &Name,
-                                                                        &Energy_GeV,
-                                                                        &List_Direction,
-                                                                        &List_Position,
-                                                                        &Beam,
-                                                                        &Sigma_Energy_GeV,
-                                                                        &T0,
-                                                                        &Current,
-                                                                        &Weight,
-                                                                        &List_Rotations,
-                                                                        &List_Translation,
-                                                                        &List_Horizontal_Direction,
-                                                                        &List_Beta,
-                                                                        &List_Emittance,
-                                                                        &List_Lattice_Reference,
-                                                                        &Mass,
-                                                                        &Charge)) {
+  static const char *kwlist[] = {"type",
+                                 "name",
+                                 "energy_GeV",
+                                 "d0",
+                                 "x0",
+                                 "beam",
+                                 "sigma_energy_GeV",
+                                 "t0",
+                                 "current",
+                                 "weight",
+                                 "rotations",
+                                 "translation",
+                                 "horizontal_direction",
+                                 "beta",
+                                 "emittance",
+                                 "lattice_reference",
+                                 "mass",
+                                 "charge",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ssdOOsddddOOOOOOdd",
+                                   const_cast<char **>(kwlist),
+                                   &Type,
+                                   &Name,
+                                   &Energy_GeV,
+                                   &List_Direction,
+                                   &List_Position,
+                                   &Beam,
+                                   &Sigma_Energy_GeV,
+                                   &T0,
+                                   &Current,
+                                   &Weight,
+                                   &List_Rotations,
+                                   &List_Translation,
+                                   &List_Horizontal_Direction,
+                                   &List_Beta,
+                                   &List_Emittance,
+                                   &List_Lattice_Reference,
+                                   &Mass,
+                                   &Charge)) {
     return NULL;
   }
 
@@ -3048,8 +3180,14 @@ static PyObject* OSCARSSR_SetNewParticle (OSCARSSRObject* self, PyObject* args, 
   char const* Beam_IN = "";
   char const* Particle_IN = "";
 
-  static char *kwlist[] = {"beam", "particle", NULL};
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ss", kwlist, &Beam_IN, &Particle_IN)) {
+  static const char *kwlist[] = {"beam",
+                                 "particle",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ss",
+                                   const_cast<char **>(kwlist),
+                                   &Beam_IN,
+                                   &Particle_IN)) {
     return NULL;
   }
 
@@ -3344,28 +3482,29 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
   int         NParticles                = 0;
   int         NThreads                  = 0;
   int         GPU                       = -1;
-  char*       OutFileNameText           = "";
-  char*       OutFileNameBinary         = "";
+  const char* OutFileNameText           = "";
+  const char* OutFileNameBinary         = "";
 
   // Input variable list
-  static char *kwlist[] = {"obs",
-                           "npoints",
-                           "energy_range_eV",
-                           "energy_points_eV",
-                           "points_eV", // UPDATE: REMOVE in v2
-                           "polarization",
-                           "angle",
-                           "horizontal_direction",
-                           "propogation_direction",
-                           "nparticles",
-                           "nthreads",
-                           "gpu",
-                           "ofile",
-                           "bofile",
-                           NULL};
+  static const char *kwlist[] = {"obs",
+                                 "npoints",
+                                 "energy_range_eV",
+                                 "energy_points_eV",
+                                 "points_eV", // UPDATE: REMOVE in v2
+                                 "polarization",
+                                 "angle",
+                                 "horizontal_direction",
+                                 "propogation_direction",
+                                 "nparticles",
+                                 "nthreads",
+                                 "gpu",
+                                 "ofile",
+                                 "bofile",
+                                 NULL};
 
   // Parse inputs
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|iOOOsdOOiiiss", kwlist,
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|iOOOsdOOiiiss",
+                                   const_cast<char **>(kwlist),
                                    &List_Obs,
                                    &NPoints,
                                    &List_EnergyRange_eV,
@@ -3630,17 +3769,26 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
   char const* OutFileName = "";
 
 
-  static char *kwlist[] = {"points", "normal", "rotations", "translation", "nparticles", "gpu", "nthreads", "ofile", NULL};
+  static const char *kwlist[] = {"points",
+                                 "normal",
+                                 "rotations",
+                                 "translation",
+                                 "nparticles",
+                                 "gpu",
+                                 "nthreads",
+                                 "ofile",
+                                 NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|iOOiiis", kwlist,
-                                                              &List_Points,
-                                                              &NormalDirection,
-                                                              &List_Rotations,
-                                                              &List_Translation,
-                                                              &NParticles,
-                                                              &GPU,
-                                                              &NThreads,
-                                                              &OutFileName)) {
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|iOOiiis",
+                                   const_cast<char **>(kwlist),
+                                   &List_Points,
+                                   &NormalDirection,
+                                   &List_Rotations,
+                                   &List_Translation,
+                                   &NParticles,
+                                   &GPU,
+                                   &NThreads,
+                                   &OutFileName)) {
     return NULL;
   }
 
@@ -3887,26 +4035,40 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
   int         GPU = -1;
   int         NThreads = 0;
   int         Dim = 2;
-  char*       OutFileNameText = "";
-  char*       OutFileNameBinary = "";
+  const char* OutFileNameText = "";
+  const char* OutFileNameBinary = "";
 
 
-  static char *kwlist[] = {"npoints", "plane", "width", "x0x1x2", "rotations", "translation", "ofile", "bofile", "normal", "nparticles", "gpu", "nthreads", "dim",  NULL};
+  static const char *kwlist[] = {"npoints",
+                                 "plane",
+                                 "width",
+                                 "x0x1x2",
+                                 "rotations",
+                                 "translation",
+                                 "ofile",
+                                 "bofile",
+                                 "normal",
+                                 "nparticles",
+                                 "gpu",
+                                 "nthreads",
+                                 "dim",
+                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|sOOOOssiiiii", kwlist,
-                                                                  &List_NPoints,
-                                                                  &SurfacePlane,
-                                                                  &List_Width,
-                                                                  &List_X0X1X2,
-                                                                  &List_Rotations,
-                                                                  &List_Translation,
-                                                                  &OutFileNameText,
-                                                                  &OutFileNameBinary,
-                                                                  &NormalDirection,
-                                                                  &NParticles,
-                                                                  &GPU,
-                                                                  &NThreads,
-                                                                  &Dim)) {
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|sOOOOssiiiii",
+                                   const_cast<char **>(kwlist),
+                                   &List_NPoints,
+                                   &SurfacePlane,
+                                   &List_Width,
+                                   &List_X0X1X2,
+                                   &List_Rotations,
+                                   &List_Translation,
+                                   &OutFileNameText,
+                                   &OutFileNameBinary,
+                                   &NormalDirection,
+                                   &NParticles,
+                                   &GPU,
+                                   &NThreads,
+                                   &Dim)) {
     return NULL;
   }
 
@@ -4178,19 +4340,30 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
   char const* OutFileNameBinary = "";
 
 
-  static char *kwlist[] = {"energy_eV", "points", "normal", "rotations", "translation", "nparticles", "nthreads", "gpu", "ofile", "bofile", NULL};
+  static const char *kwlist[] = {"energy_eV",
+                                 "points",
+                                 "normal",
+                                 "rotations",
+                                 "translation",
+                                 "nparticles",
+                                 "nthreads",
+                                 "gpu",
+                                 "ofile",
+                                 "bofile",
+                                 NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dO|iOOiiiss", kwlist,
-                                                                &Energy_eV,
-                                                                &List_Points,
-                                                                &NormalDirection,
-                                                                &List_Rotations,
-                                                                &List_Translation,
-                                                                &NParticles,
-                                                                &NThreads,
-                                                                &GPU,
-                                                                &OutFileNameText,
-                                                                &OutFileNameBinary)) {
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dO|iOOiiiss",
+                                   const_cast<char **>(kwlist),
+                                   &Energy_eV,
+                                   &List_Points,
+                                   &NormalDirection,
+                                   &List_Rotations,
+                                   &List_Translation,
+                                   &NParticles,
+                                   &NThreads,
+                                   &GPU,
+                                   &OutFileNameText,
+                                   &OutFileNameBinary)) {
     return NULL;
   }
 
@@ -4449,27 +4622,46 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   char const* OutFileNameBinary = "";
 
 
-  static char *kwlist[] = {"energy_eV", "npoints", "plane", "normal", "dim", "width", "rotations", "translation", "x0x1x2", "polarization", "angle", "horizontal_direction", "propogation_direction", "nparticles", "nthreads", "gpu", "ofile", "bofile", NULL};
+  static const char *kwlist[] = {"energy_eV",
+                                 "npoints",
+                                 "plane",
+                                 "normal",
+                                 "dim",
+                                 "width",
+                                 "rotations",
+                                 "translation",
+                                 "x0x1x2",
+                                 "polarization",
+                                 "angle",
+                                 "horizontal_direction",
+                                 "propogation_direction",
+                                 "nparticles",
+                                 "nthreads",
+                                 "gpu",
+                                 "ofile",
+                                 "bofile",
+                                 NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dO|siiOOOOsdOOiiiss", kwlist,
-                                                                   &Energy_eV,
-                                                                   &List_NPoints,
-                                                                   &SurfacePlane,
-                                                                   &NormalDirection,
-                                                                   &Dim,
-                                                                   &List_Width,
-                                                                   &List_Rotations,
-                                                                   &List_Translation,
-                                                                   &List_X0X1X2,
-                                                                   &Polarization,
-                                                                   &Angle,
-                                                                   &List_HorizontalDirection,
-                                                                   &List_PropogationDirection,
-                                                                   &NParticles,
-                                                                   &NThreads,
-                                                                   &GPU,
-                                                                   &OutFileNameText,
-                                                                   &OutFileNameBinary)) {
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dO|siiOOOOsdOOiiiss",
+                                   const_cast<char **>(kwlist),
+                                   &Energy_eV,
+                                   &List_NPoints,
+                                   &SurfacePlane,
+                                   &NormalDirection,
+                                   &Dim,
+                                   &List_Width,
+                                   &List_Rotations,
+                                   &List_Translation,
+                                   &List_X0X1X2,
+                                   &Polarization,
+                                   &Angle,
+                                   &List_HorizontalDirection,
+                                   &List_PropogationDirection,
+                                   &NParticles,
+                                   &NThreads,
+                                   &GPU,
+                                   &OutFileNameText,
+                                   &OutFileNameBinary)) {
     return NULL;
   }
 
@@ -4732,13 +4924,18 @@ static PyObject* OSCARSSR_AverageSpectra (OSCARSSRObject* self, PyObject* args, 
   char const* OutFileNameBinary = "";
 
 
-  static char *kwlist[] = {"ifiles", "bifiles", "ofile", "bofile", NULL};
+  static const char *kwlist[] = {"ifiles",
+                                 "bifiles",
+                                 "ofile",
+                                 "bofile",
+                                 NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|OOss", kwlist,
-                                                          &List_InFileNamesText,
-                                                          &List_InFileNamesBinary,
-                                                          &OutFileNameText,
-                                                          &OutFileNameBinary)) {
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|OOss",
+                                   const_cast<char **>(kwlist),
+                                   &List_InFileNamesText,
+                                   &List_InFileNamesBinary,
+                                   &OutFileNameText,
+                                   &OutFileNameBinary)) {
     return NULL;
   }
 
@@ -4840,11 +5037,14 @@ static PyObject* OSCARSSR_AddToSpectrum (OSCARSSRObject* self, PyObject* args, P
   double Weight = 1;
 
 
-  static char *kwlist[] = {"spectrum", "weight", NULL};
+  static const char *kwlist[] = {"spectrum",
+                                 "weight",
+                                 NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|d", kwlist,
-                                                        &List_Spectrum,
-                                                        &Weight)) {
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|d",
+                                   const_cast<char **>(kwlist),
+                                   &List_Spectrum,
+                                   &Weight)) {
     return NULL;
   }
 
@@ -4957,14 +5157,20 @@ static PyObject* OSCARSSR_AverageT3DScalars (OSCARSSRObject* self, PyObject* arg
   char const* OutFileNameBinary = "";
 
 
-  static char *kwlist[] = {"ifiles", "bifiles", "ofile", "bofile", "dim", NULL};
+  static const char *kwlist[] = {"ifiles",
+                                 "bifiles",
+                                 "ofile",
+                                 "bofile",
+                                 "dim",
+                                 NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|OOssi", kwlist,
-                                                         &List_InFileNamesText,
-                                                         &List_InFileNamesBinary,
-                                                         &OutFileNameText,
-                                                         &OutFileNameBinary,
-                                                         &Dim)) {
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|OOssi",
+                                   const_cast<char **>(kwlist),
+                                   &List_InFileNamesText,
+                                   &List_InFileNamesBinary,
+                                   &OutFileNameText,
+                                   &OutFileNameBinary,
+                                   &Dim)) {
     return NULL;
   }
 
@@ -5076,11 +5282,14 @@ static PyObject* OSCARSSR_AddToFlux (OSCARSSRObject* self, PyObject* args, PyObj
   double Weight = 1;
 
 
-  static char *kwlist[] = {"flux", "weight", NULL};
+  static const char *kwlist[] = {"flux",
+                                 "weight",
+                                 NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|d", kwlist,
-                                                        &List_Flux,
-                                                        &Weight)) {
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|d",
+                                   const_cast<char **>(kwlist),
+                                   &List_Flux,
+                                   &Weight)) {
     return NULL;
   }
 
@@ -5153,11 +5362,14 @@ static PyObject* OSCARSSR_AddToPowerDensity (OSCARSSRObject* self, PyObject* arg
   double Weight = 1;
 
 
-  static char *kwlist[] = {"power_density", "weight", NULL};
+  static const char *kwlist[] = {"power_density",
+                                 "weight",
+                                 NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|d", kwlist,
-                                                        &List_PowerDensity,
-                                                        &Weight)) {
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|d",
+                                   const_cast<char **>(kwlist),
+                                   &List_PowerDensity,
+                                   &Weight)) {
     return NULL;
   }
 
@@ -5244,11 +5456,14 @@ static PyObject* OSCARSSR_CalculateElectricFieldTimeDomain (OSCARSSRObject* self
   char const* OutFileName = "";
 
 
-  static char *kwlist[] = {"obs", "ofile", NULL};
+  static const char *kwlist[] = {"obs",
+                                 "ofile",
+                                 NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|O", kwlist,
-                                                        &List_Obs,
-                                                        &OutFileName)) {
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|O",
+                                   const_cast<char **>(kwlist),
+                                   &List_Obs,
+                                   &OutFileName)) {
     return NULL;
   }
 

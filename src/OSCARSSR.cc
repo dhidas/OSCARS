@@ -256,8 +256,7 @@ void OSCARSSR::WriteField (std::string const& BorE,
   } else if (BorE == "E") {
     fEFieldContainer.WriteToFile(OutFileName, OutFormat, XLim, NX, YLim, NY, ZLim, NZ, Comment);
   } else {
-    std::cerr << "Write failure because not B or E" << std::endl;
-    throw;
+    throw std::ifstream::failure("Write failure because not B or E");
   }
 
   return;
@@ -283,8 +282,7 @@ void OSCARSSR::WriteFieldBinary (std::string const& BorE,
   } else if (BorE == "E") {
     fEFieldContainer.WriteToFileBinary(OutFileName, OutFormat, XLim, NX, YLim, NY, ZLim, NZ, Comment, Version);
   } else {
-    std::cerr << "Write failure because not B or E" << std::endl;
-    throw;
+    throw std::ifstream::failure("Write failure because not B or E");
   }
 
   return;
@@ -651,13 +649,11 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
 
   // Check that CTStart is not after T0 of particle
   if (this->GetCTStart() > P.GetT0()) {
-    std::cerr << "ERROR: start time is greater than T0" << std::endl;
     throw std::out_of_range("start time is greater than T0");
   }
 
   // Check that CTStart and CTStop are not the same (probably not defined if this is the case)
   if (this->GetCTStart() >= this->GetCTStop()) {
-    std::cerr << "ERROR: start time is >= stop time" << std::endl;
     throw std::out_of_range("start time is greater than stop time.  check that set_ctstartstop is set");
   }
 
@@ -1029,8 +1025,7 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
   // Number of threads to possibly use
   int const NThreadsToUse = NThreads < 1 ? fNThreadsGlobal : NThreads;
   if (NThreadsToUse <= 0) {
-    std::cerr << "NThreads or NThreadsGlobal must be >= 1" << std::endl;
-    throw;
+    throw std::out_of_range("NThreads or NThreadsGlobal must be >= 1");
   }
 
   // Should we use the GPU or not?
@@ -1287,8 +1282,8 @@ void OSCARSSR::CalculateSpectrumThreads (TParticleA& Particle,
   size_t const NThreadsActual = NPoints > (size_t) NThreads ? NThreads : NPoints;
 
   // Keep track of which threads are finished and re-joined
-  bool Done[NThreadsActual];
-  bool Joined[NThreadsActual];
+  bool *Done = new bool(NThreadsActual);
+  bool *Joined = new bool(NThreadsActual);
 
   // Number per thread plus remainder to be added to first threads
   size_t const NPerThread = NPoints / NThreadsActual;
@@ -1350,6 +1345,10 @@ void OSCARSSR::CalculateSpectrumThreads (TParticleA& Particle,
 
   // Clear all threads
   Threads.clear();
+
+  // Delete my arrays, I hate new for this purpose
+  delete [] Done;
+  delete [] Joined;
 
   return;
 }
@@ -1422,7 +1421,6 @@ void OSCARSSR::AddToSpectrum (TSpectrumContainer const& S, double const Weight)
       fSpectrum.AddToFlux(i, S.GetFlux(i) * Weight);
     }
   } else {
-    std::cerr << "ERROR: incorrect dimension in spectrum" << std::endl;
     throw std::out_of_range("spectra dimensions do not match");
   }
 
@@ -1446,7 +1444,6 @@ void OSCARSSR::AddToFlux (T3DScalarContainer const& F, double const Weight)
       fFlux.AddToPoint(i, F.GetPoint(i).GetV() * Weight);
     }
   } else {
-    std::cerr << "ERROR: incorrect dimension in spectrum" << std::endl;
     throw std::out_of_range("spectra dimensions do not match");
   }
 
@@ -1470,7 +1467,6 @@ void OSCARSSR::AddToPowerDensity (T3DScalarContainer const& P, double const Weig
       fPowerDensity.AddToPoint(i, P.GetPoint(i).GetV() * Weight);
     }
   } else {
-    std::cerr << "ERROR: incorrect dimension in spectrum" << std::endl;
     throw std::out_of_range("spectra dimensions do not match");
   }
 
@@ -1599,8 +1595,7 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface,
   // How many threads to use.
   int const NThreadsToUse = NThreads < 1 ? fNThreadsGlobal : NThreads;
   if (NThreadsToUse <= 0) {
-    std::cerr << "NThreads or NThreadsGlobal must be >= 1" << std::endl;
-    throw;
+    throw std::out_of_range("NThreads or NThreadsGlobal must be >= 1");
   }
 
   // Should we use the GPU or not?
@@ -1625,8 +1620,7 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface,
       PowerDensityContainer.AddPoint( TVector3D(Surface.GetX1(i), Surface.GetX2(i), 0), 0);
     }
   } else {
-    std::cerr << "Wrong dimension" << std::endl;
-    throw;
+    throw std::out_of_range("Wrong dimension");
   }
 
   // GPU will outrank NThreads...
@@ -1803,8 +1797,8 @@ void OSCARSSR::CalculatePowerDensityThreads (TParticleA& Particle,
   size_t const NThreadsActual = NPoints > (size_t) NThreads ? NThreads : NPoints;
 
   // Keep track of which threads are finished and re-joined
-  bool Done[NThreadsActual];
-  bool Joined[NThreadsActual];
+  bool *Done = new bool(NThreadsActual);
+  bool *Joined = new bool(NThreadsActual);
 
   // Number per thread plus remainder to be added to first threads
   size_t const NPerThread = NPoints / NThreadsActual;
@@ -1861,6 +1855,10 @@ void OSCARSSR::CalculatePowerDensityThreads (TParticleA& Particle,
 
   // Clear all threads
   Threads.clear();
+
+  // Delete my arrays, I hate new for this purpose
+  delete [] Done;
+  delete [] Joined;
 
   return;
 }
@@ -2046,8 +2044,7 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
   // Number of threads to possibly use
   int const NThreadsToUse = NThreads < 1 ? fNThreadsGlobal : NThreads;
   if (NThreadsToUse <= 0) {
-    std::cerr << "NThreads or NThreadsGlobal must be >= 1" << std::endl;
-    throw;
+    throw std::out_of_range("NThreads or NThreadsGlobal must be >= 1");
   }
 
   // Should we use the GPU or not?
@@ -2062,8 +2059,7 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
       FluxContainer.AddPoint( TVector3D(Surface.GetX1(i), Surface.GetX2(i), 0), 0);
     }
   } else {
-    std::cerr << "wROng dimension" << std::endl;
-    throw;
+    throw std::out_of_range("wROng dimension");
   }
 
   // GPU will outrank NThreads...
@@ -2319,8 +2315,8 @@ void OSCARSSR::CalculateFluxThreads (TParticleA& Particle,
   size_t const NThreadsActual = NPoints > (size_t) NThreads ? NThreads : NPoints;
 
   // Keep track of which threads are finished and re-joined
-  bool Done[NThreadsActual];
-  bool Joined[NThreadsActual];
+  bool *Done = new bool(NThreadsActual);
+  bool *Joined = new bool(NThreadsActual);
 
   // Number per thread plus remainder to be added to first threads
   size_t const NPerThread = NPoints / NThreadsActual;
@@ -2380,6 +2376,10 @@ void OSCARSSR::CalculateFluxThreads (TParticleA& Particle,
 
   // Clear all threads
   Threads.clear();
+
+  // Delete my arrays, I hate new for this purpose
+  delete [] Done;
+  delete [] Joined;
 
   return;
 }

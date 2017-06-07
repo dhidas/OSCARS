@@ -399,6 +399,10 @@ TVector2D OSCARSTH::UndulatorBrightnessK (double const K,
   TVector2D const Emittance      = fParticleBeam.GetEmittance();
   double    const Current        = fParticleBeam.GetCurrent();
 
+  // Check that we can do this calculation, else reject
+  if (Gamma == 0 || Beta[0] == 0 || Beta[1] == 0 || Emittance[0] == 0 || Emittance[1] == 0 || Current == 0) {
+    throw std::invalid_argument("Beam definition incorrect for this calculation: Check energy, current, beta, emittance");
+  }
 
   double const sigx = sqrt(Emittance[0] * Beta[0]);
   double const sigy = sqrt(Emittance[1] * Beta[1]);
