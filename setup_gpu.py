@@ -35,6 +35,7 @@ moduleOSCARSSR = Extension('oscars.sr',
                                  'src/OSCARSPY.cc'],
                       extra_compile_args=['-DCUDA', '-std=c++11', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread'],
                       libraries = ['cuda', 'cudart'],
+                      #libraries = ['cudart_static'],
                       library_dirs = ['/usr/local/cuda/lib64', '/lib64', '/usr/lib64', '/usr/local/cuda/lib'],
                       extra_objects = ['lib/OSCARSSR_Cuda.o']
                      )
