@@ -17,13 +17,15 @@
 class TField3D_IdealUndulator : public TField
 {
   public:
-    TField3D_IdealUndulator ();
-    TField3D_IdealUndulator (TVector3D const& Field,
-                             TVector3D const& Period,
-                             int       const  NPeriods,
-                             TVector3D const& Center    = TVector3D(0, 0, 0),
-                             double    const  Phase     = 0,
-                             double    const  Taper     = 0);
+    TField3D_IdealUndulator (std::string const& Name);
+
+    TField3D_IdealUndulator (TVector3D   const& Field,
+                             TVector3D   const& Period,
+                             int         const  NPeriods,
+                             TVector3D   const& Center    = TVector3D(0, 0, 0),
+                             double      const  Phase     = 0,
+                             double      const  Taper     = 0,
+                             std::string const& Name      = "");
 
     ~TField3D_IdealUndulator ();
 
@@ -33,12 +35,13 @@ class TField3D_IdealUndulator : public TField
     TVector3D GetF  (double const X, double const Y, double const Z) const;
     TVector3D GetF  (TVector3D const& X) const;
 
-    void Init (TVector3D const& Field,
-               TVector3D const& Period,
-               int       const  NPeriods,
-               TVector3D const& Center    = TVector3D(0, 0, 0),
-               double    const  Phase     = 0,
-               double    const Taper      = 0);
+    void Init (TVector3D   const& Field,
+               TVector3D   const& Period,
+               int         const  NPeriods,
+               TVector3D   const& Center    = TVector3D(0, 0, 0),
+               double      const  Phase     = 0,
+               double      const  Taper     = 0,
+               std::string const& Name      = "");
 
     TVector3D GetField () const;
     TVector3D GetPeriod () const;
@@ -69,6 +72,7 @@ inline std::ostream& operator << (std::ostream& os, TField3D_IdealUndulator cons
 {
   // For easy printing
   os << "TField3D_IdealUndulator " << "\n"
+     << "Name                    " << o.GetName() << "\n"
      << "Field                   " << o.GetField() << "\n"
      << "Period                  " << o.GetPeriod() << "  (" << o.GetPeriod().Mag() << " [m])\n"
      << "NPeriods                " << o.GetNPeriods() << "\n"

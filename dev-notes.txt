@@ -6,6 +6,8 @@ Previous Release: 1.36.12
 
 
 
+Field naming and ability to remove fields by name
+
 Spectrum: corrected energy_range_eV stepping
 
 More optimal multi-threadding

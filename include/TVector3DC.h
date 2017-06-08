@@ -122,6 +122,20 @@ inline TVector3DC operator + (TVector3D const& L, TVector3DC& R)
 
 
 
+inline TVector3DC operator * (std::complex<double> const& V, TVector3D const& R)
+{
+  // Multiply vector by some complex scalar
+  return TVector3DC(R.GetX() * V, R.GetY() * V, R.GetZ() * V);
+}
+
+
+inline TVector3DC operator * (TVector3D const& L, std::complex<double> const& V)
+{
+  // Multiply vector by some complex scalar
+  return TVector3DC(L.GetX() * V, L.GetY() * V, L.GetZ() * V);
+}
+
+
 
 
 

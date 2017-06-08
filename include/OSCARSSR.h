@@ -39,19 +39,42 @@ class OSCARSSR
                            std::string const Format,
                            TVector3D const& R = TVector3D(0, 0, 0),
                            TVector3D const& D = TVector3D(0, 0, 0),
-                           std::vector<double> const& S = std::vector<double>());
+                           std::vector<double> const& S = std::vector<double>(),
+                           std::string const& Name = "");
 
     void AddMagneticFieldInterpolated (std::vector<std::pair<double, std::string> > const& Mapping,
                                        std::string const Format,
                                        double const Parameter,
                                        TVector3D const& Rotations = TVector3D(0, 0, 0),
                                        TVector3D const& Translation = TVector3D(0, 0, 0),
-                                       std::vector<double> const& Scaling = std::vector<double>());
+                                       std::vector<double> const& Scaling = std::vector<double>(),
+                                       std::string const& Name = "");
+
     void AddMagneticField (TField*);
+
+    void RemoveMagneticField (std::string const& Name);
+
     void ClearMagneticFields ();
 
-    void AddElectricField (std::string const, std::string const, TVector3D const& R = TVector3D(0, 0, 0), TVector3D const& D = TVector3D(0, 0, 0), std::vector<double> const& S = std::vector<double>());
+    void AddElectricField (std::string const FileName,
+                           std::string const Format,
+                           TVector3D const& Rotations = TVector3D(0, 0, 0),
+                           TVector3D const& Translation = TVector3D(0, 0, 0),
+                           std::vector<double> const& Scaling = std::vector<double>(),
+                           std::string const& Name = "");
+
+    void AddElectricFieldInterpolated (std::vector<std::pair<double, std::string> > const& Mapping,
+                                       std::string const Format,
+                                       double const Parameter,
+                                       TVector3D const& Rotations = TVector3D(0, 0, 0),
+                                       TVector3D const& Translation = TVector3D(0, 0, 0),
+                                       std::vector<double> const& Scaling = std::vector<double>(),
+                                       std::string const& Name = "");
+
     void AddElectricField (TField*);
+
+    void RemoveElectricField (std::string const& Name);
+
     void ClearElectricFields ();
 
     void WriteField (std::string const& BorE,

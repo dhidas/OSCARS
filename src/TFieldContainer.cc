@@ -48,6 +48,30 @@ void TFieldContainer::AddField (TField* F)
 
 
 
+
+void TFieldContainer::RemoveField (std::string const& Name)
+{
+  // Remove all fields that match the input name
+
+  size_t i = 0;
+  while (i < fFields.size()) {
+    if (fFields[i]->GetName() == Name) {
+
+      // Delete TField
+      delete fFields[i];
+
+      // Remove pointer from vector
+      fFields.erase( fFields.begin() + i );
+    } else {
+      ++i;
+    }
+  }
+  return;
+}
+
+
+
+
 double TFieldContainer::GetFx (double const X, double const Y, double const Z) const
 {
   double Sum = 0;

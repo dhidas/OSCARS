@@ -15,8 +15,11 @@
 
 #include "TOMATH.h"
 
-TField3D_Grid::TField3D_Grid ()
+TField3D_Grid::TField3D_Grid (std::string const& Name)
 {
+  // Set name
+  this->SetName(Name);
+
   fRotated.SetXYZ(0, 0, 0);
   fTranslation.SetXYZ(0, 0, 0);
 }
@@ -29,8 +32,12 @@ TField3D_Grid::TField3D_Grid (std::string         const& InFileName,
                               TVector3D           const& Rotations,
                               TVector3D           const& Translation,
                               std::vector<double> const& Scaling,
+                              std::string         const& Name,
                               char                const  CommentChar)
 {
+  // Set name
+  this->SetName(Name);
+
   // I will accept lower-case
   std::string format = FileFormat;
   std::transform(format.begin(), format.end(), format.begin(), ::toupper);
@@ -61,11 +68,15 @@ TField3D_Grid::TField3D_Grid (std::vector<std::pair<double, std::string> > Mappi
                               TVector3D                             const& Rotations,
                               TVector3D                             const& Translation,
                               std::vector<double>                   const& Scaling,
+                              std::string                           const& Name,
                               char                                  const  CommentChar)
 {
   // This one is for interpolated fields from a mapping vector and parameter value.
   // It is meant for interpolating between different undulator gaps, but it is generalized
   // to interpolate any fields
+
+  // Set name
+  this->SetName(Name);
 
   // I will accept lower-case
   std::string format = FileFormat;
@@ -866,8 +877,9 @@ void TField3D_Grid::ReadFile_Binary (std::string const& InFileName,
   // Header 0: Number of characters in comment, then comment
   int NCommentChars;
   fi.read((char*) &NCommentChars, sizeof(int));
-  char Comment[NCommentChars];
+  char *Comment = new char(NCommentChars + 1);
   fi.read(Comment, NCommentChars * sizeof(char));
+  Comment[NCommentChars] = '\0';
 
 
   // Header 1: Version number
@@ -877,7 +889,7 @@ void TField3D_Grid::ReadFile_Binary (std::string const& InFileName,
   // Header 2: Number of chars in format string, then format string
   int NFormatChars;
   fi.read((char*) &NFormatChars, sizeof(int));
-  char Format[NFormatChars+1];
+  char *Format = new char(NFormatChars+1);
   fi.read(Format, NFormatChars * sizeof(char));
   Format[NFormatChars] = '\0';
 
@@ -888,6 +900,10 @@ void TField3D_Grid::ReadFile_Binary (std::string const& InFileName,
   } else {
     throw std::invalid_argument("File Version number incorrect");
   }
+
+  // Delete arrays
+  delete [] Comment;
+  delete [] Format;
 
   return;
 }

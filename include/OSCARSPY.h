@@ -32,13 +32,6 @@ namespace OSCARSPY {
   PyObject* TVector2DAsList (TVector2D const& V);
   PyObject* TVector3DAsList (TVector3D const& V);
 
-
-
-
-
-
-
-
 }
 
 

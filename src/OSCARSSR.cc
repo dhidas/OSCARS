@@ -60,7 +60,8 @@ void OSCARSSR::AddMagneticField (std::string const FileName,
                                  std::string const Format,
                                  TVector3D const& Rotations,
                                  TVector3D const& Translation,
-                                 std::vector<double> const& Scaling)
+                                 std::vector<double> const& Scaling,
+                                 std::string const& Name)
 {
   // Add a magnetic field from a file to the field container
 
@@ -72,7 +73,7 @@ void OSCARSSR::AddMagneticField (std::string const FileName,
   if ( (FormatUpperCase == "OSCARS" || FormatUpperCase == "SRW" || FormatUpperCase == "SPECTRA") || FormatUpperCase == "BINARY" ||
        (FormatUpperCase.size() > 8 && std::string(FormatUpperCase.begin(), FormatUpperCase.begin() + 8) == std::string("OSCARS1D"))) {
 
-    this->fBFieldContainer.AddField( new TField3D_Grid(FileName, Format, Rotations, Translation, Scaling) );
+    this->fBFieldContainer.AddField( new TField3D_Grid(FileName, Format, Rotations, Translation, Scaling, Name) );
 
   } else {
     throw std::invalid_argument("Incorrect format in format string");
@@ -91,7 +92,8 @@ void OSCARSSR::AddMagneticFieldInterpolated (std::vector<std::pair<double, std::
                                              double const Parameter,
                                              TVector3D const& Rotations,
                                              TVector3D const& Translation,
-                                             std::vector<double> const& Scaling)
+                                             std::vector<double> const& Scaling,
+                                             std::string const& Name)
 {
   // Add a magnetic field from a file to the field container
 
@@ -104,7 +106,7 @@ void OSCARSSR::AddMagneticFieldInterpolated (std::vector<std::pair<double, std::
   if ( (FormatUpperCase == "OSCARS"  || FormatUpperCase == "SRW" || FormatUpperCase == "SPECTRA") ||
      (FormatUpperCase.size() > 8 && std::string(FormatUpperCase.begin(), FormatUpperCase.begin() + 8) == std::string("OSCARS1D")) ) {
 
-    this->fBFieldContainer.AddField( new TField3D_Grid(Mapping, Format, Parameter, Rotations, Translation, Scaling) );
+    this->fBFieldContainer.AddField( new TField3D_Grid(Mapping, Format, Parameter, Rotations, Translation, Scaling, Name) );
 
   } else {
     throw std::invalid_argument("Incorrect format in format string");
@@ -127,6 +129,17 @@ void OSCARSSR::AddMagneticField (TField* Field)
 
   // Set the derivs function accordingly
   this->SetDerivativesFunction();
+
+  return;
+}
+
+
+
+void OSCARSSR::RemoveMagneticField (std::string const& Name)
+{
+  // Remove all fields with the given name
+
+  this->fBFieldContainer.RemoveField(Name);
 
   return;
 }
@@ -202,16 +215,56 @@ TVector3D OSCARSSR::GetB (TVector3D const& X) const
 
 
 
-void OSCARSSR::AddElectricField (std::string const FileName, std::string const Format, TVector3D const& Rotations, TVector3D const& Translation, std::vector<double> const& Scaling)
+void OSCARSSR::AddElectricField (std::string const FileName,
+                                 std::string const Format,
+                                 TVector3D const& Rotations,
+                                 TVector3D const& Translation,
+                                 std::vector<double> const& Scaling,
+                                 std::string const& Name)
 {
   // Add a electric field from a file to the field container
-  this->fEFieldContainer.AddField( new TField3D_Grid(FileName, Format, Rotations, Translation) );
+  this->fEFieldContainer.AddField( new TField3D_Grid(FileName, Format, Rotations, Translation, Scaling, Name) );
 
   // Set the derivs function accordingly
   this->SetDerivativesFunction();
 
   return;
 }
+
+
+
+
+void OSCARSSR::AddElectricFieldInterpolated (std::vector<std::pair<double, std::string> > const& Mapping,
+                                             std::string const Format,
+                                             double const Parameter,
+                                             TVector3D const& Rotations,
+                                             TVector3D const& Translation,
+                                             std::vector<double> const& Scaling,
+                                             std::string const& Name)
+{
+  // Add an electric field from a file to the field container
+
+  // Format string all upper-case (just in case you like to type L.C.).
+  std::string FormatUpperCase = Format;
+  std::transform(FormatUpperCase.begin(), FormatUpperCase.end(), FormatUpperCase.begin(), ::toupper);
+
+  // Check that the format name is correct
+  if ( (FormatUpperCase == "OSCARS"  || FormatUpperCase == "SRW" || FormatUpperCase == "SPECTRA") ||
+     (FormatUpperCase.size() > 8 && std::string(FormatUpperCase.begin(), FormatUpperCase.begin() + 8) == std::string("OSCARS1D")) ) {
+
+    this->fEFieldContainer.AddField( new TField3D_Grid(Mapping, Format, Parameter, Rotations, Translation, Scaling, Name) );
+
+  } else {
+    throw std::invalid_argument("Incorrect format in format string");
+  }
+
+  // Set the derivs function accordingly
+  this->SetDerivativesFunction();
+
+  return;
+}
+
+
 
 
 void OSCARSSR::AddElectricField (TField* F)
@@ -224,6 +277,18 @@ void OSCARSSR::AddElectricField (TField* F)
 
   return;
 }
+
+
+
+void OSCARSSR::RemoveElectricField (std::string const& Name)
+{
+  // Remove all fields with the given name
+
+  this->fEFieldContainer.RemoveField(Name);
+
+  return;
+}
+
 
 
 

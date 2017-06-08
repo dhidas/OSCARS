@@ -49,6 +49,7 @@ static PyObject* OSCARSSR_AddMagneticFieldGaussian (OSCARSSRObject* self, PyObje
 static PyObject* OSCARSSR_AddMagneticFieldUniform (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSSR_AddMagneticFieldIdealUndulator (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSSR_AddMagneticFieldQuadrupole (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
+static PyObject* OSCARSSR_RemoveMagneticField (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSSR_GetBField (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSSR_ClearMagneticFields (OSCARSSRObject* self);
 static PyObject* OSCARSSR_PrintMagneticFields (OSCARSSRObject* self);

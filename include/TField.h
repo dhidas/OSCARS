@@ -10,6 +10,8 @@
 
 #include "TVector3D.h"
 
+#include <string>
+
 class TField
 {
   // This class is designed to be a base class for a field object.
@@ -21,9 +23,22 @@ class TField
     virtual TVector3D GetF  (double const, double const, double const) const = 0;
     virtual TVector3D GetF  (TVector3D const&) const = 0;
 
+    void SetName (std::string const& Name)
+    {
+      fName = Name;
+      return;
+    }
+    std::string const& GetName () const
+    {
+      return fName;
+    }
+
     virtual void      Print (std::ostream&) const = 0;
 
     virtual ~TField () {};
+
+  private:
+    std::string fName;
 
 
 };

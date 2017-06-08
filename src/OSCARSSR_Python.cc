@@ -488,7 +488,7 @@ static PyObject* OSCARSSR_SetNPointsPerMeterTrajectory (OSCARSSRObject* self, Py
 
 
 const char* DOC_OSCARSSR_AddMagneticField = R"docstring(
-add_bfield_file([, ifile, bifile, iformat, rotations, translation, scale])
+add_bfield_file([, ifile, bifile, iformat, rotations, translation, scale, name])
 
 Add a magnetic field from a text file *ifile* according to the format *iformat*.
 
@@ -526,6 +526,9 @@ translation : list, optional
 scale : list, optional
     List of scale factors to be used for multiplying the inputs in the order of iformat (equal in length or less than the number of input parameters)
 
+name : str
+    Name of this magnetic field
+
 Returns
 -------
 None
@@ -543,12 +546,13 @@ static PyObject* OSCARSSR_AddMagneticField (OSCARSSRObject* self, PyObject* args
 
 
   // Grab the values
-  char const* FileNameText   = "";
-  char const* FileNameBinary = "";
-  char const* FileFormat     = "";
+  char const* FileNameText     = "";
+  char const* FileNameBinary   = "";
+  char const* FileFormat       = "";
   PyObject*   List_Rotations   = PyList_New(0);
   PyObject*   List_Translation = PyList_New(0);
   PyObject*   List_Scaling     = PyList_New(0);
+  char const* Name             = "";
 
   TVector3D Rotations(0, 0, 0);
   TVector3D Translation(0, 0, 0);
@@ -562,16 +566,18 @@ static PyObject* OSCARSSR_AddMagneticField (OSCARSSRObject* self, PyObject* args
                                  "rotations",
                                  "translation",
                                  "scale",
+                                 "name",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sssOOO",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sssOOOs",
                                    const_cast<char **>(kwlist),
                                    &FileNameText,
                                    &FileNameBinary,
                                    &FileFormat,
                                    &List_Rotations,
                                    &List_Translation,
-                                   &List_Scaling)) {
+                                   &List_Scaling,
+                                   &Name)) {
     return NULL;
   }
 
@@ -613,12 +619,18 @@ static PyObject* OSCARSSR_AddMagneticField (OSCARSSRObject* self, PyObject* args
     Scaling.push_back(PyFloat_AsDouble(PyList_GetItem(List_Scaling, i)));
   }
 
+  // Name check
+  if (std::string(Name).size() > 0 && Name[0] == '_') {
+    PyErr_SetString(PyExc_ValueError, "'name' cannot begin with '_'.  This is reserved for internal use.  Please pick a different name");
+    return NULL;
+  }
+
   // Add the magnetic field to the OSCARSSR object
   try {
     if (std::strlen(FileNameBinary) != 0) {
-      self->obj->AddMagneticField(FileNameBinary, "BINARY", Rotations, Translation, Scaling);
+      self->obj->AddMagneticField(FileNameBinary, "BINARY", Rotations, Translation, Scaling, Name);
     } else {
-      self->obj->AddMagneticField(FileNameText, FileFormat, Rotations, Translation, Scaling);
+      self->obj->AddMagneticField(FileNameText, FileFormat, Rotations, Translation, Scaling, Name);
     }
   } catch (...) {
     PyErr_SetString(PyExc_ValueError, "Could not import magnetic field.  Check 'ifile' and 'iformat' are correct");
@@ -637,7 +649,7 @@ static PyObject* OSCARSSR_AddMagneticField (OSCARSSRObject* self, PyObject* args
 
 
 const char* DOC_OSCARSSR_AddMagneticFieldInterpolated = R"docstring(
-add_bfield_interpolated(mapping, iformat, parameter [, rotations, translation, scale])
+add_bfield_interpolated(mapping, iformat, parameter [, rotations, translation, scale, name])
 
 Add field given a paramater and a mapping between known parameters and field data files where the field is interpolated from the known data points.
 
@@ -660,6 +672,9 @@ translation : list, optional
 
 scale : list, optional
     List of scale factors to be used for multiplying the inputs in the order of iformat (equal in length or less than the number of input parameters)
+
+name : str
+    Name of this magnetic field
 
 Returns
 -------
@@ -689,6 +704,7 @@ static PyObject* OSCARSSR_AddMagneticFieldInterpolated (OSCARSSRObject* self, Py
   PyObject*   List_Rotations   = PyList_New(0);
   PyObject*   List_Translation = PyList_New(0);
   PyObject*   List_Scaling     = PyList_New(0);
+  char const* Name             = "";
 
   TVector3D Rotations(0, 0, 0);
   TVector3D Translation(0, 0, 0);
@@ -704,16 +720,18 @@ static PyObject* OSCARSSR_AddMagneticFieldInterpolated (OSCARSSRObject* self, Py
                                  "rotations",
                                  "translation",
                                  "scale",
+                                 "name",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "Osd|OOO",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "Osd|OOOs",
                                    const_cast<char **>(kwlist),
                                    &List_Mapping,
                                    &FileFormat,
                                    &Parameter,
                                    &List_Rotations,
                                    &List_Translation,
-                                   &List_Scaling)) {
+                                   &List_Scaling,
+                                   &Name)) {
     return NULL;
   }
 
@@ -770,9 +788,15 @@ static PyObject* OSCARSSR_AddMagneticFieldInterpolated (OSCARSSRObject* self, Py
     Scaling.push_back(PyFloat_AsDouble(PyList_GetItem(List_Scaling, i)));
   }
 
+  // Name check
+  if (std::string(Name).size() > 0 && Name[0] == '_') {
+    PyErr_SetString(PyExc_ValueError, "'name' cannot begin with '_'.  This is reserved for internal use.  Please pick a different name");
+    return NULL;
+  }
+
   // Add the magnetic field to the OSCARSSR object
   try {
-    self->obj->AddMagneticFieldInterpolated(Mapping, FileFormat, Parameter, Rotations, Translation, Scaling);
+    self->obj->AddMagneticFieldInterpolated(Mapping, FileFormat, Parameter, Rotations, Translation, Scaling, Name);
   } catch (...) {
     PyErr_SetString(PyExc_ValueError, "Could not import magnetic field.  Check filenames and 'iformat' are correct");
     return NULL;
@@ -851,7 +875,7 @@ static PyObject* OSCARSSR_AddMagneticFieldFunction (OSCARSSRObject* self, PyObje
 
 
 const char* DOC_OSCARSSR_AddMagneticFieldGaussian = R"docstring(
-add_bfield_gaussian(bfield, sigma [, rotations, translation])
+add_bfield_gaussian(bfield, sigma [, rotations, translation, name])
 
 Add a gaussian field in 3D with the peak field magnitude and direction given by *bfield*, centered about a point with a given sigma in each coordinate.  If any component of *sigma* is less than or equal to zero it is ignored (ie. spatial extent is infinite).
 
@@ -871,6 +895,9 @@ rotations : list, optional
 
 translation : list, optional
     3-element list representing a translation in space [x, y, z]
+
+name : str
+    Name of this field
 
 Returns
 -------
@@ -895,6 +922,7 @@ static PyObject* OSCARSSR_AddMagneticFieldGaussian (OSCARSSRObject* self, PyObje
   PyObject* List_Translation  = PyList_New(0);
   PyObject* List_Rotations    = PyList_New(0);
   PyObject* List_Sigma        = PyList_New(0);
+  const char* Name            = "";
 
   TVector3D BField(0, 0, 0);
   TVector3D Sigma(0, 0, 0);
@@ -907,14 +935,16 @@ static PyObject* OSCARSSR_AddMagneticFieldGaussian (OSCARSSRObject* self, PyObje
                                  "sigma",
                                  "rotations",
                                  "translation",
+                                 "name",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OO|OO",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OO|OOs",
                                    const_cast<char **>(kwlist),
                                    &List_BField,
                                    &List_Sigma,
                                    &List_Rotations,
-                                   &List_Translation)) {
+                                   &List_Translation,
+                                   &Name)) {
     return NULL;
   }
 
@@ -956,8 +986,14 @@ static PyObject* OSCARSSR_AddMagneticFieldGaussian (OSCARSSRObject* self, PyObje
     }
   }
 
+  // Name check
+  if (std::string(Name).size() > 0 && Name[0] == '_') {
+    PyErr_SetString(PyExc_ValueError, "'name' cannot begin with '_'.  This is reserved for internal use.  Please pick a different name");
+    return NULL;
+  }
+
   // Add field
-  self->obj->AddMagneticField( (TField*) new TField3D_Gaussian(BField, Translation, Sigma, Rotations));
+  self->obj->AddMagneticField( (TField*) new TField3D_Gaussian(BField, Translation, Sigma, Rotations, Name));
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -971,7 +1007,7 @@ static PyObject* OSCARSSR_AddMagneticFieldGaussian (OSCARSSRObject* self, PyObje
 
 
 const char* DOC_OSCARSSR_AddMagneticFieldUniform = R"docstring(
-add_bfield_uniform(bfield, width [, rotations, translation])
+add_bfield_uniform(bfield [, width, rotations, translation, name])
 
 Add a uniform field in a given range or for all space.  The *bfield* is given as a 3D vector representing the field magnitude and direction.  *width* is an optional parameters, if not present the field permeates all space.  If a component of the 3D list *width* is less than or equal to zero, that coordinate will be ignored when calculating the field.
 
@@ -988,6 +1024,9 @@ rotations : list, optional
 
 translation : list, optional
     3-element list representing a translation in space [x, y, z]
+
+name : str
+    Name of this field
 
 Returns
 -------
@@ -1012,12 +1051,13 @@ static PyObject* OSCARSSR_AddMagneticFieldUniform (OSCARSSRObject* self, PyObjec
   // Add a uniform field with a given width in a given direction, or for all space
 
   // Lists and vectors
-  PyObject* List_BField      = PyList_New(0);
-  PyObject* List_Translation = PyList_New(0);
-  PyObject* List_Rotations   = PyList_New(0);
-  PyObject* List_Width       = PyList_New(0);
+  PyObject*   List_Field       = PyList_New(0);
+  PyObject*   List_Translation = PyList_New(0);
+  PyObject*   List_Rotations   = PyList_New(0);
+  PyObject*   List_Width       = PyList_New(0);
+  char const* Name             = "";
 
-  TVector3D BField(0, 0, 0);
+  TVector3D Field(0, 0, 0);
   TVector3D Width (0, 0, 0);
   TVector3D Rotations(0, 0, 0);
   TVector3D Translation(0, 0, 0);
@@ -1028,21 +1068,24 @@ static PyObject* OSCARSSR_AddMagneticFieldUniform (OSCARSSRObject* self, PyObjec
                                  "width",
                                  "rotations",
                                  "translation",
+                                 "name",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOO",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOOs",
                                    const_cast<char **>(kwlist),
-                                   &List_BField,
+                                   &List_Field,
                                    &List_Width,
                                    &List_Rotations,
-                                   &List_Translation)) {
+                                   &List_Translation,
+                                   &Name
+                                   )) {
     return NULL;
   }
 
 
-  // Check BField
+  // Check Field
   try {
-    BField = OSCARSPY::ListAsTVector3D(List_BField);
+    Field = OSCARSPY::ListAsTVector3D(List_Field);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, "Incorrect format in 'bfield'");
     return NULL;
@@ -1078,8 +1121,14 @@ static PyObject* OSCARSSR_AddMagneticFieldUniform (OSCARSSRObject* self, PyObjec
     }
   }
 
+  // Name check
+  if (std::string(Name).size() > 0 && Name[0] == '_') {
+    PyErr_SetString(PyExc_ValueError, "'name' cannot begin with '_'.  This is reserved for internal use.  Please pick a different name");
+    return NULL;
+  }
+
   // Add the field
-  self->obj->AddMagneticField((TField*) new TField3D_UniformBox(BField, Width, Translation, Rotations));
+  self->obj->AddMagneticField((TField*) new TField3D_UniformBox(Field, Width, Translation, Rotations, Name));
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -1090,7 +1139,7 @@ static PyObject* OSCARSSR_AddMagneticFieldUniform (OSCARSSRObject* self, PyObjec
 
 
 const char* DOC_OSCARSSR_AddMagneticFieldIdealUndulator = R"docstring(
-add_bfield_undulator(bfield, period, nperiods [, phase, rotations, translation, taper])
+add_bfield_undulator(bfield, period, nperiods [, phase, rotations, translation, taper, name])
 
 Adds an ideal sinusoidal undulator field with a given maximum bfield amplitude, period, and number of periods.  Optionally one can specify the phase offset (in [rad]), rotations and translation.  The number of periods given is the full number of fields not counting the terminating fields.
 
@@ -1117,6 +1166,9 @@ translation : list, optional
 taper : float
     The fractional change of the bfield per meter along the magnetic axis
 
+name : str
+    Name of this field
+
 Returns
 -------
 None
@@ -1132,13 +1184,14 @@ static PyObject* OSCARSSR_AddMagneticFieldIdealUndulator (OSCARSSRObject* self, 
   // Add a magnetic field for undulator
 
   // Lists and variables
-  PyObject* List_Field      = PyList_New(0);
-  PyObject* List_Period      = PyList_New(0);
-  PyObject* List_Rotations   = PyList_New(0);
-  PyObject* List_Translation = PyList_New(0);
-  int       NPeriods = 0;
-  double    Phase = 0;
-  double    Taper = 0;
+  PyObject*   List_Field       = PyList_New(0);
+  PyObject*   List_Period      = PyList_New(0);
+  PyObject*   List_Rotations   = PyList_New(0);
+  PyObject*   List_Translation = PyList_New(0);
+  int         NPeriods         = 0;
+  double      Phase            = 0;
+  double      Taper            = 0;
+  char const* Name             = "";
 
   TVector3D Field(0, 0, 0);
   TVector3D Period(0, 0, 0);
@@ -1153,9 +1206,10 @@ static PyObject* OSCARSSR_AddMagneticFieldIdealUndulator (OSCARSSRObject* self, 
                                  "rotations",
                                  "translation",
                                  "taper",
+                                 "name",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOi|dOOd",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOi|dOOds",
                                    const_cast<char **>(kwlist),
                                    &List_Field,
                                    &List_Period,
@@ -1163,7 +1217,8 @@ static PyObject* OSCARSSR_AddMagneticFieldIdealUndulator (OSCARSSRObject* self, 
                                    &Phase,
                                    &List_Rotations,
                                    &List_Translation,
-                                   &Taper
+                                   &Taper,
+                                   &Name
                                    )) {
     return NULL;
   }
@@ -1205,6 +1260,12 @@ static PyObject* OSCARSSR_AddMagneticFieldIdealUndulator (OSCARSSRObject* self, 
     }
   }
 
+  // Name check
+  if (std::string(Name).size() > 0 && Name[0] == '_') {
+    PyErr_SetString(PyExc_ValueError, "'name' cannot begin with '_'.  This is reserved for internal use.  Please pick a different name");
+    return NULL;
+  }
+
 
   // Rotate field and sigma
   // UPDATE: check this
@@ -1213,7 +1274,7 @@ static PyObject* OSCARSSR_AddMagneticFieldIdealUndulator (OSCARSSRObject* self, 
 
 
   // Add field
-  self->obj->AddMagneticField( (TField*) new TField3D_IdealUndulator(Field, Period, NPeriods, Translation, Phase, Taper));
+  self->obj->AddMagneticField( (TField*) new TField3D_IdealUndulator(Field, Period, NPeriods, Translation, Phase, Taper, Name));
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -1227,7 +1288,7 @@ static PyObject* OSCARSSR_AddMagneticFieldIdealUndulator (OSCARSSRObject* self, 
 
 
 const char* DOC_OSCARSSR_AddMagneticFieldQuadrupole = R"docstring(
-add_bfield_quadrupole(K, width [, rotations, translation])
+add_bfield_quadrupole(K, width [, rotations, translation, name])
 
 Adds a quadrupole field in a given volume according to:
 
@@ -1255,6 +1316,9 @@ rotations : list, optional
 translation : list, optional
     3-element list representing a translation in space [x, y, z]
 
+name : str
+    Name of this field
+
 Returns
 -------
 None
@@ -1267,8 +1331,9 @@ static PyObject* OSCARSSR_AddMagneticFieldQuadrupole (OSCARSSRObject* self, PyOb
   // Lists and variables
   double K = 0;
   double Width = 0;
-  PyObject* List_Rotations   = PyList_New(0);
-  PyObject* List_Translation = PyList_New(0);
+  PyObject*   List_Rotations   = PyList_New(0);
+  PyObject*   List_Translation = PyList_New(0);
+  char const* Name             = "";
 
   TVector3D Rotations(0, 0, 0);
   TVector3D Translation(0, 0, 0);
@@ -1278,14 +1343,16 @@ static PyObject* OSCARSSR_AddMagneticFieldQuadrupole (OSCARSSRObject* self, PyOb
                                  "width",
                                  "rotations",
                                  "translation",
+                                 "name",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dd|OO",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dd|OOs",
                                    const_cast<char **>(kwlist),
                                    &K,
                                    &Width,
                                    &List_Rotations,
-                                   &List_Translation
+                                   &List_Translation,
+                                   &Name
                                    )) {
     return NULL;
   }
@@ -1311,9 +1378,14 @@ static PyObject* OSCARSSR_AddMagneticFieldQuadrupole (OSCARSSRObject* self, PyOb
     }
   }
 
+  // Name check
+  if (std::string(Name).size() > 0 && Name[0] == '_') {
+    PyErr_SetString(PyExc_ValueError, "'name' cannot begin with '_'.  This is reserved for internal use.  Please pick a different name");
+    return NULL;
+  }
 
   // Add field
-  self->obj->AddMagneticField( (TField*) new TField3D_Quadrupole(K, Width, Rotations, Translation));
+  self->obj->AddMagneticField( (TField*) new TField3D_Quadrupole(K, Width, Rotations, Translation, Name));
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -1322,6 +1394,50 @@ static PyObject* OSCARSSR_AddMagneticFieldQuadrupole (OSCARSSRObject* self, PyOb
 
 
 
+const char* DOC_OSCARSSR_RemoveMagneticField = R"docstring(
+remove_bfield(name)
+
+Remove all fields with the given name
+
+Parameters
+----------
+name : str
+    Name of field to remove
+
+Returns
+-------
+None
+)docstring";
+static PyObject* OSCARSSR_RemoveMagneticField (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
+{
+  // Remove magnetic field
+
+  char const* Name             = "";
+
+  // Input variables and parsing
+  static const char *kwlist[] = {"name",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char **>(kwlist),
+                                   &Name
+                                   )) {
+    return NULL;
+  }
+
+  // Name check
+  if (std::string(Name).size() > 0 && Name[0] == '_') {
+    PyErr_SetString(PyExc_ValueError, "'name' cannot begin with '_'.  This is reserved for internal use.  Please pick a different name");
+    return NULL;
+  }
+
+  // Remove fields with name name
+  self->obj->RemoveMagneticField(Name);
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
 
 
 
@@ -1451,7 +1567,7 @@ static PyObject* OSCARSSR_PrintMagneticFields (OSCARSSRObject* self)
 
 
 const char* DOC_OSCARSSR_AddElectricField = R"docstring(
-add_efield_file(ifile, iformat [, rotations, translation, scale])
+add_efield_file(ifile, iformat [, rotations, translation, scale, name])
 
 Add a electric field from a text file *ifile* according to the format *iformat*.
 
@@ -1486,6 +1602,9 @@ translation : list, optional
 scale : list, optional
     List of scale factors to be used for multiplying the inputs in the order of iformat (equal in length or less than the number of input parameters)
 
+name : str
+    Name of this field
+
 Returns
 -------
 None
@@ -1508,6 +1627,7 @@ static PyObject* OSCARSSR_AddElectricField (OSCARSSRObject* self, PyObject* args
   PyObject*   List_Rotations   = PyList_New(0);
   PyObject*   List_Translation = PyList_New(0);
   PyObject*   List_Scaling     = PyList_New(0);
+  char const* Name             = "";
 
   TVector3D Rotations(0, 0, 0);
   TVector3D Translation(0, 0, 0);
@@ -1520,15 +1640,17 @@ static PyObject* OSCARSSR_AddElectricField (OSCARSSRObject* self, PyObject* args
                                  "rotations",
                                  "translation",
                                  "scale",
+                                 "name",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ss|OOO",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ss|OOOs",
                                    const_cast<char **>(kwlist),
                                    &FileName,
                                    &FileFormat,
                                    &List_Rotations,
                                    &List_Translation,
-                                   &List_Scaling)) {
+                                   &List_Scaling,
+                                   &Name)) {
     return NULL;
   }
 
@@ -1565,9 +1687,15 @@ static PyObject* OSCARSSR_AddElectricField (OSCARSSRObject* self, PyObject* args
     Scaling.push_back(PyFloat_AsDouble(PyList_GetItem(List_Scaling, i)));
   }
 
+  // Name check
+  if (std::string(Name).size() > 0 && Name[0] == '_') {
+    PyErr_SetString(PyExc_ValueError, "'name' cannot begin with '_'.  This is reserved for internal use.  Please pick a different name");
+    return NULL;
+  }
+
   // Add the magnetic field to the OSCARSSR object
   try {
-    self->obj->AddElectricField(FileName, FileFormat, Rotations, Translation, Scaling);
+    self->obj->AddElectricField(FileName, FileFormat, Rotations, Translation, Scaling, Name);
   } catch (...) {
     PyErr_SetString(PyExc_ValueError, "Could not import electric field.  Check 'ifile' and 'iformat' are correct");
     return NULL;
@@ -1585,7 +1713,7 @@ static PyObject* OSCARSSR_AddElectricField (OSCARSSRObject* self, PyObject* args
 
 
 const char* DOC_OSCARSSR_AddElectricFieldInterpolated = R"docstring(
-add_efield_interpolated(mapping, iformat, parameter [, rotations, translation, scale])
+add_efield_interpolated(mapping, iformat, parameter [, rotations, translation, scale, name])
 
 Add field given a paramater and a mapping between known parameters and field data files where the field is interpolated from the known data points.
 
@@ -1609,6 +1737,9 @@ translation : list, optional
 scale : list, optional
     List of scale factors to be used for multiplying the inputs in the order of iformat (equal in length or less than the number of input parameters)
 
+name : str
+    Name of this field
+
 Returns
 -------
 None
@@ -1629,6 +1760,7 @@ static PyObject* OSCARSSR_AddElectricFieldInterpolated (OSCARSSRObject* self, Py
   PyObject*   List_Rotations   = PyList_New(0);
   PyObject*   List_Translation = PyList_New(0);
   PyObject*   List_Scaling     = PyList_New(0);
+  char const* Name             = "";
 
   TVector3D Rotations(0, 0, 0);
   TVector3D Translation(0, 0, 0);
@@ -1644,16 +1776,18 @@ static PyObject* OSCARSSR_AddElectricFieldInterpolated (OSCARSSRObject* self, Py
                                  "rotations",
                                  "translation",
                                  "scale",
+                                 "name",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "Osd|OOO",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "Osd|OOOs",
                                    const_cast<char **>(kwlist),
                                    &List_Mapping,
                                    &FileFormat,
                                    &Parameter,
                                    &List_Rotations,
                                    &List_Translation,
-                                   &List_Scaling)) {
+                                   &List_Scaling,
+                                   &Name)) {
     return NULL;
   }
 
@@ -1710,9 +1844,15 @@ static PyObject* OSCARSSR_AddElectricFieldInterpolated (OSCARSSRObject* self, Py
     Scaling.push_back(PyFloat_AsDouble(PyList_GetItem(List_Scaling, i)));
   }
 
+  // Name check
+  if (std::string(Name).size() > 0 && Name[0] == '_') {
+    PyErr_SetString(PyExc_ValueError, "'name' cannot begin with '_'.  This is reserved for internal use.  Please pick a different name");
+    return NULL;
+  }
+
   // Add the magnetic field to the OSCARSSR object
   try {
-    self->obj->AddMagneticFieldInterpolated(Mapping, FileFormat, Parameter, Rotations, Translation, Scaling);
+    self->obj->AddElectricFieldInterpolated(Mapping, FileFormat, Parameter, Rotations, Translation, Scaling, Name);
   } catch (...) {
     PyErr_SetString(PyExc_ValueError, "Could not import magnetic field.  Check filenames and 'iformat' are correct");
     return NULL;
@@ -1834,6 +1974,7 @@ static PyObject* OSCARSSR_AddElectricFieldGaussian (OSCARSSRObject* self, PyObje
   PyObject* List_Translation  = PyList_New(0);
   PyObject* List_Rotations    = PyList_New(0);
   PyObject* List_Sigma        = PyList_New(0);
+  const char* Name            = "";
 
   TVector3D Field(0, 0, 0);
   TVector3D Sigma(0, 0, 0);
@@ -1846,14 +1987,16 @@ static PyObject* OSCARSSR_AddElectricFieldGaussian (OSCARSSRObject* self, PyObje
                                  "sigma",
                                  "rotations",
                                  "translation",
+                                 "name",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OO|OO",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OO|OOs",
                                    const_cast<char **>(kwlist),
                                    &List_Field,
                                    &List_Sigma,
                                    &List_Rotations,
-                                   &List_Translation)) {
+                                   &List_Translation,
+                                   &Name)) {
     return NULL;
   }
 
@@ -1895,8 +2038,14 @@ static PyObject* OSCARSSR_AddElectricFieldGaussian (OSCARSSRObject* self, PyObje
     }
   }
 
+  // Name check
+  if (std::string(Name).size() > 0 && Name[0] == '_') {
+    PyErr_SetString(PyExc_ValueError, "'name' cannot begin with '_'.  This is reserved for internal use.  Please pick a different name");
+    return NULL;
+  }
+
   // Add field
-  self->obj->AddElectricField( (TField*) new TField3D_Gaussian(Field, Translation, Sigma, Rotations));
+  self->obj->AddElectricField( (TField*) new TField3D_Gaussian(Field, Translation, Sigma, Rotations, Name));
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -1910,7 +2059,7 @@ static PyObject* OSCARSSR_AddElectricFieldGaussian (OSCARSSRObject* self, PyObje
 
 
 const char* DOC_OSCARSSR_AddElectricFieldUniform = R"docstring(
-add_efield_uniform(efield, width [, rotations, translation])
+add_efield_uniform(efield [, width, rotations, translation, name])
 
 Add a uniform field in a given range or for all space.  The *efield* is given as a 3D vector representing the field magnitude and direction.  *width* is an optional parameters, if not present the field permeates all space.  If a component of the 3D list *width* is less than or equal to zero, that coordinate will be ignored when calculating the field.
 
@@ -1927,6 +2076,9 @@ rotations : list, optional
 
 translation : list, optional
     3-element list representing a translation in space [x, y, z]
+
+name : str
+    Name of this field
 
 Returns
 -------
@@ -1951,10 +2103,11 @@ static PyObject* OSCARSSR_AddElectricFieldUniform (OSCARSSRObject* self, PyObjec
   // Add a uniform field with a given width in a given direction, or for all space
 
   // Lists and vectors
-  PyObject* List_Field       = PyList_New(0);
-  PyObject* List_Translation = PyList_New(0);
-  PyObject* List_Rotations   = PyList_New(0);
-  PyObject* List_Width       = PyList_New(0);
+  PyObject*   List_Field       = PyList_New(0);
+  PyObject*   List_Translation = PyList_New(0);
+  PyObject*   List_Rotations   = PyList_New(0);
+  PyObject*   List_Width       = PyList_New(0);
+  char const* Name             = "";
 
   TVector3D Field(0, 0, 0);
   TVector3D Width (0, 0, 0);
@@ -1967,14 +2120,17 @@ static PyObject* OSCARSSR_AddElectricFieldUniform (OSCARSSRObject* self, PyObjec
                                  "width",
                                  "rotations",
                                  "translation",
+                                 "name",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOO",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOOs",
                                    const_cast<char **>(kwlist),
                                    &List_Field,
                                    &List_Width,
                                    &List_Rotations,
-                                   &List_Translation)) {
+                                   &List_Translation,
+                                   &Name
+                                   )) {
     return NULL;
   }
 
@@ -2017,8 +2173,14 @@ static PyObject* OSCARSSR_AddElectricFieldUniform (OSCARSSRObject* self, PyObjec
     }
   }
 
+  // Name check
+  if (std::string(Name).size() > 0 && Name[0] == '_') {
+    PyErr_SetString(PyExc_ValueError, "'name' cannot begin with '_'.  This is reserved for internal use.  Please pick a different name");
+    return NULL;
+  }
+
   // Add the field
-  self->obj->AddElectricField((TField*) new TField3D_UniformBox(Field, Width, Translation, Rotations));
+  self->obj->AddElectricField((TField*) new TField3D_UniformBox(Field, Width, Translation, Rotations, Name));
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -2062,6 +2224,9 @@ translation : list, optional
 taper : float
     The fractional change of the efield per meter along the magnetic axis
 
+name : str
+    Name of this field
+
 Returns
 -------
 None
@@ -2077,12 +2242,14 @@ static PyObject* OSCARSSR_AddElectricFieldIdealUndulator (OSCARSSRObject* self, 
   // Add an electric field undulator to OSCARSSR
 
   // Lists and variables
-  PyObject* List_Field       = PyList_New(0);
-  PyObject* List_Period      = PyList_New(0);
-  PyObject* List_Rotations   = PyList_New(0);
-  PyObject* List_Translation = PyList_New(0);
-  int       NPeriods = 0;
-  double    Phase = 0;
+  PyObject*   List_Field       = PyList_New(0);
+  PyObject*   List_Period      = PyList_New(0);
+  PyObject*   List_Rotations   = PyList_New(0);
+  PyObject*   List_Translation = PyList_New(0);
+  int         NPeriods         = 0;
+  double      Phase            = 0;
+  double      Taper            = 0;
+  char const* Name             = "";
 
   TVector3D Field(0, 0, 0);
   TVector3D Period(0, 0, 0);
@@ -2096,16 +2263,21 @@ static PyObject* OSCARSSR_AddElectricFieldIdealUndulator (OSCARSSRObject* self, 
                                  "phase",
                                  "rotations",
                                  "translation",
+                                 "taper",
+                                 "name",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOi|dOO",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOi|dOOds",
                                    const_cast<char **>(kwlist),
                                    &List_Field,
                                    &List_Period,
                                    &NPeriods,
                                    &Phase,
                                    &List_Rotations,
-                                   &List_Translation)) {
+                                   &List_Translation,
+                                   &Taper,
+                                   &Name
+                                   )) {
     return NULL;
   }
 
@@ -2114,7 +2286,7 @@ static PyObject* OSCARSSR_AddElectricFieldIdealUndulator (OSCARSSRObject* self, 
   try {
     Field = OSCARSPY::ListAsTVector3D(List_Field);
   } catch (std::length_error e) {
-    PyErr_SetString(PyExc_ValueError, "Incorrect format in 'efield'");
+    PyErr_SetString(PyExc_ValueError, "Incorrect format in 'bfield'");
     return NULL;
   }
 
@@ -2146,6 +2318,12 @@ static PyObject* OSCARSSR_AddElectricFieldIdealUndulator (OSCARSSRObject* self, 
     }
   }
 
+  // Name check
+  if (std::string(Name).size() > 0 && Name[0] == '_') {
+    PyErr_SetString(PyExc_ValueError, "'name' cannot begin with '_'.  This is reserved for internal use.  Please pick a different name");
+    return NULL;
+  }
+
 
   // Rotate field and sigma
   // UPDATE: check this
@@ -2154,7 +2332,7 @@ static PyObject* OSCARSSR_AddElectricFieldIdealUndulator (OSCARSSRObject* self, 
 
 
   // Add field
-  self->obj->AddElectricField( (TField*) new TField3D_IdealUndulator(Field, Period, NPeriods, Translation, Phase));
+  self->obj->AddElectricField( (TField*) new TField3D_IdealUndulator(Field, Period, NPeriods, Translation, Phase, Taper, Name));
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -2163,6 +2341,54 @@ static PyObject* OSCARSSR_AddElectricFieldIdealUndulator (OSCARSSRObject* self, 
 
 
 
+
+
+
+
+const char* DOC_OSCARSSR_RemoveElectricField = R"docstring(
+remove_efield(name)
+
+Remove all fields with the given name
+
+Parameters
+----------
+name : str
+    Name of field to remove
+
+Returns
+-------
+None
+)docstring";
+static PyObject* OSCARSSR_RemoveElectricField (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
+{
+  // Remove magnetic field
+
+  char const* Name             = "";
+
+  // Input variables and parsing
+  static const char *kwlist[] = {"name",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char **>(kwlist),
+                                   &Name
+                                   )) {
+    return NULL;
+  }
+
+  // Name check
+  if (std::string(Name).size() > 0 && Name[0] == '_') {
+    PyErr_SetString(PyExc_ValueError, "'name' cannot begin with '_'.  This is reserved for internal use.  Please pick a different name");
+    return NULL;
+  }
+
+  // Remove fields with name name
+  self->obj->RemoveElectricField(Name);
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
 
 
 
@@ -5589,6 +5815,7 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   {"add_bfield_uniform",                (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldUniform},
   {"add_bfield_undulator",              (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldIdealUndulator},
   {"add_bfield_quadrupole",             (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldQuadrupole},
+  {"remove_bfield",                     (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_RemoveMagneticField},
   {"get_bfield",                        (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetBField},
   {"clear_bfields",                     (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_ClearMagneticFields},
   {"print_bfields",                     (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_PrintMagneticFields},
@@ -5599,6 +5826,7 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   {"add_efield_gaussian",               (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldGaussian},
   {"add_efield_uniform",                (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldUniform},
   {"add_efield_undulator",              (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldIdealUndulator},
+  {"remove_efield",                     (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_RemoveElectricField},
   {"get_efield",                        (PyCFunction) OSCARSSR_Fake, METH_VARARGS,                 DOC_OSCARSSR_GetEField},
   {"clear_efields",                     (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_ClearElectricFields},
   {"print_efields",                     (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_PrintElectricFields},
@@ -5679,6 +5907,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"add_bfield_uniform",                (PyCFunction) OSCARSSR_AddMagneticFieldUniform,         METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldUniform},
   {"add_bfield_undulator",              (PyCFunction) OSCARSSR_AddMagneticFieldIdealUndulator,  METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldIdealUndulator},
   {"add_bfield_quadrupole",             (PyCFunction) OSCARSSR_AddMagneticFieldQuadrupole,      METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldQuadrupole},
+  {"remove_bfield",                     (PyCFunction) OSCARSSR_RemoveMagneticField,             METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_RemoveMagneticField},
   {"get_bfield",                        (PyCFunction) OSCARSSR_GetBField,                       METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetBField},
   {"clear_bfields",                     (PyCFunction) OSCARSSR_ClearMagneticFields,             METH_NOARGS,                  DOC_OSCARSSR_ClearMagneticFields},
   {"print_bfields",                     (PyCFunction) OSCARSSR_PrintMagneticFields,             METH_NOARGS,                  DOC_OSCARSSR_PrintMagneticFields},
@@ -5689,6 +5918,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"add_efield_gaussian",               (PyCFunction) OSCARSSR_AddElectricFieldGaussian,        METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldGaussian},
   {"add_efield_uniform",                (PyCFunction) OSCARSSR_AddElectricFieldUniform,         METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldUniform},
   {"add_efield_undulator",              (PyCFunction) OSCARSSR_AddElectricFieldIdealUndulator,  METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldIdealUndulator},
+  {"remove_efield",                     (PyCFunction) OSCARSSR_RemoveElectricField,             METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_RemoveElectricField},
   {"get_efield",                        (PyCFunction) OSCARSSR_GetEField,                       METH_VARARGS,                 DOC_OSCARSSR_GetEField},
   {"clear_efields",                     (PyCFunction) OSCARSSR_ClearElectricFields,             METH_NOARGS,                  DOC_OSCARSSR_ClearElectricFields},
   {"print_efields",                     (PyCFunction) OSCARSSR_PrintElectricFields,             METH_NOARGS,                  DOC_OSCARSSR_PrintElectricFields},

@@ -21,12 +21,14 @@ class TField3D_Grid : public TField
 {
 
   public:
-    TField3D_Grid ();
+    TField3D_Grid (std::string const& Name = "");
+
     TField3D_Grid (std::string         const& InFileName,
                    std::string         const& FileFormat = "OSCARS",
                    TVector3D           const& Rotations = TVector3D(0, 0, 0),
                    TVector3D           const& Translation = TVector3D(0, 0, 0),
                    std::vector<double> const& Scaling = std::vector<double>(),
+                   std::string         const& Name = "",
                    char                const  CommentChar = '#');
 
     TField3D_Grid (std::vector<std::pair<double, std::string> > Mapping,
@@ -35,6 +37,7 @@ class TField3D_Grid : public TField
                    TVector3D                             const& Rotations = TVector3D(0, 0, 0),
                    TVector3D                             const& Translation = TVector3D(0, 0, 0),
                    std::vector<double>                   const& Scaling = std::vector<double>(),
+                   std::string                           const& Name = "",
                    char                                  const  CommentChar = '#');
 
     ~TField3D_Grid ();
@@ -183,12 +186,13 @@ inline std::ostream& operator << (std::ostream& os, TField3D_Grid const& o)
 {
   // For easy printing
   os << "TField3D_Grid " << "\n"
+     << "Name          " << o.GetName()   << "\n"
      << "XRange        " << o.GetXRange() << "\n"
      << "YRange        " << o.GetYRange() << "\n"
      << "ZRange        " << o.GetZRange() << "\n"
-     << "XStep         " << o.GetXStep() << "\n"
-     << "YStep         " << o.GetYStep() << "\n"
-     << "ZStep         " << o.GetZStep() << "\n";
+     << "XStep         " << o.GetXStep()  << "\n"
+     << "YStep         " << o.GetYStep()  << "\n"
+     << "ZStep         " << o.GetZStep()  << "\n";
 
   return os;
 }

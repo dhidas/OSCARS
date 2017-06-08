@@ -14,11 +14,14 @@
 class TField3D_Gaussian : public TField
 {
   public:
-    TField3D_Gaussian ();
+    TField3D_Gaussian (std::string const Name = "");
+
     TField3D_Gaussian (TVector3D const& PeakField,
                        TVector3D const& Center,
                        TVector3D const& Sigma,
-                       TVector3D const& Rotations);
+                       TVector3D const& Rotations,
+                       std::string const& Name = "");
+
     ~TField3D_Gaussian ();
 
     double    GetFx (double const X, double const Y, double const Z) const;
@@ -55,6 +58,7 @@ inline std::ostream& operator << (std::ostream& os, TField3D_Gaussian const& o)
 {
   // For easy printing
   os << "Gaussian  " << "\n"
+     << "Name      " << o.GetName() << "\n"
      << "Peak      " << o.GetPeakField() << "\n"
      << "Center    " << o.GetCenter() << "\n"
      << "Sigma     " << o.GetSigma() << "\n"

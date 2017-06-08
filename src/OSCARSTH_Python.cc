@@ -858,7 +858,7 @@ static PyObject* OSCARSTH_UndulatorFluxOnAxis (OSCARSTHObject* self, PyObject* a
 
 
 
-const char* DOC_OSCARSTH_UndulatorBrightness2 = R"docstring(
+const char* DOC_OSCARSTH_UndulatorBrightness = R"docstring(
 undulator_brightness(period, nperiods, harmonic, [, bfield_range, K_range, npoints, bfield_points, K_points, minimum, ofile, bofile])
 
 Get the brightness for an ideal undulator given K for a specific harmonic.  Should specify either K or bfield, but not both.  You must have previously defined a beam, including the beta and emittance values.
@@ -913,7 +913,7 @@ Get the photon energy and flux for a undulator with a period of 0.050 [m] having
 
     >>> oth.undulator_flux_onaxis(period=0.050, nperiods=41, harmonic=1, K=1.8674577)
 )docstring";
-static PyObject* OSCARSTH_UndulatorBrightness2 (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
+static PyObject* OSCARSTH_UndulatorBrightness (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {
   // Return a list of points corresponding to the brightness.
 
@@ -1089,123 +1089,6 @@ static PyObject* OSCARSTH_UndulatorBrightness2 (OSCARSTHObject* self, PyObject* 
   // Return the spectrum
   return OSCARSPY::GetSpectrumAsList(SpectrumContainer);
 }
-
-
-
-
-
-const char* DOC_OSCARSTH_UndulatorBrightness = R"docstring(
-undulator_brightness(period, nperiods, harmonic [, K, bfield])
-
-Calculate undulator brightness.  You should either specify K or bfield, but not both.  You must have alreay setup a beam with the emittance and beta function values.
-
-Parameters
-----------
-period : float
-    Undulator period length [m]
-
-nperiods : int
-    Number of periods
-
-harmonic : int
-    Harmonic number of interest
-
-K : float
-    Undulator deflection parameter
-
-bfield : float
-    Magnetic field of interest [T]
-
-Returns
--------
-[energy_eV, brightness] : list[float, float]
-    Photon energy [eV] and brightness [photons/s/0.1%bw/mm^2/mrad^2] for the given parameters
-
-Examples
---------
-Get the photon energy and brightness for a undulator with a period of 0.050 [m] having 41 periods and a field of 0.4 [T] from the 1st harmonic
-
-    >>> oth.undulator_brightness(period=0.050, nperiods=41, harmonic=1, bfield=0.4)
-
-Get the photon energy and brightness for a undulator with a period of 0.050 [m] having 41 periods and K value of 1.8674577 from the 1st harmonic
-
-    >>> oth.undulator_brightness(period=0.050, nperiods=41, harmonic=1, K=1.8674577)
-)docstring";
-static PyObject* OSCARSTH_UndulatorBrightness (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
-{
-  // Return the brightness [gamma/s/mrad^2/mm^2/0.1%bw] at a given K for a given harmonic
-
-  // Require some arguments
-  double Period   = 0;
-  int    NPeriods = 0;
-  int    Harmonic = 0;
-  double K        = 0;
-  double BField   = 0;
-
-  // Input variables and parsing
-  static const char *kwlist[] = {"period",
-                                 "nperiods",
-                                 "harmonic",
-                                 "K",
-                                 "bfield",
-                                 NULL};
-
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dii|dd",
-                                   const_cast<char **>(kwlist),
-                                   &Period,
-                                   &NPeriods,
-                                   &Harmonic,
-                                   &K,
-                                   &BField
-                                   )) {
-    return NULL;
-  }
-
-
-  // Check that bfield is > 0 or K > 0
-  if (BField <= 0 && K <= 0) {
-    PyErr_SetString(PyExc_ValueError, "'bfield' or 'K' must be > 0");
-    return NULL;
-  }
-
-  // Check that bfield and K not both defined
-  if (BField > 0 && K > 0) {
-    PyErr_SetString(PyExc_ValueError, "use 'bfield' or 'K' but not both");
-    return NULL;
-  }
-
-
-  // Check period and nperiods
-  if (Period <= 0 || NPeriods <= 0) {
-    PyErr_SetString(PyExc_ValueError, "'period' and 'nperiods' must be > 0");
-    return NULL;
-  }
-
-  // Check that photon energy is > 0
-  if (Harmonic <= 0) {
-    PyErr_SetString(PyExc_ValueError, "'harmonic' must be > 0");
-    return NULL;
-  }
-
-
-  TVector2D Result;
-
-  if (K > 0) {
-    Result = self->obj->UndulatorBrightnessK(K, Period, NPeriods, Harmonic);
-  } else if (BField > 0) {
-    Result = self->obj->UndulatorBrightnessB(BField, Period, NPeriods, Harmonic);
-  } else {
-    PyErr_SetString(PyExc_ValueError, "not B nor K.  please report this bug");
-    return NULL;
-  }
-
-
-  return OSCARSPY::TVector2DAsList(Result);
-}
-
-
-
-
 
 
 
@@ -1758,7 +1641,7 @@ static PyMethodDef OSCARSTH_methods[] = {
   //{"dipole_brightness",                          (PyCFunction) OSCARSTH_DipoleBrightness,                        METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleBrightness},
 
   {"undulator_flux_onaxis",                      (PyCFunction) OSCARSTH_UndulatorFluxOnAxis,                     METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorFluxOnAxis},
-  {"undulator_brightness",                       (PyCFunction) OSCARSTH_UndulatorBrightness2,                     METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorBrightness2},
+  {"undulator_brightness",                       (PyCFunction) OSCARSTH_UndulatorBrightness,                     METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorBrightness},
   {"undulator_energy_harmonic",                  (PyCFunction) OSCARSTH_UndulatorEnergyHarmonic,                 METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorEnergyHarmonic},
 
   {"bessel_j",                                   (PyCFunction) OSCARSTH_BesselJ,                                 METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_BesselJ},

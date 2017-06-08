@@ -16,11 +16,16 @@
 class TField3D_UniformBox : public TField
 {
   public:
-    TField3D_UniformBox (double const Fx, double const Fy, double const Fz);
-    TField3D_UniformBox (TVector3D const& Field,
-                         TVector3D const& Width = TVector3D(0, 0, 0),
-                         TVector3D const& Center = TVector3D(0, 0, 0),
-                         TVector3D const& Rotations = TVector3D(0, 0, 0));
+    TField3D_UniformBox (double      const  Fx,
+                         double      const  Fy,
+                         double      const  Fz,
+                         std::string const& Name);
+
+    TField3D_UniformBox (TVector3D   const& Field,
+                         TVector3D   const& Width = TVector3D(0, 0, 0),
+                         TVector3D   const& Center = TVector3D(0, 0, 0),
+                         TVector3D   const& Rotations = TVector3D(0, 0, 0),
+                         std::string const& Name = "");
 
     ~TField3D_UniformBox ();
 
@@ -56,6 +61,7 @@ inline std::ostream& operator << (std::ostream& os, TField3D_UniformBox const& o
 {
   // For easy printing
   os << "TField3D_UniformBox " << "\n"
+     << "Name                " << o.GetName() << "\n"
      << "Field               " << o.GetField() << "\n"
      << "Width               " << o.GetWidth() << "\n"
      << "Rotations           " << o.GetRotated() << "\n"

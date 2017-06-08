@@ -26,6 +26,7 @@ class TFieldContainer
     ~TFieldContainer ();
 
     void AddField (TField*);
+    void RemoveField (std::string const& Name);
 
     double    GetFx (double const, double const, double const) const;
     double    GetFy (double const, double const, double const) const;

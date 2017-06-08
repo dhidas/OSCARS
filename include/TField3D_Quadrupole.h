@@ -14,11 +14,13 @@
 class TField3D_Quadrupole : public TField
 {
   public:
-    TField3D_Quadrupole ();
+    TField3D_Quadrupole (std::string const& Name);
+
     TField3D_Quadrupole (double const K,
                          double const Width,
                          TVector3D const& Rotations,
-                         TVector3D const& Translation);
+                         TVector3D const& Translation,
+                         std::string const& Name);
 
     ~TField3D_Quadrupole ();
 
@@ -50,11 +52,12 @@ class TField3D_Quadrupole : public TField
 inline std::ostream& operator << (std::ostream& os, TField3D_Quadrupole const& o)
 {
   // For easy printing
-  os << "Quadrupole  " << "\n"
-     << "K           " << o.GetK() << "\n"
-     << "Width       " << o.GetWidth() << "\n"
-     << "Rotations   " << o.GetRotations() << "\n"
-     << "Translation " << o.GetTranslation() << "\n";
+  os << "TField3D_Quadrupole " << "\n"
+     << "Name                " << o.GetName() << "\n"
+     << "K                   " << o.GetK() << "\n"
+     << "Width               " << o.GetWidth() << "\n"
+     << "Rotations           " << o.GetRotations() << "\n"
+     << "Translation         " << o.GetTranslation() << "\n";
 
   return os;
 }

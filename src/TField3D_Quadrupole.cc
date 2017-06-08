@@ -2,9 +2,12 @@
 
 #include <cmath>
 
-TField3D_Quadrupole::TField3D_Quadrupole ()
+TField3D_Quadrupole::TField3D_Quadrupole (std::string const& Name = "")
 {
   // Default constructor
+
+  // Set Name
+  this->SetName(Name);
 }
 
 
@@ -13,8 +16,12 @@ TField3D_Quadrupole::TField3D_Quadrupole ()
 TField3D_Quadrupole::TField3D_Quadrupole (double const K,
                                           double const Width,
                                           TVector3D const& Rotations,
-                                          TVector3D const& Translation) {
+                                          TVector3D const& Translation,
+                                          std::string const& Name = "") {
   // Constructor
+
+  // Set Name
+  this->SetName(Name);
 
   fK = K;
   fWidth = Width;

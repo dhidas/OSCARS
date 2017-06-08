@@ -11,9 +11,12 @@
 
 #include <cmath>
 
-TField3D_Gaussian::TField3D_Gaussian ()
+TField3D_Gaussian::TField3D_Gaussian (std::string const Name)
 {
   // Constructor
+
+  // Set the name
+  this->SetName(Name);
 }
 
 
@@ -21,9 +24,13 @@ TField3D_Gaussian::TField3D_Gaussian ()
 TField3D_Gaussian::TField3D_Gaussian (TVector3D const& PeakField,
                                       TVector3D const& Center,
                                       TVector3D const& Sigma,
-                                      TVector3D const& Rotations)
+                                      TVector3D const& Rotations,
+                                      std::string const& Name)
 {
   // Constructor you should use.. just a suggestion...
+
+  // Set the name
+  this->SetName(Name);
 
   fPeakField = PeakField;
   fPeakField.RotateSelfXYZ(Rotations);
