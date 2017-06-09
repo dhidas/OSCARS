@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-TField3D_Quadrupole::TField3D_Quadrupole (std::string const& Name = "")
+TField3D_Quadrupole::TField3D_Quadrupole (std::string const& Name)
 {
   // Default constructor
 

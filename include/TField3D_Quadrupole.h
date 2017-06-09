@@ -14,7 +14,7 @@
 class TField3D_Quadrupole : public TField
 {
   public:
-    TField3D_Quadrupole (std::string const& Name);
+    TField3D_Quadrupole (std::string const& Name = "");
 
     TField3D_Quadrupole (double const K,
                          double const Width,
