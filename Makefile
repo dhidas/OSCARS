@@ -2,7 +2,7 @@ NVCC = nvcc
 
 CUDAOBJS  = $(patsubst src/%.cu,lib/%.o,$(wildcard src/*.cu))
 
-CUDACFLAGS = -DCUDA -std=c++11 -shared --compiler-options '-fPIC'
+CUDACFLAGS = -DCUDA -cudart static -std=c++11 -shared --compiler-options '-fPIC'
 INCLUDE = -Iinclude
 
 all: $(CUDAOBJS)
