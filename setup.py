@@ -40,7 +40,7 @@ if sys.platform == "linux" or sys.platform == "linux2":
     extra_compile_args.append('-O3')
     extra_compile_args.append('-fPIC')
     extra_compile_args.append('-pthread')
-    library_dirs = ['/usr/local/cuda/lib64', '/lib64', '/usr/lib64'],
+    library_dirs = ['/usr/local/cuda/lib64', '/lib64', '/usr/lib64']
 elif sys.platform == 'darwin':
     extra_compile_args.append('-std=c++11')
     extra_compile_args.append('-O3')
@@ -50,7 +50,8 @@ elif sys.platform == 'darwin':
     if 'conda' not in sys.version:
         extra_compile_args.append('-mmacosx-version-min=10.9')
 elif sys.platform == 'win32':
-    pass
+    library_dirs = ['C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v8.0\\lib\\x64']
+    
 
 # Check for OSCARS gpu library
 if os.path.exists('lib/OSCARSSR_Cuda.o'):
@@ -59,6 +60,7 @@ if os.path.exists('lib/OSCARSSR_Cuda.o'):
     #libraries.append('cudart'),
     libraries.append('cudart_static')
     extra_objects.append('lib/OSCARSSR_Cuda.o')
+    extra_compile_args.append('/DCUDA')
 
 
 
