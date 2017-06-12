@@ -17,6 +17,7 @@
 #include "TVector2D.h"
 #include "TVector3D.h"
 #include "TSpectrumContainer.h"
+#include "T3DScalarContainer.h"
 
 
 
@@ -28,12 +29,15 @@ namespace OSCARSPY {
   char* GetVersionOfModule (std::string const&);
 
   PyObject* GetSpectrumAsList (TSpectrumContainer const& Spectrum);
+  TSpectrumContainer GetSpectrumFromList (PyObject* List);
 
   TVector2D ListAsTVector2D (PyObject* List);
   TVector3D ListAsTVector3D (PyObject* List);
 
   PyObject* TVector2DAsList (TVector2D const& V);
   PyObject* TVector3DAsList (TVector3D const& V);
+
+  T3DScalarContainer GetT3DScalarContainerFromList (PyObject* List);
 
 }
 

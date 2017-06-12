@@ -12,7 +12,6 @@
 
 #include "OSCARSPY.h"
 
-
 #include <stdexcept>
 
 namespace OSCARSPY {
@@ -94,6 +93,44 @@ PyObject* GetSpectrumAsList (TSpectrumContainer const& Spectrum)
 
 
 
+TSpectrumContainer GetSpectrumFromList (PyObject* List)
+{
+  // Take an input list in spectrum format and convert it to TSpectrumContainer object
+
+  // Increment reference for list
+  Py_INCREF(List);
+
+  // Get size of input list
+  int const NPoints = PyList_Size(List);
+  if (NPoints <= 0) {
+    throw;
+  }
+
+  TSpectrumContainer S;
+
+  for (int ip = 0; ip != NPoints; ++ip) {
+    PyObject* List_Point = PyList_GetItem(List, ip);
+    if (PyList_Size(List_Point) == 2) {
+      S.AddPoint(PyFloat_AsDouble(PyList_GetItem(List_Point, 0)), PyFloat_AsDouble(PyList_GetItem(List_Point, 1)));
+    } else {
+      throw;
+    }
+  }
+
+
+  // Increment reference for list
+  Py_DECREF(List);
+
+  // Return the object
+  return S;
+}
+
+
+
+
+
+
+
 TVector2D ListAsTVector2D (PyObject* List)
 {
   // Get a list as a TVector2D
@@ -167,6 +204,44 @@ PyObject* TVector3DAsList (TVector3D const& V)
 
   // Return the python list
   return PList;
+}
+
+
+
+
+
+
+
+T3DScalarContainer GetT3DScalarContainerFromList (PyObject* List)
+{
+  // Take an input list and convert it to T3DScalarContainer object
+
+  // Increment reference for list
+  Py_INCREF(List);
+
+  // Get size of input list
+  int const NPoints = PyList_Size(List);
+  if (NPoints <= 0) {
+    throw;
+  }
+
+  T3DScalarContainer F;
+
+  for (int ip = 0; ip != NPoints; ++ip) {
+    PyObject* List_Point = PyList_GetItem(List, ip);
+    if (PyList_Size(List_Point) == 2) {
+      F.AddPoint(OSCARSPY::ListAsTVector3D(PyList_GetItem(List_Point, 0)), PyFloat_AsDouble(PyList_GetItem(List_Point, 1)));
+    } else {
+      throw;
+    }
+  }
+
+
+  // Increment reference for list
+  Py_DECREF(List);
+
+  // Return the object
+  return F;
 }
 
 

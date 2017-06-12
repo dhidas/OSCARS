@@ -5281,7 +5281,7 @@ static PyObject* OSCARSSR_AddToSpectrum (OSCARSSRObject* self, PyObject* args, P
     PyErr_SetString(PyExc_ValueError, "No points in spectrum.");
     return NULL;
   }
-  TSpectrumContainer S = OSCARSSR_GetSpectrumFromList(List_Spectrum);
+  TSpectrumContainer S = OSCARSPY::GetSpectrumFromList(List_Spectrum);
 
   self->obj->AddToSpectrum(S, Weight);
 
@@ -5526,7 +5526,7 @@ static PyObject* OSCARSSR_AddToFlux (OSCARSSRObject* self, PyObject* args, PyObj
     PyErr_SetString(PyExc_ValueError, "No points in flux.");
     return NULL;
   }
-  T3DScalarContainer F = OSCARSSR_GetT3DScalarContainerFromList(List_Flux);
+  T3DScalarContainer F = OSCARSPY::GetT3DScalarContainerFromList(List_Flux);
 
   self->obj->AddToFlux(F, Weight);
 
@@ -5606,7 +5606,7 @@ static PyObject* OSCARSSR_AddToPowerDensity (OSCARSSRObject* self, PyObject* arg
     PyErr_SetString(PyExc_ValueError, "No points in flux.");
     return NULL;
   }
-  T3DScalarContainer F = OSCARSSR_GetT3DScalarContainerFromList(List_PowerDensity);
+  T3DScalarContainer F = OSCARSPY::GetT3DScalarContainerFromList(List_PowerDensity);
 
   self->obj->AddToPowerDensity(F, Weight);
 
@@ -6105,17 +6105,11 @@ PyMODINIT_FUNC PyInit_sr(void)
   Py_INCREF(&OSCARSSRType);
   PyModule_AddObject(m, "sr", (PyObject *)&OSCARSSRType);
 
-  std::string Version = "UNKNOWN";
-  try {
-    Version = OSCARSPY::GetVersionOfModule("oscars");
-  } catch (...) {
-  }
 
   // Print copyright notice
   PyObject* sys = PyImport_ImportModule( "sys");
   PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
   std::string Message = "OSCARS v" + OSCARSPY::GetVersionString() + " - Open Source Code for Advanced Radiation Simulation\nBrookhaven National Laboratory, Upton NY, USA\nhttp://oscars.bnl.gov\noscars@bnl.gov\n";
-  //std::string Message = "OSCARS v" + Version + " - Open Source Code for Advanced Radiation Simulation\nBrookhaven National Laboratory, Upton NY, USA\nhttp://oscars.bnl.gov\noscars@bnl.gov\n";
   PyObject_CallMethod(s_out, "write", "s", Message.c_str());
 
   return m;
@@ -6133,17 +6127,10 @@ PyMODINIT_FUNC initsr(OSCARSSRObject* self, PyObject* args, PyObject* kwds)
   Py_INCREF(&OSCARSSRType);
   PyModule_AddObject(m, "sr", (PyObject *)&OSCARSSRType);
 
-  std::string Version = "UNKNOWN";
-  try {
-    Version = OSCARSPY::GetVersionOfModule("oscars");
-  } catch (...) {
-  }
-
   // Print copyright notice
   PyObject* sys = PyImport_ImportModule( "sys");
   PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
   std::string Message = "OSCARS v" + OSCARSPY::GetVersionString() + " - Open Source Code for Advanced Radiation Simulation\nBrookhaven National Laboratory, Upton NY, USA\nhttp://oscars.bnl.gov\noscars@bnl.gov\n";
-  //std::string Message = "OSCARS v" + Version + " - Open Source Code for Advanced Radiation Simulation\nBrookhaven National Laboratory, Upton NY, USA\nhttp://oscars.bnl.gov\noscars@bnl.gov\n";
   PyObject_CallMethod(s_out, "write", "s", Message.c_str());
 
   return;
@@ -6188,86 +6175,6 @@ static PyObject* OSCARSSR_GetT3DScalarAsList (T3DScalarContainer const& C)
   // Return the python list
   return PList;
 }
-
-
-
-
-
-
-TSpectrumContainer OSCARSSR_GetSpectrumFromList (PyObject* List)
-{
-  // Take an input list in spectrum format and convert it to TSpectrumContainer object
-
-  // Increment reference for list
-  Py_INCREF(List);
-
-  // Get size of input list
-  int const NPoints = PyList_Size(List);
-  if (NPoints <= 0) {
-    throw;
-  }
-
-  TSpectrumContainer S;
-
-  for (int ip = 0; ip != NPoints; ++ip) {
-    PyObject* List_Point = PyList_GetItem(List, ip);
-    if (PyList_Size(List_Point) == 2) {
-      S.AddPoint(PyFloat_AsDouble(PyList_GetItem(List_Point, 0)), PyFloat_AsDouble(PyList_GetItem(List_Point, 1)));
-    } else {
-      throw;
-    }
-  }
-
-
-  // Increment reference for list
-  Py_DECREF(List);
-
-  // Return the object
-  return S;
-}
-
-
-
-
-
-
-
-T3DScalarContainer OSCARSSR_GetT3DScalarContainerFromList (PyObject* List)
-{
-  // Take an input list and convert it to T3DScalarContainer object
-
-  // Increment reference for list
-  Py_INCREF(List);
-
-  // Get size of input list
-  int const NPoints = PyList_Size(List);
-  if (NPoints <= 0) {
-    throw;
-  }
-
-  T3DScalarContainer F;
-
-  for (int ip = 0; ip != NPoints; ++ip) {
-    PyObject* List_Point = PyList_GetItem(List, ip);
-    if (PyList_Size(List_Point) == 2) {
-      F.AddPoint(OSCARSPY::ListAsTVector3D(PyList_GetItem(List_Point, 0)), PyFloat_AsDouble(PyList_GetItem(List_Point, 1)));
-    } else {
-      throw;
-    }
-  }
-
-
-  // Increment reference for list
-  Py_DECREF(List);
-
-  // Return the object
-  return F;
-}
-
-
-
-
-
 
 
 
