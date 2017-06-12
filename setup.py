@@ -31,6 +31,7 @@ VERSION=v_major+'.'+v_minor+'.'+v_rev
 
 extra_compile_args=['-std=c++11', '-O3', '-fPIC', '-pthread']
 extra_objects=[]
+library_dirs=[]
 libraries=[]
 
 # Check distribution for flags and libs
