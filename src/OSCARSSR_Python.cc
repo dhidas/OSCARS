@@ -6104,11 +6104,20 @@ PyMODINIT_FUNC PyInit_sr(void)
   }
   Py_INCREF(&OSCARSSRType);
   PyModule_AddObject(m, "sr", (PyObject *)&OSCARSSRType);
+
+  std::string Version = "UNKNOWN";
+  try {
+    Version = OSCARSPY::GetVersionOfModule("oscars");
+  } catch (...) {
+  }
+
   // Print copyright notice
   PyObject* sys = PyImport_ImportModule( "sys");
   PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
-  std::string Message = "OSCARS v" + OSCARS::GetVersionString() + " - Open Source Code for Advanced Radiation Simulation\nBrookhaven National Laboratory, Upton NY, USA\nhttp://oscars.bnl.gov\noscars@bnl.gov\n";
+  std::string Message = "OSCARS v" + OSCARSPY::GetVersionString() + " - Open Source Code for Advanced Radiation Simulation\nBrookhaven National Laboratory, Upton NY, USA\nhttp://oscars.bnl.gov\noscars@bnl.gov\n";
+  //std::string Message = "OSCARS v" + Version + " - Open Source Code for Advanced Radiation Simulation\nBrookhaven National Laboratory, Upton NY, USA\nhttp://oscars.bnl.gov\noscars@bnl.gov\n";
   PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+
   return m;
 }
 #else
@@ -6123,11 +6132,20 @@ PyMODINIT_FUNC initsr(OSCARSSRObject* self, PyObject* args, PyObject* kwds)
   }
   Py_INCREF(&OSCARSSRType);
   PyModule_AddObject(m, "sr", (PyObject *)&OSCARSSRType);
+
+  std::string Version = "UNKNOWN";
+  try {
+    Version = OSCARSPY::GetVersionOfModule("oscars");
+  } catch (...) {
+  }
+
   // Print copyright notice
   PyObject* sys = PyImport_ImportModule( "sys");
   PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
-  std::string Message = "OSCARS v" + OSCARS::GetVersionString() + " - Open Source Code for Advanced Radiation Simulation\nBrookhaven National Laboratory, Upton NY, USA\nhttp://oscars.bnl.gov\noscars@bnl.gov\n";
+  std::string Message = "OSCARS v" + OSCARSPY::GetVersionString() + " - Open Source Code for Advanced Radiation Simulation\nBrookhaven National Laboratory, Upton NY, USA\nhttp://oscars.bnl.gov\noscars@bnl.gov\n";
+  //std::string Message = "OSCARS v" + Version + " - Open Source Code for Advanced Radiation Simulation\nBrookhaven National Laboratory, Upton NY, USA\nhttp://oscars.bnl.gov\noscars@bnl.gov\n";
   PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+
   return;
 }
 #endif

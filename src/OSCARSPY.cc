@@ -17,6 +17,20 @@
 
 namespace OSCARSPY {
 
+std::string GetVersionString ()
+{
+  // Get the version string based off of the compiler defines
+  char ver[200];
+  if (OSCARS_RELEASE == NULL) {
+    sprintf(ver, "%i.%i.%i", OSCARS_VMAJOR, OSCARS_VMINOR, OSCARS_REVISION);
+  } else {
+    sprintf(ver, "%i.%i.%i.%s", OSCARS_VMAJOR, OSCARS_VMINOR, OSCARS_REVISION, OSCARS_RELEASE);
+  }
+  return std::string(ver);
+}
+
+
+
 
 char* GetAsString (PyObject* S)
 {
@@ -27,6 +41,26 @@ char* GetAsString (PyObject* S)
   #else
   return PyString_AsString(S);
   #endif
+}
+
+
+
+char* GetVersionOfModule (std::string const& ModuleName)
+{
+  PyObject* pkg_resources = PyImport_ImportModule("pkg_resources");
+  if (pkg_resources == NULL) {
+    throw std::invalid_argument("cannot import pkg_resources");
+  }
+  PyObject* dist = PyObject_CallMethod(pkg_resources, "get_distribution", "s", ModuleName.c_str());
+  if (dist == NULL) {
+    throw std::invalid_argument("cannot call get_distribution with this argument");
+  }
+  PyObject* ver = PyObject_GetAttrString(dist, "version");
+  if (ver == NULL) {
+    throw std::invalid_argument("cannot find version");
+  }
+
+  return GetAsString(ver);
 }
 
 

@@ -34,7 +34,7 @@ moduleOSCARSSR = Extension('oscars.sr',
                                  'src/TField3D_Quadrupole.cc',
                                  'src/TOMATH.cc',
                                  'src/OSCARSPY.cc'],
-                      extra_compile_args=['-std=c++11', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread'],
+                      extra_compile_args=['-std=c++11', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread', '-mmacosx-version-min=10.9'],
                      )
 
 
@@ -66,7 +66,7 @@ moduleOSCARSTH = Extension('oscars.th',
                                  'src/TField3D_Quadrupole.cc',
                                  'src/TOMATH.cc',
                                  'src/OSCARSPY.cc'],
-                      extra_compile_args=['-std=c++11', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread'],
+                      extra_compile_args=['-std=c++11', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread', '-mmacosx-version-min=10.9'],
                      )
 
 
@@ -74,7 +74,7 @@ moduleOSCARSTH = Extension('oscars.th',
 
 setup(
   name="oscars",
-  version="1.37.1.dev0",
+  version="1.36.13",
   description = 'Open Source Code for Advanced Radiation Simulation',
   author = 'Dean Andrew Hidas',
   author_email = 'dhidas@bnl.gov',

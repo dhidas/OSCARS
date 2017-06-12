@@ -1,10 +1,32 @@
 import os
+#from distutils.core import setup, Extension
 from setuptools import setup, Extension
+
+# Get Version numbering from Version.h
+v_major = ''
+v_minor = ''
+v_rev = ''
+v_rel = ''
+with open('include/Version.h', 'r') as f:
+    for l in f:
+        if "OSCARS_VMAJOR" in l:
+            s = l.split()
+            v_major = s[-1]
+        elif "OSCARS_VMINOR" in l:
+            s = l.split()
+            v_minor = s[-1]
+        elif "OSCARS_REVISION" in l:
+            s = l.split()
+            v_rev = s[-1]
+        elif "OSCARS_RELEASE" in l:
+            s = l.split()
+            if s[-1] != 'NULL':
+                v_rev = v_rev + '.' + s[-1].strip('"')
+
+VERSION=v_major+'.'+v_minor+'.'+v_rev
 
 os.environ["CC"] = "g++"
 os.environ["CXX"] = "g++"
-
-
 
 moduleOSCARSSR = Extension('oscars.sr',
                       include_dirs = ['include'],
@@ -34,7 +56,11 @@ moduleOSCARSSR = Extension('oscars.sr',
                                  'src/TField3D_Quadrupole.cc',
                                  'src/TOMATH.cc',
                                  'src/OSCARSPY.cc'],
-                      extra_compile_args=['-std=c++11', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread'],
+                      extra_compile_args=['-DCUDA', '-std=c++11', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread', '-mmacosx-version-min=10.9'],
+                      #libraries = ['cuda', 'cudart'],
+                      libraries = ['cudart_static'],
+                      library_dirs = ['/usr/local/cuda/lib64', '/lib64', '/usr/lib64', '/usr/local/cuda/lib'],
+                      extra_objects = ['lib/OSCARSSR_Cuda.o']
                      )
 
 
@@ -66,7 +92,10 @@ moduleOSCARSTH = Extension('oscars.th',
                                  'src/TField3D_Quadrupole.cc',
                                  'src/TOMATH.cc',
                                  'src/OSCARSPY.cc'],
-                      extra_compile_args=['-std=c++11', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread'],
+                      extra_compile_args=['-DCUDA', '-std=c++11', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread', '-mmacosx-version-min=10.9'],
+                      #libraries = ['cuda', 'cudart'],
+                      #library_dirs = ['/usr/local/cuda/lib64', '/lib64', '/usr/lib64', '/usr/local/cuda/lib'],
+                      #extra_objects = ['']
                      )
 
 
@@ -74,7 +103,7 @@ moduleOSCARSTH = Extension('oscars.th',
 
 setup(
   name="oscars",
-  version="1.37.1.dev0",
+  version=VERSION,
   description = 'Open Source Code for Advanced Radiation Simulation',
   author = 'Dean Andrew Hidas',
   author_email = 'dhidas@bnl.gov',
@@ -85,6 +114,5 @@ setup(
   data_files=[('oscars', ['LICENSE.txt', 'COPYRIGHT.txt'])],
   package_data = {'' : ['LICENSE.txt']},
   package_dir = {'oscars': 'python'},
-  py_modules = ['oscars.plots_mpl', 'oscars.plots3d_mpl', 'oscars.parametric_surfaces'],
-  #install_requires=['gcc>=4']
+  py_modules = ['oscars.plots_mpl', 'oscars.plots3d_mpl', 'oscars.parametric_surfaces']
 )

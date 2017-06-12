@@ -13,6 +13,7 @@
 
 #include <Python.h>
 
+#include "Version.h"
 #include "TVector2D.h"
 #include "TVector3D.h"
 #include "TSpectrumContainer.h"
@@ -21,8 +22,10 @@
 
 namespace OSCARSPY {
 
+  std::string GetVersionString ();
 
   char* GetAsString (PyObject* S);
+  char* GetVersionOfModule (std::string const&);
 
   PyObject* GetSpectrumAsList (TSpectrumContainer const& Spectrum);
 
