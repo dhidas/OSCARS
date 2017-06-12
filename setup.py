@@ -29,15 +29,23 @@ VERSION=v_major+'.'+v_minor+'.'+v_rev
 #os.environ["CXX"] = "g++"
 
 
-extra_compile_args=['-std=c++11', '-O3', '-fPIC', '-pthread']
+extra_compile_args=[]
 extra_objects=[]
 library_dirs=[]
 libraries=[]
 
 # Check distribution for flags and libs
 if sys.platform == "linux" or sys.platform == "linux2":
+    extra_compile_args.append('-std=c++11')
+    extra_compile_args.append('-O3')
+    extra_compile_args.append('-fPIC')
+    extra_compile_args.append('-pthread')
     library_dirs = ['/usr/local/cuda/lib64', '/lib64', '/usr/lib64'],
 elif sys.platform == 'darwin':
+    extra_compile_args.append('-std=c++11')
+    extra_compile_args.append('-O3')
+    extra_compile_args.append('-fPIC')
+    extra_compile_args.append('-pthread')
     library_dirs = ['/usr/local/cuda/lib']
     if 'conda' not in sys.version:
         extra_compile_args.append('-mmacosx-version-min=10.9')
