@@ -1,8 +1,56 @@
 import os
+import sys
 from setuptools import setup, Extension
 
-os.environ["CC"] = "g++"
-os.environ["CXX"] = "g++"
+# Get Version numbering from Version.h
+v_major = ''
+v_minor = ''
+v_rev = ''
+v_rel = ''
+with open('include/Version.h', 'r') as f:
+    for l in f:
+        if "OSCARS_VMAJOR" in l:
+            s = l.split()
+            v_major = s[-1]
+        elif "OSCARS_VMINOR" in l:
+            s = l.split()
+            v_minor = s[-1]
+        elif "OSCARS_REVISION" in l:
+            s = l.split()
+            v_rev = s[-1]
+        elif "OSCARS_RELEASE" in l:
+            s = l.split()
+            if s[-1] != 'NULL':
+                v_rev = v_rev + '.' + s[-1].strip('"')
+
+VERSION=v_major+'.'+v_minor+'.'+v_rev
+
+#os.environ["CC"] = "g++"
+#os.environ["CXX"] = "g++"
+
+
+extra_compile_args=['-std=c++11', '-O3', '-fPIC', '-pthread']
+extra_objects=[]
+libraries=[]
+
+# Check distribution for flags and libs
+if sys.platform == "linux" or sys.platform == "linux2":
+    library_dirs = ['/usr/local/cuda/lib64', '/lib64', '/usr/lib64'],
+elif sys.platform == 'darwin':
+    library_dirs = ['/usr/local/cuda/lib']
+    if 'conda' not in sys.version:
+        extra_compile_args.append('-mmacosx-version-min=10.9')
+elif sys.platform == 'win32':
+    pass
+
+# Check for OSCARS gpu library
+if os.path.exists('lib/OSCARSSR_Cuda.o'):
+    extra_compile_args.append('-DCUDA')
+    #libraries.append('cuda')
+    #libraries.append('cudart'),
+    libraries.append('cudart_static')
+    extra_objects.append('lib/OSCARSSR_Cuda.o')
+
 
 
 
@@ -34,7 +82,10 @@ moduleOSCARSSR = Extension('oscars.sr',
                                  'src/TField3D_Quadrupole.cc',
                                  'src/TOMATH.cc',
                                  'src/OSCARSPY.cc'],
-                      extra_compile_args=['-std=c++11', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread'],
+                      extra_compile_args=extra_compile_args,
+                      libraries=libraries,
+                      library_dirs=library_dirs,
+                      extra_objects=extra_objects
                      )
 
 
@@ -66,7 +117,10 @@ moduleOSCARSTH = Extension('oscars.th',
                                  'src/TField3D_Quadrupole.cc',
                                  'src/TOMATH.cc',
                                  'src/OSCARSPY.cc'],
-                      extra_compile_args=['-std=c++11', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread'],
+                      extra_compile_args=extra_compile_args,
+                      #libraries=libraries,
+                      #library_dirs=library_dirs,
+                      #extra_objects=extra_objects
                      )
 
 
@@ -74,7 +128,7 @@ moduleOSCARSTH = Extension('oscars.th',
 
 setup(
   name="oscars",
-  version="1.37.1.dev0",
+  version=VERSION,
   description = 'Open Source Code for Advanced Radiation Simulation',
   author = 'Dean Andrew Hidas',
   author_email = 'dhidas@bnl.gov',
@@ -85,6 +139,5 @@ setup(
   data_files=[('oscars', ['LICENSE.txt', 'COPYRIGHT.txt'])],
   package_data = {'' : ['LICENSE.txt']},
   package_dir = {'oscars': 'python'},
-  py_modules = ['oscars.plots_mpl', 'oscars.plots3d_mpl', 'oscars.parametric_surfaces'],
-  #install_requires=['gcc>=4']
+  py_modules = ['oscars.plots_mpl', 'oscars.plots3d_mpl', 'oscars.parametric_surfaces']
 )

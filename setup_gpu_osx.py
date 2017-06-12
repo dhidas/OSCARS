@@ -1,5 +1,5 @@
 import os
-#from distutils.core import setup, Extension
+import sys
 from setuptools import setup, Extension
 
 # Get Version numbering from Version.h
@@ -25,8 +25,34 @@ with open('include/Version.h', 'r') as f:
 
 VERSION=v_major+'.'+v_minor+'.'+v_rev
 
-os.environ["CC"] = "g++"
-os.environ["CXX"] = "g++"
+#os.environ["CC"] = "g++"
+#os.environ["CXX"] = "g++"
+
+
+extra_compile_args=['-std=c++11', '-O3', '-fPIC', '-pthread']
+extra_objects=[]
+libraries=[]
+
+# Check distribution for flags and libs
+if sys.platform == "linux" or sys.platform == "linux2":
+    library_dirs = ['/usr/local/cuda/lib64', '/lib64', '/usr/lib64'],
+elif sys.platform == 'darwin':
+    library_dirs = ['/usr/local/cuda/lib']
+    if 'conda' not in sys.version:
+        extra_compile_args.append('-mmacosx-version-min=10.9')
+elif sys.platform == 'win32':
+    pass
+
+# Check for OSCARS gpu library
+if os.path.exists('lib/OSCARSSR_Cuda.o'):
+    extra_compile_args.append('-DCUDA')
+    #libraries.append('cuda')
+    #libraries.append('cudart'),
+    libraries.append('cudart_static')
+    extra_objects.append('lib/OSCARSSR_Cuda.o')
+
+
+
 
 moduleOSCARSSR = Extension('oscars.sr',
                       include_dirs = ['include'],
@@ -56,11 +82,10 @@ moduleOSCARSSR = Extension('oscars.sr',
                                  'src/TField3D_Quadrupole.cc',
                                  'src/TOMATH.cc',
                                  'src/OSCARSPY.cc'],
-                      extra_compile_args=['-DCUDA', '-std=c++11', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread', '-mmacosx-version-min=10.9'],
-                      #libraries = ['cuda', 'cudart'],
-                      libraries = ['cudart_static'],
-                      library_dirs = ['/usr/local/cuda/lib64', '/lib64', '/usr/lib64', '/usr/local/cuda/lib'],
-                      extra_objects = ['lib/OSCARSSR_Cuda.o']
+                      extra_compile_args=extra_compile_args,
+                      libraries=libraries,
+                      library_dirs=library_dirs,
+                      extra_objects=extra_objects
                      )
 
 
@@ -92,10 +117,10 @@ moduleOSCARSTH = Extension('oscars.th',
                                  'src/TField3D_Quadrupole.cc',
                                  'src/TOMATH.cc',
                                  'src/OSCARSPY.cc'],
-                      extra_compile_args=['-DCUDA', '-std=c++11', '-Wall', '-O3', '-pedantic', '-fPIC', '-pthread', '-mmacosx-version-min=10.9'],
-                      #libraries = ['cuda', 'cudart'],
-                      #library_dirs = ['/usr/local/cuda/lib64', '/lib64', '/usr/lib64', '/usr/local/cuda/lib'],
-                      #extra_objects = ['']
+                      extra_compile_args=extra_compile_args,
+                      #libraries=libraries,
+                      #library_dirs=library_dirs,
+                      #extra_objects=extra_objects
                      )
 
 
