@@ -70,8 +70,11 @@ class T3DScalarContainer
 
     T3DScalar const& GetPoint (size_t const) const;
 
-    void WriteToFileText (std::string const&, int const);
-    void WriteToFileBinary (std::string const&, int const);
+    void WriteToFileText (std::string const& OutFileName,
+                          int const Dimension);
+
+    void WriteToFileBinary (std::string const& OutFileName,
+                            int const Dimension);
 
   private:
     std::vector<T3DScalar> fValues;
