@@ -337,7 +337,8 @@ void T3DScalarContainer::AverageFromFilesBinary (std::vector<std::string> const&
 
 
 
-void T3DScalarContainer::WriteToFileText (std::string const& OutFileName, int const Dimension)
+void T3DScalarContainer::WriteToFileText (std::string const& OutFileName,
+                                          int const Dimension)
 {
   // Write to file in text format
   // If writing to a file, open it and set to scientific output
@@ -366,7 +367,8 @@ void T3DScalarContainer::WriteToFileText (std::string const& OutFileName, int co
 }
 
 
-void T3DScalarContainer::WriteToFileBinary (std::string const& OutFileName, int const Dimension)
+void T3DScalarContainer::WriteToFileBinary (std::string const& OutFileName,
+                                            int const Dimension)
 {
   // Write the data in simple binary format.  I would like to use machine independent types for this eventually
 
