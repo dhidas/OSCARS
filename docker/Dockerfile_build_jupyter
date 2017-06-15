@@ -1,0 +1,22 @@
+# This file is intended to create a docker image for running jupyter notebook with oscars for distribution
+#
+# docker build -t oscars:jupyter -f docker/Dockerfile_build_jupyter .
+# docker tag oscars:jupyter dhidas/oscars:jupyter
+# docker login
+# docker push dhidas/oscars:jupyter
+# docker run -d -v `pwd`/data:/oscars/data -p 8888:8888 dhidas/oscars:jupyter
+
+FROM python:3
+
+RUN pip install oscars==1.37.1.dev3
+RUN pip install numpy
+RUN pip install matplotlib
+RUN pip install ipython
+RUN pip install jupyter
+RUN pip install scipy
+
+RUN mkdir /oscars
+WORKDIR /oscars
+ADD examples examples
+
+CMD ["sh", "-c", "jupyter notebook --no-browser --allow-root --NotebookApp.token='' --ip=*"]
