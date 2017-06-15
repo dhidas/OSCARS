@@ -1,0 +1,14 @@
+# This file is for building the oscars manylinux1 releases for pypi upload
+# This file is NOT for running oscars.  Please see the other Dockerfile for that
+#
+# Shoud be run from the base of the OSCARS release:
+# >>> docker create oscars_manylinux1 -f docker/Dockerfile_manylinux1_x86_64
+# >>> docker run -i oscars_manylinux /bin/bash
+# [root@d1702905336b /]# # add -u [username] -p [password] to ./build_scripts/build_docker.sh upload line
+# [root@d1702905336b /]# ./build_scripts/build_docker.sh
+#
+
+FROM quay.io/pypa/manylinux1_x86_64
+
+COPY OSCARS /
+
