@@ -22,6 +22,7 @@
 
 #include "TOSCARSSR.h"
 #include "TVector2D.h"
+#include "TSurfacePoints_Rectangle.h"
 
 #include <iostream>
 #include <vector>
@@ -1190,6 +1191,281 @@ static PyObject* OSCARSTH_UndulatorEnergyHarmonic (OSCARSTHObject* self, PyObjec
 
 
 
+const char* DOC_OSCARSTH_WigglerFluxRectangle = R"docstring(
+wiggler_flux_rectangle(plane, energy_eV, period, nperiods, width, npoints [, bfield, K, ofile, bofile])
+
+Get the flux for an ideal wiggler according to R. P. Walker XXX XXX.  Should specify either K or bfield, but not both.  You *must* have previously defined a beam.
+
+Parameters
+----------
+period : float
+    Magnetic period length [m]
+
+nperiods : int
+    Number of periods
+
+harmonic : int
+    Harmonic number of interest
+
+bfield_range : list
+    [min, max] of bfield range of interest
+
+K_range : list
+    [min, max] of K range of interest
+
+npoints : int
+    number of points to use when bfield_range or K_range is specified
+
+bfield_points : list
+    List of bfield points to calculate flux at
+
+K_points : list
+    List of K points to calculate flux at
+
+minimum : float
+    Any flux below the minimum will not be included in the return list
+
+ofile : str
+    Output file name
+
+bofile : str
+    Binary output file name
+
+Returns
+-------
+[energy_eV, flux]s : list[[float, float], ...]
+    Photon energy [eV] and flux [photons/s/0.1%bw/mrad^2] for the given parameters
+
+Examples
+--------
+Get the harmonic peak spectrum for a undulator with a period of 0.050 [m] having 41 periods and a bfield ranging from 0.05 to 0.8 [T] from the 1st harmonic
+
+    >>> oth.undulator_flux_onaxis(period=0.050, nperiods=41, harmonic=1, bfield_range=[0.05, 0.8], npoints=1000)
+
+Get the photon energy and flux for a undulator with a period of 0.050 [m] having 41 periods and K value of 1.8674577 from the 1st harmonic
+
+    >>> oth.undulator_flux_onaxis(period=0.050, nperiods=41, harmonic=1, K=1.8674577)
+)docstring";
+static PyObject* OSCARSTH_WigglerFluxRectangle (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
+{
+  // Return a list of points corresponding to the flux in a given energy range for a given vertical angle.
+  // This approximation assumes that the particle beam is perpendicular to the magnetic field
+
+  // Require 2 arguments
+  char const*  SurfacePlane      = "";
+  double       Energy_eV         = 0;
+  double       Period            = 0;
+  int          NPeriods          = 0;
+  PyObject*    List_NPoints      = PyList_New(0);
+  PyObject*    List_Width        = PyList_New(0);
+  PyObject*    List_X0X1X2       = PyList_New(0);
+  double       BField            = 0;
+  double       K                 = 0;
+  PyObject*    List_Rotations    = PyList_New(0);
+  PyObject*    List_Translation  = PyList_New(0);
+  int          NormalDirection   = 0;
+  int          Dim               = 2;
+  const char*  OutFileNameText   = "";
+  const char*  OutFileNameBinary = "";
+
+  int NX1 = 0;
+  int NX2 = 0;
+
+  // Input variable list
+  static const char *kwlist[] = {
+                                 "plane",
+                                 "energy_eV",
+                                 "period",
+                                 "nperiods",
+                                 "npoints",
+                                 "width",
+                                 "x0x1x2",
+                                 "bfield",
+                                 "K",
+                                 "rotations",
+                                 "translation",
+                                 "normal",
+                                 "dim",
+                                 "ofile",
+                                 "bofile",
+                                 NULL};
+
+  // Parse inputs
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "sddiO|OOddOOiiss",
+                                   const_cast<char **>(kwlist),
+                                   &SurfacePlane,
+                                   &Energy_eV,
+                                   &Period,
+                                   &NPeriods,
+                                   &List_NPoints,
+                                   &List_Width,
+                                   &List_X0X1X2,
+                                   &BField,
+                                   &K,
+                                   &List_Rotations,
+                                   &List_Translation,
+                                   &NormalDirection,
+                                   &Dim,
+                                   &OutFileNameText,
+                                   &OutFileNameBinary)) {
+    return NULL;
+  }
+
+  // CHeck if beam is ok
+  if (!self->obj->CheckBeam()) {
+    PyErr_SetString(PyExc_ValueError, "particle beam not correctly defined");
+    return NULL;
+  }
+
+  // Check period
+  if (Period <= 0) {
+    PyErr_SetString(PyExc_ValueError, "'period' must be > 0");
+    return NULL;
+  }
+
+  // Check nperiods
+  if (NPeriods <= 0) {
+    PyErr_SetString(PyExc_ValueError, "'nperiod' must be > 0");
+    return NULL;
+  }
+
+  TVector2D Width;
+  try {
+    Width = OSCARSPY::ListAsTVector2D(List_Width);
+  } catch (...) {
+    PyErr_SetString(PyExc_ValueError, "'width' has incorrect format");
+    return NULL;
+  }
+
+  if (PyList_Size(List_NPoints) == 2) {
+    // NPoints in [m]
+    NX1 = PyLong_AsSsize_t(PyList_GetItem(List_NPoints, 0));
+    NX2 = PyLong_AsSsize_t(PyList_GetItem(List_NPoints, 1));
+  } else {
+    PyErr_SetString(PyExc_ValueError, "'npoints' must be [int, int]");
+    return NULL;
+  }
+
+  // Check BField and K
+  if ((BField != 0) ^ (K != 0)) {
+    PyErr_SetString(PyExc_ValueError, "Must specify one and only one of: 'bfield' or 'K'");
+    return NULL;
+  }
+
+  // Vectors for rotations and translations.  Default to 0
+  TVector3D Rotations(0, 0, 0);
+  TVector3D Translation(0, 0, 0);
+
+  // Check for Rotations in the input
+  if (PyList_Size(List_Rotations) != 0) {
+    try {
+      Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
+      return NULL;
+    }
+  }
+
+
+  // Check for Translation in the input
+  if (PyList_Size(List_Translation) != 0) {
+    try {
+      Translation = OSCARSPY::ListAsTVector3D(List_Translation);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
+      return NULL;
+    }
+  }
+
+  // Check normal
+  if (abs(NormalDirection) > 1) {
+    PyErr_SetString(PyExc_ValueError, "'normal' must be -1, 0, or 1");
+    return NULL;
+  }
+
+  // Check dim
+  if (Dim != 2 && Dim != 3) {
+    PyErr_SetString(PyExc_ValueError, "'dim' must be 2 or 3");
+    return NULL;
+  }
+
+  // The rectangular surface object we'll use
+  TSurfacePoints_Rectangle Surface;
+
+  // If you are requesting a simple surface plane, check that you have widths
+  if (std::strlen(SurfacePlane) != 0 && Width[0] > 0 && Width[1] > 0) {
+    try {
+      Surface.Init(SurfacePlane, (int) NX1, (int) NX2, Width[0], Width[1], Rotations, Translation, NormalDirection);
+    } catch (std::invalid_argument e) {
+      PyErr_SetString(PyExc_ValueError, e.what());
+      return NULL;
+    }
+  } else if (PyList_Size(List_X0X1X2) != 0) {
+    std::vector<TVector3D> X0X1X2;
+    if (PyList_Size(List_X0X1X2) == 3) {
+      for (int i = 0; i != 3; ++i) {
+        PyObject* List_X = PyList_GetItem(List_X0X1X2, i);
+
+        try {
+          X0X1X2.push_back(OSCARSPY::ListAsTVector3D(List_X));
+        } catch (std::length_error e) {
+          PyErr_SetString(PyExc_ValueError, "Incorrect format in 'x0x1x2'");
+          return NULL;
+        }
+      }
+    } else {
+      PyErr_SetString(PyExc_ValueError, "'x0x1x2' must have 3 XYZ points defined correctly");
+      return NULL;
+    }
+
+    for (std::vector<TVector3D>::iterator it = X0X1X2.begin(); it != X0X1X2.end(); ++it) {
+      it->RotateSelfXYZ(Rotations);
+      *it += Translation;
+    }
+
+    // UPDATE: Check for orthogonality
+    Surface.Init((int) NX1, (int) NX2, X0X1X2[0], X0X1X2[1], X0X1X2[2], NormalDirection);
+  }
+
+  // Container for Flux
+  T3DScalarContainer FluxContainer;
+
+
+  // Write to file if output is requested
+  if (std::string(OutFileNameText) != "") {
+    FluxContainer.WriteToFileText(OutFileNameText, Dim);
+  }
+  if (std::string(OutFileNameBinary) != "") {
+    FluxContainer.WriteToFileBinary(OutFileNameBinary, Dim);
+  }
+
+  // Build the output list of: [[[x, y, z], Flux], [...]]
+  // Create a python list
+  PyObject *PList = PyList_New(0);
+
+  size_t const NPoints = FluxContainer.GetNPoints();
+
+  for (size_t i = 0; i != NPoints; ++i) {
+    T3DScalar P = FluxContainer.GetPoint(i);
+
+    // Inner list for each point
+    PyObject *PList2 = PyList_New(0);
+
+
+    // Add position and value to list
+    PyList_Append(PList2, OSCARSPY::TVector3DAsList(P.GetX()));
+    PyList_Append(PList2, Py_BuildValue("f", P.GetV()));
+    PyList_Append(PList, PList2);
+
+  }
+
+  return PList;
+}
+
+
+
+
+
 
 
 
@@ -1644,6 +1920,8 @@ static PyMethodDef OSCARSTH_methods[] = {
   {"undulator_brightness",                       (PyCFunction) OSCARSTH_UndulatorBrightness,                     METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorBrightness},
   {"undulator_energy_harmonic",                  (PyCFunction) OSCARSTH_UndulatorEnergyHarmonic,                 METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorEnergyHarmonic},
 
+  {"wiggler_flux",                               (PyCFunction) OSCARSTH_WigglerFluxRectangle,                             METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_WigglerFluxRectangle},
+
   {"bessel_j",                                   (PyCFunction) OSCARSTH_BesselJ,                                 METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_BesselJ},
   {"bessel_k",                                   (PyCFunction) OSCARSTH_BesselK,                                 METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_BesselK},
 
@@ -1674,6 +1952,8 @@ static PyMethodDef OSCARSTH_methods_fake[] = {
   {"undulator_flux_onaxis",                      (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorFluxOnAxis},
   {"undulator_brightness",                       (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorBrightness},
   {"undulator_energy_harmonic",                  (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorEnergyHarmonic},
+
+  {"wiggler_flux",                               (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_WigglerFluxRectangle},
 
   {"bessel_j",                                   (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_BesselK},
   {"bessel_k",                                   (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_BesselK},

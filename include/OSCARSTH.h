@@ -90,6 +90,19 @@ class OSCARSTH
                                     int    const N) const;
 
 
+    TVector2D WigglerFluxK (double const K,
+                            double const Period,
+                            double const NPeriods,
+                            int    const Harmonic) const;
+
+    TVector2D WigglerFluxB (double const BField,
+                            double const Period,
+                            double const NPeriods,
+                            int    const Harmonic) const;
+
+
+
+
 
     // Functions related to the particle beam
     void SetParticleBeam (std::string const& Beam,

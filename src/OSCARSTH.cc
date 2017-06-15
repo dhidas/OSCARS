@@ -455,6 +455,34 @@ TVector2D OSCARSTH::UndulatorBrightnessB (double const BField,
 
 
 
+TVector2D OSCARSTH::WigglerFluxK (double const K, double const Period, double const NPeriods, int const Harmonic) const
+{
+  // Return the on-axis flux for this K value and harmonic
+
+  double const BeamEnergyGeV = fParticleBeam.GetE0();
+
+  return TVector2D(0, 0);
+}
+
+
+
+
+
+TVector2D OSCARSTH::WigglerFluxB (double const BField, double const Period, double const NPeriods, int const Harmonic) const
+{
+  // Return the on-axis flux for this K value and harmonic
+
+  // Undulator deflection parameter
+  double const K = this->UndulatorK(BField, Period);
+
+  return this->WigglerFluxK(K, Period, NPeriods, Harmonic);
+}
+
+
+
+
+
+
 void OSCARSTH::SetParticleBeam (std::string const& Beam, std::string const& Name)
 {
   // Add a particle beam
