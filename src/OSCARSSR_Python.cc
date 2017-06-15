@@ -4955,6 +4955,11 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
     Width_X2 = PyFloat_AsDouble(PyList_GetItem(List_Width, 1));
   }
 
+  // Check normal
+  if (abs(NormalDirection) > 1) {
+    PyErr_SetString(PyExc_ValueError, "'normal' must be -1, 0, or 1");
+    return NULL;
+  }
 
 
   // If you are requesting a simple surface plane, check that you have widths
