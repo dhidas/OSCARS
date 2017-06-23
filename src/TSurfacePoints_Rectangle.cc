@@ -223,7 +223,7 @@ TVector3D TSurfacePoints_Rectangle::GetXYZ (size_t const i) const
 {
   // Get the XYZ coordinate for the ith point
 
-  int const ix1 = i / fNX2;
+  int const ix1 = (int) (i / fNX2);
   int const ix2 = i % fNX2;
 
   return (fStartVector + ix1 * fX1Vector + ix2 * fX2Vector);
@@ -244,7 +244,7 @@ size_t TSurfacePoints_Rectangle::GetNPoints () const
 double TSurfacePoints_Rectangle::GetX1 (size_t const i) const
 {
   // Get the X1 coordinate in this frame
-  int const ix1 = i / fNX2;
+  int const ix1 = (int) (i / fNX2);
   return fX1StepSize * ix1 - fX1Vector.Mag() * (fNX1 - 1)/ 2.;
 }
 
