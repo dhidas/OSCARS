@@ -148,9 +148,9 @@ class TField3D_Grid : public TField
 
   private:
     // Dimension and position data
-    int    fNX;
-    int    fNY;
-    int    fNZ;
+    size_t fNX;
+    size_t fNY;
+    size_t fNZ;
     double fXStart;
     double fYStart;
     double fZStart;
