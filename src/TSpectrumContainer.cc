@@ -166,7 +166,7 @@ size_t TSpectrumContainer::RemovePoint (size_t const i)
   // in the case you have input an invalid index
 
   // Check that this is inside of the existing range
-  if (i < 0 || i >= fSpectrumPoints.size()) {
+  if (i >= fSpectrumPoints.size()) {
     return -1;
   }
 
