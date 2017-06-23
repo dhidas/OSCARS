@@ -101,14 +101,14 @@ TSpectrumContainer GetSpectrumFromList (PyObject* List)
   Py_INCREF(List);
 
   // Get size of input list
-  int const NPoints = PyList_Size(List);
+  size_t const NPoints = PyList_Size(List);
   if (NPoints <= 0) {
     throw;
   }
 
   TSpectrumContainer S;
 
-  for (int ip = 0; ip != NPoints; ++ip) {
+  for (size_t ip = 0; ip != NPoints; ++ip) {
     PyObject* List_Point = PyList_GetItem(List, ip);
     if (PyList_Size(List_Point) == 2) {
       S.AddPoint(PyFloat_AsDouble(PyList_GetItem(List_Point, 0)), PyFloat_AsDouble(PyList_GetItem(List_Point, 1)));
@@ -220,14 +220,14 @@ T3DScalarContainer GetT3DScalarContainerFromList (PyObject* List)
   Py_INCREF(List);
 
   // Get size of input list
-  int const NPoints = PyList_Size(List);
+  size_t const NPoints = PyList_Size(List);
   if (NPoints <= 0) {
     throw;
   }
 
   T3DScalarContainer F;
 
-  for (int ip = 0; ip != NPoints; ++ip) {
+  for (size_t ip = 0; ip != NPoints; ++ip) {
     PyObject* List_Point = PyList_GetItem(List, ip);
     if (PyList_Size(List_Point) == 2) {
       F.AddPoint(OSCARSPY::ListAsTVector3D(PyList_GetItem(List_Point, 0)), PyFloat_AsDouble(PyList_GetItem(List_Point, 1)));
