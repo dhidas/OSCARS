@@ -757,9 +757,9 @@ static PyObject* OSCARSTH_UndulatorFluxOnAxis (OSCARSTHObject* self, PyObject* a
 
   // Check not overlapping definitions
   int const SizeSumLists =  PyList_Size(List_BFieldRange)
-                          + PyList_Size(List_KRange)
-                          + PyList_Size(List_BFieldPoints)
-                          + PyList_Size(List_KPoints);
+                             + PyList_Size(List_KRange)
+                             + PyList_Size(List_BFieldPoints)
+                             + PyList_Size(List_KPoints);
   if (!(PyList_Size(List_BFieldRange)  == SizeSumLists ||
         PyList_Size(List_KRange)       == SizeSumLists ||
         PyList_Size(List_BFieldPoints) == SizeSumLists ||
@@ -988,9 +988,9 @@ static PyObject* OSCARSTH_UndulatorBrightness (OSCARSTHObject* self, PyObject* a
 
   // Check not overlapping definitions
   int const SizeSumLists =  PyList_Size(List_BFieldRange)
-                          + PyList_Size(List_KRange)
-                          + PyList_Size(List_BFieldPoints)
-                          + PyList_Size(List_KPoints);
+                            + PyList_Size(List_KRange)
+                            + PyList_Size(List_BFieldPoints)
+                            + PyList_Size(List_KPoints);
   if (!(PyList_Size(List_BFieldRange)  == SizeSumLists ||
         PyList_Size(List_KRange)       == SizeSumLists ||
         PyList_Size(List_BFieldPoints) == SizeSumLists ||
@@ -1265,11 +1265,13 @@ static PyObject* OSCARSTH_WigglerFluxRectangle (OSCARSTHObject* self, PyObject* 
   PyObject*    List_Translation  = PyList_New(0);
   int          NormalDirection   = 0;
   int          Dim               = 2;
+  int          NThreads          = 0;
+  int          GPU               = -1;
   const char*  OutFileNameText   = "";
   const char*  OutFileNameBinary = "";
 
-  int NX1 = 0;
-  int NX2 = 0;
+  size_t NX1 = 0;
+  size_t NX2 = 0;
 
   // Input variable list
   static const char *kwlist[] = {
@@ -1286,12 +1288,14 @@ static PyObject* OSCARSTH_WigglerFluxRectangle (OSCARSTHObject* self, PyObject* 
                                  "translation",
                                  "normal",
                                  "dim",
+                                 "nthreads",
+                                 "gpu",
                                  "ofile",
                                  "bofile",
                                  NULL};
 
   // Parse inputs
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "sddiO|OOddOOiiss",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "sddiO|OOddOOiiiiss",
                                    const_cast<char **>(kwlist),
                                    &SurfacePlane,
                                    &Energy_eV,
@@ -1306,6 +1310,8 @@ static PyObject* OSCARSTH_WigglerFluxRectangle (OSCARSTHObject* self, PyObject* 
                                    &List_Translation,
                                    &NormalDirection,
                                    &Dim,
+                                   &NThreads,
+                                   &GPU,
                                    &OutFileNameText,
                                    &OutFileNameBinary)) {
     return NULL;
@@ -1389,6 +1395,25 @@ static PyObject* OSCARSTH_WigglerFluxRectangle (OSCARSTHObject* self, PyObject* 
     return NULL;
   }
 
+  // Check GPU parameter
+  if (GPU != 0 && GPU != 1 && GPU != -1) {
+    PyErr_SetString(PyExc_ValueError, "'gpu' must be 0 or 1");
+    return NULL;
+  }
+
+  // Check NThreads parameter
+  if (NThreads < 0) {
+    PyErr_SetString(PyExc_ValueError, "'nthreads' must be > 0");
+    return NULL;
+  }
+
+  // Check you are not trying to use threads and GPU
+  if (NThreads > 0 && GPU == 1) {
+    PyErr_SetString(PyExc_ValueError, "gpu is 1 and nthreads > 0.  Both are not currently allowed.");
+    return NULL;
+  }
+
+
   // The rectangular surface object we'll use
   TSurfacePoints_Rectangle Surface;
 
@@ -1430,6 +1455,13 @@ static PyObject* OSCARSTH_WigglerFluxRectangle (OSCARSTHObject* self, PyObject* 
   // Container for Flux
   T3DScalarContainer FluxContainer;
 
+  //self->obj->CalculateFluxWiggler(Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NParticles, NThreads, GPU, Dim);
+
+  if (BField != 0) {
+    self->obj->WigglerFluxB(BField, Period, NPeriods, Surface, Energy_eV, FluxContainer, NThreads, GPU);
+  } else if (K != 0) {
+    self->obj->WigglerFluxK(K,      Period, NPeriods, Surface, Energy_eV, FluxContainer, NThreads, GPU);
+  }
 
   // Write to file if output is requested
   if (std::string(OutFileNameText) != "") {

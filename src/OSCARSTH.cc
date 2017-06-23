@@ -7,6 +7,7 @@
 ////////////////////////////////////////////////////////////////////
 
 #include "OSCARSTH.h"
+#include "OSCARSTH_Cuda.h"
 
 #include <iostream>
 #include <cmath>
@@ -23,6 +24,8 @@
 OSCARSTH::OSCARSTH ()
 {
   // Default constructor
+  SetUseGPUGlobal(0);   // GPU off by default
+  SetNThreadsGlobal(1); // Use N threads for calculations by default
 }
 
 
@@ -455,27 +458,84 @@ TVector2D OSCARSTH::UndulatorBrightnessB (double const BField,
 
 
 
-TVector2D OSCARSTH::WigglerFluxK (double const K, double const Period, double const NPeriods, int const Harmonic) const
+void OSCARSTH::WigglerFluxK (double         const  K,
+                             double         const  Period,
+                             int            const  NPeriods,
+                             TSurfacePoints const& Surface,
+                             double         const  Energy_eV,
+                             T3DScalarContainer&   FluxContainer,
+                             int            const  NThreads,
+                             int            const  GPU) const
 {
-  // Return the on-axis flux for this K value and harmonic
+  // Calculate the wiggler flux
+  //
+  // THIS is the ENTRY POINT typically (or WigglerFluxB forwards to here)
+
+  // SHOULD be given in input, fake for now
+  int const Dimension = 2;
 
   double const BeamEnergyGeV = fParticleBeam.GetE0();
 
-  return TVector2D(0, 0);
+  // Number of threads to possibly use
+  int const NThreadsToUse = NThreads < 1 ? fNThreadsGlobal : NThreads;
+  if (NThreadsToUse <= 0) {
+    throw std::out_of_range("NThreads or NThreadsGlobal must be >= 1");
+  }
+
+  // Should we use the GPU or not?
+  bool const UseGPU = GPU == 0 ? false : this->GetUseGPUGlobal() && (this->CheckGPU() > 0) ? true : false;
+
+  if (Dimension == 3) {
+    for (size_t i = 0; i != Surface.GetNPoints(); ++i) {
+      FluxContainer.AddPoint(Surface.GetPoint(i).GetPoint(), 0);
+    }
+  } else if (Dimension == 2) {
+    for (size_t i = 0; i != Surface.GetNPoints(); ++i) {
+      FluxContainer.AddPoint( TVector3D(Surface.GetX1(i), Surface.GetX2(i), 0), 0);
+    }
+  } else {
+    throw std::out_of_range("wROng dimension");
+  }
+
+  // GPU will outrank NThreads...
+  if (UseGPU == 0) {
+    if (NThreadsToUse == 1) {
+      //this->WigglerFluxK(K, Period, NPeriods, Surface, Energy_eV, FluxContainer);
+    } else {
+      //this->CalculateFluxThreads(fParticle,
+      //                           1);
+    }
+  } else if (UseGPU == 1) {
+    //this->CalculateFluxGPU(fParticle,
+  }
+
+
+
+
+  return;
 }
 
 
 
 
 
-TVector2D OSCARSTH::WigglerFluxB (double const BField, double const Period, double const NPeriods, int const Harmonic) const
+void OSCARSTH::WigglerFluxB (double         const  BField,
+                             double         const  Period,
+                             int            const  NPeriods,
+                             TSurfacePoints const& Surface,
+                             double         const  Energy_eV,
+                             T3DScalarContainer&   FluxContainer,
+                             int            const  NThreads,
+                             int            const  GPU) const
 {
   // Return the on-axis flux for this K value and harmonic
 
   // Undulator deflection parameter
   double const K = this->UndulatorK(BField, Period);
 
-  return this->WigglerFluxK(K, Period, NPeriods, Harmonic);
+  this->WigglerFluxK(K, Period, NPeriods, Surface, Energy_eV, FluxContainer, NThreads, GPU);
+
+  return;
 }
 
 
@@ -535,3 +595,67 @@ bool OSCARSTH::CheckBeam () const
 
   return true;
 }
+
+
+
+
+bool OSCARSTH::SetUseGPUGlobal (int const in)
+{
+  // Must be a 0 or a 1 at the moment.  Will return false if you tried to set the GPU but it's not available
+
+  if (in == 0) {
+    fUseGPUGlobal = 0;
+    return true;
+  }
+
+  if (in != 1) {
+    fUseGPUGlobal = 0;
+    return false;
+  }
+
+  #ifdef CUDA
+  if (OSCARSTH_Cuda_GetDeviceCount() > 0) {
+    fUseGPUGlobal = 1;
+    return true;
+  } else {
+    fUseGPUGlobal = 0;
+    return false;
+  }
+  #endif
+
+  fUseGPUGlobal = 0;
+
+  return false;
+}
+
+
+
+
+int OSCARSTH::GetUseGPUGlobal () const
+{
+  return fUseGPUGlobal;
+}
+
+
+
+
+int OSCARSTH::CheckGPU () const
+{
+  #ifdef CUDA
+    return OSCARSTH_Cuda_GetDeviceCount();
+  #endif
+  return -1;
+}
+
+
+
+
+void OSCARSTH::SetNThreadsGlobal (int const N)
+{
+  fNThreadsGlobal = N;
+  return;
+}
+
+
+
+

@@ -12,6 +12,8 @@
 #include "TOMATH.h"
 #include "TParticleBeamContainer.h"
 #include "TSpectrumContainer.h"
+#include "TSurfacePoints.h"
+#include "T3DScalarContainer.h"
 
 
 class OSCARSTH
@@ -90,15 +92,23 @@ class OSCARSTH
                                     int    const N) const;
 
 
-    TVector2D WigglerFluxK (double const K,
-                            double const Period,
-                            double const NPeriods,
-                            int    const Harmonic) const;
+    void WigglerFluxK (double         const  K,
+                       double         const  Period,
+                       int            const  NPeriods,
+                       TSurfacePoints const& Surface,
+                       double         const  Energy_eV,
+                       T3DScalarContainer&   FluxContainer,
+                       int            const  NThreads,
+                       int            const  GPU) const;
 
-    TVector2D WigglerFluxB (double const BField,
-                            double const Period,
-                            double const NPeriods,
-                            int    const Harmonic) const;
+    void WigglerFluxB (double         const  K,
+                       double         const  Period,
+                       int            const  NPeriods,
+                       TSurfacePoints const& Surface,
+                       double         const  Energy_eV,
+                       T3DScalarContainer&   FluxContainer,
+                       int            const  NThreads,
+                       int            const  GPU) const;
 
 
 
@@ -119,8 +129,19 @@ class OSCARSTH
 
     bool CheckBeam () const;
 
+
+    // Global threads and GPU settings
+    bool SetUseGPUGlobal (int const);
+    int  GetUseGPUGlobal () const;
+    int  CheckGPU () const;
+    void SetNThreadsGlobal (int const);
+
   private:
     TParticleBeam fParticleBeam;
+
+    // Global thread and GPU settings
+    int fNThreadsGlobal;
+    bool fUseGPUGlobal;
 
 };
 
