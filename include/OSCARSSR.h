@@ -292,18 +292,6 @@ class OSCARSSR
                               TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
                               double const Weight = 1);
 
-    void CalculateFluxPoint (TParticleA& Particle,
-                             TSurfacePoints const& Surface,
-                             double const Energy_eV,
-                             T3DScalarContainer& FluxContainer,
-                             size_t const i,
-                             bool& Done,
-                             std::string const& Polarization = "all",
-                             double const Angle = 0,
-                             TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
-                             TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
-                             double const Weight = 1);
-
     void CalculateFluxThreads (TParticleA& Particle,
                                TSurfacePoints const& Surface,
                                double const Energy_eV,
@@ -355,7 +343,6 @@ class OSCARSSR
 
     // Current particle for calculations and rel parameters
     TParticleA fParticle;
-    double fCurrent;
 
     // Spectrum container
     TSpectrumContainer fSpectrum;
