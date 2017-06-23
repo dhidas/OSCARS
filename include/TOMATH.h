@@ -176,7 +176,7 @@ template <class T> class TSpline1D3
 
       fYPP[N-1] = (un - qn * u[N-2]) / (qn * fYPP[N-2] + T(1.));
 
-      for (int k = N-2; k >= 0; --k) {
+      for (size_t k = N-2; k >= 0; --k) {
         fYPP[k] = fYPP[k] * fYPP[k+1] + u[k];
       }
 
