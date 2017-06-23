@@ -712,8 +712,8 @@ void TField3D_Grid::ReadFile_OSCARS1D (std::string         const& InFileName,
   double const Last  = InputData[InputData.size() - 1][0];
 
 
-  // UPDATE: VAR
-  int const NPointsPerMeter = 10000;
+  // UPDATE: Variable n ppm
+  size_t const NPointsPerMeter = 10000;
 
   // Get the number of points and the step size
   size_t const NPoints  = (Last - First) * NPointsPerMeter;
@@ -877,7 +877,7 @@ void TField3D_Grid::ReadFile_Binary (std::string const& InFileName,
   // Header 0: Number of characters in comment, then comment
   int NCommentChars;
   fi.read((char*) &NCommentChars, sizeof(int));
-  char *Comment = new char(NCommentChars + 1);
+  char Comment[NCommentChars + 1];
   fi.read(Comment, NCommentChars * sizeof(char));
   Comment[NCommentChars] = '\0';
 
@@ -889,7 +889,7 @@ void TField3D_Grid::ReadFile_Binary (std::string const& InFileName,
   // Header 2: Number of chars in format string, then format string
   int NFormatChars;
   fi.read((char*) &NFormatChars, sizeof(int));
-  char *Format = new char(NFormatChars+1);
+  char Format[NFormatChars+1];
   fi.read(Format, NFormatChars * sizeof(char));
   Format[NFormatChars] = '\0';
 
@@ -900,10 +900,6 @@ void TField3D_Grid::ReadFile_Binary (std::string const& InFileName,
   } else {
     throw std::invalid_argument("File Version number incorrect");
   }
-
-  // Delete arrays
-  delete [] Comment;
-  delete [] Format;
 
   return;
 }
@@ -1625,9 +1621,9 @@ void TField3D_Grid::ReadFile_SPECTRA (std::string const& InFileName,
   double fz;
 
   // Loop over all points
-  for (int ix = 0; ix != fNX; ++ix) {
-    for (int iy = 0; iy != fNY; ++iy) {
-      for (int iz = 0; iz != fNZ; ++iz) {
+  for (size_t ix = 0; ix != fNX; ++ix) {
+    for (size_t iy = 0; iy != fNY; ++iy) {
+      for (size_t iz = 0; iz != fNZ; ++iz) {
 
         // Grab a line from input file
         std::getline(fi, L);
