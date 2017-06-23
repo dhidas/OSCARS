@@ -1222,7 +1222,7 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
   }
 
   // Check input spectrum range numbers
-  if (iFirst < 0 || iLast < iFirst || iLast >= Spectrum.GetNPoints()) {
+  if (iLast < iFirst || iLast >= Spectrum.GetNPoints()) {
     throw std::out_of_range("spectrum range is incorrect.  Please report this error.");
   }
 
@@ -1347,8 +1347,8 @@ void OSCARSSR::CalculateSpectrumThreads (TParticleA& Particle,
   size_t const NThreadsActual = NPoints > (size_t) NThreads ? NThreads : NPoints;
 
   // Keep track of which threads are finished and re-joined
-  bool *Done = new bool(NThreadsActual);
-  bool *Joined = new bool(NThreadsActual);
+  bool *Done = new bool[NThreadsActual];
+  bool *Joined = new bool[NThreadsActual];
 
   // Number per thread plus remainder to be added to first threads
   size_t const NPerThread = NPoints / NThreadsActual;
@@ -1862,8 +1862,8 @@ void OSCARSSR::CalculatePowerDensityThreads (TParticleA& Particle,
   size_t const NThreadsActual = NPoints > (size_t) NThreads ? NThreads : NPoints;
 
   // Keep track of which threads are finished and re-joined
-  bool *Done = new bool(NThreadsActual);
-  bool *Joined = new bool(NThreadsActual);
+  bool *Done = new bool[NThreadsActual];
+  bool *Joined = new bool[NThreadsActual];
 
   // Number per thread plus remainder to be added to first threads
   size_t const NPerThread = NPoints / NThreadsActual;
@@ -2380,8 +2380,8 @@ void OSCARSSR::CalculateFluxThreads (TParticleA& Particle,
   size_t const NThreadsActual = NPoints > (size_t) NThreads ? NThreads : NPoints;
 
   // Keep track of which threads are finished and re-joined
-  bool *Done = new bool(NThreadsActual);
-  bool *Joined = new bool(NThreadsActual);
+  bool *Done = new bool[NThreadsActual];
+  bool *Joined = new bool[NThreadsActual];
 
   // Number per thread plus remainder to be added to first threads
   size_t const NPerThread = NPoints / NThreadsActual;
