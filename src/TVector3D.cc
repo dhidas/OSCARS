@@ -124,22 +124,24 @@ double TVector3D::Mag2() const
 
 
 
-double TVector3D::Dot(TVector3D const& V) const
-{
-  // Get the dot product of this dot V
-  return fX * V.GetX() + fY * V.GetY() + fZ * V.GetZ();
+double TVector3D::Perp ()  const {
+  return sqrt(this->Perp2());
 }
 
 
 
 
-double TVector3D::Perp2(TVector3D const& p)  const {
-  double const tot = p.Mag2();
-  double const ss  = Dot(p);
-  double per = Mag2();
-  if (tot > 0.0) per -= ss*ss/tot;
-  if (per < 0)   per = 0;
-  return per;
+double TVector3D::Perp2 ()  const {
+  return fX * fX + fY * fY;
+}
+
+
+
+
+double TVector3D::Dot(TVector3D const& V) const
+{
+  // Get the dot product of this dot V
+  return fX * V.GetX() + fY * V.GetY() + fZ * V.GetZ();
 }
 
 
