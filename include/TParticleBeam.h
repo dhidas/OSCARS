@@ -101,6 +101,7 @@ class TParticleBeam : public TParticleA
     void SetE0 (double const);
     void SetT0 (double const);
     void SetSigmaEnergyGeV (double const);
+    double GetSigmaEnergyGeV () const;
 
     void SetName (std::string const&);
     void SetWeight (double const);
@@ -147,6 +148,7 @@ inline std::ostream& operator << (std::ostream& os, TParticleBeam const& o)
      << "U0:         " << o.GetU0() << "\n"
      << "T0:         " << o.GetT0() << "\n"
      << "E0:         " << o.GetE0() << "\n"
+     << "SigmaE:     " << o.GetSigmaEnergyGeV() << "\n"
      << "Current     " << o.GetCurrent() << "\n"
      << "Beta        " << o.GetBeta() << "\n"
      << "Emittance   " << o.GetEmittance() << "\n"

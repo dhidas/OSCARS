@@ -412,6 +412,14 @@ void TParticleBeam::SetSigmaEnergyGeV (double const Sigma)
 
 
 
+double TParticleBeam::GetSigmaEnergyGeV () const
+{
+  return fSigmaEnergyGeV;
+}
+
+
+
+
 void TParticleBeam::SetName (std::string const& Name)
 {
   // Set the name of this beam
