@@ -192,7 +192,9 @@ Parameters
 n : float
     Seed number you wish to use
 
-:returns: None
+Returns
+-------
+None
 )docstring";
 static PyObject* OSCARSSR_SetSeed (OSCARSSRObject* self, PyObject* arg)
 {
