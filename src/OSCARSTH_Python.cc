@@ -1353,7 +1353,9 @@ static PyObject* OSCARSTH_WigglerFluxRectangle (OSCARSTHObject* self, PyObject* 
   }
 
   // Check BField and K
-  if ((BField != 0) ^ (K != 0)) {
+  if (!((BField != 0) ^ (K != 0))) {
+    std::cout << BField << std::endl;
+    std::cout << K << std::endl;
     PyErr_SetString(PyExc_ValueError, "Must specify one and only one of: 'bfield' or 'K'");
     return NULL;
   }
