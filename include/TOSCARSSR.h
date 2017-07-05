@@ -19,6 +19,7 @@ namespace TOSCARSSR {
 
    inline double Pi()       { return 3.14159265358979323846; }
    inline double Pi2()      { return Pi() * Pi(); }
+   inline double Pi3()      { return Pi() * Pi() * Pi(); }
    inline double TwoPi()    { return 2.0 * Pi(); }
    inline double FourPi()   { return 4.0 * Pi(); }
    inline double PiOver2()  { return Pi() / 2.0; }
