@@ -122,8 +122,8 @@ template <class T> class TSpline1D3
     void Derivatives ()
     {
       // Number in vectors
-      size_t const N = fX.size();
-      if (N != fY.size()) {
+      int const N = (int) fX.size();
+      if (N != (int) fY.size()) {
         throw;
       }
 
@@ -152,7 +152,7 @@ template <class T> class TSpline1D3
       //}
 
 
-      for (size_t i = 1; i < N-1; ++i) {
+      for (int i = 1; i < N-1; ++i) {
         sig = (fX[i] - fX[i-1]) / (fX[i+1] - fX[i-1]);
         p = sig * fYPP[i-1] + T(2);
         fYPP[i] = (sig - 1.) / p;
@@ -176,7 +176,7 @@ template <class T> class TSpline1D3
 
       fYPP[N-1] = (un - qn * u[N-2]) / (qn * fYPP[N-2] + T(1.));
 
-      for (size_t k = N-2; k >= 0; --k) {
+      for (int k = N-2; k >= 0; --k) {
         fYPP[k] = fYPP[k] * fYPP[k+1] + u[k];
       }
 
