@@ -97,6 +97,13 @@ class OSCARSTH
                        int            const  NPeriods,
                        TSurfacePoints const& Surface,
                        double         const  Energy_eV,
+                       T3DScalarContainer&   FluxContainer) const;
+
+    void WigglerFluxK (double         const  K,
+                       double         const  Period,
+                       int            const  NPeriods,
+                       TSurfacePoints const& Surface,
+                       double         const  Energy_eV,
                        T3DScalarContainer&   FluxContainer,
                        int            const  NThreads,
                        int            const  GPU) const;
@@ -109,6 +116,17 @@ class OSCARSTH
                        T3DScalarContainer&   FluxContainer,
                        int            const  NThreads,
                        int            const  GPU) const;
+
+    void WigglerFluxKPoints (double         const  K,
+                             double         const  Period,
+                             int            const  NPeriods,
+                             TSurfacePoints const& Surface,
+                             double         const  Energy_eV,
+                             T3DScalarContainer&   FluxContainer,
+                             size_t const iFirst,
+                             size_t const iLast,
+                             bool& Done
+                            ) const;
 
 
 

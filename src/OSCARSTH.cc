@@ -458,6 +458,36 @@ TVector2D OSCARSTH::UndulatorBrightnessB (double const BField,
 
 
 
+
+void OSCARSTH::WigglerFluxK (double         const  K,
+                             double         const  Period,
+                             int            const  NPeriods,
+                             TSurfacePoints const& Surface,
+                             double         const  Energy_eV,
+                             T3DScalarContainer&   FluxContainer) const
+{
+  // Extra inputs for calculation
+  bool Done = false;
+  size_t const iFirst = 0;
+  size_t const iLast = Surface.GetNPoints() - 1;
+
+  WigglerFluxKPoints(K,
+                     Period,
+                     NPeriods,
+                     Surface,
+                     Energy_eV,
+                     FluxContainer,
+                     iFirst,
+                     iLast,
+                     Done);
+
+  return;
+}
+
+
+
+
+
 void OSCARSTH::WigglerFluxK (double         const  K,
                              double         const  Period,
                              int            const  NPeriods,
@@ -500,7 +530,7 @@ void OSCARSTH::WigglerFluxK (double         const  K,
   // GPU will outrank NThreads...
   if (UseGPU == 0) {
     if (NThreadsToUse == 1) {
-      //this->WigglerFluxK(K, Period, NPeriods, Surface, Energy_eV, FluxContainer);
+      this->WigglerFluxK(K, Period, NPeriods, Surface, Energy_eV, FluxContainer);
     } else {
       //this->CalculateFluxThreads(fParticle,
       //                           1);
@@ -508,9 +538,6 @@ void OSCARSTH::WigglerFluxK (double         const  K,
   } else if (UseGPU == 1) {
     //this->CalculateFluxGPU(fParticle,
   }
-
-
-
 
   return;
 }
@@ -539,6 +566,70 @@ void OSCARSTH::WigglerFluxB (double         const  BField,
 }
 
 
+
+
+void OSCARSTH::WigglerFluxKPoints (double         const  K,
+                                   double         const  Period,
+                                   int            const  NPeriods,
+                                   TSurfacePoints const& Surface,
+                                   double         const  Energy_eV,
+                                   T3DScalarContainer&   FluxContainer,
+                                   size_t const iFirst,
+                                   size_t const iLast,
+                                   bool& Done
+                                  ) const
+{
+  // Calculate flux for the points given in surface/flux container
+
+
+  double const Gamma = fParticleBeam.GetE0() / TOSCARSSR::kgToGeV( TOSCARSSR::Me());
+  double const Gamma2 = Gamma*Gamma;
+  double const C0 = 3. * TOSCARSSR::Qe() * TOSCARSSR::Qe() / (16. * TOSCARSSR::Pi3() * TOSCARSSR::Epsilon0() * TOSCARSSR::C()) * Gamma2;
+
+  double const K2 = K * K;
+
+  // Loop over all points in the surface container
+  for (size_t i = iFirst; i <= iLast; ++i) {
+
+    // Obs point
+    TVector3D const& ObservationPoint = Surface.GetPoint(i).GetPoint();
+    double const X0 = ObservationPoint.GetX();
+    double const Y0 = ObservationPoint.GetY();
+    double const Z0 = ObservationPoint.GetZ();
+    double const ThetaX = atan2(X0, Z0);
+    double const ThetaY = atan2(Y0, sqrt(Z0*Z0 + X0*X0));
+
+    double const omega = TOSCARSSR::EvToAngularFrequency(Energy_eV);
+    double const omega1 = TOSCARSSR::TwoPi() * TOSCARSSR::C() / Period * 2. * Gamma2 / (1. + K2 / 2. + Gamma2 * pow(ObservationPoint.GetTheta(), 2));
+
+    double const alpha = Gamma * ThetaX / K;
+    double const A = 1. + K2 / 2. + Gamma2 *(ThetaX*ThetaX + ThetaY*ThetaY);
+    double const Delta = omega / omega1 * (TOSCARSSR::Pi() + 2. * asin(alpha) + 3. * K2 / A * alpha * sqrt(1. - alpha*alpha));
+
+    double const omega_c0 = TOSCARSSR::TwoPi() * TOSCARSSR::C() * 2. * Gamma2 / Period;
+    double const omega_c = omega_c0 * sqrt(1. - alpha*alpha);
+    double const y = omega / omega_c;
+    double const X = Gamma * ThetaY;
+    double const Xi = 0.5 * y * pow(1. + X*X, 1.5);
+
+    double const SinFactor = pow(sin(NPeriods * TOSCARSSR::Pi() * omega / omega1), 2) / pow(sin(TOSCARSSR::Pi() * omega / omega1), 2);
+
+    double const AxMag2 = 4. * pow(sin(Delta/2.), 2) * pow(TOMATH::BesselK(2./3., Xi), 2) * SinFactor;
+    double const AyMag2 = 4. * pow(cos(Delta/2.), 2) * X*X/(1. + X*X) * pow(TOMATH::BesselK(1./3., Xi), 2) * SinFactor;
+
+    // Flux in terms of intensity per rad^2 ==> nphotons / mrad^2 / s / 0.1%bw
+    //double const ThisFlux = C0 * y*y * pow(1. + X*X, 2) * AxMag2;
+    double const ThisFlux = C0 * y*y * pow(1. + X*X, 2) * (AxMag2 + AyMag2);
+
+    // All point to flux container
+    FluxContainer.AddToPoint(i, ThisFlux);
+  }
+
+  // Set done to true before returnning
+  Done = true;
+
+  return;
+}
 
 
 
