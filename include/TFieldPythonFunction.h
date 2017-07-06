@@ -14,7 +14,7 @@
 class TFieldPythonFunction : public TField
 {
   public:
-    TFieldPythonFunction (PyObject*);
+    TFieldPythonFunction (PyObject*, std::string const& Name = "");
     ~TFieldPythonFunction ();
 
     double    GetFx (double const, double const, double const) const;

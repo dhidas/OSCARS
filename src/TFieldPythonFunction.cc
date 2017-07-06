@@ -4,13 +4,14 @@
 
 // UPDATE: exceptions
 
-TFieldPythonFunction::TFieldPythonFunction (PyObject* Function)
+TFieldPythonFunction::TFieldPythonFunction (PyObject* Function, std::string const& Name)
 {
   // Constructor takes a python object, which should be a function
   // Increment reference because we're going to keep it..
 
   Py_INCREF(Function);
   fPythonFunction = Function;
+  this->SetName(Name);
 
   // Check to see the function is callable
   if (!PyCallable_Check(fPythonFunction)) {
