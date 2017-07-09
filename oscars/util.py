@@ -44,18 +44,31 @@ def read_file_list(ifile, idir=None):
 
 
 
-def read_file_list2(ifile, idir=None):
+def read_file_list2(ifile, gap=None, phase_mode=None, phase=None, idir=None):
     """
     read a list of parameters and filenames from a file.
     
     The file format should be four columns separated by whitespace.
     The columns are gap value, phase mode, phase value, file name.
-    Whitespace in the phase mode is not allowed.  
+    Whitespace in the phase mode is not allowed.
+
+    One can specify the following:
+        gap + phase_mode
+        phase + phase_mode
     
     Parameters
     ----------
     ifile : str
         Full path to file containing the list of parameters and filenames
+
+    gap : float
+        Gap value of interest (must be exact match, not interpolated)
+
+    phase_mode : str
+        Phase mode of interest
+
+    phase : float
+        Phase value
         
     idir : str
         Path to directory where the files are contained if not in the 'ifile' directory
@@ -63,7 +76,7 @@ def read_file_list2(ifile, idir=None):
     Returns
     -------
     file_list : list
-        List of [gap, phase mode, phase, filename]s
+        List of [gap, phase_mode, phase, filename]s
     """
     
     # Directory where files are
@@ -80,11 +93,18 @@ def read_file_list2(ifile, idir=None):
             if len(ls) < 4:
                 continue
                 
-            gap = float(ls[0])
+            g  = float(ls[0])
             pm = ls[1]
-            phase = float(ls[2])
+            ph = float(ls[2])
             fn = os.path.join(mydir, ' '.join(ls[3:]))
-            
-            mylist.append([gap, pm, phase, fn])
+     
+            if phase_mode is None and phase is None and gap == None:
+                mylist.append([g, pm, ph, fn])
+            elif gap is not None and phase_mode is not None:
+                if g == gap and phase_mode == pm:
+                    mylist.append([ph, fn])
+            elif phase is not None and phase_mode is not None:
+                if phase == ph and phase_mode == pm:
+                    mylist.append([g, fn])
             
     return mylist
