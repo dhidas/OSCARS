@@ -15,8 +15,9 @@ TField3D_Gaussian::TField3D_Gaussian (std::string const Name)
 {
   // Constructor
 
-  // Set the name
+  // Set the name and default scale factors
   this->SetName(Name);
+  this->SetScaleFactorMinimumMaximum();
 }
 
 
@@ -29,8 +30,9 @@ TField3D_Gaussian::TField3D_Gaussian (TVector3D const& PeakField,
 {
   // Constructor you should use.. just a suggestion...
 
-  // Set the name
+  // Set the name and default scale factors
   this->SetName(Name);
+  this->SetScaleFactorMinimumMaximum();
 
   fPeakField = PeakField;
   fPeakField.RotateSelfXYZ(Rotations);

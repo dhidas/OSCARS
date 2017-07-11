@@ -6,8 +6,9 @@ TField3D_Quadrupole::TField3D_Quadrupole (std::string const& Name)
 {
   // Default constructor
 
-  // Set Name
+  // Set the name and default scale factors
   this->SetName(Name);
+  this->SetScaleFactorMinimumMaximum();
 }
 
 
@@ -20,8 +21,9 @@ TField3D_Quadrupole::TField3D_Quadrupole (double const K,
                                           std::string const& Name = "") {
   // Constructor
 
-  // Set Name
+  // Set the name and default scale factors
   this->SetName(Name);
+  this->SetScaleFactorMinimumMaximum();
 
   fK = K;
   fWidth = Width;
