@@ -12,6 +12,7 @@ TFieldPythonFunction::TFieldPythonFunction (PyObject* Function, std::string cons
   Py_INCREF(Function);
   fPythonFunction = Function;
   this->SetName(Name);
+  this->SetScaleFactorMinimumMaximum();
 
   // Check to see the function is callable
   if (!PyCallable_Check(fPythonFunction)) {
