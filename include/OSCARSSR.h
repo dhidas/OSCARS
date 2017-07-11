@@ -131,6 +131,7 @@ class OSCARSSR
 
 
     // Functions related to Trajectory
+    void CorrectTrajectory ();
     void CalculateTrajectory ();
     void CalculateTrajectory (TParticleA&);
     TParticleTrajectoryPoints const& GetTrajectory ();

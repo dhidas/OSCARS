@@ -44,7 +44,7 @@ static PyObject* OSCARSSR_SetNPointsTrajectory (OSCARSSRObject* self, PyObject* 
 static PyObject* OSCARSSR_SetNPointsPerMeterTrajectory (OSCARSSRObject* self, PyObject* arg);
 static PyObject* OSCARSSR_AddMagneticField (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSSR_AddMagneticFieldInterpolated (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
-static PyObject* OSCARSSR_AddMagneticFieldFunction (OSCARSSRObject* self, PyObject* args);
+static PyObject* OSCARSSR_AddMagneticFieldFunction (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSSR_AddMagneticFieldGaussian (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSSR_AddMagneticFieldUniform (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSSR_AddMagneticFieldIdealUndulator (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
@@ -54,7 +54,7 @@ static PyObject* OSCARSSR_GetBField (OSCARSSRObject* self, PyObject* args, PyObj
 static PyObject* OSCARSSR_ClearMagneticFields (OSCARSSRObject* self);
 static PyObject* OSCARSSR_PrintMagneticFields (OSCARSSRObject* self);
 static PyObject* OSCARSSR_AddElectricField (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
-static PyObject* OSCARSSR_AddElectricFieldFunction (OSCARSSRObject* self, PyObject* args);
+static PyObject* OSCARSSR_AddElectricFieldFunction (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSSR_AddElectricFieldGaussian (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSSR_AddElectricFieldUniform (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSSR_AddElectricFieldIdealUndulator (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
@@ -71,6 +71,7 @@ static PyObject* OSCARSSR_SetNewParticle (OSCARSSRObject* self, PyObject* args, 
 static PyObject* OSCARSSR_GetParticleX0 (OSCARSSRObject* self);
 static PyObject* OSCARSSR_GetParticleBeta0 (OSCARSSRObject* self);
 static PyObject* OSCARSSR_GetParticleE0 (OSCARSSRObject* self);
+static PyObject* OSCARSSR_CorrectTrajectory (OSCARSSRObject* self);
 static PyObject* OSCARSSR_CalculateTrajectory (OSCARSSRObject* self);
 static PyObject* OSCARSSR_GetTrajectory (OSCARSSRObject* self);
 static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* args, PyObject* keywds);

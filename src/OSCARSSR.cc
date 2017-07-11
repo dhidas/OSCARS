@@ -18,6 +18,7 @@
 
 #include "TVector3DC.h"
 #include "TField3D_Grid.h"
+#include "TField3D_Gaussian.h"
 #include "TSpectrumContainer.h"
 #include "TSurfacePoints_Rectangle.h"
 
@@ -684,6 +685,54 @@ double OSCARSSR::GetRandomUniform () const
 }
 
 
+
+
+void OSCARSSR::CorrectTrajectory ()
+{
+  // Correct the ideal trajectory so that the position and direction at
+  // a specified point is as close as possible to the specified values
+
+  TVector3D Direction(0, 0, 1);
+  TVector3D ExitPoint(0, 0, 2);
+
+  TVector3D V0 = Direction.Perp();
+  TVector3D V1 = Direction.Cross(V0);
+
+  this->CalculateTrajectory(fParticle);
+
+  TParticleTrajectoryPoints& ParticleTrajectory = fParticle.GetTrajectory();
+
+  // Closest approach to point and direction
+  double MinimumDistance2;
+  size_t MinimumDistanceIndex = 0;
+  for (size_t i = 0; i != ParticleTrajectory.GetNPoints(); ++i) {
+    double const Distance2 = (ParticleTrajectory.GetX(i) - ExitPoint).Mag2();
+
+    if (i == 0) {
+      MinimumDistance2 = Distance2;
+    }
+
+    if (Distance2 < MinimumDistance2) {
+      MinimumDistance2 = Distance2;
+      MinimumDistanceIndex = i;
+    }
+  }
+  std::cout << "MinimumDistance " << sqrt(MinimumDistance2) << std::endl;
+
+  this->AddMagneticField(new TField3D_Gaussian(TVector3D(0, 0.0001, 0),
+                                               TVector3D(0, 0, -1.8),
+                                               TVector3D(0, 0, 0.010),
+                                               TVector3D(0, 0, 0),
+                                               "_autocorrector_entry"));
+
+  this->AddMagneticField(new TField3D_Gaussian(TVector3D(0, 0.0001, 0),
+                                               TVector3D(0, 0, +1.8),
+                                               TVector3D(0, 0, 0.010),
+                                               TVector3D(0, 0, 0),
+                                               "_autocorrector_exit"));
+
+  return;
+}
 
 
 void OSCARSSR::CalculateTrajectory ()

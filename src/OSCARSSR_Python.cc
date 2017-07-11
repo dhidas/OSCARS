@@ -816,7 +816,7 @@ static PyObject* OSCARSSR_AddMagneticFieldInterpolated (OSCARSSRObject* self, Py
 
 
 const char* DOC_OSCARSSR_AddMagneticFieldFunction = R"docstring(
-add_bfield_function(func)
+add_bfield_function(func [, name])
 
 Adds field in the form of a user defined python function.  The input for this function must be (x, y, z, t) and return [Fx, Fy, Fz]
 
@@ -825,6 +825,9 @@ Parameters
 
 function : func
     A python function with input [x, y, z, t] and return of [Fx, Fy, Fz]
+
+name : str
+    Name of this field
 
 Returns
 -------
@@ -841,13 +844,23 @@ Create a function in python and use it as a field in OSCARS
     ...     return 0
     >>> osr.add_bfield_function(myfunc)
 )docstring";
-static PyObject* OSCARSSR_AddMagneticFieldFunction (OSCARSSRObject* self, PyObject* args)
+static PyObject* OSCARSSR_AddMagneticFieldFunction (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
 {
   // Add a python function as a magnetic field object
 
-  // Grab the function
+  // Variables for function and name
   PyObject* Function;
-  if (! PyArg_ParseTuple(args, "O:set_callback", &Function)) {
+  char const* Name = "";
+
+  // Input variables and parsing
+  static const char *kwlist[] = {"function",
+                                 "name",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|s",
+                                   const_cast<char **>(kwlist),
+                                   &Function,
+                                   &Name)) {
     return NULL;
   }
 
@@ -856,7 +869,7 @@ static PyObject* OSCARSSR_AddMagneticFieldFunction (OSCARSSRObject* self, PyObje
 
   // Add the function as a field to the OSCARSSR object
   try {
-    self->obj->AddMagneticField( (TField*) new TFieldPythonFunction(Function));
+    self->obj->AddMagneticField( (TField*) new TFieldPythonFunction(Function, Name));
   } catch (std::invalid_argument e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -1414,7 +1427,7 @@ static PyObject* OSCARSSR_RemoveMagneticField (OSCARSSRObject* self, PyObject* a
 {
   // Remove magnetic field
 
-  char const* Name             = "";
+  char const* Name = "";
 
   // Input variables and parsing
   static const char *kwlist[] = {"name",
@@ -1424,12 +1437,6 @@ static PyObject* OSCARSSR_RemoveMagneticField (OSCARSSRObject* self, PyObject* a
                                    const_cast<char **>(kwlist),
                                    &Name
                                    )) {
-    return NULL;
-  }
-
-  // Name check
-  if (std::string(Name).size() > 0 && Name[0] == '_') {
-    PyErr_SetString(PyExc_ValueError, "'name' cannot begin with '_'.  This is reserved for internal use.  Please pick a different name");
     return NULL;
   }
 
@@ -1872,7 +1879,7 @@ static PyObject* OSCARSSR_AddElectricFieldInterpolated (OSCARSSRObject* self, Py
 
 
 const char* DOC_OSCARSSR_AddElectricFieldFunction = R"docstring(
-add_efield_function(func)
+add_efield_function(func [, name])
 
 Adds field in the form of a user defined python function.  The input for this function must be (x, y, z, t) and return [Fx, Fy, Fz]
 
@@ -1881,6 +1888,9 @@ Parameters
 
 function : func
     A python function with input [x, y, z, t] and return of [Fx, Fy, Fz]
+
+name : str
+    Name of this field
 
 Returns
 -------
@@ -1897,22 +1907,33 @@ Create a function in python and use it as a field in OSCARS
     ...     return 0
     >>> osr.add_efield_function(myfunc)
 )docstring";
-static PyObject* OSCARSSR_AddElectricFieldFunction (OSCARSSRObject* self, PyObject* args)
+static PyObject* OSCARSSR_AddElectricFieldFunction (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
 {
   // Add a python function as an electric field object
 
-  // Grab the function
+  // Variables for function and name
   PyObject* Function;
-  if (! PyArg_ParseTuple(args, "O:set_callback", &Function)) {
+  char const* Name = "";
+
+  // Input variables and parsing
+  static const char *kwlist[] = {"function",
+                                 "name",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|s",
+                                   const_cast<char **>(kwlist),
+                                   &Function,
+                                   &Name)) {
     return NULL;
   }
+
 
   // Increment ref to function for python
   Py_INCREF(Function);
 
   // Add the function as a field to the OSCARSSR object
   try {
-    self->obj->AddElectricField( (TField*) new TFieldPythonFunction(Function));
+    self->obj->AddElectricField( (TField*) new TFieldPythonFunction(Function, Name));
   } catch (std::invalid_argument e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -2375,12 +2396,6 @@ static PyObject* OSCARSSR_RemoveElectricField (OSCARSSRObject* self, PyObject* a
                                    const_cast<char **>(kwlist),
                                    &Name
                                    )) {
-    return NULL;
-  }
-
-  // Name check
-  if (std::string(Name).size() > 0 && Name[0] == '_') {
-    PyErr_SetString(PyExc_ValueError, "'name' cannot begin with '_'.  This is reserved for internal use.  Please pick a different name");
     return NULL;
   }
 
@@ -3514,6 +3529,40 @@ static PyObject* OSCARSSR_GetParticleE0 (OSCARSSRObject* self)
   return Py_BuildValue("f", (self->obj->GetCurrentParticle().GetE0()));
 }
 
+
+
+
+
+
+const char* DOC_OSCARSSR_CorrectTrajectory= R"docstring(
+correct_trajectory()
+
+Correct the trajectory to desired position and direction and specified point based on corrector kicks at specified locations.
+
+This function will add magnetic fields to the sr object with names that begin with an underscore.
+
+Parameters
+----------
+None
+
+Returns
+-------
+trajectory : list
+    A list of points of the form [[[x, y, z], [Beta_x, Beta_y, Beta_z]], ...]
+)docstring";
+static PyObject* OSCARSSR_CorrectTrajectory (OSCARSSRObject* self)
+{
+  // Get the CTStop variable from OSCARSSR
+
+  try {
+    self->obj->CorrectTrajectory();
+  } catch (...) {
+    // UPDATE: Do I need t catch something?
+    throw;
+  }
+  // Return the trajectory
+  return OSCARSSR_GetTrajectory(self);
+}
 
 
 
@@ -5853,6 +5902,7 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   {"get_particle_beta0",                (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_GetParticleBeta0},
   {"get_particle_e0",                   (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_GetParticleE0},
                                                                                           
+  {"correct_trajectory",                (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_CorrectTrajectory},
   {"calculate_trajectory",              (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_CalculateTrajectory},
   {"get_trajectory",                    (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_GetTrajectory},
 
@@ -5909,7 +5959,7 @@ static PyMethodDef OSCARSSR_methods[] = {
                                                                                           
   {"add_bfield_file",                   (PyCFunction) OSCARSSR_AddMagneticField,                METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticField},
   {"add_bfield_interpolated",           (PyCFunction) OSCARSSR_AddMagneticFieldInterpolated,    METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldInterpolated},
-  {"add_bfield_function",               (PyCFunction) OSCARSSR_AddMagneticFieldFunction,        METH_VARARGS,                 DOC_OSCARSSR_AddMagneticFieldFunction},
+  {"add_bfield_function",               (PyCFunction) OSCARSSR_AddMagneticFieldFunction,        METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldFunction},
   {"add_bfield_gaussian",               (PyCFunction) OSCARSSR_AddMagneticFieldGaussian,        METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldGaussian},
   {"add_bfield_uniform",                (PyCFunction) OSCARSSR_AddMagneticFieldUniform,         METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldUniform},
   {"add_bfield_undulator",              (PyCFunction) OSCARSSR_AddMagneticFieldIdealUndulator,  METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldIdealUndulator},
@@ -5945,6 +5995,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"get_particle_beta0",                (PyCFunction) OSCARSSR_GetParticleBeta0,                METH_NOARGS,                  DOC_OSCARSSR_GetParticleBeta0},
   {"get_particle_e0",                   (PyCFunction) OSCARSSR_GetParticleE0,                   METH_NOARGS,                  DOC_OSCARSSR_GetParticleE0},
                                                                                           
+  {"correct_trajectory",                (PyCFunction) OSCARSSR_CorrectTrajectory,               METH_NOARGS,                  DOC_OSCARSSR_CorrectTrajectory},
   {"calculate_trajectory",              (PyCFunction) OSCARSSR_CalculateTrajectory,             METH_NOARGS,                  DOC_OSCARSSR_CalculateTrajectory},
   {"get_trajectory",                    (PyCFunction) OSCARSSR_GetTrajectory,                   METH_NOARGS,                  DOC_OSCARSSR_GetTrajectory},
 
