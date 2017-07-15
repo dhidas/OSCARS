@@ -1,6 +1,7 @@
 import os
 import sys
-from setuptools import setup, Extension
+#from setuptools import setup, Extension
+from distutils.core import setup, Extension
 
 # Get Version numbering from Version.h
 v_major = ''
@@ -49,6 +50,7 @@ if sys.platform == "linux" or sys.platform == "linux2":
 
         extra_compile_args.append('-DCUDA')
         libraries.append('cudart_static')
+        libraries.append('rt')
         extra_objects_sr.append('lib/OSCARSSR_Cuda.o')
         extra_objects_th.append('lib/OSCARSTH_Cuda.o')
 
@@ -66,6 +68,7 @@ elif sys.platform == 'darwin':
 
         extra_compile_args.append('-DCUDA')
         libraries.append('cudart_static')
+        libraries.append('rt')
         extra_objects_sr.append('lib/OSCARSSR_Cuda.o')
         extra_objects_th.append('lib/OSCARSTH_Cuda.o')
 
