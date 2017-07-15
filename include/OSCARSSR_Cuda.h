@@ -24,6 +24,8 @@
 
 extern "C" int  OSCARSSR_Cuda_GetDeviceCount ();
 
+extern "C" std::string OSCARSSR_Cuda_GetDeviceProperties (int const);
+
 extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (TParticleA& Particle,
                                                 TSurfacePoints const& Surface,
                                                 double const Energy_eV,

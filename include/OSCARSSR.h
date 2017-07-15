@@ -148,6 +148,7 @@ class OSCARSSR
     bool SetUseGPUGlobal (int const);
     int  GetUseGPUGlobal () const;
     int  CheckGPU () const;
+    std::string GetGPUInfo (int const) const;
     void SetNThreadsGlobal (int const);
 
     // Random seed setting and random numbers

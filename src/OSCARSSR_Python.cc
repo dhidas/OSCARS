@@ -5799,6 +5799,52 @@ static PyObject* OSCARSSR_CalculateElectricFieldTimeDomain (OSCARSSRObject* self
 
 
 
+
+const char* DOC_OSCARSSR_PrintGPU = R"docstring(
+print_gpu()
+
+Print information about all gpus to standard out
+
+Parameters
+----------
+None
+
+Returns
+-------
+None
+)docstring";
+static PyObject* OSCARSSR_PrintGPU (OSCARSSRObject* self)
+{
+  // Print all magnetic stored in OSCARSSR
+
+  int const NGPU = self->obj->CheckGPU();
+  // Out string stream for printing beam information
+  std::ostringstream ostream;
+  ostream << "*GPUs*\n";
+  ostream << "Use GPU Globally: " << self->obj->GetUseGPUGlobal() << "\n";
+  ostream << "Number of GPUs: " << NGPU << std::endl;
+  for (int i = 0; i < NGPU; ++i) {
+    ostream << "GPU " << i << "\n";
+    ostream << self->obj->GetGPUInfo(i) << "\n";
+  }
+
+  // Python printing
+  PyObject* sys = PyImport_ImportModule( "sys");
+  PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
+  std::string Message = ostream.str();
+  PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
+
 const char* DOC_OSCARSSR_PrintAll = R"docstring(
 print_all()
 
@@ -5819,6 +5865,7 @@ static PyObject* OSCARSSR_PrintAll (OSCARSSRObject* self)
   OSCARSSR_PrintParticleBeams(self);
   OSCARSSR_PrintMagneticFields(self);
   OSCARSSR_PrintElectricFields(self);
+  OSCARSSR_PrintGPU(self);
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -5930,6 +5977,8 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
 
   {"calculate_efield_vs_time",          (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateElectricFieldTimeDomain},
 
+  {"print_gpu",                         (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_PrintGPU},
+
   {"print_all",                         (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_PrintAll},
 
   {NULL, NULL, 0, NULL}  /* Sentinel */
@@ -6022,6 +6071,8 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"get_power_density",                 (PyCFunction) OSCARSSR_GetPowerDensity,                 METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetPowerDensity},
 
   {"calculate_efield_vs_time",          (PyCFunction) OSCARSSR_CalculateElectricFieldTimeDomain,METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateElectricFieldTimeDomain},
+
+  {"print_gpu",                         (PyCFunction) OSCARSSR_PrintGPU,                           METH_NOARGS,                  DOC_OSCARSSR_PrintGPU},
 
   {"print_all",                         (PyCFunction) OSCARSSR_PrintAll,                           METH_NOARGS,                  DOC_OSCARSSR_PrintAll},
 

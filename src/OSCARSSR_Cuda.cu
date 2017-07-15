@@ -39,6 +39,34 @@ extern "C" int OSCARSSR_Cuda_GetDeviceCount ()
 
 
 
+extern "C" std::string OSCARSSR_Cuda_GetDeviceProperties (int const i)
+{
+  int ngpu = 0;
+  cudaGetDeviceCount(&ngpu);
+
+  char buf[1000];
+
+  if (i >= ngpu) {
+    sprintf(buf, "ERROR: GPU %i Not available", i);
+    return std::string(buf);
+  }
+
+  cudaDeviceProp prop;
+  cudaGetDeviceProperties(&prop, i);
+  sprintf(buf, "Device Number: %d\n", i);
+  sprintf(buf, "  Device name: %s\n", prop.name);
+  sprintf(buf, "  Memory Clock Rate (KHz): %d\n",
+          prop.memoryClockRate);
+  sprintf(buf, "  Memory Bus Width (bits): %d\n",
+          prop.memoryBusWidth);
+  sprintf(buf, "  Peak Memory Bandwidth (GB/s): %f\n\n",
+          2.0*prop.memoryClockRate*(prop.memoryBusWidth/8)/1.0e6);
+}
+
+
+
+
+
 __device__ static __inline__ void Orthogonal(double *a, double *b)
 {
   // Return a vector which is orthogonal vector a

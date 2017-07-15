@@ -251,7 +251,7 @@ def plot_spectrum(S, log=False, show=True, ofile='', title='Spectrum', xlabel='E
 
 
 
-def plot_spectra(spectra, label=None, show=True, ofile='', title='', loc='upper left', log=False, xlabel='Energy [eV]', ylabel='[$\gamma / mm^2 / 0.1\%bw / s$]', figsize=None, ylim=None, xlim=None, ret=False, axis=None, transparent=True, xticks=None, **kwargs):
+def plot_spectra(spectra, label=None, show=True, ofile='', title='', loc='upper left', log=False, xlabel='Energy [eV]', ylabel='[$\gamma / mm^2 / 0.1\%bw / s$]', figsize=None, ylim=None, xlim=None, ret=False, axis=None, transparent=True, xticks=None, xvlines=None, **kwargs):
 
 
     # Size and limits
@@ -272,6 +272,9 @@ def plot_spectra(spectra, label=None, show=True, ofile='', title='', loc='upper 
         else:
             plt.plot(X, Y, **kwargs)
 
+    if xvlines is not None:
+        for xvline in xvlines:
+            plt.axvline(x=xvline, color='red', linestyle='dashed', linewidth=1)
 
     if log:
         plt.yscale('log')

@@ -653,6 +653,17 @@ int OSCARSSR::CheckGPU () const
 
 
 
+std::string OSCARSSR::GetGPUInfo(int const i) const
+{
+  #ifdef CUDA
+    return OSCARSSR_Cuda_GetDeviceProperties(i);
+  #endif
+  return "";
+}
+
+
+
+
 void OSCARSSR::SetNThreadsGlobal (int const N)
 {
   fNThreadsGlobal = N;
