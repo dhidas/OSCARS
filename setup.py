@@ -68,7 +68,6 @@ elif sys.platform == 'darwin':
 
         extra_compile_args.append('-DCUDA')
         libraries.append('cudart_static')
-        libraries.append('rt')
         extra_objects_sr.append('lib/OSCARSSR_Cuda.o')
         extra_objects_th.append('lib/OSCARSTH_Cuda.o')
 
