@@ -658,7 +658,7 @@ std::string OSCARSSR::GetGPUInfo(int const i) const
   #ifdef CUDA
     return OSCARSSR_Cuda_GetDeviceProperties(i);
   #endif
-  return "";
+  return "INFO: GPU not enabled in this version";
 }
 
 
