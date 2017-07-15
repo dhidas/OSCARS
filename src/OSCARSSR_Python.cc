@@ -5823,6 +5823,11 @@ static PyObject* OSCARSSR_PrintGPU (OSCARSSRObject* self)
   ostream << "*GPUs*\n";
   ostream << "Use GPU Globally: " << self->obj->GetUseGPUGlobal() << "\n";
   ostream << "Number of GPUs: " << NGPU << std::endl;
+
+  if (NGPU == -1) {
+    ostream << " GPU not enabled in this compiled binary\n";
+  }
+
   for (int i = 0; i < NGPU; ++i) {
     ostream << "GPU " << i << "\n";
     ostream << self->obj->GetGPUInfo(i) << "\n";
