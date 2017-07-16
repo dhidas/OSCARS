@@ -2155,7 +2155,7 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
                               int const Dimension)
 {
   // Calculate flux on surface
-  // THIS is the ENTRY POINT typically
+  // THIS is the ENTRY POINT typically.
 
   // Check that particle has been set yet.  If fType is "" it has not been set yet
   if (fParticle.GetType() == "") {
