@@ -1210,31 +1210,31 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU2 (OSCARSSR& OSR,
   // Copy constants to first device (async)
   int const d0 = GPUsToUse[0];
   cudaSetDevice(d0);
-  cudaMemcpyAsync(d_nt[d0],    h_nt,          sizeof(int),    cudaMemcpyHostToDevice);
-  cudaMemcpyAsync(d_ns[d0],    h_ns,          sizeof(int),    cudaMemcpyHostToDevice);
-  cudaMemcpyAsync(d_dt[d0],    h_dt,          sizeof(double), cudaMemcpyHostToDevice);
-  cudaMemcpyAsync(d_c0[d0],    h_c0,          sizeof(double), cudaMemcpyHostToDevice);
-  cudaMemcpyAsync(d_c2[d0],    h_c2,          sizeof(double), cudaMemcpyHostToDevice);
-  cudaMemcpyAsync(d_c[d0],     h_c,           sizeof(double), cudaMemcpyHostToDevice);
-  cudaMemcpyAsync(d_omega[d0], h_omega,       sizeof(double), cudaMemcpyHostToDevice);
-  cudaMemcpyAsync(d_sx[d0],    h_sx,  *h_ns * sizeof(double), cudaMemcpyHostToDevice);
-  cudaMemcpyAsync(d_sy[d0],    h_sy,  *h_ns * sizeof(double), cudaMemcpyHostToDevice);
-  cudaMemcpyAsync(d_sz[d0],    h_sz,  *h_ns * sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_nt[0],    h_nt,          sizeof(int),    cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_ns[0],    h_ns,          sizeof(int),    cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_dt[0],    h_dt,          sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_c0[0],    h_c0,          sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_c2[0],    h_c2,          sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_c[0],     h_c,           sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_omega[0], h_omega,       sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_sx[0],    h_sx,  *h_ns * sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_sy[0],    h_sy,  *h_ns * sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_sz[0],    h_sz,  *h_ns * sizeof(double), cudaMemcpyHostToDevice);
   for (size_t i = 0; i < GPUsToUse.size() - 1; ++i) {
     // Device number
     int const d  = GPUsToUse[i];
     int const d1 = GPUsToUse[i+1];
     cudaSetDevice(d);
-    cudaMemcpyPeerAsync( d_nt[d1],     d1, d_nt[d],     d, sizeof(int));
-    cudaMemcpyPeerAsync( d_ns[d1],     d1, d_ns[d],     d, sizeof(int));
-    cudaMemcpyPeerAsync( d_dt[d1],     d1, d_dt[d],     d, sizeof(double));
-    cudaMemcpyPeerAsync( d_c0[d1],     d1, d_c0[d],     d, sizeof(double));
-    cudaMemcpyPeerAsync( d_c2[d1],     d1, d_c2[d],     d, sizeof(double));
-    cudaMemcpyPeerAsync( d_c[d1],      d1, d_c[d],      d, sizeof(double));
-    cudaMemcpyPeerAsync( d_omega[d1],  d1, d_omega[d],  d, sizeof(double));
-    cudaMemcpyPeerAsync( d_sx[d1],     d1, d_sx[d],     d, *h_ns * sizeof(double));
-    cudaMemcpyPeerAsync( d_sy[d1],     d1, d_sy[d],     d, *h_ns * sizeof(double));
-    cudaMemcpyPeerAsync( d_sz[d1],     d1, d_sz[d],     d, *h_ns * sizeof(double));
+    cudaMemcpyPeerAsync( d_nt[i+1],     d1, d_nt[i],     d, sizeof(int));
+    cudaMemcpyPeerAsync( d_ns[i+1],     d1, d_ns[i],     d, sizeof(int));
+    cudaMemcpyPeerAsync( d_dt[i+1],     d1, d_dt[i],     d, sizeof(double));
+    cudaMemcpyPeerAsync( d_c0[i+1],     d1, d_c0[i],     d, sizeof(double));
+    cudaMemcpyPeerAsync( d_c2[i+1],     d1, d_c2[i],     d, sizeof(double));
+    cudaMemcpyPeerAsync( d_c[i+1],      d1, d_c[i],      d, sizeof(double));
+    cudaMemcpyPeerAsync( d_omega[i+1],  d1, d_omega[i],  d, sizeof(double));
+    cudaMemcpyPeerAsync( d_sx[i+1],     d1, d_sx[i],     d, *h_ns * sizeof(double));
+    cudaMemcpyPeerAsync( d_sy[i+1],     d1, d_sy[i],     d, *h_ns * sizeof(double));
+    cudaMemcpyPeerAsync( d_sz[i+1],     d1, d_sz[i],     d, *h_ns * sizeof(double));
   }
 
   // Set first trajectory
@@ -1275,23 +1275,23 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU2 (OSCARSSR& OSR,
 
     // Copy trajectory to first GPU, then internal async transfers (where possible)
     cudaSetDevice(d0);
-    cudaMemcpyAsync(d_x[d0],  h_x,  *h_nt * sizeof(double), cudaMemcpyHostToDevice);
-    cudaMemcpyAsync(d_y[d0],  h_y,  *h_nt * sizeof(double), cudaMemcpyHostToDevice);
-    cudaMemcpyAsync(d_z[d0],  h_z,  *h_nt * sizeof(double), cudaMemcpyHostToDevice);
-    cudaMemcpyAsync(d_bx[d0], h_bx, *h_nt * sizeof(double), cudaMemcpyHostToDevice);
-    cudaMemcpyAsync(d_by[d0], h_by, *h_nt * sizeof(double), cudaMemcpyHostToDevice);
-    cudaMemcpyAsync(d_bz[d0], h_bz, *h_nt * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(d_x[0],  h_x,  *h_nt * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(d_y[0],  h_y,  *h_nt * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(d_z[0],  h_z,  *h_nt * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(d_bx[0], h_bx, *h_nt * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(d_by[0], h_by, *h_nt * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(d_bz[0], h_bz, *h_nt * sizeof(double), cudaMemcpyHostToDevice);
     for (size_t ig = 0; ig < GPUsToUse.size() - 1; ++ig) {
       // Device number
       int const d  = GPUsToUse[ig];
       int const d1 = GPUsToUse[ig+1];
       cudaSetDevice(d);
-      cudaMemcpyPeerAsync(d_x[d1],  d1, d_x[d],  d, *h_nt * sizeof(double));
-      cudaMemcpyPeerAsync(d_y[d1],  d1, d_y[d],  d, *h_nt * sizeof(double));
-      cudaMemcpyPeerAsync(d_z[d1],  d1, d_z[d],  d, *h_nt * sizeof(double));
-      cudaMemcpyPeerAsync(d_bx[d1], d1, d_bx[d], d, *h_nt * sizeof(double));
-      cudaMemcpyPeerAsync(d_by[d1], d1, d_by[d], d, *h_nt * sizeof(double));
-      cudaMemcpyPeerAsync(d_bz[d1], d1, d_bz[d], d, *h_nt * sizeof(double));
+      cudaMemcpyPeerAsync(d_x[ig+1],  d1, d_x[ig],  d, *h_nt * sizeof(double));
+      cudaMemcpyPeerAsync(d_y[ig+1],  d1, d_y[ig],  d, *h_nt * sizeof(double));
+      cudaMemcpyPeerAsync(d_z[ig+1],  d1, d_z[ig],  d, *h_nt * sizeof(double));
+      cudaMemcpyPeerAsync(d_bx[ig+1], d1, d_bx[ig], d, *h_nt * sizeof(double));
+      cudaMemcpyPeerAsync(d_by[ig+1], d1, d_by[ig], d, *h_nt * sizeof(double));
+      cudaMemcpyPeerAsync(d_bz[ig+1], d1, d_bz[ig], d, *h_nt * sizeof(double));
 
     }
 
