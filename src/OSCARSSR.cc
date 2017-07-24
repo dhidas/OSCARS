@@ -2204,6 +2204,9 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
     throw std::out_of_range("wROng dimension");
   }
 
+  std::cout << "hello" << std::endl;
+  return;
+
   // Which cpmpute method will we use, gpu, multi-thread, or single-thread
   if (UseGPU) {
     // Send to GPU function
