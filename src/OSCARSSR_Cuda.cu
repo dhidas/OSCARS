@@ -1081,7 +1081,6 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU2 (OSCARSSR& OSR,
   *h_ns = (int) Surface.GetNPoints();
   *h_dt = (double) OSR.GetTrajectory().GetDeltaT();
 
-  double const Weight = 1.0 / (double) NParticlesReally;
 
   int const NThreads = *h_ns;
   int const NThreadsPerBlock = 32*16;
@@ -1314,7 +1313,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU2 (OSCARSSR& OSR,
             break;
           }
           int iss = ith + NThreadsPerBlock * NBlocksUsed;
-          FluxContainer.AddToPoint(iss, h_flux[ig][ith] * Weight);
+          FluxContainer.AddToPoint(iss, h_flux[ig][ith]);
         }
         NBlocksUsed += NBlocksThisGPU[ig];
       }
@@ -1358,11 +1357,14 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU2 (OSCARSSR& OSR,
         break;
       }
       int iss = ith + NThreadsPerBlock * NBlocksUsed;
-      FluxContainer.AddToPoint(iss, h_flux[ig][ith] * Weight);
+      FluxContainer.AddToPoint(iss, h_flux[ig][ith]);
     }
     NBlocksUsed += NBlocksThisGPU[ig];
   }
 
+  // Weighting for multi-particle
+  double const Weight = 1.0 / (double) NParticlesReally;
+  FluxContainer.WeightAll(Weight);
 
   // Free host memory
   cudaFreeHost(h_nt);
