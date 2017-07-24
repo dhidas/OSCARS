@@ -2176,7 +2176,7 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
 
   // Should we use the GPU or not?
   int const NGPUAvailable = this->CheckGPU();
-  bool const UseGPU = GPU == 0 ? false : this->GetUseGPUGlobal() && (NGPUAvailable > 0) ? true : false;
+  bool const UseGPU = GPU == 0 ? false : this->GetUseGPUGlobal() && (NGPUAvailable > 0) ? true : (GPU == 1) && (NGPUAvailable > 0);
 
   // If use GPU, let's check the GPU vector, or construct one if we must
   std::vector<int> GPUVector;
@@ -2192,6 +2192,8 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
     GPUVector.resize(NGPU);
   }
 
+  std::cout << "starting FC " << FluxContainer.GetNPoints() << std::endl;
+
   if (Dimension == 3) {
     for (size_t i = 0; i != Surface.GetNPoints(); ++i) {
       FluxContainer.AddPoint(Surface.GetPoint(i).GetPoint(), 0);
@@ -2205,11 +2207,24 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
   }
 
   std::cout << "hello" << std::endl;
-  return;
+  std::cout << "UseGPU: " << UseGPU << std::endl;
+  for (size_t ig = 0; ig != GPUVector.size(); ++ig) {
+    std::cout << "GPUVector: " << GPUVector[ig] << std::endl;
+  }
+
 
   // Which cpmpute method will we use, gpu, multi-thread, or single-thread
   if (UseGPU) {
     // Send to GPU function
+    CalculateFluxGPU2(Surface,
+                      Energy_eV,
+                      FluxContainer,
+                      Polarization,
+                      Angle,
+                      HorizontalDirection,
+                      PropogationDirection,
+                      NParticles,
+                      GPUVector);
   } else {
     if (NParticles == 0) {
       if (NThreadsToUse == 1) {
@@ -2575,18 +2590,13 @@ void OSCARSSR::CalculateFluxGPU2 (TSurfacePoints const& Surface,
     }
   }
 
-  // Add points to flux container
-  for (size_t i = 0; i != Surface.GetNPoints(); ++i) {
-    FluxContainer.AddPoint(Surface.GetPoint(i).GetPoint(), 0);
-  }
-
   #ifdef CUDA
   // Check that the GPU exists
   if (this->CheckGPU() < 1) {
     throw std::invalid_argument("You are requesting the GPU, but none were found");
   }
 
-  //return OSCARSSR_Cuda_CalculateFluxGPU2(*this, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NParticles, GPUVector);
+  return OSCARSSR_Cuda_CalculateFluxGPU2(*this, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NParticles, GPUVector);
   #else
   throw std::invalid_argument("GPU functionality not compiled into this binary distribution");
   #endif

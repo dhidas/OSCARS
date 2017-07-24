@@ -15,6 +15,7 @@
 #include <cmath>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 
 #include "TVector3DC.h"
 #include "TSpectrumContainer.h"
@@ -126,6 +127,7 @@ __global__ void OSCARSSR_Cuda_FluxGPUMulti (double *x, double *y, double *z, dou
   if (is >= *ns) {
     return;
   }
+
 
   // Complex i
   cuDoubleComplex I = make_cuDoubleComplex(0, 1);
@@ -1115,7 +1117,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU2 (OSCARSSR& OSR,
 
   cudaHostAlloc((void**) &h_flux,   NGPUsToUse * sizeof(double*), cudaHostAllocWriteCombined | cudaHostAllocMapped);
   for (size_t i = 0; i < GPUsToUse.size(); ++i) {
-    cudaHostAlloc((void**) &h_flux[i], NFlux * sizeof(double), cudaHostAllocWriteCombined | cudaHostAllocMapped);
+    cudaHostAlloc((void**) &(h_flux[i]), NFlux * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
   }
 
   // First surface point for each gpu
@@ -1198,17 +1200,25 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU2 (OSCARSSR& OSR,
   *h_c2    = TOSCARSSR::FourPi() * OSR.GetCurrentParticle().GetCurrent() / (TOSCARSSR::H() * fabs(OSR.GetCurrentParticle().GetQ()) * TOSCARSSR::Mu0() * TOSCARSSR::C()) * 1e-6 * 0.001;
   *h_c     = TOSCARSSR::C();
   *h_omega = TOSCARSSR::EvToAngularFrequency(Energy_eV);
+  for (size_t i = 0; i < *h_ns; ++i) {
+    h_sx[i] = Surface.GetPoint(i).GetX();
+    h_sy[i] = Surface.GetPoint(i).GetY();
+    h_sz[i] = Surface.GetPoint(i).GetZ();
+  }
 
   // Copy constants to first device (async)
   int const d0 = GPUsToUse[0];
   cudaSetDevice(d0);
-  cudaMemcpyAsync(d_nt[d0],    h_nt,    sizeof(int),    cudaMemcpyHostToDevice);
-  cudaMemcpyAsync(d_ns[d0],    h_ns,    sizeof(int),    cudaMemcpyHostToDevice);
-  cudaMemcpyAsync(d_dt[d0],    h_dt,    sizeof(double), cudaMemcpyHostToDevice);
-  cudaMemcpyAsync(d_c0[d0],    h_c0,    sizeof(double), cudaMemcpyHostToDevice);
-  cudaMemcpyAsync(d_c2[d0],    h_c2,    sizeof(double), cudaMemcpyHostToDevice);
-  cudaMemcpyAsync(d_c[d0],     h_c,     sizeof(double), cudaMemcpyHostToDevice);
-  cudaMemcpyAsync(d_omega[d0], h_omega, sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_nt[d0],    h_nt,          sizeof(int),    cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_ns[d0],    h_ns,          sizeof(int),    cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_dt[d0],    h_dt,          sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_c0[d0],    h_c0,          sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_c2[d0],    h_c2,          sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_c[d0],     h_c,           sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_omega[d0], h_omega,       sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_sx[d0],    h_sx,  *h_ns * sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_sy[d0],    h_sy,  *h_ns * sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_sz[d0],    h_sz,  *h_ns * sizeof(double), cudaMemcpyHostToDevice);
   for (size_t i = 0; i < GPUsToUse.size() - 1; ++i) {
     // Device number
     int const d  = GPUsToUse[i];
@@ -1221,6 +1231,9 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU2 (OSCARSSR& OSR,
     cudaMemcpyPeerAsync( d_c2[d1],     d1, d_c2[d],     d, sizeof(double));
     cudaMemcpyPeerAsync( d_c[d1],      d1, d_c[d],      d, sizeof(double));
     cudaMemcpyPeerAsync( d_omega[d1],  d1, d_omega[d],  d, sizeof(double));
+    cudaMemcpyPeerAsync( d_sx[d1],     d1, d_sx[d],     d, *h_ns * sizeof(double));
+    cudaMemcpyPeerAsync( d_sy[d1],     d1, d_sy[d],     d, *h_ns * sizeof(double));
+    cudaMemcpyPeerAsync( d_sz[d1],     d1, d_sz[d],     d, *h_ns * sizeof(double));
   }
 
   // Set first trajectory
@@ -1235,12 +1248,6 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU2 (OSCARSSR& OSR,
   }
 
   // Set the surface points
-  for (size_t i = 0; i < *h_ns; ++i) {
-    h_sx[i] = Surface.GetPoint(i).GetX();
-    h_sy[i] = Surface.GetPoint(i).GetY();
-    h_sz[i] = Surface.GetPoint(i).GetZ();
-  }
-
   // GPU events
   cudaEvent_t *event_fluxcopy = new cudaEvent_t[NGPUsToUse];
   for (int ig = 0; ig < NGPUsToUse; ++ig) {
@@ -1297,23 +1304,25 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU2 (OSCARSSR& OSR,
 
 
     // Add result to flux container (from **previous**)
-    int NBlocksUsed = 0;
-    for (size_t ig = 0; ig < GPUsToUse.size(); ++ig) {
-      for (size_t ith = 0; ith < NBlocksThisGPU[ig] * NThreadsPerBlock; ++ith) {
-        if (ith + NThreadsPerBlock * NBlocksUsed >= *h_ns) {
-          break;
+    if (ip > 0) {
+      int NBlocksUsed = 0;
+      for (size_t ig = 0; ig < GPUsToUse.size(); ++ig) {
+        for (size_t ith = 0; ith < NBlocksThisGPU[ig] * NThreadsPerBlock; ++ith) {
+          if (ith + NThreadsPerBlock * NBlocksUsed >= *h_ns) {
+            break;
+          }
+          int iss = ith + NThreadsPerBlock * NBlocksUsed;
+          FluxContainer.AddToPoint(iss, h_flux[ig][ith] * Weight);
         }
-        int iss = ith + NThreadsPerBlock * NBlocksUsed;
-        FluxContainer.AddToPoint(iss, *(h_flux[ith]) * Weight);
+        NBlocksUsed += NBlocksThisGPU[ig];
       }
-      NBlocksUsed += NBlocksThisGPU[ig];
     }
 
     // Add copy back to streams
     for (size_t ig = 0; ig < GPUsToUse.size(); ++ig) {
       int const d  = GPUsToUse[ig];
       cudaSetDevice(d);
-      cudaMemcpyAsync(h_flux[d0],  d_flux,  NFlux * sizeof(double), cudaMemcpyDeviceToHost);
+      cudaMemcpyAsync(h_flux[ig],  d_flux[ig],  NFlux * sizeof(double), cudaMemcpyDeviceToHost);
       cudaEventRecord(event_fluxcopy[ig]);
     }
 
@@ -1347,7 +1356,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU2 (OSCARSSR& OSR,
         break;
       }
       int iss = ith + NThreadsPerBlock * NBlocksUsed;
-      FluxContainer.AddToPoint(iss, *(h_flux[ith]) * Weight);
+      FluxContainer.AddToPoint(iss, h_flux[ig][ith] * Weight);
     }
     NBlocksUsed += NBlocksThisGPU[ig];
   }
