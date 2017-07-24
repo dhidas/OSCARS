@@ -34,6 +34,9 @@ namespace OSCARSPY {
   TVector2D ListAsTVector2D (PyObject* List);
   TVector3D ListAsTVector3D (PyObject* List);
 
+  void      ListToVectorInt (PyObject* List, std::vector<int>& V);
+  PyObject* VectorIntToList (std::vector<int>& V);
+
   PyObject* TVector2DAsList (TVector2D const& V);
   PyObject* TVector3DAsList (TVector3D const& V);
 

@@ -22,9 +22,12 @@
 #include "TSurfacePoints.h"
 #include "T3DScalarContainer.h"
 
+class OSCARSSR;
+
+
 extern "C" int  OSCARSSR_Cuda_GetDeviceCount ();
 
-extern "C" std::string OSCARSSR_Cuda_GetDeviceProperties (int const);
+std::string OSCARSSR_Cuda_GetDeviceProperties (int const);
 
 extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (TParticleA& Particle,
                                                 TSurfacePoints const& Surface,
@@ -35,6 +38,17 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (TParticleA& Particle,
                                                 TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
                                                 TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
                                                 double const Weight = 1);
+
+extern "C" void OSCARSSR_Cuda_CalculateFluxGPU2 (OSCARSSR& OSR,
+                                                TSurfacePoints const& Surface,
+                                                double const Energy_eV,
+                                                T3DScalarContainer& FluxContainer,
+                                                std::string const& Polarization = "all",
+                                                double const Angle = 0,
+                                                TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
+                                                TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
+                                                int const NParticles = 0,
+                                                std::vector<int> const& GPUVector = std::vector<int>());
 
 extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (TParticleA& Particle,
                                                     TVector3D const& ObservationPoint,

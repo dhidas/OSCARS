@@ -4556,7 +4556,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
 
 
 const char* DOC_OSCARSSR_CalculateFlux = R"docstring(
-calculate_flux(energy_eV, points [, normal, rotations, translation, nparticles, nthreads, gpu, ofile, bofile])
+calculate_flux(energy_eV, points [, normal, rotations, translation, nparticles, nthreads, gpu, ngpu, ofile, bofile])
 
 Calculates the flux at a given set of points
 
@@ -4587,7 +4587,11 @@ nthreads : int
     Number of threads to use
 
 gpu : int
-    Use the gpu or not (0 or 1)
+    Use the gpu or not (0 or 1).  If 1 will attempt to use ALL gpus available.  This is overridden if you use the input 'ngpu'
+
+ngpu : int or list
+    If ngpu is an int, use that number of gpus (if available).
+    If ngpu is a list, the list should be a list of gpus you wish to use
 
 ofile : str
     Output file name
@@ -4611,8 +4615,9 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
   int         NormalDirection = 0;
   int         Dim = 3;
   int         NParticles = 0;
-  int         GPU = -1;
   int         NThreads = 0;
+  int         GPU = -1;
+  PyObject*   NGPU;
   char const* OutFileNameText = "";
   char const* OutFileNameBinary = "";
 
@@ -4625,11 +4630,12 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
                                  "nparticles",
                                  "nthreads",
                                  "gpu",
+                                 "ngpu",
                                  "ofile",
                                  "bofile",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dO|iOOiiiss",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|dOiOOiiiOss",
                                    const_cast<char **>(kwlist),
                                    &Energy_eV,
                                    &List_Points,
@@ -4639,6 +4645,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
                                    &NParticles,
                                    &NThreads,
                                    &GPU,
+                                   &NGPU,
                                    &OutFileNameText,
                                    &OutFileNameBinary)) {
     return NULL;
@@ -4721,15 +4728,15 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
     return NULL;
   }
 
-  // Check GPU parameter
-  if (GPU != 0 && GPU != 1 && GPU != -1) {
-    PyErr_SetString(PyExc_ValueError, "'gpu' must be 0 or 1");
-    return NULL;
-  }
-
   // Check NThreads parameter
   if (NThreads < 0) {
     PyErr_SetString(PyExc_ValueError, "'nthreads' must be > 0");
+    return NULL;
+  }
+
+  // Check GPU parameter
+  if (GPU != 0 && GPU != 1 && GPU != -1) {
+    PyErr_SetString(PyExc_ValueError, "'gpu' must be 0 or 1");
     return NULL;
   }
 
@@ -4739,13 +4746,22 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
     return NULL;
   }
 
+  // Check ngpu inputa
+  int NumberOfGPUs = -1;
+  std::vector<int> GPUVector;
+  if (PyLong_Check(NGPU)) {
+    NumberOfGPUs = (int) PyLong_AsLong(NGPU);
+  } else if (PyList_Check(NGPU)) {
+    OSCARSPY::ListToVectorInt(NGPU, GPUVector);
+  }
+
   // Container for Point plus scalar
   T3DScalarContainer FluxContainer;
 
   try {
     throw;
     // UPDATE: Must fix single flux to accept polarizaton and angle
-    self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, "all", 0, TVector3D(1, 0, 0), TVector3D(0, 1, 0), NParticles, NThreads, GPU, Dim);
+    self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, "all", 0, TVector3D(1, 0, 0), TVector3D(0, 1, 0), NParticles, NThreads, GPU, NumberOfGPUs, GPUVector, Dim);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -5113,7 +5129,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   //bool const Directional = NormalDirection == 0 ? false : true;
 
   try {
-    self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NParticles, NThreads, GPU, Dim);
+    self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NParticles, NThreads, GPU, 1, std::vector<int>(), Dim);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;

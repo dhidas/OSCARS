@@ -70,7 +70,7 @@ PyObject* GetSpectrumAsList (TSpectrumContainer const& Spectrum)
   // Get the spectrum as a list format for python output
 
   // Create a python list
-  PyObject *PList = PyList_New(0);
+  PyObject *List = PyList_New(0);
 
   // Number of points in trajectory calculation
   size_t NSPoints = Spectrum.GetNPoints();
@@ -78,16 +78,16 @@ PyObject* GetSpectrumAsList (TSpectrumContainer const& Spectrum)
   // Loop over all points in trajectory
   for (size_t iS = 0; iS != NSPoints; ++iS) {
     // Create a python list for X and Beta
-    PyObject *PList2 = PyList_New(0);
+    PyObject *List2 = PyList_New(0);
 
     // Add position and Beta to list
-    PyList_Append(PList2, Py_BuildValue("f", Spectrum.GetEnergy(iS)));
-    PyList_Append(PList2, Py_BuildValue("f", Spectrum.GetFlux(iS)));
-    PyList_Append(PList, PList2);
+    PyList_Append(List2, Py_BuildValue("f", Spectrum.GetEnergy(iS)));
+    PyList_Append(List2, Py_BuildValue("f", Spectrum.GetFlux(iS)));
+    PyList_Append(List, List2);
   }
 
   // Return the python list
-  return PList;
+  return List;
 }
 
 
@@ -174,18 +174,51 @@ TVector3D ListAsTVector3D (PyObject* List)
 
 
 
+void ListToVectorInt (PyObject* List, std::vector<int>& V)
+{
+  // Get a list as std::vector
+
+  V.clear();
+  V.resize(PyList_Size(List));
+  for (int i = 0; i < PyList_Size(List); ++i) {
+    V[i] = (int) PyLong_AsLong(PyList_GetItem(List, i));
+  }
+
+  return;
+}
+
+
+
+
+PyObject* VectorIntToList (std::vector<int>& V)
+{
+  // Get a vector<int> as a PyObject list
+
+  // Create a python list
+  PyObject *List = PyList_New(0);
+
+  for (std::vector<int>::const_iterator it = V.begin(); it != V.end(); ++it) {
+    PyList_Append(List, Py_BuildValue("i", *it));
+  }
+
+  return List;
+}
+
+
+
+
 PyObject* TVector2DAsList (TVector2D const& V)
 {
   // Turn a TVector2D into a list (like a vector)
 
   // Create a python list
-  PyObject *PList = PyList_New(0);
+  PyObject *List = PyList_New(0);
 
-  PyList_Append(PList, Py_BuildValue("f", V.GetX()));
-  PyList_Append(PList, Py_BuildValue("f", V.GetY()));
+  PyList_Append(List, Py_BuildValue("f", V.GetX()));
+  PyList_Append(List, Py_BuildValue("f", V.GetY()));
 
   // Return the python list
-  return PList;
+  return List;
 }
 
 
@@ -196,14 +229,14 @@ PyObject* TVector3DAsList (TVector3D const& V)
   // Turn a TVector3D into a list (like a vector)
 
   // Create a python list
-  PyObject *PList = PyList_New(0);
+  PyObject *List = PyList_New(0);
 
-  PyList_Append(PList, Py_BuildValue("f", V.GetX()));
-  PyList_Append(PList, Py_BuildValue("f", V.GetY()));
-  PyList_Append(PList, Py_BuildValue("f", V.GetZ()));
+  PyList_Append(List, Py_BuildValue("f", V.GetX()));
+  PyList_Append(List, Py_BuildValue("f", V.GetY()));
+  PyList_Append(List, Py_BuildValue("f", V.GetZ()));
 
   // Return the python list
-  return PList;
+  return List;
 }
 
 

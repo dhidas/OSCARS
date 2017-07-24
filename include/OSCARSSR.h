@@ -279,6 +279,8 @@ class OSCARSSR
                         int const NParticles = 0,
                         int const NThreads = 0,
                         int const GPU = 0,
+                        int const NGPU = -1,
+                        std::vector<int> VGPU = std::vector<int>(),
                         int const Dimension = 3);
 
     void CalculateFluxPoints (TParticleA& Particle,
@@ -314,6 +316,16 @@ class OSCARSSR
                            TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
                            TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
                            double const Weight = 1);
+
+    void CalculateFluxGPU2 (TSurfacePoints const& Surface,
+                           double const Energy_eV,
+                           T3DScalarContainer& FluxContainer,
+                           std::string const& Polarization = "all",
+                           double const Angle = 0,
+                           TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
+                           TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
+                           int const NParticles = 0,
+                           std::vector<int> GPUVector = std::vector<int>());
 
     // Electric Field Calculations
     void CalculateElectricFieldTimeDomain (TVector3D const& Observer, T3DScalarContainer&);
