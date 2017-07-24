@@ -887,7 +887,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (TParticleA& Particle,
 
   // Send computation to gpu
   int const NBlocks = NSPoints / NTHREADS_PER_BLOCK + 1;
-  OSCARSSR_Cuda_FluxGPU4<<<NBlocks, NTHREADS_PER_BLOCK>>>(d_x, d_y, d_z, d_bx, d_by, d_bz, d_sx, d_sy, d_sz, d_dt, d_nt, d_ns, d_C0, d_C2, d_C, d_Omega, d_flux);
+  OSCARSSR_Cuda_FluxGPU<<<NBlocks, NTHREADS_PER_BLOCK>>>(d_x, d_y, d_z, d_bx, d_by, d_bz, d_sx, d_sy, d_sz, d_dt, d_nt, d_ns, d_C0, d_C2, d_C, d_Omega, d_flux);
 
   // Copy result back from GPU
   cudaMemcpy(flux, d_flux, size_s, cudaMemcpyDeviceToHost);
