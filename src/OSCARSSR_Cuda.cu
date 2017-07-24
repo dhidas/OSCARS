@@ -124,8 +124,6 @@ __global__ void OSCARSSR_Cuda_FluxGPUMulti (double *x, double *y, double *z, dou
   // Check that this is within the number of spectrum points requested
   int const ith = threadIdx.x + blockIdx.x * blockDim.x;
   int const is = ith + *ifirst;
-  flux[ith] = *ifirst;
-  return;
   if (is >= *ns) {
     return;
   }
@@ -1100,7 +1098,8 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU2 (OSCARSSR& OSR,
   }
 
   // Memory allocation for Host
-  double  *h_x,  *h_y,  *h_z,  *h_bx,  *h_by,  *h_bz,  *h_sx,  *h_sy,  *h_sz,   *h_c0,  *h_c2,  *h_c,  *h_omega, *h_ifirst;
+  double  *h_x,  *h_y,  *h_z,  *h_bx,  *h_by,  *h_bz,  *h_sx,  *h_sy,  *h_sz,   *h_c0,  *h_c2,  *h_c,  *h_omega;
+  int     *h_ifirst;
   double **h_flux;
   cudaHostAlloc((void**) &h_x,           *h_nt * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void**) &h_y,           *h_nt * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
