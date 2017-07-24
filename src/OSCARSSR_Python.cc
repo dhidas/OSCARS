@@ -4746,7 +4746,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
     return NULL;
   }
 
-  // Check ngpu inputa
+  // Check ngpu input
   int NumberOfGPUs = -1;
   std::vector<int> GPUVector;
   if (PyLong_Check(NGPU)) {
@@ -4818,7 +4818,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
 
 
 const char* DOC_OSCARSSR_CalculateFluxRectangle = R"docstring(
-calculate_flux_rectangle(energy_eV, npoints [, plane, normal, dim, width, rotations, translation, x0x1x2, polarization, angle, horizontal_direction, propogation_direction, nparticles, nthreads, gpu, ofile, bofile])
+calculate_flux_rectangle(energy_eV, npoints [, plane, normal, dim, width, rotations, translation, x0x1x2, polarization, angle, horizontal_direction, propogation_direction, nparticles, nthreads, gpu, ngpu, ofile, bofile])
 
 Calculate the flux density in a rectangle either defined by three points, or by defining the plane the rectangle is in and the width, and then rotating and translating it to where it needs be.  The simplest is outlined in the first example below.  By default (dim=2) this returns a list whose position coordinates are in the local coordinate space x1 and x2 (*ie* they do not include the rotations and translation).  if dim=3 the coordinates in the return list are in absolute 3D space.
 
@@ -4874,7 +4874,12 @@ nthreads : int
     Number of threads to use
 
 gpu : int
-    Use the gpu or not (0 or 1)
+    Use the gpu or not (0 or 1).  If 1 will attempt to use ALL gpus available.  This is overridden if you use the input 'ngpu'
+
+ngpu : int or list
+    If ngpu is an int, use that number of gpus (if available).
+    If ngpu is a list, the list should be a list of gpus you wish to use
+
 
 ofile : str
     Output file name
@@ -4911,6 +4916,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   int         NParticles = 0;
   int         NThreads = 0;
   int         GPU = -1;
+  PyObject*   NGPU;
   char const* OutFileNameText = "";
   char const* OutFileNameBinary = "";
 
@@ -4931,11 +4937,12 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
                                  "nparticles",
                                  "nthreads",
                                  "gpu",
+                                 "ngpu",
                                  "ofile",
                                  "bofile",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dO|siiOOOOsdOOiiiss",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dO|siiOOOOsdOOiiiOss",
                                    const_cast<char **>(kwlist),
                                    &Energy_eV,
                                    &List_NPoints,
@@ -4953,6 +4960,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
                                    &NParticles,
                                    &NThreads,
                                    &GPU,
+                                   &NGPU,
                                    &OutFileNameText,
                                    &OutFileNameBinary)) {
     return NULL;
@@ -5102,6 +5110,11 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
     return NULL;
   }
 
+  // Check NThreads parameter
+  if (NThreads < 0) {
+    PyErr_SetString(PyExc_ValueError, "'nthreads' must be > 0");
+    return NULL;
+  }
 
   // Check GPU parameter
   if (GPU != 0 && GPU != 1 && GPU != -1) {
@@ -5109,16 +5122,19 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
     return NULL;
   }
 
-  // Check NThreads parameter
-  if (NThreads < 0) {
-    PyErr_SetString(PyExc_ValueError, "'nthreads' must be > 0");
-    return NULL;
-  }
-
   // Check you are not trying to use threads and GPU
   if (NThreads > 0 && GPU == 1) {
     PyErr_SetString(PyExc_ValueError, "gpu is 1 and nthreads > 0.  Both are not currently allowed.");
     return NULL;
+  }
+
+  // Check ngpu input
+  int NumberOfGPUs = -1;
+  std::vector<int> GPUVector;
+  if (PyLong_Check(NGPU)) {
+    NumberOfGPUs = (int) PyLong_AsLong(NGPU);
+  } else if (PyList_Check(NGPU)) {
+    OSCARSPY::ListToVectorInt(NGPU, GPUVector);
   }
 
   // Container for Point plus scalar
@@ -5129,7 +5145,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   //bool const Directional = NormalDirection == 0 ? false : true;
 
   try {
-    self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NParticles, NThreads, GPU, 3, std::vector<int>(), Dim);
+    self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NParticles, NThreads, GPU, NumberOfGPUs, GPUVector, Dim);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
