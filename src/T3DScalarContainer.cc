@@ -335,6 +335,18 @@ void T3DScalarContainer::AverageFromFilesBinary (std::vector<std::string> const&
 
 
 
+void T3DScalarContainer::WeightAll (double const Weight)
+{
+  for (size_t i = 0; i != fValues.size(); ++i) {
+    fValues[i].SetV( fValues[i].GetV() * Weight );
+    fCompensation[i] = 0;
+  }
+}
+
+
+
+
+
 
 
 void T3DScalarContainer::WriteToFileText (std::string const& OutFileName,

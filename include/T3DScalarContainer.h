@@ -66,6 +66,8 @@ class T3DScalarContainer
     void AverageFromFilesText (std::vector<std::string> const&, int const Dimension);
     void AverageFromFilesBinary (std::vector<std::string> const&, int const Dimension);
 
+    void WeightAll (double const Weight);
+
     size_t GetNPoints () const;
 
     T3DScalar const& GetPoint (size_t const) const;
