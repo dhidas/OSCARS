@@ -39,7 +39,7 @@ extern "C" int OSCARSSR_Cuda_GetDeviceCount ()
 
 
 
-extern "C" std::string OSCARSSR_Cuda_GetDeviceProperties (int const i)
+std::string OSCARSSR_Cuda_GetDeviceProperties (int const i)
 {
   int ngpu = 0;
   cudaGetDeviceCount(&ngpu);
@@ -112,6 +112,22 @@ __host__ __device__ static __inline__ cuDoubleComplex cuCexp(cuDoubleComplex x)
 
 
 
+
+
+
+
+
+
+__global__ void OSCARSSR_Cuda_FluxGPUMulti (double *x, double *y, double *z, double *bx, double *by, double *bz, double *sx, double *sy, double *sz, double *dt, int *nt, int *ns, double *C0, double *C2, double *C, double *Omega, double *flux)
+{
+  // Check that this is within the number of spectrum points requested
+  int is = threadIdx.x + blockIdx.x * blockDim.x;
+  if (is >= *ns) {
+    return;
+  }
+
+  return;
+}
 
 
 
@@ -934,7 +950,379 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (TParticleA& Particle,
 
 
 
+extern "C" void OSCARSSR_Cuda_CalculateFluxGPU2 (OSCARSSR& OSR,
+                                                TSurfacePoints const& Surface,
+                                                double const Energy_eV,
+                                                T3DScalarContainer& FluxContainer,
+                                                std::string const& Polarization,
+                                                double const Angle,
+                                                TVector3D const& HorizontalDirection,
+                                                TVector3D const& PropogationDirection,
+                                                int const NParticles,
+                                                std::vector<int> const& GPUVector)
+{
+  // Calculate the flux for NParticles using the GPUs given in GPUVector.  Each particle's
+  // trajectory will be sent to all GPUs for processing, meanwhile a new trajectory will
+  // be calculated
 
+  // Number of available GPUs
+  int ngpu = 0;
+  cudaGetDeviceCount(&ngpu);
+  if (ngpu == 0) {
+    throw std::invalid_argument("No GPU found");
+  }
+
+  // Make sure that a gpu listed is within the range and not a duplicate
+  std::vector<int> GPUsToUse;
+  for (std::vector<int>::const_iterator it = GPUVector.begin(); it != GPUVector.end(); ++it) {
+    if ( !(std::find(GPUsToUse.begin(), GPUsToUse.end(), *it) != GPUsToUse.end() && (*it < ngpu)) ) {
+      GPUsToUse.push_back(*it);
+    }
+  }
+
+  // Make sure we have at least one
+  if (GPUsToUse.size() == 0) {
+    throw std::invalid_argument("GPUs selected do not match hardware");
+  }
+  int const NGPUsToUse = (int) GPUsToUse.size();
+
+  // Do we calculate for the current particle?
+  bool const ThisParticleOnly = NParticles == 0 ? true : false;
+  int  const NParticlesReally = ThisParticleOnly ? 1 : NParticles;
+  // Type check, new particle if no type
+
+
+  int *h_nt, *h_ns;
+  double *h_dt;
+  cudaHostAlloc((void**) &h_nt, sizeof(int),    cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_ns, sizeof(int),    cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_dt, sizeof(double), cudaHostAllocWriteCombined | cudaHostAllocMapped);
+
+  // First one, set particle and trajectory
+  if (!ThisParticleOnly) {
+    OSR.SetNewParticle();
+  }
+  if (OSR.GetTrajectory().GetNPoints() == 0) {
+    OSR.CalculateTrajectory();
+  }
+
+  // Needed number of points in the track and time step
+  *h_nt = (int) OSR.GetTrajectory().GetNPoints();
+  *h_ns = (int) Surface.GetNPoints();
+  *h_dt = (double) OSR.GetTrajectory().GetDeltaT();
+
+
+  int const NThreads = *h_ns;
+  int const NThreadsPerBlock = 32*16;
+  int const NThreadsRemainder = NThreads % NThreadsPerBlock;
+  int const NBlocksTotal = (NThreads - 1) / NThreadsPerBlock + 1;
+  int const NBlocksPerGPU = NBlocksTotal / NGPUsToUse;
+  int const NRemainderBlocks = NBlocksTotal % NGPUsToUse;
+  // UPDATE: To be modified
+  int const NFlux = NThreadsPerBlock * (NBlocksPerGPU + (NRemainderBlocks > 0 ? 1 : 0));
+
+  // Memory allocation for Host
+  double  *h_x,  *h_y,  *h_z,  *h_bx,  *h_by,  *h_bz,  *h_sx,  *h_sy,  *h_sz,   *h_c0,  *h_c2,  *h_c,  *h_omega;
+  double **h_flux;
+  cudaHostAlloc((void**) &h_x,          *h_nt * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_y,          *h_nt * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_z,          *h_nt * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_bx,         *h_nt * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_by,         *h_nt * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_bz,         *h_nt * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_sx,         *h_ns * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_sy,         *h_ns * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_sz,         *h_ns * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_c0,                 sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_c2,                 sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_c,                  sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_omega,              sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_flux,  NGPUsToUse * sizeof(double*), cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  for (size_t i = 0; i < GPUsToUse.size(); ++i) {
+    cudaHostAlloc((void**) &h_flux[i], NFlux * sizeof(double), cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  }
+
+  // Memor allocations for GPU
+  int    **d_d;
+  int    **d_nt;
+  int    **d_ns;
+  double **d_dt;
+  double **d_x;
+  double **d_y;
+  double **d_z;
+  double **d_bx;
+  double **d_by;
+  double **d_bz;
+  double **d_sx;
+  double **d_sy;
+  double **d_sz;
+  double **d_c0;
+  double **d_c2;
+  double **d_c;
+  double **d_omega;
+  double **d_flux;
+
+  cudaHostAlloc((void **) &d_d,     NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_nt,    NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_ns,    NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_dt,    NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_x,     NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_y,     NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_z,     NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_bx,    NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_by,    NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_bz,    NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_sx,    NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_sy,    NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_sz,    NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_c0,    NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_c2,    NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_c,     NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_omega, NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_flux,  NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+
+  for (size_t i = 0; i < GPUsToUse.size(); ++i) {
+    // Device number
+    int const d = GPUsToUse[i];
+
+    cudaSetDevice(d);
+    cudaMalloc((void **) &d_d[i],              sizeof(int));
+    cudaMalloc((void **) &d_nt[i],             sizeof(int));
+    cudaMalloc((void **) &d_ns[i],             sizeof(int));
+    cudaMalloc((void **) &d_dt[i],             sizeof(double));
+    cudaMalloc((void **) &d_x[i],      *h_nt * sizeof(double));
+    cudaMalloc((void **) &d_y[i],      *h_nt * sizeof(double));
+    cudaMalloc((void **) &d_z[i],      *h_nt * sizeof(double));
+    cudaMalloc((void **) &d_bx[i],     *h_nt * sizeof(double));
+    cudaMalloc((void **) &d_by[i],     *h_nt * sizeof(double));
+    cudaMalloc((void **) &d_bz[i],     *h_nt * sizeof(double));
+    cudaMalloc((void **) &d_sx[i],     *h_ns * sizeof(double));
+    cudaMalloc((void **) &d_sy[i],     *h_ns * sizeof(double));
+    cudaMalloc((void **) &d_sz[i],     *h_ns * sizeof(double));
+    cudaMalloc((void **) &d_c0[i],             sizeof(double));
+    cudaMalloc((void **) &d_c2[i],             sizeof(double));
+    cudaMalloc((void **) &d_c[i],              sizeof(double));
+    cudaMalloc((void **) &d_omega[i],          sizeof(double));
+    cudaMalloc((void **) &d_flux[i],   NFlux * sizeof(double));
+
+    // Copy device number to device
+    cudaMemcpyAsync(d_d[i], &d, sizeof(int), cudaMemcpyHostToDevice);
+  }
+
+  // Compute known host values
+  *h_c0    = OSR.GetCurrentParticle().GetQ() / (TOSCARSSR::FourPi() * TOSCARSSR::C() * TOSCARSSR::Epsilon0() * TOSCARSSR::Sqrt2Pi());
+  *h_c2    = TOSCARSSR::FourPi() * OSR.GetCurrentParticle().GetCurrent() / (TOSCARSSR::H() * fabs(OSR.GetCurrentParticle().GetQ()) * TOSCARSSR::Mu0() * TOSCARSSR::C()) * 1e-6 * 0.001;
+  *h_c     = TOSCARSSR::C();
+  *h_omega = TOSCARSSR::EvToAngularFrequency(Energy_eV);
+
+  // Copy constants to first device (async)
+  int const d0 = GPUsToUse[0];
+  cudaSetDevice(d0);
+  cudaMemcpyAsync(d_nt[d0],    h_nt,    sizeof(int),    cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_ns[d0],    h_ns,    sizeof(int),    cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_dt[d0],    h_dt,    sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_c0[d0],    h_c0,    sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_c2[d0],    h_c2,    sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_c[d0],     h_c,     sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_omega[d0], h_omega, sizeof(double), cudaMemcpyHostToDevice);
+  for (size_t i = 0; i < GPUsToUse.size() - 1; ++i) {
+    // Device number
+    int const d  = GPUsToUse[i];
+    int const d1 = GPUsToUse[i+1];
+    cudaSetDevice(d);
+    cudaMemcpyPeerAsync( d_nt[d1],     d1, d_nt[d],     d, sizeof(int));
+    cudaMemcpyPeerAsync( d_ns[d1],     d1, d_ns[d],     d, sizeof(int));
+    cudaMemcpyPeerAsync( d_dt[d1],     d1, d_dt[d],     d, sizeof(double));
+    cudaMemcpyPeerAsync( d_c0[d1],     d1, d_c0[d],     d, sizeof(double));
+    cudaMemcpyPeerAsync( d_c2[d1],     d1, d_c2[d],     d, sizeof(double));
+    cudaMemcpyPeerAsync( d_c[d1],      d1, d_c[d],      d, sizeof(double));
+    cudaMemcpyPeerAsync( d_omega[d1],  d1, d_omega[d],  d, sizeof(double));
+  }
+
+  // Set first trajectory
+  TParticleTrajectoryPoints const& T = OSR.GetTrajectory();
+  for (size_t i = 0; i < *h_nt; ++i) {
+    h_x[i]  = T.GetX(i).GetX();
+    h_y[i]  = T.GetX(i).GetY();
+    h_z[i]  = T.GetX(i).GetZ();
+    h_bx[i] = T.GetB(i).GetX();
+    h_by[i] = T.GetB(i).GetY();
+    h_bz[i] = T.GetB(i).GetZ();
+  }
+
+  // Set the surface points
+  for (size_t i = 0; i < *h_ns; ++i) {
+    h_sx[i] = Surface.GetPoint(i).GetX();
+    h_sy[i] = Surface.GetPoint(i).GetY();
+    h_sz[i] = Surface.GetPoint(i).GetZ();
+  }
+
+  // GPU events
+  cudaEvent_t *event_fluxcopy = new cudaEvent_t[NGPUsToUse];
+  for (int ig = 0; ig < NGPUsToUse; ++ig) {
+    int const d = GPUsToUse[ig];
+    cudaSetDevice(d);
+    cudaEventCreate(&(event_fluxcopy[ig]));
+  }
+
+  // Enable peer (direct gpu-gpu) writes
+  for (size_t ig = 0; ig < GPUsToUse.size() - 1; ++ig) {
+    // Device number
+    int const d  = GPUsToUse[ig];
+    int const d1 = GPUsToUse[ig+1];
+    int access;
+    cudaDeviceCanAccessPeer(&access, d, d1);
+    if (access == 1) {
+      cudaSetDevice(d);
+      cudaDeviceEnablePeerAccess(d1, 0);
+    }
+  }
+
+  // Loop over number of particles
+  for (int ip = 0; ip < NParticlesReally; ++ip) {
+
+    // Copy trajectory to first GPU, then internal async transfers (where possible)
+    cudaSetDevice(d0);
+    cudaMemcpyAsync(d_x[d0],  h_x,  *h_nt * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(d_y[d0],  h_y,  *h_nt * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(d_z[d0],  h_z,  *h_nt * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(d_bx[d0], h_bx, *h_nt * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(d_by[d0], h_by, *h_nt * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(d_bz[d0], h_bz, *h_nt * sizeof(double), cudaMemcpyHostToDevice);
+    for (size_t ig = 0; ig < GPUsToUse.size() - 1; ++ig) {
+      // Device number
+      int const d  = GPUsToUse[ig];
+      int const d1 = GPUsToUse[ig+1];
+      cudaSetDevice(d);
+      cudaMemcpyPeerAsync(d_x[d1],  d1, d_x[d],  d, *h_nt * sizeof(double));
+      cudaMemcpyPeerAsync(d_y[d1],  d1, d_y[d],  d, *h_nt * sizeof(double));
+      cudaMemcpyPeerAsync(d_z[d1],  d1, d_z[d],  d, *h_nt * sizeof(double));
+      cudaMemcpyPeerAsync(d_bx[d1], d1, d_bx[d], d, *h_nt * sizeof(double));
+      cudaMemcpyPeerAsync(d_by[d1], d1, d_by[d], d, *h_nt * sizeof(double));
+      cudaMemcpyPeerAsync(d_bz[d1], d1, d_bz[d], d, *h_nt * sizeof(double));
+
+    }
+
+    // Wait for previous copy
+    for (size_t ig = 0; ig < GPUsToUse.size(); ++ig) {
+      cudaEventSynchronize(event_fluxcopy[ig]);
+    }
+
+    // cuda call <<<>>>
+
+    // Add result to flux container (from **previous**)
+    for (size_t is = 0; is < *h_ns; ++is) {
+      //FluxContainer.AddToPoint(ic, flux[] * Weight);
+    }
+
+    // Add copy back to streams
+    for (size_t ig = 0; ig < GPUsToUse.size(); ++ig) {
+      int const d  = GPUsToUse[ig];
+      cudaSetDevice(d);
+      cudaMemcpyAsync(h_flux[d0],  d_flux,  NFlux * sizeof(double), cudaMemcpyDeviceToHost);
+      cudaEventRecord(event_fluxcopy[ig]);
+    }
+
+    // If it's not the last one, calculate a new trajectory
+    if (ip < NParticlesReally - 1) {
+      OSR.SetNewParticle();
+      OSR.CalculateTrajectory();
+      TParticleTrajectoryPoints const& T = OSR.GetTrajectory();
+
+      for (size_t it = 0; it < *h_nt; ++it) {
+        h_x[it]  = T.GetX(it).GetX();
+        h_y[it]  = T.GetX(it).GetY();
+        h_z[it]  = T.GetX(it).GetZ();
+        h_bx[it] = T.GetB(it).GetX();
+        h_by[it] = T.GetB(it).GetY();
+        h_bz[it] = T.GetB(it).GetZ();
+      }
+    }
+  }
+
+  // Wait for last copy
+  for (size_t ig = 0; ig < GPUsToUse.size(); ++ig) {
+    cudaEventSynchronize(event_fluxcopy[ig]);
+  }
+
+  // Add result to flux container (from **previous**)
+  for (size_t is = 0; is < *h_ns; ++is) {
+    //FluxContainer.AddToPoint(ic, flux[] * Weight);
+  }
+
+
+  // Free host memory
+  cudaFreeHost(h_nt);
+  cudaFreeHost(h_ns);
+  cudaFreeHost(h_dt);
+  cudaFreeHost(h_x);
+  cudaFreeHost(h_y);
+  cudaFreeHost(h_z);
+  cudaFreeHost(h_bx);
+  cudaFreeHost(h_by);
+  cudaFreeHost(h_bz);
+  cudaFreeHost(h_sx);
+  cudaFreeHost(h_sy);
+  cudaFreeHost(h_sz);
+  cudaFreeHost(h_c0);
+  cudaFreeHost(h_c2);
+  cudaFreeHost(h_c);
+  cudaFreeHost(h_omega);
+  // Free host and GPU memory
+  for (size_t i = 0; i < GPUsToUse.size(); ++i) {
+
+    cudaFreeHost(h_flux[i]);
+
+    // Device number
+    int const d = GPUsToUse[i];
+
+    cudaSetDevice(d);
+    cudaFree(d_d[i]);
+    cudaFree(d_nt[i]);
+    cudaFree(d_ns[i]);
+    cudaFree(d_dt[i]);
+    cudaFree(d_x[i]);
+    cudaFree(d_y[i]);
+    cudaFree(d_z[i]);
+    cudaFree(d_bx[i]);
+    cudaFree(d_by[i]);
+    cudaFree(d_bz[i]);
+    cudaFree(d_sx[i]);
+    cudaFree(d_sy[i]);
+    cudaFree(d_sz[i]);
+    cudaFree(d_c0[i]);
+    cudaFree(d_c2[i]);
+    cudaFree(d_c[i]);
+    cudaFree(d_omega[i]);
+    cudaFree(d_flux[i]);
+  }
+  cudaFree(h_flux);
+
+  cudaFree(d_d);
+  cudaFree(d_nt);
+  cudaFree(d_ns);
+  cudaFree(d_dt);
+  cudaFree(d_x);
+  cudaFree(d_y);
+  cudaFree(d_z);
+  cudaFree(d_bx);
+  cudaFree(d_by);
+  cudaFree(d_bz);
+  cudaFree(d_sx);
+  cudaFree(d_sy);
+  cudaFree(d_sz);
+  cudaFree(d_c0);
+  cudaFree(d_c2);
+  cudaFree(d_c);
+  cudaFree(d_omega);
+  cudaFree(d_flux);
+
+  // Delete host gpu pointer arrays
+  delete [] event_fluxcopy;
+
+
+  return;
+}
 
 
 
