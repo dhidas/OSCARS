@@ -124,6 +124,8 @@ __global__ void OSCARSSR_Cuda_FluxGPUMulti (double *x, double *y, double *z, dou
   // Check that this is within the number of spectrum points requested
   int const ith = threadIdx.x + blockIdx.x * blockDim.x;
   int const is = ith + *ifirst;
+  flux[ith] = *ifirst;
+  return;
   if (is >= *ns) {
     return;
   }
@@ -1124,6 +1126,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU2 (OSCARSSR& OSR,
   int NBlocksUsed = 0;
   for (int i = 0; i < NGPUsToUse; ++i) {
     h_ifirst[i] = NBlocksUsed * NThreadsPerBlock;
+    std::cout << "ifirst " << h_ifirst[i] << std::endl;
     NBlocksUsed += NBlocksThisGPU[i];
   }
 
