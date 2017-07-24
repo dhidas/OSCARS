@@ -1,6 +1,7 @@
 import os
 import sys
-from setuptools import setup, Extension
+#from setuptools import setup, Extension
+from distutils.core import setup, Extension
 
 # Get Version numbering from Version.h
 v_major = ''

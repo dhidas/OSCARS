@@ -16,8 +16,9 @@ TField3D_IdealUndulator::TField3D_IdealUndulator (std::string const& Name)
 {
   // Constructor
 
-  // Set Name
+  // Set the name and default scale factors
   this->SetName(Name);
+  this->SetScaleFactorMinimumMaximum();
 }
 
 
@@ -76,8 +77,9 @@ void TField3D_IdealUndulator::Init (TVector3D const& Field,
   // Phase - A phase offset for the sine function given in [rad]
   // Name - Name of this field
 
-  // Set Name
+  // Set the name and default scale factors
   this->SetName(Name);
+  this->SetScaleFactorMinimumMaximum();
 
   fField   = Field;
   fPeriod   = Period;

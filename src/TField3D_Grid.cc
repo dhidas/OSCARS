@@ -17,8 +17,9 @@
 
 TField3D_Grid::TField3D_Grid (std::string const& Name)
 {
-  // Set name
+  // Set the name and default scale factors
   this->SetName(Name);
+  this->SetScaleFactorMinimumMaximum();
 
   fRotated.SetXYZ(0, 0, 0);
   fTranslation.SetXYZ(0, 0, 0);
@@ -35,8 +36,9 @@ TField3D_Grid::TField3D_Grid (std::string         const& InFileName,
                               std::string         const& Name,
                               char                const  CommentChar)
 {
-  // Set name
+  // Set the name and default scale factors
   this->SetName(Name);
+  this->SetScaleFactorMinimumMaximum();
 
   // I will accept lower-case
   std::string format = FileFormat;
@@ -75,8 +77,9 @@ TField3D_Grid::TField3D_Grid (std::vector<std::pair<double, std::string> > Mappi
   // It is meant for interpolating between different undulator gaps, but it is generalized
   // to interpolate any fields
 
-  // Set name
+  // Set the name and default scale factors
   this->SetName(Name);
+  this->SetScaleFactorMinimumMaximum();
 
   // I will accept lower-case
   std::string format = FileFormat;

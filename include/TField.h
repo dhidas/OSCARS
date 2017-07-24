@@ -11,6 +11,7 @@
 #include "TVector3D.h"
 
 #include <string>
+#include <stdexcept>
 
 class TField
 {
@@ -33,13 +34,43 @@ class TField
       return fName;
     }
 
-    virtual void      Print (std::ostream&) const = 0;
+    // Scale factor
+    void SetScaleFactor (double const& s)
+    {
+      if (fScaleFactorMinimum > fScaleFactorMaximum || (s >= fScaleFactorMinimum && s <= fScaleFactorMaximum)) {
+        fScaleFactor = s;
+      } else {
+        throw std::out_of_range("TField::SetScaleFactor input is incorrect");
+      }
+      return;
+    }
+    double GetScaleFactor () const
+    {
+      return fScaleFactor;
+    }
+    void SetScaleFactorMinimumMaximum(double const& Min = 1, double const& Max = 1)
+    {
+      fScaleFactorMinimum = Min;
+      fScaleFactorMaximum = Max;
+      if (fScaleFactorMinimum == fScaleFactorMaximum) {
+        this->SetScaleFactor(fScaleFactorMaximum);
+      }
+      return;
+    }
+
+    virtual void Print (std::ostream&) const = 0;
 
     virtual ~TField () {};
 
   private:
     std::string fName;
 
+    // Scale factor for field magnitude.  This must be implemented in the following way:
+    //  If min > max, assume the limits are +/- infinity for fScaleFactor.  fScaleFactor
+    //  should always be initialized to 1.
+    double fScaleFactor;
+    double fScaleFactorMinimum;
+    double fScaleFactorMaximum;
 
 };
 

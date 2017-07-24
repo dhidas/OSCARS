@@ -35,7 +35,9 @@ class TFieldPythonFunction : public TField
 inline std::ostream& operator << (std::ostream& os, TFieldPythonFunction const& o)
 {
   // For easy printing
-  os << "TFieldPythonFunction at address " << &o << "\n";
+  os << "TFieldPythonFunction\n"
+     << "  Name               " << o.GetName() << "\n"
+     << "  at address " << &o << "\n";
 
   return os;
 }
