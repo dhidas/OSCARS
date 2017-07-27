@@ -1,4 +1,5 @@
 import os.path
+import copy
 
 def read_file_list(ifile, idir=None):
     """
@@ -108,3 +109,54 @@ def read_file_list2(ifile, gap=None, phase_mode=None, phase=None, idir=None):
                     mylist.append([g, fn])
             
     return mylist
+
+
+
+
+def scale_spectrum(s, c):
+    """Multiple spectrum by constant c"""
+    
+    for l in s:
+        l[1] *= c
+        
+    return
+
+def add_spectra(spectra):
+    """Add spectra from list spectra and return new spectrum"""
+    
+    spectrum=copy.deepcopy(spectra[0])
+
+    N = len(spectrum)
+
+    for isp in range(1, len(spectra)):
+        if len(isp) != N:
+            raise ValueError('spectra do not have the same dimensions')
+        for i in range(len(spectra[isp])):
+            spectrum[i][1] += spectra[isp][i][1]
+        
+    return spectrum
+
+
+
+def add_flux(f):
+    """Add flux from list of fluxes and return new summed flux"""
+    
+    fsummed = copy.deepcopy(f[0])
+
+    N = len(fsummed)
+
+    for ifn in range(1, len(f)):
+        if len(f[ifn]) != N:
+            raise ValueError('flux do not have the same dimensions')
+
+        for i in range(len(f[ifn])):
+            fsummed[i][1] += f[ifn][i][1]
+        
+    return fsummed
+
+
+
+def add_power_density(p):
+    """Add power densities from list of power densities and return new summed power density"""
+    
+    return add_flux(p)
