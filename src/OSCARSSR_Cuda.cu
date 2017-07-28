@@ -30,7 +30,7 @@
 
 extern "C" int OSCARSSR_Cuda_GetDeviceCount ()
 {
-  int ngpu = 0;
+  static int ngpu = 0;
   cudaGetDeviceCount(&ngpu);
 
   return ngpu;
@@ -1124,7 +1124,6 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU2 (OSCARSSR& OSR,
   int NBlocksUsed = 0;
   for (int i = 0; i < NGPUsToUse; ++i) {
     h_ifirst[i] = NBlocksUsed * NThreadsPerBlock;
-    std::cout << "ifirst " << h_ifirst[i] << std::endl;
     NBlocksUsed += NBlocksThisGPU[i];
   }
 

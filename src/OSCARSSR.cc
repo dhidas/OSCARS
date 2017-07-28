@@ -2192,7 +2192,6 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
     GPUVector.resize(NGPU);
   }
 
-  std::cout << "starting FC " << FluxContainer.GetNPoints() << std::endl;
 
   if (Dimension == 3) {
     for (size_t i = 0; i != Surface.GetNPoints(); ++i) {
@@ -2205,13 +2204,6 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
   } else {
     throw std::out_of_range("wROng dimension");
   }
-
-  std::cout << "hello" << std::endl;
-  std::cout << "UseGPU: " << UseGPU << std::endl;
-  for (size_t ig = 0; ig != GPUVector.size(); ++ig) {
-    std::cout << "GPUVector: " << GPUVector[ig] << std::endl;
-  }
-
 
   // Which cpmpute method will we use, gpu, multi-thread, or single-thread
   if (UseGPU) {
