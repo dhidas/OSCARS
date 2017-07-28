@@ -533,6 +533,41 @@ void OSCARSSR::ClearParticleBeams ()
 
 
 
+void OSCARSSR::AddDriftVolume (TDriftVolume* DV)
+{
+  // Add a magnetic field from a file to the field container
+
+  this->fDriftVolumeContainer.AddDriftVolume(DV);
+
+  return;
+}
+
+
+
+void OSCARSSR::RemoveDriftVolume (std::string const& Name)
+{
+  // Remove all drift volumes with a given name
+
+  fDriftVolumeContainer.RemoveDriftVolume(Name);
+
+  return;
+}
+
+
+
+
+void OSCARSSR::ClearDriftVolumes ()
+{
+  // Add a magnetic field from a file to the field container
+
+  this->fDriftVolumeContainer.Clear();
+
+  return;
+}
+
+
+
+
 void OSCARSSR::SetNPointsTrajectory (size_t const N)
 {
   // Set this number of points for any trajectory calculations
@@ -831,13 +866,19 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
     double t = P.GetT0() + DeltaT * i;
 
 
-    // Add this point to the trajectory
-    ParticleTrajectory.AddPoint(x[0], x[2], x[4], x[1] / TOSCARSSR::C(), x[3] / TOSCARSSR::C(), x[5] / TOSCARSSR::C(), dxdt[1] / TOSCARSSR::C(), dxdt[3] / TOSCARSSR::C(), dxdt[5] / TOSCARSSR::C());
+    // UPDATE: dhidas dhidas dhidas
+    if (fDriftVolumeContainer.IsInside(TVector3D(x[0], x[2], x[4]))) {
+      x[0] += DeltaT * x[1];
+      x[2] += DeltaT * x[3];
+      x[4] += DeltaT * x[5];
+    } else {
+      // Add this point to the trajectory
+      ParticleTrajectory.AddPoint(x[0], x[2], x[4], x[1] / TOSCARSSR::C(), x[3] / TOSCARSSR::C(), x[5] / TOSCARSSR::C(), dxdt[1] / TOSCARSSR::C(), dxdt[3] / TOSCARSSR::C(), dxdt[5] / TOSCARSSR::C());
 
-    // Propogate
-    (this->*fDerivativesFunction)(t, x, dxdt, P);
-    //this->DerivativesB(t, x, dxdt, P);
-    RK4(x, dxdt, N, t, DeltaT, x, P);
+      // Propogate
+      (this->*fDerivativesFunction)(t, x, dxdt, P);
+      RK4(x, dxdt, N, t, DeltaT, x, P);
+    }
   }
 
   // Reverse trajectory elements for backward propogation
@@ -860,13 +901,18 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
     // This time
     double t = P.GetT0() + DeltaTReversed * (i + 1);
 
-    // Propogate backward in time!
-    (this->*fDerivativesFunction)(t, x, dxdt, P);
-    //this->DerivativesB(t, x, dxdt, P);
-    RK4(x, dxdt, N, t, DeltaTReversed, x, P);
+    if (fDriftVolumeContainer.IsInside(TVector3D(x[0], x[2], x[4]))) {
+      x[0] += DeltaTReversed * x[1];
+      x[2] += DeltaTReversed * x[3];
+      x[4] += DeltaTReversed * x[5];
+    } else {
+      // Propogate backward in time!
+      (this->*fDerivativesFunction)(t, x, dxdt, P);
+      RK4(x, dxdt, N, t, DeltaTReversed, x, P);
 
-    // Add the point to the trajectory
-    ParticleTrajectory.AddPoint(x[0], x[2], x[4], x[1] / TOSCARSSR::C(), x[3] / TOSCARSSR::C(), x[5] / TOSCARSSR::C(), dxdt[1] / TOSCARSSR::C(), dxdt[3] / TOSCARSSR::C(), dxdt[5] / TOSCARSSR::C());
+      // Add the point to the trajectory
+      ParticleTrajectory.AddPoint(x[0], x[2], x[4], x[1] / TOSCARSSR::C(), x[3] / TOSCARSSR::C(), x[5] / TOSCARSSR::C(), dxdt[1] / TOSCARSSR::C(), dxdt[3] / TOSCARSSR::C(), dxdt[5] / TOSCARSSR::C());
+    }
   }
 
   // Re-Reverse the trajectory to be in the proper time order
@@ -2683,4 +2729,13 @@ TFieldContainer const& OSCARSSR::GetEFieldContainer () const
 {
   // Return the efield container
   return fEFieldContainer;
+}
+
+
+
+
+TDriftVolumeContainer const& OSCARSSR::GetDriftVolumeContainer () const
+{
+  // Return the drift volume container
+  return fDriftVolumeContainer;
 }

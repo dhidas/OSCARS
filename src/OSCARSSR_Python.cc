@@ -26,6 +26,7 @@
 #include "TField3D_UniformBox.h"
 #include "TField3D_IdealUndulator.h"
 #include "TField3D_Quadrupole.h"
+#include "TDriftBox.h"
 #include "TRandomA.h"
 
 #include <iostream>
@@ -3534,6 +3535,233 @@ static PyObject* OSCARSSR_GetParticleE0 (OSCARSSRObject* self)
 
 
 
+const char* DOC_OSCARSSR_AddDriftVolume_Box = R"docstring(
+add_drift_box(width, [, rotations, translation, name])
+
+Add a drift volume box.  The particle will drift with constant velocity inside of this volume and the points inside of the volume will not be recorded in the trajectory.  If a dimension of the box is <= 0 that axis is ignored.
+
+Parameters
+----------
+width: list
+    Width of the drift box in x, y, and z
+
+rotations : list, optional
+    3-element list representing rotations around x, y, and z axes: [:math:`\theta_x, \theta_y, \theta_z`]
+
+translation : list, optional
+    3-element list representing a translation in space [x, y, z]
+
+name : str
+    Name of the drift volume
+
+Returns
+-------
+None
+)docstring";
+static PyObject* OSCARSSR_AddDriftVolume_Box (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
+{
+  // Add a magnetic field from a file.
+  // UPDATE: add binary file reading
+
+
+  // Grab the values
+  PyObject*   List_Width       = PyList_New(0);
+  PyObject*   List_Rotations   = PyList_New(0);
+  PyObject*   List_Translation = PyList_New(0);
+  char const* Name             = "";
+
+  TVector3D Width(0, 0, 0);
+  TVector3D Rotations(0, 0, 0);
+  TVector3D Translation(0, 0, 0);
+
+
+  // Input variables and parsing
+  static const char *kwlist[] = {"width",
+                                 "rotations",
+                                 "translation",
+                                 "name",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOs",
+                                   const_cast<char **>(kwlist),
+                                   &List_Width,
+                                   &List_Rotations,
+                                   &List_Translation,
+                                   &Name)) {
+    return NULL;
+  }
+
+  // Get width
+  try {
+    Width = OSCARSPY::ListAsTVector3D(List_Width);
+  } catch (std::length_error e) {
+    PyErr_SetString(PyExc_ValueError, "Incorrect format in 'width'");
+    return NULL;
+  }
+
+  // Check for Rotations in the input
+  if (PyList_Size(List_Rotations) != 0) {
+    try {
+      Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
+      return NULL;
+    }
+  }
+
+  // Check for Translation in the input
+  if (PyList_Size(List_Translation) != 0) {
+    try {
+      Translation = OSCARSPY::ListAsTVector3D(List_Translation);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
+      return NULL;
+    }
+  }
+
+  // Name check
+  if (std::string(Name).size() > 0 && Name[0] == '_') {
+    PyErr_SetString(PyExc_ValueError, "'name' cannot begin with '_'.  This is reserved for internal use.  Please pick a different name");
+    return NULL;
+  }
+
+  // Add the drift box to the OSCARSSR object
+  try {
+    std::cout << Rotations << std::endl;
+    self->obj->AddDriftVolume( new TDriftBox(Width, Translation, Rotations, Name) );
+  } catch (...) {
+    PyErr_SetString(PyExc_ValueError, "Could not add drift volume.");
+    return NULL;
+  }
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
+const char* DOC_OSCARSSR_RemoveDriftVolume = R"docstring(
+remove_drift(name)
+
+Remove all drift volumes with the given name
+
+Parameters
+----------
+name : str
+    Name of the drift volume
+
+Returns
+-------
+None
+)docstring";
+static PyObject* OSCARSSR_RemoveDriftVolume (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
+{
+  // Add a magnetic field from a file.
+  // UPDATE: add binary file reading
+
+
+  // Grab the values
+  char const* Name             = "";
+
+  // Input variables and parsing
+  static const char *kwlist[] = {"name",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char **>(kwlist),
+                                   &Name)) {
+    return NULL;
+  }
+
+  self->obj->RemoveDriftVolume(Name);
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
+const char* DOC_OSCARSSR_ClearDriftVolumes = R"docstring(
+clear_drifts()
+
+Remove all drift volumes
+
+Parameters
+----------
+None
+
+Returns
+-------
+None
+)docstring";
+static PyObject* OSCARSSR_ClearDriftVolumes (OSCARSSRObject* self)
+{
+  // Print all magnetic stored in OSCARSSR
+
+  self->obj->ClearDriftVolumes();
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
+
+
+
+const char* DOC_OSCARSSR_PrintDriftVolumes = R"docstring(
+print_drifts()
+
+Print information about all drift volumes to the standard out
+
+Parameters
+----------
+None
+
+Returns
+-------
+None
+)docstring";
+static PyObject* OSCARSSR_PrintDriftVolumes (OSCARSSRObject* self)
+{
+  // Print all magnetic stored in OSCARSSR
+
+  // Out string stream for printing beam information
+  std::ostringstream ostream;
+  ostream << "*Drift Volumes*\n";
+  ostream << self->obj->GetDriftVolumeContainer() << std::endl;
+
+  // Python printing
+  PyObject* sys = PyImport_ImportModule( "sys");
+  PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
+  std::string Message = ostream.str();
+  PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
+
+
+
 const char* DOC_OSCARSSR_CorrectTrajectory= R"docstring(
 correct_trajectory()
 
@@ -5902,6 +6130,7 @@ static PyObject* OSCARSSR_PrintAll (OSCARSSRObject* self)
   OSCARSSR_PrintParticleBeams(self);
   OSCARSSR_PrintMagneticFields(self);
   OSCARSSR_PrintElectricFields(self);
+  OSCARSSR_PrintDriftVolumes(self);
   OSCARSSR_PrintGPU(self);
 
   // Must return python object None in a special way
@@ -5985,7 +6214,12 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   {"get_particle_x0",                   (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_GetParticleX0},
   {"get_particle_beta0",                (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_GetParticleBeta0},
   {"get_particle_e0",                   (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_GetParticleE0},
-                                                                                          
+ 
+  {"add_drift_box",                     (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddDriftVolume_Box},
+  {"remove_drift",                      (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_RemoveDriftVolume},
+  {"clear_drifts",                      (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_ClearDriftVolumes},
+  {"print_drifts",                      (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_PrintDriftVolumes},
+
   {"correct_trajectory",                (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_CorrectTrajectory},
   {"calculate_trajectory",              (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_CalculateTrajectory},
   {"get_trajectory",                    (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_GetTrajectory},
@@ -6080,6 +6314,11 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"get_particle_x0",                   (PyCFunction) OSCARSSR_GetParticleX0,                   METH_NOARGS,                  DOC_OSCARSSR_GetParticleX0},
   {"get_particle_beta0",                (PyCFunction) OSCARSSR_GetParticleBeta0,                METH_NOARGS,                  DOC_OSCARSSR_GetParticleBeta0},
   {"get_particle_e0",                   (PyCFunction) OSCARSSR_GetParticleE0,                   METH_NOARGS,                  DOC_OSCARSSR_GetParticleE0},
+
+  {"add_drift_box",                     (PyCFunction) OSCARSSR_AddDriftVolume_Box,              METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddDriftVolume_Box},
+  {"remove_drift",                      (PyCFunction) OSCARSSR_RemoveDriftVolume,               METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_RemoveDriftVolume},
+  {"clear_drifts",                      (PyCFunction) OSCARSSR_ClearDriftVolumes,               METH_NOARGS,                  DOC_OSCARSSR_ClearDriftVolumes},
+  {"print_drifts",                      (PyCFunction) OSCARSSR_PrintDriftVolumes,               METH_NOARGS,                  DOC_OSCARSSR_PrintDriftVolumes},
                                                                                           
   {"correct_trajectory",                (PyCFunction) OSCARSSR_CorrectTrajectory,               METH_NOARGS,                  DOC_OSCARSSR_CorrectTrajectory},
   {"calculate_trajectory",              (PyCFunction) OSCARSSR_CalculateTrajectory,             METH_NOARGS,                  DOC_OSCARSSR_CalculateTrajectory},
