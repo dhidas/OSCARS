@@ -13,6 +13,10 @@ TDriftBox::TDriftBox (TVector3D   const& Width,
   this->SetName(Name);
   this->SetRecordTrajectory(RecordTrajectory);
 
+  fIgnoreAxisX = false;
+  fIgnoreAxisY = false;
+  fIgnoreAxisZ = false;
+
   if (fWidth.GetX() <= 0) {
     fIgnoreAxisX = true;
   }

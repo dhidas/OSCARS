@@ -71,6 +71,10 @@ static PyObject* OSCARSSR_SetNewParticle (OSCARSSRObject* self, PyObject* args, 
 static PyObject* OSCARSSR_GetParticleX0 (OSCARSSRObject* self);
 static PyObject* OSCARSSR_GetParticleBeta0 (OSCARSSRObject* self);
 static PyObject* OSCARSSR_GetParticleE0 (OSCARSSRObject* self);
+static PyObject* OSCARSSR_AddDriftVolume_Box (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
+static PyObject* OSCARSSR_RemoveDriftVolume (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
+static PyObject* OSCARSSR_ClearDriftVolumes (OSCARSSRObject* self);
+static PyObject* OSCARSSR_PrintDriftVolumes (OSCARSSRObject* self);
 static PyObject* OSCARSSR_CorrectTrajectory (OSCARSSRObject* self);
 static PyObject* OSCARSSR_CalculateTrajectory (OSCARSSRObject* self);
 static PyObject* OSCARSSR_GetTrajectory (OSCARSSRObject* self);

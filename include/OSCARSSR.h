@@ -19,6 +19,7 @@
 #include "OSCARSSR_Cuda.h"
 #include "TFieldContainer.h"
 #include "TParticleBeamContainer.h"
+#include "TDriftVolumeContainer.h"
 #include "TSurfacePoints.h"
 #include "TSpectrumContainer.h"
 #include "T3DScalarContainer.h"
@@ -129,6 +130,11 @@ class OSCARSSR
     void SetNewParticle (std::string const&, std::string const&);
     void ClearParticleBeams ();
 
+
+    // Functions related to drift spaces
+    void AddDriftVolume (TDriftVolume*);
+    void RemoveDriftVolume (std::string const& Name);
+    void ClearDriftVolumes ();
 
     // Functions related to Trajectory
     void CorrectTrajectory ();
@@ -321,12 +327,15 @@ class OSCARSSR
 
     TFieldContainer const& GetBFieldContainer () const;
     TFieldContainer const& GetEFieldContainer () const;
+    TDriftVolumeContainer const& GetDriftVolumeContainer () const;
 
   private:
     TFieldContainer  fBFieldContainer;
     TFieldContainer  fEFieldContainer;
 
     TParticleBeamContainer fParticleBeamContainer;
+
+    TDriftVolumeContainer fDriftVolumeContainer;
 
     void SetDerivativesFunction ();
 
