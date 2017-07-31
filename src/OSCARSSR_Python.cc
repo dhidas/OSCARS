@@ -3627,7 +3627,6 @@ static PyObject* OSCARSSR_AddDriftVolume_Box (OSCARSSRObject* self, PyObject* ar
 
   // Add the drift box to the OSCARSSR object
   try {
-    std::cout << Rotations << std::endl;
     self->obj->AddDriftVolume( new TDriftBox(Width, Translation, Rotations, Name) );
   } catch (...) {
     PyErr_SetString(PyExc_ValueError, "Could not add drift volume.");
@@ -5144,7 +5143,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   int         NParticles = 0;
   int         NThreads = 0;
   int         GPU = -1;
-  PyObject*   NGPU;
+  PyObject*   NGPU = 0x0;
   char const* OutFileNameText = "";
   char const* OutFileNameBinary = "";
 
@@ -5359,10 +5358,12 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   // Check ngpu input
   int NumberOfGPUs = -1;
   std::vector<int> GPUVector;
-  if (PyLong_Check(NGPU)) {
-    NumberOfGPUs = (int) PyLong_AsLong(NGPU);
-  } else if (PyList_Check(NGPU)) {
-    OSCARSPY::ListToVectorInt(NGPU, GPUVector);
+  if (NGPU != 0x0) {
+    if (PyLong_Check(NGPU)) {
+      NumberOfGPUs = (int) PyLong_AsLong(NGPU);
+    } else if (PyList_Check(NGPU)) {
+      OSCARSPY::ListToVectorInt(NGPU, GPUVector);
+    }
   }
 
   // Container for Point plus scalar

@@ -1064,9 +1064,10 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU2 (OSCARSSR& OSR,
 
   int *h_nt, *h_nt_max, *h_ns;
   double *h_dt;
-  cudaHostAlloc((void**) &h_nt, sizeof(int),    cudaHostAllocWriteCombined | cudaHostAllocMapped);
-  cudaHostAlloc((void**) &h_ns, sizeof(int),    cudaHostAllocWriteCombined | cudaHostAllocMapped);
-  cudaHostAlloc((void**) &h_dt, sizeof(double), cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_nt_max, sizeof(int),    cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_nt,     sizeof(int),    cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_ns,     sizeof(int),    cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_dt,     sizeof(double), cudaHostAllocWriteCombined | cudaHostAllocMapped);
 
   // First one, set particle and trajectory
   if (!ThisParticleOnly) {
