@@ -129,7 +129,7 @@ def add_spectra(spectra):
     N = len(spectrum)
 
     for isp in range(1, len(spectra)):
-        if len(isp) != N:
+        if len(spectra[isp]) != N:
             raise ValueError('spectra do not have the same dimensions')
         for i in range(len(spectra[isp])):
             spectrum[i][1] += spectra[isp][i][1]

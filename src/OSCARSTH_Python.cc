@@ -229,7 +229,7 @@ static PyObject* OSCARSTH_UndulatorPeriod (OSCARSTHObject* self, PyObject* args,
 
 
 const char* DOC_OSCARSTH_DipoleSpectrum = R"docstring(
-dipole_spectrum(bfield [, energy_range_eV, energy_points_eV, energy_eV, angle_range, angle_points, angle, npoints, minimum, ofile, bofile])
+dipole_spectrum(bfield [, energy_range_eV, energy_points_eV, energy_eV, angle_integrated, angle_range, angle_points, angle, npoints, minimum, ofile, bofile])
 
 Get the spectrum from ideal dipole field.  One can calculate the spectrum as a function of photon energy at a given angle or the angular dependence for a particular energy.
 
@@ -246,6 +246,9 @@ energy_points_eV : list
 
 energy_eV : float
     Photon energy of interest
+
+angle_integrated : boolean
+    Set to true if you want the vertical angle integrated
 
 angle_range : list
     [min, max] angle of interest in [rad]
@@ -294,6 +297,7 @@ static PyObject* OSCARSTH_DipoleSpectrum (OSCARSTHObject* self, PyObject* args, 
   PyObject*   List_EnergyRange_eV  = PyList_New(0);
   PyObject*   List_EnergyPoints_eV = PyList_New(0);
   double      Energy_eV            = 0;
+  bool        AngleIntegrated      = false;
   PyObject*   List_AngleRange      = PyList_New(0);
   PyObject*   List_AnglePoints     = PyList_New(0);
   double      Angle                = 0;
@@ -306,6 +310,7 @@ static PyObject* OSCARSTH_DipoleSpectrum (OSCARSTHObject* self, PyObject* args, 
                                  "energy_range_eV",
                                  "energy_points_eV",
                                  "energy_eV",
+                                 "angle_integrated",
                                  "angle_range",
                                  "angle_points",
                                  "angle",
@@ -315,12 +320,13 @@ static PyObject* OSCARSTH_DipoleSpectrum (OSCARSTHObject* self, PyObject* args, 
                                  NULL};
 
   // Parse inputs
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|OOdOOdiss",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|OOdpOOdiss",
                                    const_cast<char **>(kwlist),
                                    &BField,
                                    &List_EnergyRange_eV,
                                    &List_EnergyPoints_eV,
                                    &Energy_eV,
+                                   &AngleIntegrated,
                                    &List_AngleRange,
                                    &List_AnglePoints,
                                    &Angle,
@@ -374,7 +380,11 @@ static PyObject* OSCARSTH_DipoleSpectrum (OSCARSTHObject* self, PyObject* args, 
   if (PyList_Size(List_EnergyRange_eV) != 0 && NPoints > 0) {
     TVector2D const EnergyRange_eV = OSCARSPY::ListAsTVector2D(List_EnergyRange_eV);
     SpectrumContainer.Init(NPoints, EnergyRange_eV[0], EnergyRange_eV[1]);
-    self->obj->DipoleSpectrumEnergy(BField, SpectrumContainer, Angle);
+    if (AngleIntegrated) {
+      self->obj->DipoleSpectrumEnergyAngleIntegrated(BField, SpectrumContainer);
+    } else {
+      self->obj->DipoleSpectrumEnergy(BField, SpectrumContainer, Angle);
+    }
   } else if (PyList_Size(List_EnergyPoints_eV) != 0) {
     SpectrumContainer.Init(VEnergyPoints_eV);
   } else if (PyList_Size(List_AngleRange) != 0 && NPoints > 0) {
@@ -1191,6 +1201,239 @@ static PyObject* OSCARSTH_UndulatorEnergyHarmonic (OSCARSTHObject* self, PyObjec
 
 
 
+const char* DOC_OSCARSTH_WigglerSpectrum = R"docstring(
+wiggler_spectrum(bfield, period, length [, energy_range_eV, energy_points_eV, energy_eV, angle_integrated, angle_range, angle_points, angle, npoints, minimum, ofile, bofile])
+
+Get the spectrum from ideal dipole field.  One can calculate the spectrum as a function of photon energy at a given angle or the angular dependence for a particular energy.
+
+Parameters
+----------
+bfield : float
+    Magnetic field of the dipole in [T]
+
+period : float
+    Length of magnetic period in [m]
+
+length : float
+    Length of device in [m]
+
+energy_range_eV : list
+    [min, max] photon energy of interest in [eV]
+
+energy_points_eV : list
+    List of energy points in [eV]
+
+energy_eV : float
+    Photon energy of interest
+
+angle_integrated : boolean
+    Set to true if you want the vertical angle integrated
+
+angle_range : list
+    [min, max] angle of interest in [rad]
+
+angle_points : list
+    List of angle points in [rad]
+
+angle : float
+    Angle of interest in [rad]
+
+npoints : int
+    Number of points for _range requests
+
+ofile : str
+    Output file name
+
+bofile : str
+    Binary output file name
+
+Returns
+-------
+flux : list
+    A list of flux values for given points [[p0, f0], [p1, f1], ...].  The points can be in energy or angle depending on the input parameters.  Output is in [photons / s / mrad^2 / 0.1\%bw]
+
+Examples
+--------
+Calculate the spectrum in a given energy range
+
+    >>> oth.wiggler_spectrum(bfield=0.4, period=0.100, length=7.0, energy_range_eV=[10, 30000], npoints=1000)
+)docstring";
+static PyObject* OSCARSTH_WigglerSpectrum (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
+{
+  // Return a list of points corresponding to the flux in a given energy range for a given vertical angle.
+  // This approximation assumes that the particle beam is perpendicular to the magnetic field
+
+  // Require 2 arguments
+  double      BField               = 0;
+  double      Period               = 0;
+  double      Length               = 0;
+  PyObject*   List_EnergyRange_eV  = PyList_New(0);
+  PyObject*   List_EnergyPoints_eV = PyList_New(0);
+  double      Energy_eV            = 0;
+  bool        AngleIntegrated      = false;
+  PyObject*   List_AngleRange      = PyList_New(0);
+  PyObject*   List_AnglePoints     = PyList_New(0);
+  double      Angle                = 0;
+  int         NPoints              = 500;
+  const char* OutFileNameText      = "";
+  const char* OutFileNameBinary    = "";
+
+  // Input variable list
+  static const char *kwlist[] = {"bfield",
+                                 "period",
+                                 "length",
+                                 "energy_range_eV",
+                                 "energy_points_eV",
+                                 "energy_eV",
+                                 "angle_integrated",
+                                 "angle_range",
+                                 "angle_points",
+                                 "angle",
+                                 "npoints",
+                                 "ofile",
+                                 "bofile",
+                                 NULL};
+
+  // Parse inputs
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ddd|OOdpOOdiss",
+                                   const_cast<char **>(kwlist),
+                                   &BField,
+                                   &Period,
+                                   &Length,
+                                   &List_EnergyRange_eV,
+                                   &List_EnergyPoints_eV,
+                                   &Energy_eV,
+                                   &AngleIntegrated,
+                                   &List_AngleRange,
+                                   &List_AnglePoints,
+                                   &Angle,
+                                   &NPoints,
+                                   &OutFileNameText,
+                                   &OutFileNameBinary)) {
+    return NULL;
+  }
+
+  // CHeck if beam is ok
+  if (!self->obj->CheckBeam()) {
+    PyErr_SetString(PyExc_ValueError, "particle beam not correctly defined");
+    return NULL;
+  }
+
+  // Must have a bfield
+  if (fabs(BField) == 0) {
+    PyErr_SetString(PyExc_ValueError, "'bfield' must not be zero");
+    return NULL;
+  }
+
+  // Must have a period
+  if (Period <= 0) {
+    PyErr_SetString(PyExc_ValueError, "'period' must not be > 0");
+    return NULL;
+  }
+
+  // Must have a length greater than or equal to 1/2 period
+  if (Length < Period / 2.) {
+    PyErr_SetString(PyExc_ValueError, "'Length' must be at least one half-period");
+    return NULL;
+  }
+
+  // Number of periods as a double
+  double const NPeriods = (double) (int) (Length / Period);
+
+
+  // Must have some combination that makes sense
+  if (PyList_Size(List_EnergyRange_eV) != 0 && PyList_Size(List_AngleRange) != 0) {
+    PyErr_SetString(PyExc_ValueError, "can only specify 'energy_range_eV' or 'angle_range', but not both");
+    return NULL;
+  } else if (PyList_Size(List_EnergyPoints_eV) != 0 && PyList_Size(List_AnglePoints) != 0) {
+    PyErr_SetString(PyExc_ValueError, "cannot specify both energy and angle lists");
+    return NULL;
+  } else if (PyList_Size(List_EnergyRange_eV) != 0 && NPoints == 0) {
+    PyErr_SetString(PyExc_ValueError, "must specify 'npoints' > 0");
+    return NULL;
+  } else if (PyList_Size(List_AngleRange) != 0 && NPoints == 0) {
+    PyErr_SetString(PyExc_ValueError, "must specify 'npoints' > 0");
+    return NULL;
+  }
+
+  // Container for spectrum
+  TSpectrumContainer SpectrumContainer;
+
+  // Grap points if they are there
+  std::vector<double> VEnergyPoints_eV;
+  for (int i = 0; i < PyList_Size(List_EnergyPoints_eV); ++i) {
+    VEnergyPoints_eV.push_back(PyFloat_AsDouble(PyList_GetItem(List_EnergyPoints_eV, i)));
+  }
+  std::vector<double> VAnglePoints;
+  for (int i = 0; i < PyList_Size(List_AnglePoints); ++i) {
+    VAnglePoints.push_back(PyFloat_AsDouble(PyList_GetItem(List_AnglePoints, i)));
+  }
+
+  // Select on inputs and calculate
+  if (PyList_Size(List_EnergyRange_eV) != 0 && NPoints > 0) {
+    TVector2D const EnergyRange_eV = OSCARSPY::ListAsTVector2D(List_EnergyRange_eV);
+    SpectrumContainer.Init(NPoints, EnergyRange_eV[0], EnergyRange_eV[1]);
+    if (AngleIntegrated) {
+      self->obj->DipoleSpectrumEnergyAngleIntegrated(BField, SpectrumContainer);
+    } else {
+      self->obj->DipoleSpectrumEnergy(BField, SpectrumContainer, Angle);
+    }
+  } else if (PyList_Size(List_EnergyPoints_eV) != 0) {
+    SpectrumContainer.Init(VEnergyPoints_eV);
+  } else if (PyList_Size(List_AngleRange) != 0 && NPoints > 0) {
+    TVector2D const AngleRange = OSCARSPY::ListAsTVector2D(List_AngleRange);
+    SpectrumContainer.Init(NPoints, AngleRange[0], AngleRange[1]);
+    self->obj->DipoleSpectrumAngle(BField, SpectrumContainer, Energy_eV);
+  } else if (PyList_Size(List_AnglePoints) != 0 && Energy_eV > 0) {
+    SpectrumContainer.Init(VAnglePoints);
+  } else {
+    PyErr_SetString(PyExc_ValueError, "Incorrect combination of or missing input parameters.  Please see documentation for this function");
+    return NULL;
+  }
+
+  // Insert factor for Wiggler
+  SpectrumContainer.Scale(2. * NPeriods);
+
+
+  TVector2D EnergyRange_eV;
+  TVector2D AngleRange;
+
+  // Check for energy range
+  if (PyList_Size(List_EnergyRange_eV) != 0) {
+    try {
+      EnergyRange_eV = OSCARSPY::ListAsTVector2D(List_EnergyRange_eV);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'energy_range_eV'");
+      return NULL;
+    }
+  }
+
+  // Check for angle range
+  if (PyList_Size(List_AngleRange) != 0) {
+    try {
+      AngleRange = OSCARSPY::ListAsTVector2D(List_AngleRange);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'angle_range'");
+      return NULL;
+    }
+  }
+
+  // Write to file if output is requested
+  if (std::string(OutFileNameText) != "") {
+    SpectrumContainer.WriteToFileText(OutFileNameText);
+  }
+  if (std::string(OutFileNameBinary) != "") {
+    SpectrumContainer.WriteToFileBinary(OutFileNameBinary);
+  }
+
+  // Return the spectrum
+  return OSCARSPY::GetSpectrumAsList(SpectrumContainer);
+}
+
+
+
+
+
 const char* DOC_OSCARSTH_WigglerFluxRectangle = R"docstring(
 wiggler_flux_rectangle(plane, energy_eV, period, nperiods, width, npoints [, bfield, K, ofile, bofile])
 
@@ -1954,6 +2197,7 @@ static PyMethodDef OSCARSTH_methods[] = {
   {"undulator_brightness",                       (PyCFunction) OSCARSTH_UndulatorBrightness,                     METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorBrightness},
   {"undulator_energy_harmonic",                  (PyCFunction) OSCARSTH_UndulatorEnergyHarmonic,                 METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorEnergyHarmonic},
 
+  {"wiggler_spectrum",                           (PyCFunction) OSCARSTH_WigglerSpectrum,                         METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_WigglerSpectrum},
   {"wiggler_flux",                               (PyCFunction) OSCARSTH_WigglerFluxRectangle,                             METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_WigglerFluxRectangle},
 
   {"bessel_j",                                   (PyCFunction) OSCARSTH_BesselJ,                                 METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_BesselJ},
@@ -1987,6 +2231,7 @@ static PyMethodDef OSCARSTH_methods_fake[] = {
   {"undulator_brightness",                       (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorBrightness},
   {"undulator_energy_harmonic",                  (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorEnergyHarmonic},
 
+  {"wiggler_spectrum",                           (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_WigglerSpectrum},
   {"wiggler_flux",                               (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_WigglerFluxRectangle},
 
   {"bessel_j",                                   (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_BesselK},

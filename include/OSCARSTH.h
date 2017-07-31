@@ -41,10 +41,17 @@ class OSCARSTH
                               TSpectrumContainer& Spectrum,
                               double const Energy_eV) const;
 
+    void DipoleSpectrumEnergyAngleIntegrated (double const BField, 
+                                              TSpectrumContainer& Spectrum) const;
+
     double DipoleSpectrum (double const BField,
                            double const BeamEnergy_GeV,
                            double const Angle,
                            double const Energy_eV) const;
+
+    double DipoleSpectrumAngleIntegrated (double const BField,
+                                          double const BeamEnergy_GeV,
+                                          double const Energy_eV) const;
 
     double UndulatorFlux (double const BField,
                           double const Period,

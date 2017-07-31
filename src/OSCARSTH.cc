@@ -118,6 +118,23 @@ void OSCARSTH::DipoleSpectrumAngle (double const BField,
 
 
 
+void OSCARSTH::DipoleSpectrumEnergyAngleIntegrated (double const BField, 
+                                     TSpectrumContainer& Spectrum) const
+{
+  // Beam energy from internal beam
+  double const BeamEnergy_GeV =  fParticleBeam.GetE0();
+
+  // Calculate flux for each point
+  for (size_t i = 0; i < Spectrum.GetNPoints(); ++i) {
+    Spectrum.SetFlux(i, DipoleSpectrumAngleIntegrated(BField, BeamEnergy_GeV, Spectrum.GetEnergy(i)));
+  }
+
+  return;
+}
+
+
+
+
 double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_GeV, double const Angle, double const Energy_eV) const
 {
 
@@ -161,6 +178,22 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
   double const d2N = d * (1e-6);
 
   return d2N;
+}
+
+
+
+
+
+double OSCARSTH::DipoleSpectrumAngleIntegrated (double const BField, double const BeamEnergy_GeV, double const Energy_eV) const
+{
+  // This function calculates the dipole spectrum integrated over the vertical angle and returns the result as:
+  // [0.1%bw / mrad]
+
+  double const Gamma = BeamEnergy_GeV / TOSCARSSR::kgToGeV( TOSCARSSR::Me());
+  double const OmegaC = 3. * Gamma * Gamma * Gamma * TOSCARSSR::C() / (2. * BeamEnergy_GeV * 1e9 * TOSCARSSR::Qe() / (TOSCARSSR::Qe() * TOSCARSSR::C() * fabs(BField)));
+  double const Omega = TOSCARSSR::EvToAngularFrequency(Energy_eV);
+  double const y = Omega / OmegaC;
+  return sqrt(3.0) / TOSCARSSR::TwoPi() * TOSCARSSR::Alpha() * Gamma * 0.001 * y * fParticleBeam.GetCurrent() / TOSCARSSR::Qe() * TOMATH::BesselK_IntegralToInfty(5./3., y) * 0.001;
 }
 
 
