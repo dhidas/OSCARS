@@ -201,6 +201,18 @@ void TSpectrumContainer::AddToFlux (size_t const i, double const Flux)
 
 
 
+void TSpectrumContainer::Scale (double const ScaleFactor)
+{
+  // Scale all flux by the input factor
+  //
+  for (size_t i = 0; i != fSpectrumPoints.size(); ++i) {
+    fSpectrumPoints[i].second *= ScaleFactor;
+  }
+
+  return;
+}
+
+
 
 
 double TSpectrumContainer::GetFlux (size_t const i) const
