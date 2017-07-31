@@ -5,6 +5,7 @@ OSCARS consists of several modules.  The functions of each are found below.  The
 
 * :ref:`oscars.sr`
 * :ref:`oscars.th`
+* :ref:`oscars.util`
 * :ref:`oscars.plots_mpl`
 * :ref:`oscars.plots3d_mpl`
 * :ref:`oscars.parametric_surfaces`
@@ -46,6 +47,16 @@ oscars.th
     :members:
     :noindex:
 
+
+
+
+.. _oscars.util:
+
+oscars.util
+----------------
+
+.. automodule:: oscars.util
+    :members:
 
 
 
