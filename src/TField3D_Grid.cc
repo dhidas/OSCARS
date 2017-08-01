@@ -44,6 +44,7 @@ TField3D_Grid::TField3D_Grid (std::string         const& InFileName,
   std::string format = FileFormat;
   std::transform(format.begin(), format.end(), format.begin(), ::toupper);
 
+
   // Which file format are you looking at?
   if (format == "OSCARS") {
     this->ReadFile(InFileName, Rotations, Translation, Scaling);
@@ -663,7 +664,6 @@ void TField3D_Grid::ReadFile_OSCARS1D (std::string         const& InFileName,
 
   // Loop over all lines in file
   for ( ; std::getline(fi, L); ) {
-
     // Look for a blank line or comment line and skip if found.  You should never use tab btw.
     size_t FirstChar = L.find_first_not_of(" \t");
     if (FirstChar == std::string::npos || L[FirstChar] == CommentChar) {
@@ -675,7 +675,7 @@ void TField3D_Grid::ReadFile_OSCARS1D (std::string         const& InFileName,
     S.str(L);
 
     // Vector for this line of input
-    std::vector<double> Value(4);
+    std::vector<double> Value(4, 0);
 
     // Read this line of data
     for (int i = 0; i < InputCount; ++i) {
@@ -687,6 +687,10 @@ void TField3D_Grid::ReadFile_OSCARS1D (std::string         const& InFileName,
 
     // Scale the input as requested
     for (size_t iscale = 0; iscale != Scaling.size() && iscale < 4; ++iscale) {
+      if (Order[iscale] < 0) {
+        // Then there is no value to scale
+        continue;
+      }
       Value[Order[iscale]] *= Scaling[iscale];
     }
 
