@@ -664,10 +664,11 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
 
 
 
-__global__ void OSCARSSR_Cuda_SpectrumGPUMulti (double *x, double *y, double *z, double *bx, double *by, double *bz, double *obs, double *dt, int *nt, int *ns, double *C0, double *C2, double *EvToOmega, double *C, double *se, double *sf, cuDoubleComplex* pol, int *pol_state)
+__global__ void OSCARSSR_Cuda_SpectrumGPUMulti (double *x, double *y, double *z, double *bx, double *by, double *bz, double *obs, double *dt, int *nt, int *ns, double *C0, double *C2, double *EvToOmega, double *C, double *se, double *sf, cuDoubleComplex* pol, int *pol_state, int const *ifirst)
 {
   // Check that this is within the number of spectrum points requested
-  int is = threadIdx.x + blockIdx.x * blockDim.x;
+  int const ith = threadIdx.x + blockIdx.x * blockDim.x;
+  int const is = ith + *ifirst;
   if (is >= *ns) {
     return;
   }
@@ -753,7 +754,7 @@ __global__ void OSCARSSR_Cuda_SpectrumGPUMulti (double *x, double *y, double *z,
   // Set the flux for this frequency / energy point
   //Spectrum.AddToFlux(i, C2 *  SumE.Dot( SumE.CC() ).real() * Weight);
 
-  sf[is] = (*C2) * (EX + EY + EZ);
+  sf[ith] = (*C2) * (EX + EY + EZ);
 
   return;
 }
@@ -1111,7 +1112,7 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
       int const d = GPUsToUse[ig];
       cudaSetDevice(d);
       cudaEventSynchronize(event_spectrumcopy[ig]);
-      OSCARSSR_Cuda_SpectrumGPUMulti<<<NBlocksThisGPU[ig], NThreadsPerBlock>>>(d_x[ig], d_y[ig], d_z[ig], d_bx[ig], d_by[ig], d_bz[ig], d_obs[ig], d_dt[ig], d_nt[ig], d_ns[ig], d_c0[ig], d_c2[ig], d_ev2omega[ig], d_c[ig], d_se[ig], d_spectrum[ig], d_pol[ig], d_pol_state[ig]);
+      OSCARSSR_Cuda_SpectrumGPUMulti<<<NBlocksThisGPU[ig], NThreadsPerBlock>>>(d_x[ig], d_y[ig], d_z[ig], d_bx[ig], d_by[ig], d_bz[ig], d_obs[ig], d_dt[ig], d_nt[ig], d_ns[ig], d_c0[ig], d_c2[ig], d_ev2omega[ig], d_c[ig], d_se[ig], d_spectrum[ig], d_pol[ig], d_pol_state[ig], d_ifirst[ig]);
     }
 
 
