@@ -2270,15 +2270,15 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
   // Which cpmpute method will we use, gpu, multi-thread, or single-thread
   if (UseGPU) {
     // Send to GPU function
-    CalculateFluxGPU2(Surface,
-                      Energy_eV,
-                      FluxContainer,
-                      Polarization,
-                      Angle,
-                      HorizontalDirection,
-                      PropogationDirection,
-                      NParticles,
-                      GPUVector);
+    CalculateFluxGPU(Surface,
+                     Energy_eV,
+                     FluxContainer,
+                     Polarization,
+                     Angle,
+                     HorizontalDirection,
+                     PropogationDirection,
+                     NParticles,
+                     GPUVector);
   } else {
     if (NParticles == 0) {
       if (NThreadsToUse == 1) {
@@ -2581,50 +2581,7 @@ void OSCARSSR::CalculateFluxThreads (TParticleA& Particle,
 
 
 
-void OSCARSSR::CalculateFluxGPU (TParticleA& Particle,
-                                 TSurfacePoints const& Surface,
-                                 double const Energy_eV,
-                                 T3DScalarContainer& FluxContainer,
-                                 std::string const& Polarization,
-                                 double const Angle,
-                                 TVector3D const& HorizontalDirection,
-                                 TVector3D const& PropogationDirection,
-                                 double const Weight)
-{
-  // If you compile for Cuda use the GPU in this function, else throw
-
-  // Add points to flux container
-  for (size_t i = 0; i != Surface.GetNPoints(); ++i) {
-    FluxContainer.AddPoint(Surface.GetPoint(i).GetPoint(), 0);
-  }
-
-  // Check that particle has been set yet.  If fType is "" it has not been set yet
-  if (Particle.GetType() == "") {
-    throw std::out_of_range("no particle defined");
-  }
-
-  // Calculate the trajectory from scratch
-  this->CalculateTrajectory(Particle);
-
-  #ifdef CUDA
-  // Check that the GPU exists
-  if (this->CheckGPU() < 1) {
-    throw std::invalid_argument("You are requesting the GPU, but none were found");
-  }
-
-  return OSCARSSR_Cuda_CalculateFluxGPU(Particle, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, Weight);
-  #else
-  throw std::invalid_argument("GPU functionality not compiled into this binary distribution");
-  #endif
-
-  return;
-}
-
-
-
-
-
-void OSCARSSR::CalculateFluxGPU2 (TSurfacePoints const& Surface,
+void OSCARSSR::CalculateFluxGPU (TSurfacePoints const& Surface,
                                  double const Energy_eV,
                                  T3DScalarContainer& FluxContainer,
                                  std::string const& Polarization,
@@ -2650,7 +2607,7 @@ void OSCARSSR::CalculateFluxGPU2 (TSurfacePoints const& Surface,
     throw std::invalid_argument("You are requesting the GPU, but none were found");
   }
 
-  return OSCARSSR_Cuda_CalculateFluxGPU2(*this, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NParticles, GPUVector);
+  return OSCARSSR_Cuda_CalculateFluxGPU(*this, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NParticles, GPUVector);
   #else
   throw std::invalid_argument("GPU functionality not compiled into this binary distribution");
   #endif

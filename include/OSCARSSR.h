@@ -316,17 +316,7 @@ class OSCARSSR
                                int const NThreads = 0,
                                double const Weight = 1);
 
-    void CalculateFluxGPU (TParticleA& Particle,
-                           TSurfacePoints const& Surface,
-                           double const Energy_eV,
-                           T3DScalarContainer& FluxContainer,
-                           std::string const& Polarization = "all",
-                           double const Angle = 0,
-                           TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
-                           TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
-                           double const Weight = 1);
-
-    void CalculateFluxGPU2 (TSurfacePoints const& Surface,
+    void CalculateFluxGPU (TSurfacePoints const& Surface,
                            double const Energy_eV,
                            T3DScalarContainer& FluxContainer,
                            std::string const& Polarization = "all",

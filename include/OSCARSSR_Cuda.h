@@ -29,17 +29,7 @@ extern "C" int  OSCARSSR_Cuda_GetDeviceCount ();
 
 std::string OSCARSSR_Cuda_GetDeviceProperties (int const);
 
-extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (TParticleA& Particle,
-                                                TSurfacePoints const& Surface,
-                                                double const Energy_eV,
-                                                T3DScalarContainer& FluxContainer,
-                                                std::string const& Polarization = "all",
-                                                double const Angle = 0,
-                                                TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
-                                                TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
-                                                double const Weight = 1);
-
-extern "C" void OSCARSSR_Cuda_CalculateFluxGPU2 (OSCARSSR& OSR,
+extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
                                                 TSurfacePoints const& Surface,
                                                 double const Energy_eV,
                                                 T3DScalarContainer& FluxContainer,
