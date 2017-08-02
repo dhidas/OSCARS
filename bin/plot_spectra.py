@@ -12,7 +12,6 @@ spectra = []
 labels  = []
 
 for i in range(1, len(sys.argv)):
-    print(sys.argv[i])
     spectra.append(osr.average_spectra(ifiles=[sys.argv[i]]))
     labels.append(i)
 
