@@ -1479,6 +1479,107 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU2 (OSCARSSR& OSR,
 
 
 
+__global__ void OSCARSSR_Cuda_SpectrumGPUMulti (double *x, double *y, double *z, double *bx, double *by, double *bz, double *obs, double *dt, int *nt, int *ns, double *C0, double *C2, double *EvToOmega, double *C, double *se, double *sf, cuDoubleComplex* pol, int *pol_state)
+{
+  // Check that this is within the number of spectrum points requested
+  int is = threadIdx.x + blockIdx.x * blockDim.x;
+  if (is >= *ns) {
+    return;
+  }
+
+  // Complex i
+  cuDoubleComplex I = make_cuDoubleComplex(0, 1);
+
+  double const Omega = *EvToOmega * se[is];
+  cuDoubleComplex ICoverOmega = make_cuDoubleComplex(0, (*C) / Omega);
+
+
+  // E-field components sum
+  cuDoubleComplex SumEX = make_cuDoubleComplex(0, 0);
+  cuDoubleComplex SumEY = make_cuDoubleComplex(0, 0);
+  cuDoubleComplex SumEZ = make_cuDoubleComplex(0, 0);
+
+
+  // Loop over all points in trajectory
+  for (int i = 0; i < *nt; ++i) {
+
+    // Distance to observer
+    double const D = sqrt( pow( obs[0] - x[i], 2) + pow( obs[1] - y[i], 2) + pow(obs[2] - z[i], 2) );
+
+    // Normal in direction of observer
+    double const NX = (obs[0] - x[i]) / D;
+    double const NY = (obs[1] - y[i]) / D;
+    double const NZ = (obs[2] - z[i]) / D;
+
+    // Exponent for fourier transformed field
+    cuDoubleComplex Exponent = make_cuDoubleComplex(0, Omega * ((*dt) * i + D / (*C)));
+
+    cuDoubleComplex X1 = make_cuDoubleComplex((bx[i] - NX) / D, -(*C) * NX / (Omega * D * D));
+    cuDoubleComplex Y1 = make_cuDoubleComplex((by[i] - NY) / D, -(*C) * NY / (Omega * D * D));
+    cuDoubleComplex Z1 = make_cuDoubleComplex((bz[i] - NZ) / D, -(*C) * NZ / (Omega * D * D));
+
+    cuDoubleComplex MyEXP = cuCexp(Exponent);
+    //cuDoubleComplex MyEXP = make_cuDoubleComplex( exp(Exponent.x) * cos(Exponent.y), exp(Exponent.x) * sin(Exponent.y));
+
+    cuDoubleComplex X2 = cuCmul(X1, MyEXP);
+    cuDoubleComplex Y2 = cuCmul(Y1, MyEXP);
+    cuDoubleComplex Z2 = cuCmul(Z1, MyEXP);
+
+
+    SumEX = cuCadd(SumEX, X2);
+    SumEY = cuCadd(SumEY, Y2);
+    SumEZ = cuCadd(SumEZ, Z2);
+
+    // Sum in fourier transformed field (integral)
+    //SumEX += (TVector3DC(B) - (N *     (One + (ICoverOmega / (D)))     )) / D * std::exp(Exponent);
+  }
+
+  SumEX = cuCmul(make_cuDoubleComplex(0, (*C0) * Omega * (*dt)), SumEX);
+  SumEY = cuCmul(make_cuDoubleComplex(0, (*C0) * Omega * (*dt)), SumEY);
+  SumEZ = cuCmul(make_cuDoubleComplex(0, (*C0) * Omega * (*dt)), SumEZ);
+
+
+  // Check for polarization state
+  if (*pol_state == 0) {
+    // Do nothing
+  } else if (*pol_state == 1) {
+    // Linear, just dot with vector and put in direction of vector
+    cuDoubleComplex Magnitude = cuCadd(cuCadd(cuCmul(SumEX, pol[0]), cuCmul(SumEY, pol[1])),  cuCmul(SumEZ, pol[2]));
+    SumEX = cuCmul(Magnitude, pol[0]);
+    SumEY = cuCmul(Magnitude, pol[1]);
+    SumEZ = cuCmul(Magnitude, pol[2]);
+  } else if (*pol_state == 2) {
+    cuDoubleComplex Magnitude = cuCadd(cuCadd(cuCmul(SumEX, cuConj(pol[0])), cuCmul(SumEY, cuConj(pol[1]))),  cuCmul(SumEZ, cuConj(pol[2])));
+    SumEX = cuCmul(Magnitude, pol[0]);
+    SumEY = cuCmul(Magnitude, pol[1]);
+    SumEZ = cuCmul(Magnitude, pol[2]);
+  } else {
+    // UPDATE: Serious problem
+  }
+
+
+  double const EX = SumEX.x * SumEX.x + SumEX.y * SumEX.y;
+  double const EY = SumEY.x * SumEY.x + SumEY.y * SumEY.y;
+  double const EZ = SumEZ.x * SumEZ.x + SumEZ.y * SumEZ.y;
+
+  // Multiply field by Constant C1 and time step
+  //SumE *= C1 * DeltaT;
+
+  // Set the flux for this frequency / energy point
+  //Spectrum.AddToFlux(i, C2 *  SumE.Dot( SumE.CC() ).real() * Weight);
+
+  sf[is] = (*C2) * (EX + EY + EZ);
+
+  return;
+}
+
+
+
+
+
+
+
+
 __global__ void OSCARSSR_Cuda_SpectrumGPU (double *x, double *y, double *z, double *bx, double *by, double *bz, double *ox, double *oy, double *oz, double *dt, int *nt, int *ns, double *C0, double *C2, double *EvToOmega, double *C, double *se, double *sf, cuDoubleComplex* pol, int *pol_state)
 {
   // Check that this is within the number of spectrum points requested
@@ -1579,6 +1680,497 @@ __global__ void OSCARSSR_Cuda_SpectrumGPU (double *x, double *y, double *z, doub
 
 
 
+
+extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU2 (OSCARSSR& OSR,
+                                                    TParticleA& Particle,
+                                                    TVector3D const& ObservationPoint,
+                                                    TSpectrumContainer& Spectrum,
+                                                    std::string const& Polarization,
+                                                    double const Angle,
+                                                    TVector3D const& HorizontalDirection,
+                                                    TVector3D const& PropogationDirection,
+                                                    int const NParticles,
+                                                    std::vector<int> const& GPUVector)
+{
+  // Calculate the spectrum for NParticles using the GPUs given in GPUVector.  Each particle's
+  // trajectory will be sent to all GPUs for processing, meanwhile a new trajectory will
+  // be calculated
+
+  // Number of available GPUs
+  int ngpu = 0;
+  cudaGetDeviceCount(&ngpu);
+  if (ngpu == 0) {
+    throw std::invalid_argument("No GPU found");
+  }
+
+  // Make sure that a gpu listed is within the range and not a duplicate
+  std::vector<int> GPUsToUse;
+  for (std::vector<int>::const_iterator it = GPUVector.begin(); it != GPUVector.end(); ++it) {
+    if ( !(std::find(GPUsToUse.begin(), GPUsToUse.end(), *it) != GPUsToUse.end() && (*it < ngpu)) ) {
+      GPUsToUse.push_back(*it);
+    }
+  }
+
+  // Make sure we have at least one
+  if (GPUsToUse.size() == 0) {
+    throw std::invalid_argument("GPUs selected do not match hardware");
+  }
+  int const NGPUsToUse = (int) GPUsToUse.size();
+
+  // Do we calculate for the current particle?
+  bool const ThisParticleOnly = NParticles == 0 ? true : false;
+  int  const NParticlesReally = ThisParticleOnly ? 1 : NParticles;
+  // Type check, new particle if no type
+
+
+  // Imaginary "i" and complxe 1+0i
+  std::complex<double> const I(0, 1);
+  std::complex<double> const One(1, 0);
+
+  // Photon vertical direction and positive and negative helicity
+  TVector3D const VerticalDirection = PropogationDirection.Cross(HorizontalDirection).UnitVector();
+  TVector3DC const Positive = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) + VerticalDirection * I );
+  TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * I );
+
+  // For polarization input to the gpu
+  cuDoubleComplex *pol = new cuDoubleComplex[3];
+
+  // State of polarization: 0 for all, 1 for linear, 2 for circular
+  // (requires different threatment of vector pol interally)
+  int pol_state = 1;
+
+  if (Polarization == "all") {
+    // Do nothing, it is already ALL
+    pol_state = 0;
+  } else if (Polarization == "linear-horizontal") {
+    pol[0] = make_cuDoubleComplex(HorizontalDirection.GetX(), 0);
+    pol[1] = make_cuDoubleComplex(HorizontalDirection.GetY(), 0);
+    pol[2] = make_cuDoubleComplex(HorizontalDirection.GetZ(), 0);
+  } else if (Polarization == "linear-vertical") {
+    pol[0] = make_cuDoubleComplex(VerticalDirection.GetX(), 0);
+    pol[1] = make_cuDoubleComplex(VerticalDirection.GetY(), 0);
+    pol[2] = make_cuDoubleComplex(VerticalDirection.GetZ(), 0);
+  } else if (Polarization == "linear") {
+    TVector3D PolarizationAngle = HorizontalDirection;
+    PolarizationAngle.RotateSelf(Angle, PropogationDirection);
+    pol[0] = make_cuDoubleComplex(PolarizationAngle.GetX(), 0);
+    pol[1] = make_cuDoubleComplex(PolarizationAngle.GetY(), 0);
+    pol[2] = make_cuDoubleComplex(PolarizationAngle.GetZ(), 0);
+  } else if (Polarization == "circular-left") {
+    //SumE = SumE.Dot(Positive.CC()) * Positive;
+    pol_state = 2;
+    pol[0] = make_cuDoubleComplex(Positive.CC().GetX().real(), Positive.CC().GetX().imag());
+    pol[1] = make_cuDoubleComplex(Positive.CC().GetY().real(), Positive.CC().GetY().imag());
+    pol[2] = make_cuDoubleComplex(Positive.CC().GetZ().real(), Positive.CC().GetZ().imag());
+  } else if (Polarization == "circular-right") {
+    //SumE = SumE.Dot(Negative.CC()) * Negative;
+    pol_state = 2;
+    pol[0] = make_cuDoubleComplex(Negative.CC().GetX().real(), Negative.CC().GetX().imag());
+    pol[1] = make_cuDoubleComplex(Negative.CC().GetY().real(), Negative.CC().GetY().imag());
+    pol[2] = make_cuDoubleComplex(Negative.CC().GetZ().real(), Negative.CC().GetZ().imag());
+  } else {
+    // Throw invalid argument if polarization is not recognized
+    //throw std::invalid_argument("Polarization requested not recognized");
+  }
+
+  int *h_nt, *h_nt_max, *h_ns;
+  double *h_dt;
+  cudaHostAlloc((void**) &h_nt_max, sizeof(int),    cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_nt,     sizeof(int),    cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_ns,     sizeof(int),    cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_dt,     sizeof(double), cudaHostAllocWriteCombined | cudaHostAllocMapped);
+
+  // First one, set particle and trajectory
+  if (!ThisParticleOnly) {
+    OSR.SetNewParticle();
+  }
+  if (OSR.GetTrajectory().GetNPoints() == 0) {
+    OSR.CalculateTrajectory();
+  }
+
+  // Needed number of points in the track and time step
+  *h_nt_max = (int) OSR.GetNPointsTrajectory();
+  *h_nt     = (int) OSR.GetTrajectory().GetNPoints();
+  *h_ns     = (int) Spectrum.GetNPoints();
+  *h_dt     = (double) OSR.GetTrajectory().GetDeltaT();
+
+
+  int const NThreads = *h_ns;
+  int const NThreadsPerBlock = 32*16;
+  int const NThreadsRemainder = NThreads % NThreadsPerBlock;
+  int const NBlocksTotal = (NThreads - 1) / NThreadsPerBlock + 1;
+  int const NBlocksPerGPU = NBlocksTotal / NGPUsToUse;
+  int const NRemainderBlocks = NBlocksTotal % NGPUsToUse;
+  // UPDATE: To be modified
+  int const NSpectrum = NThreadsPerBlock * (NBlocksPerGPU + (NRemainderBlocks > 0 ? 1 : 0));
+
+  std::vector<int> NBlocksThisGPU(NGPUsToUse, NBlocksPerGPU);
+  for (int i = 0; i < NRemainderBlocks; ++i) {
+    ++NBlocksThisGPU[i];
+  }
+
+  // Memory allocation for Host
+  double  *h_x,  *h_y,  *h_z,  *h_bx,  *h_by,  *h_bz,  *h_obs, *h_se,   *h_c0,  *h_c2,  *h_c,  *h_ev2omega;
+  int     *h_ifirst, *h_pol_state;
+  double **h_spectrum;
+  cuDoubleComplex *h_pol;
+
+  cudaHostAlloc((void**) &h_x,       *h_nt_max * sizeof(double),          cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_y,       *h_nt_max * sizeof(double),          cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_z,       *h_nt_max * sizeof(double),          cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_bx,      *h_nt_max * sizeof(double),          cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_by,      *h_nt_max * sizeof(double),          cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_bz,      *h_nt_max * sizeof(double),          cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_obs,             3 * sizeof(double),          cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_se,          *h_ns * sizeof(double),          cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_c0,                  sizeof(double),          cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_c2,                  sizeof(double),          cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_c,                   sizeof(double),          cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_ev2omega,            sizeof(double),          cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_pol,                 sizeof(int),             cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_pol_state,       3 * sizeof(cuDoubleComplex), cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_ifirst, NGPUsToUse * sizeof(int),             cudaHostAllocWriteCombined | cudaHostAllocMapped);
+
+  cudaHostAlloc((void**) &h_spectrum, NGPUsToUse * sizeof(double*),       cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  for (size_t i = 0; i < GPUsToUse.size(); ++i) {
+    cudaHostAlloc((void**) &(h_spectrum[i]), NSpectrum * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  }
+
+  // First surface point for each gpu
+  int NBlocksUsed = 0;
+  for (int i = 0; i < NGPUsToUse; ++i) {
+    h_ifirst[i] = NBlocksUsed * NThreadsPerBlock;
+    NBlocksUsed += NBlocksThisGPU[i];
+  }
+
+
+  // Memor allocations for GPU
+  int             **d_nt;
+  int             **d_ns;
+  double          **d_dt;
+  double          **d_x;
+  double          **d_y;
+  double          **d_z;
+  double          **d_bx;
+  double          **d_by;
+  double          **d_bz;
+  double          **d_obs;
+  double          **d_se;
+  double          **d_c0;
+  double          **d_c2;
+  double          **d_c;
+  double          **d_ev2omega;
+  int             **d_ifirst;
+  cuDoubleComplex **d_pol;
+  int             **d_pol_state;
+  double          **d_spectrum;
+
+  cudaHostAlloc((void **) &d_nt,        NGPUsToUse * sizeof(int*),             cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_ns,        NGPUsToUse * sizeof(int*),             cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_dt,        NGPUsToUse * sizeof(double*),          cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_x,         NGPUsToUse * sizeof(double*),          cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_y,         NGPUsToUse * sizeof(double*),          cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_z,         NGPUsToUse * sizeof(double*),          cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_bx,        NGPUsToUse * sizeof(double*),          cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_by,        NGPUsToUse * sizeof(double*),          cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_bz,        NGPUsToUse * sizeof(double*),          cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_obs,       NGPUsToUse * sizeof(double*),          cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_se,        NGPUsToUse * sizeof(double*),          cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_c0,        NGPUsToUse * sizeof(double*),          cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_c2,        NGPUsToUse * sizeof(double*),          cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_c,         NGPUsToUse * sizeof(double*),          cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_ev2omega,  NGPUsToUse * sizeof(double*),          cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_ifirst,    NGPUsToUse * sizeof(int*),             cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_pol,       NGPUsToUse * sizeof(cuDoubleComplex*), cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_pol_state, NGPUsToUse * sizeof(int*),             cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_spectrum,  NGPUsToUse * sizeof(double*),          cudaHostAllocWriteCombined | cudaHostAllocMapped);
+
+  for (size_t i = 0; i < GPUsToUse.size(); ++i) {
+    // Device number
+    int const d = GPUsToUse[i];
+
+    cudaSetDevice(d);
+    cudaMalloc((void **) &d_nt[i],                   sizeof(int));
+    cudaMalloc((void **) &d_ns[i],                   sizeof(int));
+    cudaMalloc((void **) &d_dt[i],                   sizeof(double));
+    cudaMalloc((void **) &d_x[i],        *h_nt_max * sizeof(double));
+    cudaMalloc((void **) &d_y[i],        *h_nt_max * sizeof(double));
+    cudaMalloc((void **) &d_z[i],        *h_nt_max * sizeof(double));
+    cudaMalloc((void **) &d_bx[i],       *h_nt_max * sizeof(double));
+    cudaMalloc((void **) &d_by[i],       *h_nt_max * sizeof(double));
+    cudaMalloc((void **) &d_bz[i],       *h_nt_max * sizeof(double));
+    cudaMalloc((void **) &d_obs[i],              3 * sizeof(double));
+    cudaMalloc((void **) &d_se[i],           *h_ns * sizeof(double));
+    cudaMalloc((void **) &d_c0[i],                   sizeof(double));
+    cudaMalloc((void **) &d_c2[i],                   sizeof(double));
+    cudaMalloc((void **) &d_c[i],                    sizeof(double));
+    cudaMalloc((void **) &d_ev2omega[i],             sizeof(double));
+    cudaMalloc((void **) &d_ifirst[i],               sizeof(int));
+    cudaMalloc((void **) &d_pol[i],              3 * sizeof(cuDoubleComplex));
+    cudaMalloc((void **) &d_pol_state[i],            sizeof(int));
+    cudaMalloc((void **) &d_spectrum[i], NSpectrum * sizeof(double));
+
+    // Copy device number to device
+    cudaMemcpyAsync(d_ifirst[i], &(h_ifirst[i]), sizeof(int), cudaMemcpyHostToDevice);
+  }
+
+  // Compute known host values
+  h_obs[0]     = ObservationPoint[0];
+  h_obs[1]     = ObservationPoint[1];
+  h_obs[2]     = ObservationPoint[2];
+  *h_c0        = OSR.GetCurrentParticle().GetQ() / (TOSCARSSR::FourPi() * TOSCARSSR::C() * TOSCARSSR::Epsilon0() * TOSCARSSR::Sqrt2Pi());
+  *h_c2        = TOSCARSSR::FourPi() * OSR.GetCurrentParticle().GetCurrent() / (TOSCARSSR::H() * fabs(OSR.GetCurrentParticle().GetQ()) * TOSCARSSR::Mu0() * TOSCARSSR::C()) * 1e-6 * 0.001;
+  *h_c         = TOSCARSSR::C();
+  *h_ev2omega  = TOSCARSSR::EvToAngularFrequency(1);
+  h_pol[0]     = pol[0];
+  h_pol[1]     = pol[1];
+  h_pol[2]     = pol[2];
+  *h_pol_state = pol_state;
+  for (size_t i = 0; i < *h_ns; ++i) {
+    h_se[i] = Spectrum.GetEnergy(i);
+  }
+
+  // Copy constants to first device (async)
+  int const d0 = GPUsToUse[0];
+  cudaSetDevice(d0);
+  cudaMemcpyAsync(d_nt[0],       h_nt,          sizeof(int),    cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_ns[0],       h_ns,          sizeof(int),    cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_dt[0],       h_dt,          sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_obs[0],      h_obs,     3 * sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_c0[0],       h_c0,          sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_c2[0],       h_c2,          sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_c[0],        h_c,           sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_ev2omega[0], h_ev2omega,    sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_se[0],       h_se,  *h_ns * sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_pol[0],      h_pol,     3 * sizeof(cuDoubleComplex), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_pol_state[0],h_pol_state,   sizeof(int),    cudaMemcpyHostToDevice);
+  for (size_t i = 0; i < GPUsToUse.size() - 1; ++i) {
+    // Device number
+    int const d  = GPUsToUse[i];
+    int const d1 = GPUsToUse[i+1];
+    cudaSetDevice(d);
+    cudaMemcpyPeerAsync( d_nt[i+1],        d1, d_nt[i],       d,         sizeof(int));
+    cudaMemcpyPeerAsync( d_ns[i+1],        d1, d_ns[i],       d,         sizeof(int));
+    cudaMemcpyPeerAsync( d_dt[i+1],        d1, d_dt[i],       d,         sizeof(double));
+    cudaMemcpyPeerAsync( d_obs[i+1],       d1, d_obs[i],      d,     3 * sizeof(double));
+    cudaMemcpyPeerAsync( d_c0[i+1],        d1, d_c0[i],       d,         sizeof(double));
+    cudaMemcpyPeerAsync( d_c2[i+1],        d1, d_c2[i],       d,         sizeof(double));
+    cudaMemcpyPeerAsync( d_c[i+1],         d1, d_c[i],        d,         sizeof(double));
+    cudaMemcpyPeerAsync( d_ev2omega[i+1],  d1, d_ev2omega[i], d,         sizeof(double));
+    cudaMemcpyPeerAsync( d_se[i+1],        d1, d_se[i],       d, *h_ns * sizeof(double));
+    cudaMemcpyPeerAsync( d_pol[i+1],       d1, d_pol[i],      d,     3 * sizeof(cuDoubleComplex));
+    cudaMemcpyPeerAsync( d_pol_state[i+1], d1, d_pol_state[i],d,         sizeof(int));
+  }
+
+  // Set first trajectory
+  TParticleTrajectoryPoints const& T = OSR.GetTrajectory();
+  for (size_t i = 0; i < *h_nt; ++i) {
+    h_x[i]  = T.GetX(i).GetX();
+    h_y[i]  = T.GetX(i).GetY();
+    h_z[i]  = T.GetX(i).GetZ();
+    h_bx[i] = T.GetB(i).GetX();
+    h_by[i] = T.GetB(i).GetY();
+    h_bz[i] = T.GetB(i).GetZ();
+  }
+
+  // Set the surface points
+  // GPU events
+  cudaEvent_t *event_spectrumcopy = new cudaEvent_t[NGPUsToUse];
+  for (int ig = 0; ig < NGPUsToUse; ++ig) {
+    int const d = GPUsToUse[ig];
+    cudaSetDevice(d);
+    cudaEventCreate(&(event_spectrumcopy[ig]));
+  }
+
+  // Enable peer (direct gpu-gpu) writes
+  for (size_t ig = 0; ig < GPUsToUse.size() - 1; ++ig) {
+    // Device number
+    int const d  = GPUsToUse[ig];
+    int const d1 = GPUsToUse[ig+1];
+    int access;
+    cudaDeviceCanAccessPeer(&access, d, d1);
+    if (access == 1) {
+      cudaSetDevice(d);
+      cudaDeviceEnablePeerAccess(d1, 0);
+    }
+  }
+
+  // Loop over number of particles
+  for (int ip = 0; ip < NParticlesReally; ++ip) {
+
+    // Copy trajectory to first GPU, then internal async transfers (where possible)
+    cudaSetDevice(d0);
+    cudaMemcpyAsync(d_nt[0], h_nt,         sizeof(int),    cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(d_x[0],  h_x,  *h_nt * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(d_y[0],  h_y,  *h_nt * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(d_z[0],  h_z,  *h_nt * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(d_bx[0], h_bx, *h_nt * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(d_by[0], h_by, *h_nt * sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(d_bz[0], h_bz, *h_nt * sizeof(double), cudaMemcpyHostToDevice);
+    for (size_t ig = 0; ig < GPUsToUse.size() - 1; ++ig) {
+      // Device number
+      int const d  = GPUsToUse[ig];
+      int const d1 = GPUsToUse[ig+1];
+      cudaSetDevice(d);
+      cudaMemcpyPeerAsync(d_nt[ig+1], d1, d_nt[ig], d,         sizeof(int));
+      cudaMemcpyPeerAsync(d_x[ig+1],  d1, d_x[ig],  d, *h_nt * sizeof(double));
+      cudaMemcpyPeerAsync(d_y[ig+1],  d1, d_y[ig],  d, *h_nt * sizeof(double));
+      cudaMemcpyPeerAsync(d_z[ig+1],  d1, d_z[ig],  d, *h_nt * sizeof(double));
+      cudaMemcpyPeerAsync(d_bx[ig+1], d1, d_bx[ig], d, *h_nt * sizeof(double));
+      cudaMemcpyPeerAsync(d_by[ig+1], d1, d_by[ig], d, *h_nt * sizeof(double));
+      cudaMemcpyPeerAsync(d_bz[ig+1], d1, d_bz[ig], d, *h_nt * sizeof(double));
+
+    }
+
+    // Wait for previous copy, start next one
+    for (size_t ig = 0; ig < GPUsToUse.size(); ++ig) {
+      int const d = GPUsToUse[ig];
+      cudaSetDevice(d);
+      cudaEventSynchronize(event_spectrumcopy[ig]);
+      OSCARSSR_Cuda_SpectrumGPUMulti<<<NBlocksThisGPU[ig], NThreadsPerBlock>>>(d_x[ig], d_y[ig], d_z[ig], d_bx[ig], d_by[ig], d_bz[ig], d_obs[ig], d_dt[ig], d_nt[ig], d_ns[ig], d_c0[ig], d_c2[ig], d_ev2omega[ig], d_c[ig], d_se[ig], d_spectrum[ig], d_pol[ig], d_pol_state[ig]);
+    }
+
+
+    // Add result to spectrum container (from **previous**)
+    if (ip > 0) {
+      int NBlocksUsed = 0;
+      for (size_t ig = 0; ig < GPUsToUse.size(); ++ig) {
+        for (size_t ith = 0; ith < NBlocksThisGPU[ig] * NThreadsPerBlock; ++ith) {
+          if (ith + NThreadsPerBlock * NBlocksUsed >= *h_ns) {
+            break;
+          }
+          int iss = ith + NThreadsPerBlock * NBlocksUsed;
+          Spectrum.AddToFlux(iss, h_spectrum[ig][ith]);
+        }
+        NBlocksUsed += NBlocksThisGPU[ig];
+      }
+    }
+
+    // Add copy back to streams
+    for (size_t ig = 0; ig < GPUsToUse.size(); ++ig) {
+      int const d  = GPUsToUse[ig];
+      cudaSetDevice(d);
+      cudaMemcpyAsync(h_spectrum[ig],  d_spectrum[ig],  NSpectrum * sizeof(double), cudaMemcpyDeviceToHost);
+      cudaEventRecord(event_spectrumcopy[ig]);
+    }
+
+    // If it's not the last one, calculate a new trajectory
+    if (ip < NParticlesReally - 1) {
+      OSR.SetNewParticle();
+      OSR.CalculateTrajectory();
+      TParticleTrajectoryPoints const& T = OSR.GetTrajectory();
+      *h_nt = T.GetNPoints();
+
+      for (size_t it = 0; it < *h_nt; ++it) {
+        h_x[it]  = T.GetX(it).GetX();
+        h_y[it]  = T.GetX(it).GetY();
+        h_z[it]  = T.GetX(it).GetZ();
+        h_bx[it] = T.GetB(it).GetX();
+        h_by[it] = T.GetB(it).GetY();
+        h_bz[it] = T.GetB(it).GetZ();
+      }
+    }
+  }
+
+  // Wait for last copy
+  for (size_t ig = 0; ig < GPUsToUse.size(); ++ig) {
+    cudaEventSynchronize(event_spectrumcopy[ig]);
+  }
+
+  // Add result to spectrum container (from **previous**)
+  NBlocksUsed = 0;
+  for (size_t ig = 0; ig < GPUsToUse.size(); ++ig) {
+    for (size_t ith = 0; ith < NBlocksThisGPU[ig] * NThreadsPerBlock; ++ith) {
+      if (ith + NThreadsPerBlock * NBlocksUsed >= *h_ns) {
+        break;
+      }
+      int iss = ith + NThreadsPerBlock * NBlocksUsed;
+      Spectrum.AddToFlux(iss, h_spectrum[ig][ith]);
+    }
+    NBlocksUsed += NBlocksThisGPU[ig];
+  }
+
+  // Weighting for multi-particle
+  double const Weight = 1.0 / (double) NParticlesReally;
+  Spectrum.Scale(Weight);
+
+  // Free host memory
+  cudaFreeHost(h_nt_max);
+  cudaFreeHost(h_nt);
+  cudaFreeHost(h_ns);
+  cudaFreeHost(h_dt);
+  cudaFreeHost(h_x);
+  cudaFreeHost(h_y);
+  cudaFreeHost(h_z);
+  cudaFreeHost(h_bx);
+  cudaFreeHost(h_by);
+  cudaFreeHost(h_bz);
+  cudaFreeHost(h_obs);
+  cudaFreeHost(h_se);
+  cudaFreeHost(h_c0);
+  cudaFreeHost(h_c2);
+  cudaFreeHost(h_c);
+  cudaFreeHost(h_ev2omega);
+  cudaFreeHost(h_ifirst);
+  cudaFreeHost(h_pol);
+  cudaFreeHost(h_pol_state);
+  // Free host and GPU memory
+  for (size_t i = 0; i < GPUsToUse.size(); ++i) {
+
+    cudaFreeHost(h_spectrum[i]);
+
+    // Device number
+    int const d = GPUsToUse[i];
+
+    cudaSetDevice(d);
+    cudaFree(d_nt[i]);
+    cudaFree(d_ns[i]);
+    cudaFree(d_dt[i]);
+    cudaFree(d_x[i]);
+    cudaFree(d_y[i]);
+    cudaFree(d_z[i]);
+    cudaFree(d_bx[i]);
+    cudaFree(d_by[i]);
+    cudaFree(d_bz[i]);
+    cudaFree(d_obs[i]);
+    cudaFree(d_se[i]);
+    cudaFree(d_c0[i]);
+    cudaFree(d_c2[i]);
+    cudaFree(d_c[i]);
+    cudaFree(d_ev2omega[i]);
+    cudaFree(d_ifirst[i]);
+    cudaFree(d_pol[i]);
+    cudaFree(d_pol_state[i]);
+    cudaFree(d_spectrum[i]);
+  }
+  cudaFree(h_spectrum);
+
+  cudaFree(d_nt);
+  cudaFree(d_ns);
+  cudaFree(d_dt);
+  cudaFree(d_x);
+  cudaFree(d_y);
+  cudaFree(d_z);
+  cudaFree(d_bx);
+  cudaFree(d_by);
+  cudaFree(d_bz);
+  cudaFree(d_obs);
+  cudaFree(d_se);
+  cudaFree(d_c0);
+  cudaFree(d_c2);
+  cudaFree(d_c);
+  cudaFree(d_ev2omega);
+  cudaFree(h_ifirst);
+  cudaFree(h_pol);
+  cudaFree(h_pol_state);
+  cudaFree(d_spectrum);
+
+  // Delete host gpu pointer arrays
+  delete [] event_spectrumcopy;
+
+
+  return;
+}
 
 extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (TParticleA& Particle,
                                                     TVector3D const& ObservationPoint,

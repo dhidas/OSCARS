@@ -179,7 +179,9 @@ class OSCARSSR
                             TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
                             int const NParticles = 0,
                             int const NThreads = 0,
-                            int const GPU = 0);
+                            int const GPU = 0,
+                            int const NGPU = -1,
+                            std::vector<int> VGPU = std::vector<int>());
 
     void CalculateSpectrumPoints (TParticleA& Particle,
                                   TVector3D const& ObservationPoint,
@@ -211,6 +213,16 @@ class OSCARSSR
                                TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
                                TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
                                double const Weight = 1);
+
+    void CalculateSpectrumGPU2 (TParticleA& Particle,
+                               TVector3D const& ObservationPoint,
+                               TSpectrumContainer& Spectrum,
+                               std::string const& Polarization = "all",
+                               double const Angle = 0,
+                               TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
+                               TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
+                               int const NParticles = 0,
+                               std::vector<int> GPUVector = std::vector<int>());
 
     void AddToSpectrum (TSpectrumContainer const&, double const Weight = 1);
     void AddToFlux (T3DScalarContainer const&, double const Weight = 1);

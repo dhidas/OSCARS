@@ -1179,7 +1179,9 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
                                   TVector3D const& PropogationDirection,
                                   int const NParticles,
                                   int const NThreads,
-                                  int const GPU)
+                                  int const GPU,
+                                  int const NGPU,
+                                  std::vector<int> VGPU)
 {
   // Calculate the spectrum at an observaton point.
   // THIS is the ENTRY POINT typically
@@ -1200,11 +1202,37 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
   }
 
   // Should we use the GPU or not?
-  bool const UseGPU = GPU == 0 ? false : this->GetUseGPUGlobal() && (this->CheckGPU() > 0) ? true : false;
+  int const NGPUAvailable = this->CheckGPU();
+  bool const UseGPU = GPU == 0 ? false : this->GetUseGPUGlobal() && (NGPUAvailable > 0) ? true : (GPU == 1) && (NGPUAvailable > 0);
 
-  // GPU will outrank NThreads...
-  if (NParticles == 0) {
-    if (UseGPU == 0) {
+  // If use GPU, let's check the GPU vector, or construct one if we must
+  std::vector<int> GPUVector;
+  for (std::vector<int>::const_iterator it = VGPU.begin(); it != VGPU.end(); ++it) {
+    GPUVector.push_back(*it);
+  }
+  if (GPUVector.size() == 0) {
+    for (int i = 0; i < NGPU; ++i) {
+      GPUVector.push_back(i);
+    }
+  }
+  if (NGPU != -1 && NGPU < (int) GPUVector.size()) {
+    GPUVector.resize(NGPU);
+  }
+
+  // Which cpmpute method will we use, gpu, multi-thread, or single-thread
+  if (UseGPU) {
+    // Send to GPU function
+    this->CalculateSpectrumGPU2(fParticle,
+                               ObservationPoint,
+                               Spectrum,
+                               Polarization,
+                               Angle,
+                               HorizontalDirection,
+                               PropogationDirection,
+                               NParticles,
+                               GPUVector);
+  } else {
+    if (NParticles == 0) {
       if (NThreadsToUse == 1) {
         this->CalculateSpectrum(fParticle,
                                 ObservationPoint,
@@ -1225,29 +1253,16 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
                                        PropogationDirection,
                                        1);
       }
-    } else if (UseGPU == 1) {
-      this->CalculateSpectrumGPU(fParticle,
-                                 ObservationPoint,
-                                 Spectrum,
-                                 Polarization,
-                                 Angle,
-                                 HorizontalDirection,
-                                 PropogationDirection,
-                                 1);
-    }
-  } else {
+    } else {
+      // Weight this by the number of particles
+      double const Weight = 1.0 / (double) NParticles;
 
-    // Weight this by the number of particles
-    double const Weight = 1.0 / (double) NParticles;
+      // Loop over particles
+      for (int i = 0; i != NParticles; ++i) {
 
-    // Loop over particles
-    for (int i = 0; i != NParticles; ++i) {
+        // Set a new random particle
+        this->SetNewParticle();
 
-      // Set a new random particle
-      this->SetNewParticle();
-
-      // GPU will outrank NThreads...
-      if (UseGPU == 0) {
         if (NThreadsToUse == 1) {
           this->CalculateSpectrum(fParticle,
                                   ObservationPoint,
@@ -1268,18 +1283,10 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
                                          PropogationDirection,
                                          Weight);
         }
-      } else if (UseGPU == 1) {
-        this->CalculateSpectrumGPU(fParticle,
-                                   ObservationPoint,
-                                   Spectrum,
-                                   Polarization,
-                                   Angle,
-                                   HorizontalDirection,
-                                   PropogationDirection,
-                                   Weight);
       }
     }
   }
+
 
   return;
 }
@@ -1524,6 +1531,53 @@ void OSCARSSR::CalculateSpectrumThreads (TParticleA& Particle,
   return;
 }
 
+
+
+
+
+
+void OSCARSSR::CalculateSpectrumGPU2 (TParticleA& Particle,
+                                     TVector3D const& ObservationPoint,
+                                     TSpectrumContainer& Spectrum,
+                                     std::string const& Polarization,
+                                     double const Angle,
+                                     TVector3D const& HorizontalDirection,
+                                     TVector3D const& PropogationDirection,
+                                     int const NParticles,
+                                     std::vector<int> GPUVector)
+{
+  // If you compile for Cuda use the GPU in this function, else throw
+
+  // If GPUVector is empty assume you want to use ALL GPUs available
+  if (GPUVector.size() == 0) {
+    int const NGPUAvailable = this->CheckGPU();
+    for (int i = 0; i < NGPUAvailable; ++i) {
+      GPUVector.push_back(i);
+    }
+  }
+
+  #ifdef CUDA
+  // Check that the GPU exists
+  if (this->CheckGPU() < 1) {
+    throw std::invalid_argument("You are requesting the GPU, but none were found");
+  }
+
+  return OSCARSSR_Cuda_CalculateSpectrumGPU2 (*this,
+                                             Particle,
+                                             ObservationPoint,
+                                             Spectrum,
+                                             Polarization,
+                                             Angle,
+                                             HorizontalDirection,
+                                             PropogationDirection,
+                                             NParticles,
+                                             GPUVector);
+  #else
+  throw std::invalid_argument("GPU functionality not compiled into this binary distribution");
+  #endif
+
+  return;
+}
 
 
 
