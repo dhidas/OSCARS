@@ -1222,7 +1222,7 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
   // Which cpmpute method will we use, gpu, multi-thread, or single-thread
   if (UseGPU) {
     // Send to GPU function
-    this->CalculateSpectrumGPU2(fParticle,
+    this->CalculateSpectrumGPU(fParticle,
                                ObservationPoint,
                                Spectrum,
                                Polarization,
@@ -1536,7 +1536,7 @@ void OSCARSSR::CalculateSpectrumThreads (TParticleA& Particle,
 
 
 
-void OSCARSSR::CalculateSpectrumGPU2 (TParticleA& Particle,
+void OSCARSSR::CalculateSpectrumGPU (TParticleA& Particle,
                                      TVector3D const& ObservationPoint,
                                      TSpectrumContainer& Spectrum,
                                      std::string const& Polarization,
@@ -1562,7 +1562,7 @@ void OSCARSSR::CalculateSpectrumGPU2 (TParticleA& Particle,
     throw std::invalid_argument("You are requesting the GPU, but none were found");
   }
 
-  return OSCARSSR_Cuda_CalculateSpectrumGPU2 (*this,
+  return OSCARSSR_Cuda_CalculateSpectrumGPU (*this,
                                              Particle,
                                              ObservationPoint,
                                              Spectrum,
@@ -1572,44 +1572,6 @@ void OSCARSSR::CalculateSpectrumGPU2 (TParticleA& Particle,
                                              PropogationDirection,
                                              NParticles,
                                              GPUVector);
-  #else
-  throw std::invalid_argument("GPU functionality not compiled into this binary distribution");
-  #endif
-
-  return;
-}
-
-
-
-
-
-void OSCARSSR::CalculateSpectrumGPU (TParticleA& Particle,
-                                     TVector3D const& ObservationPoint,
-                                     TSpectrumContainer& Spectrum,
-                                     std::string const& Polarization,
-                                     double const Angle,
-                                     TVector3D const& HorizontalDirection,
-                                     TVector3D const& PropogationDirection,
-                                     double const Weight)
-{
-
-  // Calculate trajectory
-  this->CalculateTrajectory(Particle);
-
-  #ifdef CUDA
-  // Check that the GPU exists
-  if (this->CheckGPU() < 1) {
-    throw std::invalid_argument("You are requesting the GPU, but none were found");
-  }
-
-  return OSCARSSR_Cuda_CalculateSpectrumGPU (Particle,
-                                             ObservationPoint,
-                                             Spectrum,
-                                             Polarization,
-                                             Angle,
-                                             HorizontalDirection,
-                                             PropogationDirection,
-                                             Weight);
   #else
   throw std::invalid_argument("GPU functionality not compiled into this binary distribution");
   #endif

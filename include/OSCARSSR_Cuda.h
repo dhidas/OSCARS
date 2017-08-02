@@ -50,16 +50,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU2 (OSCARSSR& OSR,
                                                 int const NParticles = 0,
                                                 std::vector<int> const& GPUVector = std::vector<int>());
 
-extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (TParticleA& Particle,
-                                                    TVector3D const& ObservationPoint,
-                                                    TSpectrumContainer& Spectrum,
-                                                    std::string const& Polarization = "all",
-                                                    double const Angle = 0,
-                                                    TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
-                                                    TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
-                                                    double const Weight = 1);
-
-extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU2 (OSCARSSR& OSR,
+extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
                                                     TParticleA& Particle,
                                                     TVector3D const& ObservationPoint,
                                                     TSpectrumContainer& Spectrum,

@@ -212,15 +212,6 @@ class OSCARSSR
                                double const Angle = 0,
                                TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
                                TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
-                               double const Weight = 1);
-
-    void CalculateSpectrumGPU2 (TParticleA& Particle,
-                               TVector3D const& ObservationPoint,
-                               TSpectrumContainer& Spectrum,
-                               std::string const& Polarization = "all",
-                               double const Angle = 0,
-                               TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
-                               TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
                                int const NParticles = 0,
                                std::vector<int> GPUVector = std::vector<int>());
 
