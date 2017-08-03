@@ -2621,7 +2621,7 @@ static PyObject* OSCARSSR_WriteMagneticField (OSCARSSRObject* self, PyObject* ar
                                  "version",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|ssOiOiOis",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|ssOiOiOisi",
                                    const_cast<char **>(kwlist),
                                    &OutFormat,
                                    &OutFileName,
@@ -2788,7 +2788,7 @@ static PyObject* OSCARSSR_WriteElectricField (OSCARSSRObject* self, PyObject* ar
                                  "version",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|ssOiOiOis",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|ssOiOiOisi",
                                    const_cast<char **>(kwlist),
                                    &OutFormat,
                                    &OutFileName,
