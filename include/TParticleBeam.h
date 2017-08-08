@@ -117,7 +117,7 @@ class TParticleBeam : public TParticleA
     TVector3D fX0;  // Coordinates of initial conditions [m]
     TVector3D fU0;  // Direction at fX0 (stored as a unit vector) [unitless]
     double    fE0;  // Energy [GeV]
-    double    fT0;  // Time at initial conditions [s]
+    double    fT0;  // Time at initial conditions [m]
 
     // Horizontal and vertical beta function and emittance
     TVector2D fBeta;
