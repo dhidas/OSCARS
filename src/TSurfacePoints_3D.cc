@@ -3,6 +3,7 @@
 TSurfacePoints_3D::TSurfacePoints_3D ()
 {
   // Constructor
+  fHasNormal = true;
 }
 
 
@@ -48,9 +49,17 @@ double TSurfacePoints_3D::GetX2 (size_t const i) const
 
 
 
-void TSurfacePoints_3D::AddPoint(TSurfacePoint const& P)
+bool TSurfacePoints_3D::HasNormal () const
 {
-  fPoints.push_back(P);
+  return fHasNormal;
+}
+
+
+
+void TSurfacePoints_3D::AddPoint(TVector3D const& X)
+{
+  fHasNormal = false;
+  fPoints.push_back(TSurfacePoint(X, TVector3D(0, 0, 0)));
   return;
 }
 
@@ -60,14 +69,5 @@ void TSurfacePoints_3D::AddPoint(TSurfacePoint const& P)
 void TSurfacePoints_3D::AddPoint(TVector3D const& X, TVector3D const& N)
 {
   fPoints.push_back(TSurfacePoint(X, N));
-  return;
-}
-
-
-
-
-void TSurfacePoints_3D::AddPoint(double const& X, double const& Y, double const& Z, double const& NX, double const& NY, double const& NZ)
-{
-  fPoints.push_back(TSurfacePoint(X, Y, Z, NX, NY, NZ));
   return;
 }

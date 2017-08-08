@@ -1257,7 +1257,7 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
   return;
 }
 
-__global__ void OSCARSSR_Cuda_PowerDensityGPU (double *x, double *y, double *z, double *bx, double *by, double *bz, double *aocx, double *aocy, double *aocz, double *sx, double *sy, double *sz, double *snx, double *sny, double *snz, double *dt, int *nt, int *ns, double *power_density)
+__global__ void OSCARSSR_Cuda_PowerDensityGPU (double *x, double *y, double *z, double *bx, double *by, double *bz, double *aocx, double *aocy, double *aocz, double *sx, double *sy, double *sz, double *snx, double *sny, double *snz, double *dt, int *nt, int *ns, int *shn, double *power_density)
 {
   // Get surface id from block and thread number
   int is = threadIdx.x + blockIdx.x * blockDim.x;
@@ -1304,7 +1304,7 @@ __global__ void OSCARSSR_Cuda_PowerDensityGPU (double *x, double *y, double *z, 
     double const N1Z = (OZ - z[i]) / R1;
 
     // Surface normal dot with vector normal
-    double const N1DotNormal = N1X * NormalX + N1Y * NormalY + N1Z * NormalZ;
+    double const N1DotNormal = *shn == 1 ? N1X * NormalX + N1Y * NormalY + N1Z * NormalZ : 1;
 
     // Orthogonal vector 2 & 3
     double N2X;
@@ -1414,6 +1414,7 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (TParticleA& Particle,
   double *sy     = new double[NSPoints];
   double *sz     = new double[NSPoints];
 
+  int     shn    = Surface.HasNormal() ? 1 : 0;
   double *snx    = new double[NSPoints];
   double *sny    = new double[NSPoints];
   double *snz    = new double[NSPoints];
@@ -1456,7 +1457,7 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (TParticleA& Particle,
   double *d_snx, *d_sny, *d_snz;
   double *d_power_density;
   double *d_dt;
-  int    *d_nt, *d_ns;
+  int    *d_nt, *d_ns, *d_shn;
 
   int const size_x = NTPoints * sizeof(double);
   int const size_s = NSPoints * sizeof(double);
@@ -1487,6 +1488,7 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (TParticleA& Particle,
 
   cudaMalloc((void **) &d_nt, sizeof(int));
   cudaMalloc((void **) &d_ns, sizeof(int));
+  cudaMalloc((void **) &d_shn, sizeof(int));
 
 
   cudaMemcpy(d_x, x, size_x, cudaMemcpyHostToDevice);
@@ -1513,11 +1515,12 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (TParticleA& Particle,
 
   cudaMemcpy(d_nt, &NTPoints, sizeof(int), cudaMemcpyHostToDevice);
   cudaMemcpy(d_ns, &NSPoints, sizeof(int), cudaMemcpyHostToDevice);
+  cudaMemcpy(d_shn, &shn, sizeof(int), cudaMemcpyHostToDevice);
 
 
   // Send computation to gpu
   int const NBlocks = NSPoints / NTHREADS_PER_BLOCK + 1;
-  OSCARSSR_Cuda_PowerDensityGPU<<<NBlocks, NTHREADS_PER_BLOCK>>>(d_x, d_y, d_z, d_bx, d_by, d_bz, d_aocx, d_aocy, d_aocz, d_sx, d_sy, d_sz, d_snx, d_sny, d_snz, d_dt, d_nt, d_ns, d_power_density);
+  OSCARSSR_Cuda_PowerDensityGPU<<<NBlocks, NTHREADS_PER_BLOCK>>>(d_x, d_y, d_z, d_bx, d_by, d_bz, d_aocx, d_aocy, d_aocz, d_sx, d_sy, d_sz, d_snx, d_sny, d_snz, d_dt, d_nt, d_ns, d_shn, d_power_density);
 
   // Copy result back from GPU
   cudaMemcpy(power_density, d_power_density, size_s, cudaMemcpyDeviceToHost);

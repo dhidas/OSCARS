@@ -1797,6 +1797,7 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface,
     }
   }
 
+  PowerDensityContainer.Clear();
   // Set the output flux container and with correct dimensions
   if (Dimension == 3) {
     for (size_t i = 0; i != Surface.GetNPoints(); ++i) {
@@ -1805,6 +1806,21 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface,
   } else if (Dimension == 2) {
     for (size_t i = 0; i != Surface.GetNPoints(); ++i) {
       PowerDensityContainer.AddPoint( TVector3D(Surface.GetX1(i), Surface.GetX2(i), 0), 0);
+    }
+  } else if (Dimension == 1) {
+    // UPDATE: Needs something for 1D
+    if (Surface.GetNPoints() == 1) {
+      PowerDensityContainer.AddPoint( Surface.GetPoint(0).GetPoint(), 0 );
+    } else {
+      TVector3D const x1 = Surface.GetPoint(0).GetPoint();
+      TVector3D const x2 = Surface.GetPoint( Surface.GetNPoints() - 1 ).GetPoint();
+
+      TVector3D const C = x1 + (x2 - x1) / 2;
+      for (size_t i = 0; i != Surface.GetNPoints(); ++i) {
+        double const Sign = i < Surface.GetNPoints() / 2 ? -1. : 1.;
+
+        PowerDensityContainer.AddPoint( TVector3D(Sign * (Surface.GetPoint(i).GetPoint() - C).Mag(), 0, 0), 0 );
+      }
     }
   } else {
     throw std::out_of_range("Wrong dimension");
@@ -1864,6 +1880,10 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
   //
   // Particle - Particle, contains trajectory (or if not, calculate it)
   // Surface - Observation Point
+  TVector3D a(1, 0, 0);
+  TVector3D b(0.5, 1, 1);
+  TVector3D c(0, 0, 0);
+
 
   // Grab the Trajectory
   TParticleTrajectoryPoints& T = Particle.GetTrajectory();
@@ -1885,12 +1905,15 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
 
   //std::cout << "Directional: " << Directional << std::endl;
 
+  bool const HasNormal = Surface.HasNormal();;
   // Loop over all points in the given surface
   for (size_t io = iFirst; io <= iLast; ++io) {
 
     // Get the observation point (on the surface, and its "normal"
     TVector3D const Obs = Surface.GetPoint(io).GetPoint();
     TVector3D const Normal = Surface.GetPoint(io).GetNormal();
+
+
 
     // For summing power contributions
     double Sum = 0;
@@ -1910,7 +1933,7 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
       TVector3D const N3 = N1.Cross(N2).UnitVector();
 
       // For computing non-normally incidence
-      double const N1DotNormal = N1.Dot(Normal);
+      double const N1DotNormal = HasNormal ? N1.Dot(Normal) : 1;
       // UPDATE: URGENT: Check this
       if (Directional && N1DotNormal <= 0) {
         continue;

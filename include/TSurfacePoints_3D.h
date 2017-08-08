@@ -28,12 +28,14 @@ class TSurfacePoints_3D : public TSurfacePoints
     double GetX1 (size_t const) const;
     double GetX2 (size_t const) const;
 
-    void AddPoint (TSurfacePoint const&);
-    void AddPoint (TVector3D const&, TVector3D const&);
-    void AddPoint (double const&, double const&, double const&, double const&, double const&, double const&);
+    bool HasNormal () const;
+
+    void AddPoint (TVector3D const&);
+    void AddPoint (TVector3D const& X, TVector3D const& N);
 
   private:
     std::vector<TSurfacePoint> fPoints;
+    bool fHasNormal;
 
 };
 

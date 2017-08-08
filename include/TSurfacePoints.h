@@ -27,6 +27,8 @@ class TSurfacePoints
     virtual double GetX1 (size_t const) const = 0;
     virtual double GetX2 (size_t const) const = 0;
 
+    virtual bool HasNormal () const = 0;
+
 };
 
 #endif

@@ -139,9 +139,12 @@ def plot_trajectory_velocity(trajectory, show=True, ofile='', figsize=[18, 4.5],
     return
     
     
-def plot_power_density(V, title='Power Density [$W / mm^2$]', xlabel='X1 Axis [$m$]', ylabel='X2 Axis [$m$]', show=True, ofile='', figsize=None, ret=False):
+def plot_power_density(V, title='Power Density [$W / mm^2$]', xlabel='X1 Axis [$m$]', ylabel='X2 Axis [$m$]', show=True, ofile='', figsize=None, ret=False, x1=None, x2=None):
     """Plot a 2D histogram with equal spacing"""
-        
+     
+    if x1 is not None or x2 is not None:
+        return plot_power_density_2d1d(V, x1=x1, x2=x2, title=title, show=show, ofile=ofile, figsize=figsize, ret=ret)
+
     X = [item[0][0] for item in V]
     Y = [item[0][1] for item in V]
     P = [item[1]    for item in V]
@@ -159,6 +162,121 @@ def plot_power_density(V, title='Power Density [$W / mm^2$]', xlabel='X1 Axis [$
     plt.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
     plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 
+
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
+
+    if ofile != '':
+        plt.savefig(ofile, bbox_inches='tight')
+
+    if show == True:
+        plt.show()
+
+    if ret:
+        return plt
+
+    return
+
+
+def plot_power_density_2d1d(V, x1=None, x2=None, title='Power Density [$W / mm^2$]', xlabel='[$m$]', ylabel='[$W / mm^2$]', show=True, ofile='', figsize=None, ret=False):
+    """Plot a 2D histogram with equal spacing"""
+
+    if x1 is not None and x2 is not None:
+        raise ValueError('x1 and x2 cannot both be defined')
+    if x1 is None and x2 is None:
+        raise ValueError('x1 or x2 must be defined')
+
+    X = [item[0][0] for item in V]
+    Y = [item[0][1] for item in V]
+    P = [item[1]    for item in V]
+
+    XValues = np.unique(X).tolist()
+    YValues = np.unique(Y).tolist()
+
+    NX = len(XValues)
+    NY = len(YValues)
+
+    x1_index0 = -1
+    x1_index1 = -1
+    x1_frac0 = 0.5
+    x2_index0 = -1
+    x2_index1 = -1
+    x2_frac0 = 0.5
+
+    XC = []
+    YP = []
+
+    title_position = ''
+
+    if x1 is not None:
+        if xlabel is None:
+            xlabel = 'x1 [m]'
+        title_position = 'x1 = ' + str(round(x1, 4))
+        if x1 in XValues:
+            x1_index0 = XValues.index(x1)
+            x1_index1 = x1_index0
+        else:
+            x1_index1 = next(x[0] for x in enumerate(XValues) if x[1] > x1)
+            x1_index0 = x1_index1 - 1
+            if x1_index0 < 0:
+                raise ValueError('x1 is not in range')
+        for iy in range(NY):
+            v0 = P[NY*x1_index0 + iy] * x1_frac0
+            v1 = P[NY*x1_index1 + iy] * (1 - x1_frac0)
+            YP.append(Y[NY*x1_index0 + iy])
+            XC.append(v0 + v1)
+
+            
+    elif x2 is not None:
+        if xlabel is None:
+            xlabel = 'x2 [m]'
+        title_position = 'x2 = ' + str(round(x2, 4))
+        if x2 in YValues:
+            x2_index0 = YValues.index(x2)
+            x2_index1 = x2_index0
+        else:
+            x2_index1 = next(x[0] for x in enumerate(YValues) if x[1] > x2)
+            x2_index0 = x2_index1 - 1
+            if x2_index0 < 0:
+                raise ValueError('x2 is not in range')
+        for ix in range(NX):
+            v0 = P[NY*ix + x2_index0] * x2_frac0
+            v1 = P[NY*ix + x2_index1] * (1 - x2_frac0)
+            YP.append(X[NY*ix + x2_index0])
+            XC.append(v0 + v1)
+
+
+
+
+
+    plt.figure(1, figsize=figsize)
+    plt.plot(YP, XC)
+
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title + ' at ' + title_position)
+
+    if ofile != '':
+        plt.savefig(ofile, bbox_inches='tight')
+
+    if show == True:
+        plt.show()
+
+    if ret:
+        return plt
+
+    return
+
+
+def plot_power_density_1d(V, title='Power Density [$W / mm^2$]', xlabel='[$m$]', ylabel='[$W / mm^2$]', show=True, ofile='', figsize=None, ret=False):
+    """Plot a 1D power density"""
+
+    X = [item[0][0] for item in V]
+    P = [item[1]    for item in V]
+
+    plt.figure(1, figsize=figsize)
+    plt.plot(X, P)
 
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
