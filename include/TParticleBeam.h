@@ -68,6 +68,17 @@ class TParticleBeam : public TParticleA
                                double    const E0,
                                double    const T0);
 
+    void SetBetaAlpha (TVector2D const& Beta,
+                       TVector2D const& Alpha);
+
+    void SetBetaGamma (TVector2D const& Beta,
+                       TVector2D const& Gamma);
+
+    void SetAlphaGamma (TVector2D const& Alpha,
+                        TVector2D const& Gamma);
+
+    void SetEmittance (TVector2D const& Emittance);
+
     void SetBetaEmittance (TVector3D const& HorizontalDirection,
                            TVector2D const& Beta,
                            TVector2D const& Emittance,
@@ -110,6 +121,15 @@ class TParticleBeam : public TParticleA
     TParticleA GetNewParticle ();
     TParticleA GetNewParticle (std::string const&);
 
+    std::string GetDistributionName () const;
+
+    // Types of beam distributions supported
+    enum TParticleBeam_Distribution {
+      kDistribution_None,
+      kDistribution_Gaussian,
+      kDistribution_KV
+    };
+
   private:
     std::string fName;
     double      fWeight;
@@ -119,9 +139,14 @@ class TParticleBeam : public TParticleA
     double    fE0;  // Energy [GeV]
     double    fT0;  // Time at initial conditions [s]
 
-    // Horizontal and vertical beta function and emittance
+    // Twiss parameters and emittance
     TVector2D fBeta;
+    TVector2D fAlpha;
+    TVector2D fGamma;
     TVector2D fEmittance;
+
+    // Beam distribution type
+    TParticleBeam_Distribution fDistribution;
 
     // Source size, calculated from Beta and Emittance
     TVector2D fSigmaU;
@@ -142,19 +167,20 @@ class TParticleBeam : public TParticleA
 
 inline std::ostream& operator << (std::ostream& os, TParticleBeam const& o)
 {
-  os << "Name:       " << o.GetName() << "\n"
-     << "Weight:     " << o.GetWeight() << "\n"
-     << "X0:         " << o.GetX0() << "\n"
-     << "U0:         " << o.GetU0() << "\n"
-     << "T0:         " << o.GetT0() << "\n"
-     << "E0:         " << o.GetE0() << "\n"
-     << "SigmaE:     " << o.GetSigmaEnergyGeV() << "\n"
-     << "Current     " << o.GetCurrent() << "\n"
-     << "Beta        " << o.GetBeta() << "\n"
-     << "Emittance   " << o.GetEmittance() << "\n"
-     << "V-direction " << o.GetVerticalDirection() << "\n"
-     << "H-direction " << o.GetHorizontalDirection() << "\n"
-     << "Lattice Ref " << o.GetSigmaAt() << "\n";
+  os << "Name:        " << o.GetName() << "\n"
+     << "Weight:      " << o.GetWeight() << "\n"
+     << "X0:          " << o.GetX0() << "\n"
+     << "U0:          " << o.GetU0() << "\n"
+     << "T0:          " << o.GetT0() << "\n"
+     << "E0:          " << o.GetE0() << "\n"
+     << "SigmaE:      " << o.GetSigmaEnergyGeV() << "\n"
+     << "Current      " << o.GetCurrent() << "\n"
+     << "Distribution " << o.GetDistributionName() << "\n"
+     << "Beta         " << o.GetBeta() << "\n"
+     << "Emittance    " << o.GetEmittance() << "\n"
+     << "V-direction  " << o.GetVerticalDirection() << "\n"
+     << "H-direction  " << o.GetHorizontalDirection() << "\n"
+     << "Lattice Ref  " << o.GetSigmaAt() << "\n";
 
   return os;
 }
