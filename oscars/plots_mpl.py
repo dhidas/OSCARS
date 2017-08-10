@@ -139,7 +139,7 @@ def plot_trajectory_velocity(trajectory, show=True, ofile='', figsize=[18, 4.5],
     return
     
     
-def plot_power_density(V, title='Power Density [$W / mm^2$]', xlabel='X1 Axis [$m$]', ylabel='X2 Axis [$m$]', show=True, ofile='', figsize=None, ret=False, x1=None, x2=None):
+def plot_power_density(V, title=None, xlabel='X1 Axis [$m$]', ylabel='X2 Axis [$m$]', show=True, ofile='', figsize=None, ret=False, x1=None, x2=None):
     """Plot a 2D histogram with equal spacing"""
      
     if x1 is not None or x2 is not None:
@@ -162,6 +162,8 @@ def plot_power_density(V, title='Power Density [$W / mm^2$]', xlabel='X1 Axis [$
     plt.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
     plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 
+    if title is None:
+        title = 'Power Density [$W / mm^2$]'
 
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
@@ -179,7 +181,7 @@ def plot_power_density(V, title='Power Density [$W / mm^2$]', xlabel='X1 Axis [$
     return
 
 
-def plot_power_density_2d1d(V, x1=None, x2=None, title='Power Density [$W / mm^2$]', xlabel='[$m$]', ylabel='[$W / mm^2$]', show=True, ofile='', figsize=None, ret=False):
+def plot_power_density_2d1d(V, x1=None, x2=None, title=None, xlabel='[$m$]', ylabel='[$W / mm^2$]', show=True, ofile='', figsize=None, ret=False):
     """Plot a 2D histogram with equal spacing"""
 
     if x1 is not None and x2 is not None:
@@ -207,7 +209,7 @@ def plot_power_density_2d1d(V, x1=None, x2=None, title='Power Density [$W / mm^2
     XC = []
     YP = []
 
-    title_position = ''
+    title_position = '' 
 
     if x1 is not None:
         if xlabel is None:
@@ -255,7 +257,11 @@ def plot_power_density_2d1d(V, x1=None, x2=None, title='Power Density [$W / mm^2
 
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.title(title + ' at ' + title_position)
+    if title is None:
+        title = 'Power Density [$W / mm^2$]'
+        plt.title(title + ' at ' + title_position)
+    else:
+        plt.title(title)
 
     if ofile != '':
         plt.savefig(ofile, bbox_inches='tight')
