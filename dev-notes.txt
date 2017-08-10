@@ -17,3 +17,5 @@ binary output now in float format for compactness
 print() functions renamed to print_all() to keep previous python version happy
 
 Fix compiler warnings for *_Python.cc extensions
+
+Do not need beam name now
