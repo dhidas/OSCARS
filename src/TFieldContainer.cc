@@ -334,7 +334,7 @@ void TFieldContainer::WriteToFile (std::string const& OutFileName,
     int OutputCount = XDIM + BDIM;
 
     // At the moment only support 1D irregular grid
-    if (XDIM != 1) {
+    if (XDIM > 1) {
       std::cerr << "ERROR: spatial or B-field dimensions are too large(>3)" << std::endl;
       throw std::out_of_range("spatial or B-field dimensions are too large");
     }
@@ -633,8 +633,8 @@ void TFieldContainer::WriteToFileBinary_v1 (std::string const& OutFileName,
     while (s >> c) {
 
       if (index > 3) {
-        std::cerr << "ERROR: spatial or B-field dimensions are too large(index>3)" << std::endl;
-        throw std::out_of_range("spatial or B-field dimensions are too large(index>3)");
+        std::cerr << "ERROR: spatial or field dimensions are too large(index>3)" << std::endl;
+        throw std::out_of_range("spatial or field dimensions are too large(index>3)");
       }
 
       // Check if it is XYZBxByBz and in which order
@@ -678,7 +678,7 @@ void TFieldContainer::WriteToFileBinary_v1 (std::string const& OutFileName,
     }
 
     // At the moment only support 1D irregular grid
-    if (XDIM != 1) {
+    if (XDIM > 1) {
       std::cerr << "ERROR: spatial or B-field dimensions are too large(>3)" << std::endl;
       throw std::out_of_range("spatial or B-field dimensions are too large");
     }

@@ -3127,13 +3127,6 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   // Are you asking for one of the predefined beams?
   bool const HasPredefinedBeam = std::strlen(Beam) != 0 ? true : false;
 
-  // Check that name exist
-  if (std::strlen(Name) == 0) {
-    PyErr_SetString(PyExc_ValueError, "'name' is blank");
-    return NULL;
-  }
-
-
   // Check if beam is defined (for predefined beams)
   if (HasPredefinedBeam) {
     try {

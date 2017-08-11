@@ -181,6 +181,75 @@ void TParticleBeam::SetInitialConditions (double const X, double const Y, double
 
 
 
+void TParticleBeam::SetBetaAlpha (TVector2D const& Beta,
+                                  TVector2D const& Alpha)
+{
+  // Beta and Gamma values at the reference point
+  // index as follows: 0-Horizontal, 1-vertical
+
+  // Check that beta is not zero
+  if (Beta[0] <= 0 || Beta[1] <= 0) {
+    throw std::out_of_range("Beta cannot be <= 0");
+  }
+
+  fBeta = Beta;
+  fGamma = TVector2D( (1. + Alpha[0] * Alpha[0]) / Beta[0], (1. + Alpha[1] * Alpha[1]) / Beta[1] );
+  fAlpha = Alpha;
+
+  return;
+}
+
+
+
+
+void TParticleBeam::SetBetaGamma (TVector2D const& Beta,
+                                  TVector2D const& Gamma)
+{
+  // Beta and Gamma values at the reference point
+  // index as follows: 0-Horizontal, 1-vertical
+
+  fBeta = Beta;
+  fAlpha = TVector2D( sqrt(Gamma[0] * Beta[0] - 1), sqrt(Gamma[1] * Beta[1] - 1) );
+  fGamma = Gamma;
+
+  return;
+}
+
+
+
+
+
+void TParticleBeam::SetAlphaGamma (TVector2D const& Alpha,
+                                   TVector2D const& Gamma)
+{
+  // Beta and Gamma values at the reference point
+  // index as follows: 0-Horizontal, 1-vertical
+
+  // Check that gamma is not 0
+  if (Gamma[0] == 0 || Gamma[1] == 0) {
+    throw std::out_of_range("Gamma cannot be <= 0");
+  }
+  fBeta = TVector2D( (1. + Alpha[0] * Alpha[0]) / Gamma[0], (1. + Alpha[1] * Alpha[1]) / Gamma[1] );
+  fAlpha = Alpha;
+  fGamma = Gamma;
+
+  return;
+}
+
+
+
+
+void TParticleBeam::SetEmittance (TVector2D const& Emittance)
+{
+  // Set the horizontal and vertical emittance
+
+  fEmittance = Emittance;
+  return;
+}
+
+
+
+
 void TParticleBeam::SetInitialConditions (TVector3D const& X, TVector3D const& D, double const E0, double const T0)
 {
   // Set the initial conditions variables for this particle
@@ -511,3 +580,20 @@ TParticleA TParticleBeam::GetNewParticle ()
 
   return NewParticle;
 }
+
+
+
+
+std::string TParticleBeam::GetDistributionName () const
+{
+  switch (fDistribution) {
+    case kDistribution_None:
+      return "none";
+    case kDistribution_Gaussian:
+      return "gaussian";
+    case kDistribution_KV:
+      return "kv";
+  }
+}
+
+

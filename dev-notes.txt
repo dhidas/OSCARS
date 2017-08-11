@@ -21,3 +21,5 @@ Fix compiler warnings for *_Python.cc extensions
 multi-gpu for flux and spectra
 
 power density on a line
+
+Do not need beam name now

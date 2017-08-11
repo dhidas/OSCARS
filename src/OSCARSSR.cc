@@ -2439,6 +2439,12 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
     // Loop over all points in trajectory
     for (size_t iT = 0; iT != NTPoints; ++iT) {
 
+      // If there is not acceleration there is no radiation
+      if (T.GetA(iT).Mag() < 1e-100) {
+        continue;
+      }
+
+
       // Particle position
       TVector3D const& X = T.GetX(iT);
 

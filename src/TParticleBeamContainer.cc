@@ -34,7 +34,9 @@ TParticleBeamContainer::~TParticleBeamContainer ()
 
 void TParticleBeamContainer::AddNewParticleBeam (std::string const& Type, std::string const& Name, TVector3D const& X0, TVector3D const& D0, double const E0, double const T0, double const Current, double const Weight, double const Charge, double const Mass)
 {
-  if (fParticleBeamMap.count(Name) != 0) {
+  std::string const MyName = Name != "" ? Name : "_beam" + std::to_string(fParticleBeams.size());
+
+  if (fParticleBeamMap.count(MyName) != 0) {
     std::cerr << "fParticleBeamMap.count(Name) != 0" << std::endl;
     throw std::invalid_argument("beam with this name already exists");
   }
@@ -46,11 +48,11 @@ void TParticleBeamContainer::AddNewParticleBeam (std::string const& Type, std::s
   }
 
   if (Type == "custom") {
-    fParticleBeams.push_back( TParticleBeam(Type, Name, X0, D0, E0, T0, Current, Charge, Mass, Weight) );
+    fParticleBeams.push_back( TParticleBeam(Type, MyName, X0, D0, E0, T0, Current, Charge, Mass, Weight) );
   } else {
-    fParticleBeams.push_back( TParticleBeam(Type, Name, X0, D0, E0, T0, Current, Weight) );
+    fParticleBeams.push_back( TParticleBeam(Type, MyName, X0, D0, E0, T0, Current, Weight) );
   }
-  fParticleBeamMap[Name] = fParticleBeams.size() - 1;
+  fParticleBeamMap[MyName] = fParticleBeams.size() - 1;
 
   return;
 }
@@ -60,7 +62,9 @@ void TParticleBeamContainer::AddNewParticleBeam (std::string const& Type, std::s
 
 void TParticleBeamContainer::AddNewParticleBeam (std::string const& Beam, std::string const& Name, double const Weight)
 {
-  if (fParticleBeamMap.count(Name) != 0) {
+  std::string const MyName = Name != "" ? Name : "_beam" + std::to_string(fParticleBeams.size());
+
+  if (fParticleBeamMap.count(MyName) != 0) {
     std::cerr << "fParticleBeamMap.count(Name) != 0" << std::endl;
     throw std::invalid_argument("beam with this name already exists");
   }
@@ -71,9 +75,9 @@ void TParticleBeamContainer::AddNewParticleBeam (std::string const& Beam, std::s
     fParticleBeamWeightSums.push_back(fParticleBeamWeightSums.back() + Weight);
   }
 
-  fParticleBeams.push_back( TParticleBeam(Beam, Name) );
+  fParticleBeams.push_back( TParticleBeam(Beam, MyName) );
 
-  fParticleBeamMap[Name] = fParticleBeams.size() - 1;
+  fParticleBeamMap[MyName] = fParticleBeams.size() - 1;
 
   return;
 }

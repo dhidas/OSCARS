@@ -396,7 +396,6 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   // Copy constants to first device (async)
   int const d0 = GPUsToUse[0];
   cudaSetDevice(d0);
-  cudaMemcpyAsync(d_nt[0],    h_nt,          sizeof(int),    cudaMemcpyHostToDevice);
   cudaMemcpyAsync(d_ns[0],    h_ns,          sizeof(int),    cudaMemcpyHostToDevice);
   cudaMemcpyAsync(d_dt[0],    h_dt,          sizeof(double), cudaMemcpyHostToDevice);
   cudaMemcpyAsync(d_c0[0],    h_c0,          sizeof(double), cudaMemcpyHostToDevice);
@@ -411,7 +410,6 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
     int const d  = GPUsToUse[i];
     int const d1 = GPUsToUse[i+1];
     cudaSetDevice(d);
-    cudaMemcpyPeerAsync( d_nt[i+1],     d1, d_nt[i],     d, sizeof(int));
     cudaMemcpyPeerAsync( d_ns[i+1],     d1, d_ns[i],     d, sizeof(int));
     cudaMemcpyPeerAsync( d_dt[i+1],     d1, d_dt[i],     d, sizeof(double));
     cudaMemcpyPeerAsync( d_c0[i+1],     d1, d_c0[i],     d, sizeof(double));
@@ -425,14 +423,30 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
 
   // Set first trajectory
   TParticleTrajectoryPoints const& T = OSR.GetTrajectory();
-  for (size_t i = 0; i < *h_nt; ++i) {
-    h_x[i]  = T.GetX(i).GetX();
-    h_y[i]  = T.GetX(i).GetY();
-    h_z[i]  = T.GetX(i).GetZ();
-    h_bx[i] = T.GetB(i).GetX();
-    h_by[i] = T.GetB(i).GetY();
-    h_bz[i] = T.GetB(i).GetZ();
+  int const NPointsThisTrajectory = T.GetNPoints();
+  *h_nt = 0;
+  for (size_t i = 0; i < NPointsThisTrajectory; ++i) {
+    if (T.GetA(i).Mag() < 1e-100) {
+      continue;
+    }
+    h_x[*h_nt]  = T.GetX(i).GetX();
+    h_y[*h_nt]  = T.GetX(i).GetY();
+    h_z[*h_nt]  = T.GetX(i).GetZ();
+    h_bx[*h_nt] = T.GetB(i).GetX();
+    h_by[*h_nt] = T.GetB(i).GetY();
+    h_bz[*h_nt] = T.GetB(i).GetZ();
+    ++(*h_nt);
   }
+  cudaSetDevice(d0);
+  cudaMemcpyAsync(d_nt[0],    h_nt,          sizeof(int),    cudaMemcpyHostToDevice);
+  for (size_t i = 0; i < GPUsToUse.size() - 1; ++i) {
+    // Device number
+    int const d  = GPUsToUse[i];
+    int const d1 = GPUsToUse[i+1];
+    cudaSetDevice(d);
+    cudaMemcpyPeerAsync( d_nt[i+1],     d1, d_nt[i],     d, sizeof(int));
+  }
+
 
   // Set the surface points
   // GPU events
@@ -520,15 +534,20 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
       OSR.SetNewParticle();
       OSR.CalculateTrajectory();
       TParticleTrajectoryPoints const& T = OSR.GetTrajectory();
-      *h_nt = T.GetNPoints();
+      int const NPointsThisTrajectory = T.GetNPoints();
 
-      for (size_t it = 0; it < *h_nt; ++it) {
-        h_x[it]  = T.GetX(it).GetX();
-        h_y[it]  = T.GetX(it).GetY();
-        h_z[it]  = T.GetX(it).GetZ();
-        h_bx[it] = T.GetB(it).GetX();
-        h_by[it] = T.GetB(it).GetY();
-        h_bz[it] = T.GetB(it).GetZ();
+      *h_nt = 0;
+      for (size_t it = 0; it < NPointsThisTrajectory; ++it) {
+        if (T.GetA(it).Mag() < 1e-100) {
+          continue;
+        }
+        h_x[*h_nt]  = T.GetX(it).GetX();
+        h_y[*h_nt]  = T.GetX(it).GetY();
+        h_z[*h_nt]  = T.GetX(it).GetZ();
+        h_bx[*h_nt] = T.GetB(it).GetX();
+        h_by[*h_nt] = T.GetB(it).GetY();
+        h_bz[*h_nt] = T.GetB(it).GetZ();
+        ++(*h_nt);
       }
     }
   }
