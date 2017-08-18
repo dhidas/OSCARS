@@ -3066,6 +3066,8 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   PyObject*   List_Translation           = PyList_New(0);
   PyObject*   List_Horizontal_Direction  = PyList_New(0);
   PyObject*   List_Beta                  = PyList_New(0);
+  PyObject*   List_Alpha                 = PyList_New(0);
+  PyObject*   List_Gamma                 = PyList_New(0);
   PyObject*   List_Emittance             = PyList_New(0);
   PyObject*   List_Lattice_Reference     = PyList_New(0);
 
@@ -3075,6 +3077,8 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   TVector3D Translation(0, 0, 0);
   TVector3D Horizontal_Direction;
   TVector2D Beta(0, 0);
+  TVector2D Alpha(0, 0);
+  TVector2D Gamma(0, 0);
   TVector2D Emittance(0, 0);
   TVector3D Lattice_Reference(0, 0, 0);
 
@@ -3094,13 +3098,15 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
                                  "translation",
                                  "horizontal_direction",
                                  "beta",
+                                 "alpha",
+                                 "gamma",
                                  "emittance",
                                  "lattice_reference",
                                  "mass",
                                  "charge",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ssdOOsddddOOOOOOdd",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ssdOOsddddOOOOOOOOdd",
                                    const_cast<char **>(kwlist),
                                    &Type,
                                    &Name,
@@ -3116,6 +3122,8 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
                                    &List_Translation,
                                    &List_Horizontal_Direction,
                                    &List_Beta,
+                                   &List_Alpha,
+                                   &List_Gamma,
                                    &List_Emittance,
                                    &List_Lattice_Reference,
                                    &Mass,
@@ -3127,14 +3135,16 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   // Are you asking for one of the predefined beams?
   bool const HasPredefinedBeam = std::strlen(Beam) != 0 ? true : false;
 
+  TParticleBeam* ThisBeam = 0x0;
+
   // Check if beam is defined (for predefined beams)
   if (HasPredefinedBeam) {
-    try {
-      self->obj->AddParticleBeam(Beam, Name);
-    } catch (...) {
-      PyErr_SetString(PyExc_ValueError, "Error in predefined beam name / definition");
-      return NULL;
-    }
+    //try {
+      ThisBeam = &(self->obj->AddParticleBeam(Beam, Name, Weight));
+    //} catch (...) {
+    //  PyErr_SetString(PyExc_ValueError, "Error in predefined beam name / definition");
+    //  return NULL;
+    //}
   }
 
 
@@ -3150,7 +3160,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
 
     // Change predefined beam accordingly
     if (HasPredefinedBeam) {
-      self->obj->GetParticleBeam(Name).SetX0(Position);
+      ThisBeam->SetX0(Position);
     }
   }
 
@@ -3165,19 +3175,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
 
     // Change predefined beam accordingly
     if (HasPredefinedBeam) {
-      self->obj->GetParticleBeam(Name).SetU0(Direction);
-    }
-  }
-
-  if (Sigma_Energy_GeV == 0) {
-    // Do nothing.  zero energy diff is alright
-  } else if (Sigma_Energy_GeV < 0) {
-    PyErr_SetString(PyExc_ValueError, "'sigma_energy_GeV' cannot be less than zero");
-    return NULL;
-  } else {
-    // Change predefined beam accordingly
-    if (HasPredefinedBeam) {
-      self->obj->GetParticleBeam(Name).SetSigmaEnergyGeV(Sigma_Energy_GeV);
+      ThisBeam->SetU0(Direction);
     }
   }
 
@@ -3217,17 +3215,31 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   Horizontal_Direction = Horizontal_Direction.UnitVector();
 
 
-  // Check for Beta in the input
-  if (PyList_Size(List_Beta) != 0) {
+  // Rotate beam parameters
+  Position.RotateSelfXYZ(Rotations);
+  Direction.RotateSelfXYZ(Rotations);
+  Position += Translation;
+
+  // Add the particle beam
+  if (std::strlen(Beam) == 0) {
     try {
-      Beta = OSCARSPY::ListAsTVector2D(List_Beta);
-    } catch (std::length_error e) {
-      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'beta'");
+      if (std::string(Type) == "custom") {
+        if (Mass == 0 || Charge == 0) {
+          PyErr_SetString(PyExc_ValueError, "'mass' or 'charge' is zero");
+          return NULL;
+        }
+        // UPDATE: for custom beams
+        ThisBeam = &(self->obj->AddParticleBeam(Type, Name, Position, Direction, Energy_GeV, T0, Current, Weight, Charge, Mass));
+      } else {
+        ThisBeam = &(self->obj->AddParticleBeam(Type, Name, Position, Direction, Energy_GeV, T0, Current, Weight));
+      }
+    } catch (std::invalid_argument e) {
+      PyErr_SetString(PyExc_ValueError, "invalid argument in adding particle beam.  possibly 'name' already exists");
       return NULL;
     }
   }
 
-
+  // UPDATE
   // Check for Emittance in the input
   if (PyList_Size(List_Emittance) != 0) {
     try {
@@ -3236,8 +3248,188 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'emittance'");
       return NULL;
     }
+    ThisBeam->SetEmittance(Emittance);
   }
 
+  // Check for no beam
+  if (ThisBeam == 0x0) {
+    // UPDATE: add specific throw
+    std::cerr << "ERROR: No beam at checkpoint" << std::endl;
+    throw;
+  }
+
+  if (Sigma_Energy_GeV == 0) {
+    // Do nothing.  zero energy diff is alright
+  } else if (Sigma_Energy_GeV < 0) {
+    PyErr_SetString(PyExc_ValueError, "'sigma_energy_GeV' cannot be less than zero");
+    return NULL;
+  } else {
+    ThisBeam->SetSigmaEnergyGeV(Sigma_Energy_GeV);
+  }
+
+  // Check for beta, alpha, gammain the input
+  int HasBAG = 0x0;
+  if (PyList_Size(List_Beta) != 0) {
+    try {
+      Beta = OSCARSPY::ListAsTVector2D(List_Beta);
+      HasBAG |= 0x4;
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'beta'");
+      return NULL;
+    }
+  }
+  if (PyList_Size(List_Alpha) != 0) {
+    try {
+      Alpha = OSCARSPY::ListAsTVector2D(List_Alpha);
+      HasBAG |= 0x2;
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'alpha'");
+      return NULL;
+    }
+  }
+  if (PyList_Size(List_Gamma) != 0) {
+    try {
+      Gamma = OSCARSPY::ListAsTVector2D(List_Gamma);
+      HasBAG |= 0x1;
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'gamma'");
+      return NULL;
+    }
+  }
+
+  // Check for Lattice reference in the input
+  bool HasReferencePoint = false;
+  if (PyList_Size(List_Lattice_Reference) != 0) {
+    try {
+      Lattice_Reference = OSCARSPY::ListAsTVector3D(List_Lattice_Reference);
+      HasReferencePoint = true;
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'lattice_reference'");
+      return NULL;
+    }
+    ThisBeam->SetTwissLatticeReference(Lattice_Reference);
+  }
+
+  // Set correct twiss parameters
+  switch (HasBAG) {
+    case 0x7:
+      ThisBeam->SetTwissParameters(Beta, Alpha, Gamma, Lattice_Reference, HasReferencePoint);
+      break;
+    case 0x6:
+      ThisBeam->SetTwissBetaAlpha(Beta, Alpha, Lattice_Reference, HasReferencePoint);
+      break;
+    case 0x5:
+      ThisBeam->SetTwissBetaGamma(Beta, Gamma, Lattice_Reference, HasReferencePoint);
+      break;
+    case 0x3:
+      ThisBeam->SetTwissAlphaGamma(Alpha, Gamma, Lattice_Reference, HasReferencePoint);
+      break;
+    case 0x4:
+      ThisBeam->SetTwissBetaAlpha(Beta, TVector2D(0, 0), Lattice_Reference, HasReferencePoint);
+      break;
+    default:
+      break;
+  }
+
+
+  if (T0 != 0) {
+    ThisBeam->SetT0(T0);
+  }
+
+  // Should set weight on input
+  //self->obj->GetParticleBeam(Name).SetWeight(Weight);
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+const char* DOC_OSCARSSR_SetParticleBeamSize = R"docstring(
+add_particle_beam_size(sigma, sigmap [, beam, lattice_reference, eta=0])
+
+Set the beamsize of a particular beam (if the name is given) or all beams (if no name is given) at a reference point called lattice_reference.  If lattice_reference is not given the reference point is assumed to be 'x0' from the beam in question.  This function translates the sizes into twiss parameters.  If eta (dispersion) is not given it is assumed to be zero.
+
+Parameters
+----------
+
+sigma : list[2]
+    One sigma for the spatial distribution in the horizontal and vertical directions [sigma_h, sigma_v].
+
+sigmap : list[2]
+    One sigma for the angular distribution in the horizontal and vertical directions [sigmap_h, sigmap_v].
+
+beam : str
+    Name of the beam for which these paramters apply.
+
+lattice_reference : list[3]
+    3D coordinate of there reference point for the known beam dimensions.
+
+eta : float
+    The dispersion term.  Assumed to be zero if not given.
+
+Returns
+-------
+None
+
+)docstring";
+static PyObject* OSCARSSR_SetParticleBeamSize (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
+{
+  // Add a particle beam to the experiment
+
+  // Lists and variables some with initial values
+  PyObject*   List_Sigma                 = PyList_New(0);
+  PyObject*   List_SigmaP                = PyList_New(0);
+  char const* Beam                       = "";
+  PyObject*   List_Lattice_Reference     = PyList_New(0);
+  double      Eta                        = 0;
+
+  TVector2D Sigma(0, 0);
+  TVector2D SigmaP(0, 0);
+  TVector3D Lattice_Reference(0, 0, 0);
+
+
+  // Input variables and parsing
+  static const char *kwlist[] = {"sigma",
+                                 "sigmap",
+                                 "beam",
+                                 "lattice_reference",
+                                 "eta",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OO|sOd",
+                                   const_cast<char **>(kwlist),
+                                   &List_Sigma,
+                                   &List_SigmaP,
+                                   &Beam,
+                                   &List_Lattice_Reference,
+                                   &Eta)) {
+    return NULL;
+  }
+
+
+  // Check for Lattice reference in the input
+  if (PyList_Size(List_Sigma) != 0) {
+    try {
+      Sigma = OSCARSPY::ListAsTVector2D(List_Sigma);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'sigma'");
+      return NULL;
+    }
+  }
+
+  // Check for Lattice reference in the input
+  if (PyList_Size(List_SigmaP) != 0) {
+    try {
+      SigmaP = OSCARSPY::ListAsTVector2D(List_SigmaP);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'sigmap'");
+      return NULL;
+    }
+  }
 
   // Check for Lattice reference in the input
   if (PyList_Size(List_Lattice_Reference) != 0) {
@@ -3249,68 +3441,14 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
     }
   }
 
-
-  // If emittance and beta are defined get RMS values
-  TVector2D SigmaU(0, 0);
-  TVector2D SigmaUPrime(0, 0);
-  if (PyList_Size(List_Emittance) != 0 && PyList_Size(List_Beta) != 0) {
-    SigmaU[0]      = sqrt(Emittance[0] * Beta[0]);
-    SigmaU[1]      = sqrt(Emittance[1] * Beta[1]);
-    SigmaUPrime[0] = sqrt(Emittance[0] / Beta[0]);
-    SigmaUPrime[1] = sqrt(Emittance[1] / Beta[1]);
-  }
-
-
-  // Rotate beam parameters
-  Position.RotateSelfXYZ(Rotations);
-  Direction.RotateSelfXYZ(Rotations);
-  Position += Translation;
-
-  // UPDATE: An idea for later, use new variable "velocity"
-  //if (Energy_GeV == 0) {
-  //  if (Direction.Mag() >= 1) {
-  //    throw;
-  //  }
-  //  Energy_GeV = sqrt(1.0 / (1.0 - Direction.Mag2())) * Mass;
-  //}
-
-
-  // Add the particle beam
-  if (std::strlen(Beam) == 0) {
-    try {
-      if (std::string(Type) == "custom") {
-        if (Mass == 0 || Charge == 0) {
-          PyErr_SetString(PyExc_ValueError, "'mass' or 'charge' is zero");
-          return NULL;
-        }
-        // UPDATE: for custom beams
-        self->obj->AddParticleBeam(Type, Name, Position, Direction, Energy_GeV, T0, Current, Weight, Charge, Mass);
-      } else {
-        self->obj->AddParticleBeam(Type, Name, Position, Direction, Energy_GeV, T0, Current, Weight);
-      }
-    } catch (std::invalid_argument e) {
-      PyErr_SetString(PyExc_ValueError, "invalid argument in adding particle beam.  possibly 'name' already exists");
-      return NULL;
-    }
-    // UPDATE: Change me to include sigma of beam
-    self->obj->GetParticleBeam(Name).SetSigma(Horizontal_Direction, SigmaU, SigmaUPrime, Lattice_Reference, Sigma_Energy_GeV);
-  }
-
-
-  //self->obj->GetParticleBeam(Name).SetCurrent(Current);
-  //self->obj->GetParticleBeam(Name).SetX0(Position);
-  //self->obj->GetParticleBeam(Name).SetU0(Direction);
-  if (T0 != 0) {
-    self->obj->GetParticleBeam(Name).SetT0(T0);
-  }
-
-  // Should set weight on input
-  //self->obj->GetParticleBeam(Name).SetWeight(Weight);
+  //self->obj->SetBeamSize(Beam, Sigma, SigmaP, Lattice_Reference, Eta);
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
   return Py_None;
 }
+
+
 
 
 
@@ -3373,6 +3511,146 @@ static PyObject* OSCARSSR_PrintParticleBeams (OSCARSSRObject* self)
   Py_INCREF(Py_None);
   return Py_None;
 }
+
+
+
+
+
+
+
+const char* DOC_OSCARSSR_SetTwissParameters = R"docstring(
+set_twiss_parameters(, [beam, beta, alpha, gamma, lattice_reference])
+
+Set the twiss parameters for a given beam (if a beam name is given) or for all beams (if no name is given).  You should only set 2 of the three [beta, alpha, gamma] as they are not independent.
+
+Parameters
+----------
+beam : str
+    Name of the beam for which to set the twiss parameters
+
+beta : list[2]
+    [horizontal, vertical]
+
+alpha : list[2]
+    [horizontal, vertical]
+
+gamma : list[2]
+    [horizontal, vertical]
+
+lattice_reference : list[3]
+    Location of the values of the twiss parameters.  These must be places on the beam axis (though it is not checked).
+
+Returns
+-------
+None
+)docstring";
+static PyObject* OSCARSSR_SetTwissParameters (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
+{
+  // Set the twiss parameters for a given beam or for all beams
+
+  // Lists and variables some with initial values
+  char const* Beam                       = "";
+  PyObject*   List_Beta                  = PyList_New(0);
+  PyObject*   List_Alpha                 = PyList_New(0);
+  PyObject*   List_Gamma                 = PyList_New(0);
+  PyObject*   List_Lattice_Reference     = PyList_New(0);
+
+  TVector2D Beta(0, 0);
+  TVector2D Alpha(0, 0);
+  TVector2D Gamma(0, 0);
+  TVector3D Lattice_Reference(0, 0, 0);
+
+
+  // Input variables and parsing
+  static const char *kwlist[] = {"beam",
+                                 "beta",
+                                 "alpha",
+                                 "gamma",
+                                 "lattice_reference",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sOOOO",
+                                   const_cast<char **>(kwlist),
+                                   &Beam,
+                                   &List_Beta,
+                                   &List_Alpha,
+                                   &List_Gamma,
+                                   &List_Lattice_Reference
+                                  )) {
+    return NULL;
+  }
+
+
+  // Check for beta, alpha, gammain the input
+  int HasBAG = 0x0;
+  if (PyList_Size(List_Beta) != 0) {
+    try {
+      Beta = OSCARSPY::ListAsTVector2D(List_Beta);
+      HasBAG |= 0x4;
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'beta'");
+      return NULL;
+    }
+  }
+  if (PyList_Size(List_Alpha) != 0) {
+    try {
+      Alpha = OSCARSPY::ListAsTVector2D(List_Alpha);
+      HasBAG |= 0x2;
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'alpha'");
+      return NULL;
+    }
+  }
+  if (PyList_Size(List_Gamma) != 0) {
+    try {
+      Gamma = OSCARSPY::ListAsTVector2D(List_Gamma);
+      HasBAG |= 0x1;
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'gamma'");
+      return NULL;
+    }
+  }
+
+  // Check for Lattice reference in the input
+  bool HasReferencePoint = false;
+  if (PyList_Size(List_Lattice_Reference) != 0) {
+    try {
+      Lattice_Reference = OSCARSPY::ListAsTVector3D(List_Lattice_Reference);
+      HasReferencePoint = true;
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'lattice_reference'");
+      return NULL;
+    }
+  }
+
+  // Set correct twiss parameters
+  switch (HasBAG) {
+    case 0x7:
+      self->obj->SetTwissParameters(Beam, Beta, Alpha, Gamma, Lattice_Reference, HasReferencePoint);
+      break;
+    case 0x6:
+      self->obj->GetParticleBeam(Beam).SetTwissBetaAlpha(Beta, Alpha, Lattice_Reference, HasReferencePoint);
+      break;
+    case 0x5:
+      self->obj->GetParticleBeam(Beam).SetTwissBetaGamma(Beta, Gamma, Lattice_Reference, HasReferencePoint);
+      break;
+    case 0x3:
+      self->obj->GetParticleBeam(Beam).SetTwissAlphaGamma(Alpha, Gamma, Lattice_Reference, HasReferencePoint);
+      break;
+    case 0x4:
+      self->obj->GetParticleBeam(Beam).SetTwissBetaAlpha(Beta, TVector2D(0, 0), Lattice_Reference, HasReferencePoint);
+      break;
+    default:
+      break;
+  }
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
 
 
 
@@ -6436,8 +6714,11 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
                                                                                           
   {"set_particle_beam",                 (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_SetParticleBeam},
   {"add_particle_beam",                 (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddParticleBeam},
+  {"set_particle_beam_size",            (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_SetParticleBeamSize},
   {"clear_particle_beams",              (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_ClearParticleBeams},
   {"print_particle_beams",              (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_PrintParticleBeams},
+                                                                                          
+  {"set_twiss_parameters",              (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_SetTwissParameters},
                                                                                           
   {"set_new_particle",                  (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_SetNewParticle},
   {"get_particle_x0",                   (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_GetParticleX0},
@@ -6537,9 +6818,12 @@ static PyMethodDef OSCARSSR_methods[] = {
                                                                                           
   {"set_particle_beam",                 (PyCFunction) OSCARSSR_SetParticleBeam,                 METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_SetParticleBeam},
   {"add_particle_beam",                 (PyCFunction) OSCARSSR_AddParticleBeam,                 METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddParticleBeam},
+  {"set_particle_beam_size",            (PyCFunction) OSCARSSR_SetParticleBeamSize,             METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_SetParticleBeamSize},
   {"clear_particle_beams",              (PyCFunction) OSCARSSR_ClearParticleBeams,              METH_NOARGS,                  DOC_OSCARSSR_ClearParticleBeams},
   {"print_particle_beams",              (PyCFunction) OSCARSSR_PrintParticleBeams,              METH_NOARGS,                  DOC_OSCARSSR_PrintParticleBeams},
-                                                                                          
+     
+  {"set_twiss_parameters",              (PyCFunction) OSCARSSR_SetTwissParameters,              METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_SetTwissParameters},
+
   {"set_new_particle",                  (PyCFunction) OSCARSSR_SetNewParticle,                  METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_SetNewParticle},
   {"get_particle_x0",                   (PyCFunction) OSCARSSR_GetParticleX0,                   METH_NOARGS,                  DOC_OSCARSSR_GetParticleX0},
   {"get_particle_beta0",                (PyCFunction) OSCARSSR_GetParticleBeta0,                METH_NOARGS,                  DOC_OSCARSSR_GetParticleBeta0},

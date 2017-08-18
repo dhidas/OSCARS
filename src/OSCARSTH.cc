@@ -431,7 +431,7 @@ TVector2D OSCARSTH::UndulatorBrightnessK (double const K,
 
   // Properties from beam
   double    const Gamma          = fParticleBeam.GetGamma();
-  TVector2D const Beta           = fParticleBeam.GetBeta();
+  TVector2D const Beta           = fParticleBeam.GetTwissBeta();
   TVector2D const Emittance      = fParticleBeam.GetEmittance();
   double    const Current        = fParticleBeam.GetCurrent();
 

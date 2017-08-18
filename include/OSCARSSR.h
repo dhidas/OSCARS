@@ -116,12 +116,26 @@ class OSCARSSR
 
 
     // Functions related to the particle beam(s)
-    void AddParticleBeam (std::string const&, std::string const&, TVector3D const&, TVector3D const&, double const, double const, double const, double const, double const Charge = 0, double const Mass = 0);
-    void AddParticleBeam (std::string const& Beam, std::string const& Name, double const Weight = 1);
+    TParticleBeam& AddParticleBeam (std::string const& Type,
+                                    std::string const& Name,
+                                    TVector3D const& X0,
+                                    TVector3D const& V0,
+                                    double const Energy_GeV,
+                                    double const T0,
+                                    double const Current,
+                                    double const Weight,
+                                    double const Charge = 0,
+                                    double const Mass = 0);
+
+    TParticleBeam& AddParticleBeam (std::string const& Beam,
+                                    std::string const& Name,
+                                    double const Weight = 1);
+
     TParticleBeamContainer& GetParticleBeamContainer () 
     {
       return fParticleBeamContainer;
     }
+
     TParticleBeam& GetParticleBeam (std::string const&);
     size_t GetNParticleBeams () const;
     TParticleA GetNewParticle ();
@@ -129,6 +143,16 @@ class OSCARSSR
     void SetNewParticle ();
     void SetNewParticle (std::string const&, std::string const&);
     void ClearParticleBeams ();
+
+    void SetEmittance (std::string const& Beam,
+                       TVector2D const& Emittance);
+
+    void SetTwissParameters (std::string const& Beam,
+                             TVector2D const& Beta,
+                             TVector2D const& Alpha,
+                             TVector2D const& Gamma,
+                             TVector3D const& Lattice_Reference,
+                             bool const HasReferencePoint);
 
 
     // Functions related to drift spaces

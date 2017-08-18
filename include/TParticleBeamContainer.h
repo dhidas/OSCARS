@@ -24,20 +24,20 @@ class TParticleBeamContainer
     TParticleBeamContainer ();
     ~TParticleBeamContainer ();
 
-    void AddNewParticleBeam (std::string const& Type,
-                             std::string const& Name,
-                             TVector3D const& X0,
-                             TVector3D const& D0,
-                             double const E0,
-                             double const T0,
-                             double const Current,
-                             double const Weight = 1,
-                             double const Charge = 0,
-                             double const Mass = 0);
+    TParticleBeam& AddNewParticleBeam (std::string const& Type,
+                                       std::string const& Name,
+                                       TVector3D const& X0,
+                                       TVector3D const& D0,
+                                       double const E0,
+                                       double const T0,
+                                       double const Current,
+                                       double const Weight = 1,
+                                       double const Charge = 0,
+                                       double const Mass = 0);
 
-    void AddNewParticleBeam (std::string const& Beam,
-                             std::string const& Name,
-                             double const Weight = 1);
+    TParticleBeam& AddNewParticleBeam (std::string const& Beam,
+                                       std::string const& Name,
+                                       double const Weight = 1);
 
     TParticleA GetNewParticle ();
     TParticleBeam& GetParticleBeam (size_t const);
@@ -47,6 +47,15 @@ class TParticleBeamContainer
     size_t GetNParticleBeams () const;
     void Clear ();
 
+    void SetEmittance (std::string const& Beam,
+                       TVector2D const& Emittance);
+
+    void SetTwissParameters (std::string const& Beam,
+                             TVector2D const& Beta,
+                             TVector2D const& Alpha,
+                             TVector2D const& Gamma,
+                             TVector3D const& Lattice_Reference,
+                             bool const HasReferencePoint);
 
   private:
 

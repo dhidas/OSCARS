@@ -424,7 +424,16 @@ TVector3D OSCARSSR::GetE (TVector3D const& X) const
 
 
 
-void OSCARSSR::AddParticleBeam (std::string const& Type, std::string const& Name, TVector3D const& X0, TVector3D const& V0, double const Energy_GeV, double const T0, double const Current, double const Weight, double const Charge, double const Mass)
+TParticleBeam& OSCARSSR::AddParticleBeam (std::string const& Type,
+                                          std::string const& Name,
+                                          TVector3D const& X0,
+                                          TVector3D const& V0,
+                                          double const Energy_GeV,
+                                          double const T0,
+                                          double const Current,
+                                          double const Weight,
+                                          double const Charge,
+                                          double const Mass)
 {
   // Add a particle beam
   // Type        - The name of the particle type that you want to use
@@ -438,20 +447,20 @@ void OSCARSSR::AddParticleBeam (std::string const& Type, std::string const& Name
   // Charge      - Charge of custom particle
   // Mass        - Mass of custom particle
 
-  fParticleBeamContainer.AddNewParticleBeam(Type, Name, X0, V0, Energy_GeV, T0, Current, Weight, Charge, Mass);
-  return;
+  return fParticleBeamContainer.AddNewParticleBeam(Type, Name, X0, V0, Energy_GeV, T0, Current, Weight, Charge, Mass);
 }
 
 
 
 
-void OSCARSSR::AddParticleBeam (std::string const& Beam, std::string const& Name, double const Weight)
+TParticleBeam& OSCARSSR::AddParticleBeam (std::string const& Beam,
+                                          std::string const& Name,
+                                          double const Weight)
 {
   // Add a particle beam
   // Beam - The name of the predefined particle beam to add
 
-  fParticleBeamContainer.AddNewParticleBeam(Beam, Name, Weight);
-  return;
+  return fParticleBeamContainer.AddNewParticleBeam(Beam, Name, Weight);
 }
 
 
@@ -527,6 +536,30 @@ void OSCARSSR::ClearParticleBeams ()
   // Clear the contents of the particle beam container
   fParticleBeamContainer.Clear();
 
+  return;
+}
+
+
+
+
+void OSCARSSR::SetEmittance (std::string const& Beam,
+                             TVector2D const& Emittance)
+{
+  fParticleBeamContainer.SetEmittance(Beam, Emittance);
+  return;
+}
+
+
+
+
+void OSCARSSR::SetTwissParameters (std::string const& Beam,
+                                   TVector2D const& Beta,
+                                   TVector2D const& Alpha,
+                                   TVector2D const& Gamma,
+                                   TVector3D const& Lattice_Reference,
+                                   bool const HasReferencePoint)
+{
+  fParticleBeamContainer.SetTwissParameters(Beam, Beta, Alpha, Gamma, Lattice_Reference, HasReferencePoint);
   return;
 }
 

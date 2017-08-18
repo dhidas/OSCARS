@@ -23,6 +23,8 @@ extern TRandomA* gRandomA;
 TParticleBeam::TParticleBeam ()
 {
   // Default constructor
+
+  fBeamDistribution = kBeamDistribution_None;
 }
 
 
@@ -30,6 +32,8 @@ TParticleBeam::TParticleBeam ()
 
 TParticleBeam::TParticleBeam (std::string const& PredefinedBeamType, std::string const& Name, double const Weight)
 {
+  fBeamDistribution = kBeamDistribution_None;
+
   // Constructor given a predefined beam name
   this->SetPredefinedBeam(PredefinedBeamType);
   this->SetName(Name);
@@ -43,6 +47,8 @@ TParticleBeam::TParticleBeam (std::string const& PredefinedBeamType, std::string
 TParticleBeam::TParticleBeam (std::string const& ParticleType, std::string const& Name, double const Energy, double const Current, double const Weight)
 {
   // Constructor given a particle type.
+
+  fBeamDistribution = kBeamDistribution_None;
 
   this->SetParticleType(ParticleType);
   this->SetName(Name);
@@ -61,6 +67,8 @@ TParticleBeam::TParticleBeam (std::string const& ParticleType, std::string const
 {
   // Constructor given a particle type.
   // Sets the initial time to 0
+
+  fBeamDistribution = kBeamDistribution_None;
 
   this->SetParticleType(ParticleType);
   this->SetName(Name);
@@ -82,6 +90,8 @@ TParticleBeam::TParticleBeam (std::string const& ParticleType, std::string const
 TParticleBeam::TParticleBeam (std::string const& ParticleType, std::string const& Name, TVector3D const& X0, TVector3D const& D0, double const Energy, double const T0, double const Current, double const Charge, double const Mass, double const Weight)
 {
   // Constructor given a particle type.
+
+  fBeamDistribution = kBeamDistribution_None;
 
   if (ParticleType == "custom") {
     this->SetParticleTypeCustom(ParticleType, Charge, Mass);
@@ -119,7 +129,7 @@ void TParticleBeam::SetPredefinedBeam (std::string const& Beam)
   std::string BeamU = Beam;
   std::transform(BeamU.begin(), BeamU.end(), BeamU.begin(), ::toupper);
 
-  if (BeamU == "NSLSII") {
+  if (BeamU == "NSLSII" || BeamU == "NSLS2" || BeamU == "NSLS-II") {
     this->SetParticleType("electron");
     this->SetCurrent(0.500);
     this->SetE0(3);
@@ -131,9 +141,33 @@ void TParticleBeam::SetPredefinedBeam (std::string const& Beam)
     this->SetB0(this->GetU0() * Beta);
     this->SetT0(0);
     this->SetX0(0);
-    this->SetBetaEmittance(TVector3D(1, 0, 0), TVector2D(0, 0), TVector2D(0.55e-9, 0.008e-9), TVector3D(0, 0, 0), 3 * 0.001);
+    this->SetEmittance(TVector2D(0.55e-9, 0.008e-9));
+    this->SetTwissLatticeReference(TVector3D(0, 0, 0));
+    this->SetTwissBetaAlpha(TVector2D(1.5, 0.8), TVector2D(0, 0));
+    this->SetSigmaEnergyGeV(3. * 0.001);
+    this->SetVerticalDirection(TVector3D(0, 1, 0));
+    this->SetBeamDistribution(kBeamDistribution_None);
 
-  } else if (BeamU == "NSLSII-LONGSTRAIGHT") {
+  } else if (BeamU == "NSLSII-LONGSTRAIGHT" || BeamU == "NSLS2-LONGSTRAIGHT" || BeamU == "NSLS-II-LONGSTRAIGHT") {
+    this->SetParticleType("electron");
+    this->SetCurrent(0.500);
+    this->SetE0(3);
+
+    double const Gamma = this->GetE0() / TOSCARSSR::kgToGeV(this->GetM());
+    double const Beta = sqrt(1.0 - 1.0 / (Gamma * Gamma));
+
+    this->SetU0(TVector3D(0, 0, 1));
+    this->SetB0(this->GetU0() * Beta);
+    this->SetT0(0);
+    this->SetX0(TVector3D(0, 0, 0));
+    this->SetEmittance(TVector2D(0.55e-9, 0.008e-9));
+    this->SetTwissLatticeReference(TVector3D(0, 0, 0));
+    this->SetTwissBetaAlpha(TVector2D(18, 3.1), TVector2D(0, 0));
+    this->SetSigmaEnergyGeV(3. * 0.001);
+    this->SetVerticalDirection(TVector3D(0, 1, 0));
+    this->SetBeamDistribution(kBeamDistribution_Gaussian);
+
+  } else if (BeamU == "NSLSII-SHORTSTRAIGHT" || BeamU == "NSLS2-SHORTSTRAIGHT" || BeamU == "NSLS-II-SHORTSTRAIGHT") {
     this->SetParticleType("electron");
     this->SetCurrent(0.500);
     this->SetE0(3);
@@ -145,21 +179,12 @@ void TParticleBeam::SetPredefinedBeam (std::string const& Beam)
     this->SetB0(this->GetU0() * Beta);
     this->SetT0(0);
     this->SetX0(0);
-    this->SetBetaEmittance(TVector3D(1, 0, 0), TVector2D(18, 3.1), TVector2D(0.55e-9, 0.008e-9), TVector3D(0, 0, 0), 3 * 0.001);
-
-  } else if (BeamU == "NSLSII-SHORTSTRAIGHT") {
-    this->SetParticleType("electron");
-    this->SetCurrent(0.500);
-    this->SetE0(3);
-
-    double const Gamma = this->GetE0() / TOSCARSSR::kgToGeV(this->GetM());
-    double const Beta = sqrt(1.0 - 1.0 / (Gamma * Gamma));
-
-    this->SetU0(TVector3D(0, 0, 1));
-    this->SetB0(this->GetU0() * Beta);
-    this->SetT0(0);
-    this->SetX0(0);
-    this->SetBetaEmittance(TVector3D(1, 0, 0), TVector2D(1.5, 0.8), TVector2D(0.55e-9, 0.008e-9), TVector3D(0, 0, 0), 3 * 0.001);
+    this->SetEmittance(TVector2D(0.55e-9, 0.008e-9));
+    this->SetTwissLatticeReference(TVector3D(0, 0, 0));
+    this->SetTwissBetaAlpha(TVector2D(1.5, 0.8), TVector2D(0, 0));
+    this->SetSigmaEnergyGeV(3. * 0.001);
+    this->SetVerticalDirection(TVector3D(0, 1, 0));
+    this->SetBeamDistribution(kBeamDistribution_Gaussian);
   } else {
     throw std::invalid_argument("no beam by that name found");
   }
@@ -181,8 +206,10 @@ void TParticleBeam::SetInitialConditions (double const X, double const Y, double
 
 
 
-void TParticleBeam::SetBetaAlpha (TVector2D const& Beta,
-                                  TVector2D const& Alpha)
+void TParticleBeam::SetTwissBetaAlpha (TVector2D const& Beta,
+                                       TVector2D const& Alpha,
+                                       TVector3D const& Reference,
+                                       bool const HasReference)
 {
   // Beta and Gamma values at the reference point
   // index as follows: 0-Horizontal, 1-vertical
@@ -192,9 +219,15 @@ void TParticleBeam::SetBetaAlpha (TVector2D const& Beta,
     throw std::out_of_range("Beta cannot be <= 0");
   }
 
-  fBeta = Beta;
-  fGamma = TVector2D( (1. + Alpha[0] * Alpha[0]) / Beta[0], (1. + Alpha[1] * Alpha[1]) / Beta[1] );
-  fAlpha = Alpha;
+  fTwissBeta = Beta;
+  fTwissGamma = TVector2D( (1. + Alpha[0] * Alpha[0]) / Beta[0], (1. + Alpha[1] * Alpha[1]) / Beta[1] );
+  fTwissAlpha = Alpha;
+
+  if (HasReference) {
+    fTwissLatticeReference = Reference;
+  }
+
+  SetTwissParametersAtX0();
 
   return;
 }
@@ -202,15 +235,23 @@ void TParticleBeam::SetBetaAlpha (TVector2D const& Beta,
 
 
 
-void TParticleBeam::SetBetaGamma (TVector2D const& Beta,
-                                  TVector2D const& Gamma)
+void TParticleBeam::SetTwissBetaGamma (TVector2D const& Beta,
+                                       TVector2D const& Gamma,
+                                       TVector3D const& Reference,
+                                       bool const HasReference)
 {
   // Beta and Gamma values at the reference point
   // index as follows: 0-Horizontal, 1-vertical
 
-  fBeta = Beta;
-  fAlpha = TVector2D( sqrt(Gamma[0] * Beta[0] - 1), sqrt(Gamma[1] * Beta[1] - 1) );
-  fGamma = Gamma;
+  fTwissBeta = Beta;
+  fTwissAlpha = TVector2D( sqrt(Gamma[0] * Beta[0] - 1), sqrt(Gamma[1] * Beta[1] - 1) );
+  fTwissGamma = Gamma;
+
+  if (HasReference) {
+    fTwissLatticeReference = Reference;
+  }
+
+  SetTwissParametersAtX0();
 
   return;
 }
@@ -219,8 +260,10 @@ void TParticleBeam::SetBetaGamma (TVector2D const& Beta,
 
 
 
-void TParticleBeam::SetAlphaGamma (TVector2D const& Alpha,
-                                   TVector2D const& Gamma)
+void TParticleBeam::SetTwissAlphaGamma (TVector2D const& Alpha,
+                                        TVector2D const& Gamma,
+                                        TVector3D const& Reference,
+                                        bool const HasReference)
 {
   // Beta and Gamma values at the reference point
   // index as follows: 0-Horizontal, 1-vertical
@@ -229,9 +272,15 @@ void TParticleBeam::SetAlphaGamma (TVector2D const& Alpha,
   if (Gamma[0] == 0 || Gamma[1] == 0) {
     throw std::out_of_range("Gamma cannot be <= 0");
   }
-  fBeta = TVector2D( (1. + Alpha[0] * Alpha[0]) / Gamma[0], (1. + Alpha[1] * Alpha[1]) / Gamma[1] );
-  fAlpha = Alpha;
-  fGamma = Gamma;
+  fTwissBeta = TVector2D( (1. + Alpha[0] * Alpha[0]) / Gamma[0], (1. + Alpha[1] * Alpha[1]) / Gamma[1] );
+  fTwissAlpha = Alpha;
+  fTwissGamma = Gamma;
+
+  if (HasReference) {
+    fTwissLatticeReference = Reference;
+  }
+
+  SetTwissParametersAtX0();
 
   return;
 }
@@ -244,6 +293,46 @@ void TParticleBeam::SetEmittance (TVector2D const& Emittance)
   // Set the horizontal and vertical emittance
 
   fEmittance = Emittance;
+  return;
+}
+
+
+
+
+void TParticleBeam::SetTwissParametersAtX0 ()
+{
+  // Transform twiss parameters according to drift space.
+
+  // Calculate distance to transform
+  double const D = (fTwissLatticeReference - fX0).Mag();
+  double const L = D ? (fTwissLatticeReference - fX0).Dot(fU0) >= 0 : -1. * D;
+
+  fTwissBetaX0 = fTwissBeta - 2 * L * fTwissAlpha + L * L * fTwissGamma;
+  fTwissAlphaX0 = fTwissAlpha - L * fTwissGamma;
+  fTwissGammaX0 = fTwissGamma;
+
+  return;
+}
+
+
+
+
+void TParticleBeam::SetTwissParameters (TVector2D const& Beta,
+                                        TVector2D const& Alpha,
+                                        TVector2D const& Gamma,
+                                        TVector3D const& Reference,
+                                        bool const HasReference)
+{
+  fTwissBeta = Beta;
+  fTwissAlpha = Alpha;
+  fTwissGamma = Gamma;
+
+  if (HasReference) {
+    fTwissLatticeReference = Reference;
+  }
+
+  SetTwissParametersAtX0();
+
   return;
 }
 
@@ -277,7 +366,11 @@ void TParticleBeam::SetBetaEmittance (TVector3D const& HorizontalDirection, TVec
   // Set beam parameters.  This function likely to be updated with better twiss functions
   // UPDATE: Twiss?
 
-  fBeta = Beta;
+  std::cerr << "TParticleBeam::SetBetaEmittance called doing nothing" << std::endl;
+  return;
+  throw;
+
+  //fBeta = Beta;
   fEmittance = Emittance;
 
 
@@ -305,11 +398,35 @@ void TParticleBeam::SetBetaEmittance (TVector3D const& HorizontalDirection, TVec
 
 
 
+void TParticleBeam::SetTwissLatticeReference (TVector3D const& L)
+{
+  fTwissLatticeReference = L;
+
+  // If you change the reference need to update twiss parameters at X0
+  SetTwissParametersAtX0();
+
+  return;
+}
+
+
+
+
+TVector3D TParticleBeam::GetTwissLatticeReference () const
+{
+  return fTwissLatticeReference;
+}
+
+
+
+
 void TParticleBeam::SetSigma (TVector3D const& HorizontalDirection, TVector2D const& SigmaU, TVector2D const& SigmaUP, TVector3D const& SigmaAt, double const SigmaEnergyGeV)
 {
   // Set beam parameters.  This function likely to be updated with better twiss functions
   // UPDATE: Twiss?
 
+  std::cerr << "TParticleBeam::SetSigma called doing nothing" << std::endl;
+  return;
+  throw;
   fHorizontalDirection = HorizontalDirection.UnitVector();
   fSigmaU              = SigmaU;
   fSigmaUP             = SigmaUP;
@@ -385,10 +502,55 @@ double TParticleBeam::GetWeight () const
 
 
 
-TVector2D TParticleBeam::GetBeta () const
+TVector2D TParticleBeam::GetTwissBeta () const
 {
   // Return the beta function values
-  return fBeta;
+  return fTwissBeta;
+}
+
+
+
+
+TVector2D TParticleBeam::GetTwissAlpha () const
+{
+  // Return the alpha function values
+  return fTwissAlpha;
+}
+
+
+
+
+TVector2D TParticleBeam::GetTwissGamma () const
+{
+  // Return the gamma function values
+  return fTwissGamma;
+}
+
+
+
+
+TVector2D TParticleBeam::GetTwissBetaX0 () const
+{
+  // Return the beta function values at X0
+  return fTwissBetaX0;
+}
+
+
+
+
+TVector2D TParticleBeam::GetTwissAlphaX0 () const
+{
+  // Return the alpha function values at X0
+  return fTwissAlphaX0;
+}
+
+
+
+
+TVector2D TParticleBeam::GetTwissGammaX0 () const
+{
+  // Return the gamma function values at X0
+  return fTwissGammaX0;
 }
 
 
@@ -407,6 +569,17 @@ TVector3D TParticleBeam::GetHorizontalDirection () const
 {
   // Return the horizontal direction
   return fHorizontalDirection;
+}
+
+
+
+
+void TParticleBeam::SetVerticalDirection (TVector3D const& VerticalDirection)
+{
+  fVerticalDirection = VerticalDirection.UnitVector();
+  fHorizontalDirection = fVerticalDirection.Cross(fU0).UnitVector();
+
+  return;
 }
 
 
@@ -434,6 +607,10 @@ void TParticleBeam::SetX0 (TVector3D const& X)
 {
   // Set the initial position of particle beam
   fX0 = X;
+
+  // Update TwissX0 for this change
+  SetTwissParametersAtX0();
+
   return;
 }
 
@@ -473,7 +650,7 @@ void TParticleBeam::SetT0 (double const Time)
 
 void TParticleBeam::SetSigmaEnergyGeV (double const Sigma)
 {
-  // Set initial time of beam (int [m])
+  // Set beam energy spread in [GeV]
   fSigmaEnergyGeV = Sigma;
   return;
 }
@@ -558,21 +735,40 @@ TParticleA TParticleBeam::GetNewParticle ()
   double const Gamma = ENew / TOSCARSSR::kgToGeV(this->GetM());
   double const Beta = sqrt(1.0 - 1.0 / (Gamma * Gamma));
 
-  // Distance from t0 location to lattice midpoint
-  double const DistanceToMidpoint = (fSigmaAt - fX0).Dot(this->GetU0());
-  // UPDATE: ME
+  double const Ellipse_VA = sqrt(fEmittance[0] * (fTwissBetaX0[0] + fTwissGammaX0[0]));
+  double const Ellipse_HA = sqrt(fEmittance[1] * (fTwissBetaX0[1] + fTwissGammaX0[1]));
+
+  double const Ellipse_VB = fEmittance[0] / Ellipse_VA;
+  double const Ellipse_HB = fEmittance[1] / Ellipse_HA;
+
+  double const Angle_H = 0.5*atan(2.*fTwissAlphaX0[0] / (fTwissGammaX0[0] - fTwissBetaX0[0]));
+  double const Angle_V = 0.5*atan(2.*fTwissAlphaX0[1] / (fTwissGammaX0[1] - fTwissBetaX0[1]));
+
+  double const RHA = Ellipse_HA * gRandomA->Normal();
+  double const RHB = Ellipse_HB * gRandomA->Normal();
+  double const RVA = Ellipse_VA * gRandomA->Normal();
+  double const RVB = Ellipse_VB * gRandomA->Normal();
+
+  double const HOffset  = RHA * cos(Angle_H) - RHB * sin(Angle_H);
+  double const HPOffset = RHA * sin(Angle_H) + RHB * cos(Angle_H);
+
+  double const VOffset  = RVA * cos(Angle_V) - RVB * sin(Angle_V);
+  double const VPOffset = RVA * sin(Angle_V) + RVB * cos(Angle_V);
+
+  // New X0 location for this particle
   TVector3D XNew = this->GetX0();
-  XNew += fHorizontalDirection * fSigmaU[0] * (1 + DistanceToMidpoint) * gRandomA->Normal();
-  XNew += fVerticalDirection   * fSigmaU[1] * (1 + DistanceToMidpoint) * gRandomA->Normal();
+  XNew += fHorizontalDirection * HOffset;
+  XNew += fVerticalDirection   * VOffset;
+
+  // Distance from t0 location to lattice midpoint
 
   TVector3D BetaNew = this->GetU0() * Beta;
 
   // UPDATE: Rotate about the horizontal and vertical beam axes (arbitrary)
-  BetaNew.RotateSelfY(fSigmaUP[0] * gRandomA->Normal());
-  BetaNew.RotateSelfX(-fSigmaUP[1] * gRandomA->Normal());
+  BetaNew.RotateSelf(HPOffset, fVerticalDirection);
+  BetaNew.RotateSelf(VPOffset, fHorizontalDirection);
 
   double    TNew = fT0;
-
 
   TParticleA NewParticle = (TParticleA) *this;
   NewParticle.SetInitialParticleConditions(XNew, BetaNew, TNew);
@@ -584,16 +780,29 @@ TParticleA TParticleBeam::GetNewParticle ()
 
 
 
-std::string TParticleBeam::GetDistributionName () const
+
+void TParticleBeam::SetBeamDistribution (TParticleBeam_BeamDistribution const D)
 {
-  switch (fDistribution) {
-    case kDistribution_None:
-      return "none";
-    case kDistribution_Gaussian:
-      return "gaussian";
-    case kDistribution_KV:
-      return "kv";
+  // Set the beam distribution type
+  fBeamDistribution = D;
+  return;
+}
+
+
+
+
+std::string TParticleBeam::GetBeamDistributionName () const
+{
+  switch (fBeamDistribution) {
+    case kBeamDistribution_None:
+      return std::string("none");
+    case kBeamDistribution_Gaussian:
+      return std::string("gaussian");
+    case kBeamDistribution_KV:
+      return std::string("kv");
   }
+
+  return std::string("");
 }
 
 
