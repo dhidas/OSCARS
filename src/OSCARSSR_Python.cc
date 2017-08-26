@@ -3139,12 +3139,12 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
 
   // Check if beam is defined (for predefined beams)
   if (HasPredefinedBeam) {
-    //try {
+    try {
       ThisBeam = &(self->obj->AddParticleBeam(Beam, Name, Weight));
-    //} catch (...) {
-    //  PyErr_SetString(PyExc_ValueError, "Error in predefined beam name / definition");
-    //  return NULL;
-    //}
+    } catch (...) {
+      PyErr_SetString(PyExc_ValueError, "Error in predefined beam name / definition");
+      return NULL;
+    }
   }
 
 
@@ -3158,10 +3158,6 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
       return NULL;
     }
 
-    // Change predefined beam accordingly
-    if (HasPredefinedBeam) {
-      ThisBeam->SetX0(Position);
-    }
   }
 
   // Initial direction
@@ -3171,11 +3167,6 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'd0'");
       return NULL;
-    }
-
-    // Change predefined beam accordingly
-    if (HasPredefinedBeam) {
-      ThisBeam->SetU0(Direction);
     }
   }
 
@@ -3237,6 +3228,12 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
       PyErr_SetString(PyExc_ValueError, "invalid argument in adding particle beam.  possibly 'name' already exists");
       return NULL;
     }
+  }
+
+  // Change predefined beam accordingly
+  if (HasPredefinedBeam) {
+    ThisBeam->SetU0(Direction);
+    ThisBeam->SetX0(Position);
   }
 
   // UPDATE
