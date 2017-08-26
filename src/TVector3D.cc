@@ -306,7 +306,7 @@ TVector3D& TVector3D::operator = (TVector3D const& V)
 
 
 
-TVector3D TVector3D::operator - ()
+TVector3D TVector3D::operator - () const
 {
   // Negative vector
   return TVector3D(-fX, -fY, -fZ);
