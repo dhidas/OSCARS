@@ -136,7 +136,7 @@ template <class T> class TSpline1D3
       fYPP.resize(N);
 
       T p;
-      double sig;
+      T sig;
 
       std::vector<T> u(N);
 
@@ -205,6 +205,8 @@ class TSpline1D3_1d : public TSpline1D3<double>
 
     void ReadFile (std::string const& InFileName)
     {
+      // Unfinished
+
       std::vector<double> X;
       std::vector<double> Y;
 
