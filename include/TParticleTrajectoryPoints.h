@@ -10,6 +10,7 @@
 
 #include <vector>
 
+#include "TParticleTrajectoryPoint.h"
 #include "TVector3D.h"
 
 class TParticleTrajectoryPoints
@@ -45,10 +46,8 @@ class TParticleTrajectoryPoints
 
 
   private:
-    std::vector<TVector3D> fX;       // Postion
-    std::vector<TVector3D> fB;       // Beta (velocity / c)
-    std::vector<TVector3D> fAoverC;  // Acceleration / c
-    std::vector<double>    fT;       // Time
+    std::vector<TParticleTrajectoryPoint> fP;  // Trajectory points (x, beta, a/c)
+    //std::vector<double> fT;       // Time.  Not used, but could be in the future
 
 
     // For equidistant time steps use single DeltaT

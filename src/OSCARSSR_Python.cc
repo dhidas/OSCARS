@@ -3072,7 +3072,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   PyObject*   List_Lattice_Reference     = PyList_New(0);
 
   TVector3D Position(0, 0, 0);
-  TVector3D Direction;
+  TVector3D Direction(0, 0, 1);
   TVector3D Rotations(0, 0, 0);
   TVector3D Translation(0, 0, 0);
   TVector3D Horizontal_Direction;
@@ -3232,7 +3232,9 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
 
   // Change predefined beam accordingly
   if (HasPredefinedBeam) {
-    ThisBeam->SetU0(Direction);
+    if (PyList_Size(List_Direction) != 0) {
+      ThisBeam->SetU0(Direction);
+    }
     ThisBeam->SetX0(Position);
   }
 
