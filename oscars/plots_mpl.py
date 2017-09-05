@@ -323,7 +323,7 @@ def plot_flux(V, title='Flux [$\gamma / mm^2 / 0.1\%bw / s]$', xlabel='X1 Axis [
     plt.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
     plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
     if colorbar is True:
-        plt.colorbar(format='%.0e')
+        plt.colorbar(format='%.2e')
 
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)

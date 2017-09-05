@@ -7,5 +7,5 @@ from oscars.plots_mpl import plot_flux
 
 osr = oscars.sr.sr()
 
-plot_flux( osr.average_flux(ifiles=[sys.argv[1]]) )
+plot_flux( osr.average_flux(ifiles=[sys.argv[1]], dim=3) )
 
