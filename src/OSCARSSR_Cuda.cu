@@ -283,11 +283,10 @@ __global__ void OSCARSSR_Cuda_FluxGPUMultiWithA (double  *x, double  *y, double 
 
 
     cuDoubleComplex MyEXP = cuCexp(Exponent);
-    cuDoubleComplex MyEXP_dt = cuCmul(MyEXP, make_cuDoubleComplex(*dt, 0));
 
-    cuDoubleComplex X2 = cuCmul(X1, MyEXP_dt);
-    cuDoubleComplex Y2 = cuCmul(Y1, MyEXP_dt);
-    cuDoubleComplex Z2 = cuCmul(Z1, MyEXP_dt);
+    cuDoubleComplex X2 = cuCmul(X1, MyEXP);
+    cuDoubleComplex Y2 = cuCmul(Y1, MyEXP);
+    cuDoubleComplex Z2 = cuCmul(Z1, MyEXP);
 
 
     SumEX = cuCadd(SumEX, X2);
@@ -296,16 +295,16 @@ __global__ void OSCARSSR_Cuda_FluxGPUMultiWithA (double  *x, double  *y, double 
 
   }
 
-  SumEX = cuCmul(make_cuDoubleComplex(0, (*C0) * (*Omega) * (*dt)), SumEX);
-  SumEY = cuCmul(make_cuDoubleComplex(0, (*C0) * (*Omega) * (*dt)), SumEY);
-  SumEZ = cuCmul(make_cuDoubleComplex(0, (*C0) * (*Omega) * (*dt)), SumEZ);
+  SumEX = cuCmul(make_cuDoubleComplex(0, (*C0) * (*dt)), SumEX);
+  SumEY = cuCmul(make_cuDoubleComplex(0, (*C0) * (*dt)), SumEY);
+  SumEZ = cuCmul(make_cuDoubleComplex(0, (*C0) * (*dt)), SumEZ);
 
 
-  double const EX = *C0 * (SumEX.x * SumEX.x + SumEX.y * SumEX.y);
-  double const EY = *C0 * (SumEY.x * SumEY.x + SumEY.y * SumEY.y);
-  double const EZ = *C0 * (SumEZ.x * SumEZ.x + SumEZ.y * SumEZ.y);
+  double const EX = (SumEX.x * SumEX.x + SumEX.y * SumEX.y);
+  double const EY = (SumEY.x * SumEY.x + SumEY.y * SumEY.y);
+  double const EZ = (SumEZ.x * SumEZ.x + SumEZ.y * SumEZ.y);
 
-  flux[ith] = -(*C2) * (EX + EY + EZ);
+  flux[ith] = (*C2) * (EX + EY + EZ);
 
   return;
 }
