@@ -2621,9 +2621,6 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
   // Angular frequency
   double const Omega = TOSCARSSR::EvToAngularFrequency(Energy_eV);;
 
-  // Constant for field calculation
-  std::complex<double> ICoverOmega = I * TOSCARSSR::C() / Omega;
-
   // Loop over all points in the spectrum container
   for (size_t i = iFirst; i <= iLast; ++i) {
 

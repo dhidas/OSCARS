@@ -250,7 +250,7 @@ __global__ void OSCARSSR_Cuda_FluxGPUMultiWithA (double  *x, double  *y, double 
     double const One_Minus_BMag2 = 1. -  (bx[i] * bx[i] + by[i] * by[i] + bz[i] * bz[i]);
 
     // N dot Beta
-    double const NDotBeta = sqrt(NX * bx[i] + NY * by[i] + NZ * bz[i]);
+    double const NDotBeta = NX * bx[i] + NY * by[i] + NZ * bz[i];
 
     double const FarFieldDenominator =  D * (pow(1. - NDotBeta, 2));
     double const NearFieldDenominator = D * FarFieldDenominator;
