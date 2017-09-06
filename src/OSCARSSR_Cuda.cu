@@ -290,9 +290,9 @@ __global__ void OSCARSSR_Cuda_FluxGPUMultiWithA (double  *x, double  *y, double 
 
   }
 
-  SumEX = cuCmul(make_cuDoubleComplex(0, (*C0) * (*dt)), SumEX);
-  SumEY = cuCmul(make_cuDoubleComplex(0, (*C0) * (*dt)), SumEY);
-  SumEZ = cuCmul(make_cuDoubleComplex(0, (*C0) * (*dt)), SumEZ);
+  SumEX = cuCmul(make_cuDoubleComplex((*C0) * (*dt), 0), SumEX);
+  SumEY = cuCmul(make_cuDoubleComplex((*C0) * (*dt), 0), SumEY);
+  SumEZ = cuCmul(make_cuDoubleComplex((*C0) * (*dt), 0), SumEZ);
 
 
   double const EX = (SumEX.x * SumEX.x + SumEX.y * SumEX.y);
