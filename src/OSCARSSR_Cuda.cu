@@ -305,7 +305,7 @@ __global__ void OSCARSSR_Cuda_FluxGPUMultiWithA (double  *x, double  *y, double 
   double const EY = *C0 * (SumEY.x * SumEY.x + SumEY.y * SumEY.y);
   double const EZ = *C0 * (SumEZ.x * SumEZ.x + SumEZ.y * SumEZ.y);
 
-  flux[ith] = (*C2) * (EX + EY + EZ);
+  flux[ith] = -(*C2) * (EX + EY + EZ);
 
   return;
 }
