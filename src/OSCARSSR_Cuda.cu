@@ -225,11 +225,6 @@ __global__ void OSCARSSR_Cuda_FluxGPUMultiWithA (double  *x, double  *y, double 
   }
 
 
-  // Complex i
-  cuDoubleComplex I = make_cuDoubleComplex(0, 1);
-
-  cuDoubleComplex ICoverOmega = make_cuDoubleComplex(0, (*C) / (*Omega));
-
   double const ox = sx[is];
   double const oy = sy[is];
   double const oz = sz[is];
@@ -255,7 +250,7 @@ __global__ void OSCARSSR_Cuda_FluxGPUMultiWithA (double  *x, double  *y, double 
     double const One_Minus_BMag2 = 1. -  (bx[i] * bx[i] + by[i] * by[i] + bz[i] * bz[i]);
 
     // N dot Beta
-    double const NDotBeta = sqrt(NX * bx[i] + NY * bx[i] + NZ * bz[i]);
+    double const NDotBeta = sqrt(NX * bx[i] + NY * by[i] + NZ * bz[i]);
 
     double const FarFieldDenominator =  D * (pow(1. - NDotBeta, 2));
     double const NearFieldDenominator = D * FarFieldDenominator;
@@ -273,7 +268,7 @@ __global__ void OSCARSSR_Cuda_FluxGPUMultiWithA (double  *x, double  *y, double 
     
 
     // Exponent for fourier transformed field
-    cuDoubleComplex Exponent = make_cuDoubleComplex(0, (*Omega) * ((*dt) * i + D / (*C)));
+    cuDoubleComplex Exponent = make_cuDoubleComplex(0, -(*Omega) * ((*dt) * ((double) i) + D / (*C)));
 
     cuDoubleComplex X1 = make_cuDoubleComplex(NearField_X + FarField_X, 0);
     cuDoubleComplex Y1 = make_cuDoubleComplex(NearField_Y + FarField_Y, 0);
