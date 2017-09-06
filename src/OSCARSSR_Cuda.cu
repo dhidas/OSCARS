@@ -262,9 +262,9 @@ __global__ void OSCARSSR_Cuda_FluxGPUMultiWithA (double  *x, double  *y, double 
     double const FFY = (NZ - bz[i]) * ax[i] - (NX - bx[i]) * az[i];
     double const FFZ = (NX - bx[i]) * ay[i] - (NY - by[i]) * ax[i];
 
-    double const FarField_X = (NY * FFZ - NZ * FFY) / NearFieldDenominator;
-    double const FarField_Y = (NZ * FFX - NX * FFZ) / NearFieldDenominator;
-    double const FarField_Z = (NX * FFY - NY * FFX) / NearFieldDenominator;
+    double const FarField_X = (NY * FFZ - NZ * FFY) / FarFieldDenominator;
+    double const FarField_Y = (NZ * FFX - NX * FFZ) / FarFieldDenominator;
+    double const FarField_Z = (NX * FFY - NY * FFX) / FarFieldDenominator;
     
 
     // Exponent for fourier transformed field
