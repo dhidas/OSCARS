@@ -2624,9 +2624,6 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
   // Constant for field calculation
   std::complex<double> ICoverOmega = I * TOSCARSSR::C() / Omega;
 
-  // Constant for calculation
-  std::complex<double> const C1(0, C0 * Omega);
-
   // Loop over all points in the spectrum container
   for (size_t i = iFirst; i <= iLast; ++i) {
 
