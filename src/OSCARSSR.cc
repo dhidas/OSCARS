@@ -2404,7 +2404,7 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
 
 
 
-void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
+void OSCARSSR::CalculateFluxPointsORIG (TParticleA& Particle,
                                     TSurfacePoints const& Surface,
                                     double const Energy_eV,
                                     T3DScalarContainer& FluxContainer,
@@ -2469,12 +2469,20 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
     // Electric field summation in frequency space
     TVector3DC SumE(0, 0, 0);
 
+    TVector3DC SumE1(0, 0, 0);
+    TVector3DC SumE2(0, 0, 0);
+    TVector3DC SumE3(0, 0, 0);
+    TVector3DC SumE4(0, 0, 0);
+    double MaxDPhi = 0;
+    double LastPhi = 0;
+    double MagE2 = 0;
+
     // Loop over all points in trajectory
     for (size_t iT = 0; iT != NTPoints; ++iT) {
 
       // If there is not acceleration there is no radiation
       if (T.GetA(iT).Mag() < 1e-100) {
-        continue;
+        //continue;
       }
 
 
@@ -2495,14 +2503,166 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
 
       // Exponent for fourier transformed field
       std::complex<double> Exponent(0, Omega * (DeltaT * iT + D / TOSCARSSR::C()));
+      std::complex<double> Exponent1(0, Omega * (DeltaT * iT));
+      std::complex<double> Exponent2(0, Omega * (D / TOSCARSSR::C()));
+
+
+      double Phi = Omega * (DeltaT * iT + D / TOSCARSSR::C());
+      if (iT != 0 && fabs(Phi - LastPhi) > fabs(MaxDPhi)) {
+        MaxDPhi = fabs(Phi - LastPhi);
+      }
+      LastPhi = Phi;
 
       // Sum in fourier transformed field (integral)
-      SumE += (TVector3DC(B) - (N * ( One + (ICoverOmega / (D))))) / D * std::exp(Exponent);
+      //std::complex<double> Add = One + (ICoverOmega / (D));
+      //SumE += (TVector3DC(B) - (N * ( One + (ICoverOmega / (D))))) / D * std::exp(Exponent);
+
+      std::complex<double> CEXP = std::exp(Exponent1) * std::exp(Exponent2);
+
+      SumE1 += TVector3DC(B) / D * CEXP;
+      SumE2 += N * (ICoverOmega / (D)) / D * CEXP;
+      SumE3 += N * One / D * CEXP;
+      //std::cout << TVector3DC(B) << " " << ICoverOmega / (D) << " " << ((Add - One) - ICoverOmega / (D)) * 1e20<< std::endl;
     }
 
 
+    //std::cout << "Components: " << SumE1 << " " << SumE2 << " " << SumE3 << std::endl;
+    SumE = SumE1 - SumE2 - SumE3;
+
     // Multiply field by Constant C1 and time step
     SumE *= C1 * DeltaT;
+    std::cout << "MaxDPhi: " << MaxDPhi << std::endl;
+
+    // If a polarization is specified, calculate it
+    if (Polarization == "all") {
+      // Do nothing, it is already ALL
+    } else if (Polarization == "linear-horizontal") {
+      SumE = SumE.Dot(HorizontalDirection) * HorizontalDirection;
+    } else if (Polarization == "linear-vertical") {
+      SumE = SumE.Dot(VerticalDirection) * VerticalDirection;
+    } else if (Polarization == "linear") {
+      TVector3D PolarizationAngle = HorizontalDirection;
+      PolarizationAngle.RotateSelf(Angle, PropogationDirection);
+      SumE = SumE.Dot(PolarizationAngle) * PolarizationAngle;
+    } else if (Polarization == "circular-left") {
+      SumE = SumE.Dot(Positive.CC()) * Positive;
+    } else if (Polarization == "circular-right") {
+      SumE = SumE.Dot(Negative.CC()) * Negative;
+    } else {
+      // Throw invalid argument if polarization is not recognized
+      throw std::invalid_argument("Polarization requested not recognized");
+    }
+
+    // Set the flux for this frequency / energy point
+    double const ThisFlux = C2 *  SumE.Dot( SumE.CC() ).real() * Weight;
+
+    // All point to flux container
+    FluxContainer.AddToPoint(i, ThisFlux);
+  }
+
+  // Set done to true
+  Done = true;
+
+  return;
+}
+
+
+
+
+
+void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
+                                    TSurfacePoints const& Surface,
+                                    double const Energy_eV,
+                                    T3DScalarContainer& FluxContainer,
+                                    size_t const iFirst,
+                                    size_t const iLast,
+                                    bool& Done,
+                                    std::string const& Polarization,
+                                    double const Angle,
+                                    TVector3D const& HorizontalDirection,
+                                    TVector3D const& PropogationDirection,
+                                    double const Weight)
+{
+  // Calculates the single particle flux at a given observation point
+  // in units of [photons / second / 0.001% BW / mm^2]
+  //
+  // Particle - the Particle.. with a Trajectory structure hopefully
+
+  // Grab the Trajectory
+  TParticleTrajectoryPoints& T = Particle.GetTrajectory();
+
+  // Time step.  Expecting it to be constant throughout calculation
+  double const DeltaT = T.GetDeltaT();
+
+  // Number of points in the trajectory
+  size_t const NTPoints = T.GetNPoints();
+
+  // Check number of points
+  if (NTPoints < 1) {
+    throw std::length_error("no points in trajectory.  Is particle or beam defined?");
+  }
+
+  // Constant C0 for calculation
+  double const C0 = Particle.GetQ() / (TOSCARSSR::FourPi() * TOSCARSSR::C() * TOSCARSSR::Epsilon0() * TOSCARSSR::Sqrt2Pi());
+
+
+  // Constant for flux calculation at the end
+  double const C2 = TOSCARSSR::FourPi() * Particle.GetCurrent() / (TOSCARSSR::H() * fabs(Particle.GetQ()) * TOSCARSSR::Mu0() * TOSCARSSR::C()) * 1e-6 * 0.001;
+
+  // Imaginary "i" and complxe 1+0i
+  std::complex<double> const I(0, 1);
+  std::complex<double> const One(1, 0);
+
+  // Photon vertical direction and positive and negative helicity
+  TVector3D const VerticalDirection = PropogationDirection.Cross(HorizontalDirection).UnitVector();
+  TVector3DC const Positive = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) + VerticalDirection * I );
+  TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * I );
+
+  // Angular frequency
+  double const Omega = TOSCARSSR::EvToAngularFrequency(Energy_eV);;
+
+  // Constant for field calculation
+  std::complex<double> ICoverOmega = I * TOSCARSSR::C() / Omega;
+
+  // Constant for calculation
+  std::complex<double> const C1(0, C0 * Omega);
+
+  // Loop over all points in the spectrum container
+  for (size_t i = iFirst; i <= iLast; ++i) {
+
+    // Obs point
+    TVector3D ObservationPoint = Surface.GetPoint(i).GetPoint();
+
+    // Electric field summation in frequency space
+    TVector3DC SumE(0, 0, 0);
+
+    // Loop over trajectory points
+    for (int iT = 0; iT != NTPoints; ++iT) {
+
+      // Get position, Beta, and Acceleration (over c)
+      TVector3D const& X = T.GetX(iT);
+      TVector3D const& B = T.GetB(iT);
+      TVector3D const& AoverC = T.GetAoverC(iT);
+
+      // Define R and unit vector in direction of R, and D (distance to observer)
+      TVector3D const R = ObservationPoint - X;
+      TVector3D const N = R.UnitVector();
+      double const D = R.Mag();
+
+      // Exponent in transformed field
+      std::complex<double> Exponent(0, -Omega * (DeltaT * iT + D / TOSCARSSR::C()));
+
+      TVector3DC const ThisEw = ( ( (1 - (B).Mag2()) * (N - B) ) / ( D * D * (pow(1 - N.Dot(B), 2)) )
+          + ( N.Cross( (N - B).Cross(AoverC) ) ) / ( D * pow(1 - N.Dot(B), 2) ) ) * std::exp(Exponent) * DeltaT; // NF + FF
+
+      // Add this contribution
+      SumE += ThisEw;
+
+    }
+
+    // Multiply by constant factor
+    SumE *= C0;
+
 
     // If a polarization is specified, calculate it
     if (Polarization == "all") {

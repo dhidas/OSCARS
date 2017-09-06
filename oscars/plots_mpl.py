@@ -1,4 +1,5 @@
 from matplotlib.colors import LogNorm
+import matplotlib.ticker
 import numpy as np
 import matplotlib.pyplot as plt
 from math import sqrt
@@ -300,7 +301,7 @@ def plot_power_density_1d(V, title='Power Density [$W / mm^2$]', xlabel='[$m$]',
     return
 
 
-def plot_flux(V, title='Flux [$\gamma / mm^2 / 0.1\%bw / s]$', xlabel='X1 Axis [$m$]', ylabel='X2 Axis [$m$]', clim=None, show=True, ofile='', figsize=None, ylim=None, xlim=None, colorbar=True, ret=False):
+def plot_flux(V, title='Flux [$\gamma / mm^2 / 0.1\%bw / s]$', xlabel='X1 Axis [$m$]', ylabel='X2 Axis [$m$]', clim=None, show=True, ofile='', figsize=None, ylim=None, xlim=None, colorbar=True, ret=False, nticks_cb=None):
     """Plot a 2D histogram with equal spacing"""
         
     X = [item[0][0] for item in V]
@@ -323,11 +324,16 @@ def plot_flux(V, title='Flux [$\gamma / mm^2 / 0.1\%bw / s]$', xlabel='X1 Axis [
     plt.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
     plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
     if colorbar is True:
-        plt.colorbar(format='%.2e')
+        cb = plt.colorbar(format='%.2e')
+        if nticks_cb is not None:
+            tick_locator = matplotlib.ticker.MaxNLocator(nbins=nticks_cb)
+            cb.locator = tick_locator
+            cb.update_ticks()
 
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(title)
+
 
     if clim is not None:
       plt.clim(clim)
