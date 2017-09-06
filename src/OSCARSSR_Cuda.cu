@@ -283,10 +283,11 @@ __global__ void OSCARSSR_Cuda_FluxGPUMultiWithA (double  *x, double  *y, double 
 
 
     cuDoubleComplex MyEXP = cuCexp(Exponent);
+    cuDoubleComplex MyEXP_dt = cuCmul(MyEXP, make_cuDoubleComplex(*dt, 0));
 
-    cuDoubleComplex X2 = cuCmul(X1, MyEXP);
-    cuDoubleComplex Y2 = cuCmul(Y1, MyEXP);
-    cuDoubleComplex Z2 = cuCmul(Z1, MyEXP);
+    cuDoubleComplex X2 = cuCmul(X1, MyEXP_dt);
+    cuDoubleComplex Y2 = cuCmul(Y1, MyEXP_dt);
+    cuDoubleComplex Z2 = cuCmul(Z1, MyEXP_dt);
 
 
     SumEX = cuCadd(SumEX, X2);
