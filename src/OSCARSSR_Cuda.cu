@@ -258,7 +258,7 @@ __global__ void OSCARSSR_Cuda_FluxGPUMultiWithA (double  *x, double  *y, double 
     double const NearField_Y = One_Minus_BMag2 * (NY - by[i]) / NearFieldDenominator;
     double const NearField_Z = One_Minus_BMag2 * (NZ - bz[i]) / NearFieldDenominator;
 
-    double const FFX = (NY - bx[i]) * az[i] - (NZ - bz[i]) * ay[i];
+    double const FFX = (NY - by[i]) * az[i] - (NZ - bz[i]) * ay[i];
     double const FFY = (NZ - bz[i]) * ax[i] - (NX - bx[i]) * az[i];
     double const FFZ = (NX - bx[i]) * ay[i] - (NY - by[i]) * ax[i];
 
