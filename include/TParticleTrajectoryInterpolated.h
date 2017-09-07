@@ -15,8 +15,9 @@
 
 #include <vector>
 
-#include "TParticleTrajectoryPoint.h"
 #include "TOMATH.h"
+#include "TParticleTrajectoryPoint.h"
+#include "TParticleTrajectoryPoints.h"
 
 class TParticleTrajectoryInterpolated
 {
@@ -30,7 +31,14 @@ class TParticleTrajectoryInterpolated
     void Set (std::vector<double> const& T,
               std::vector<TParticleTrajectoryPoint> const& P);
 
+    TParticleTrajectoryPoint GetTrajectoryPoint (double const T) const;
+
     void Clear ();
+
+    void FillTParticleTrajectoryPoints (TParticleTrajectoryPoints& TPTP,
+                                        double const TStart,
+                                        double const TStop,
+                                        int const NPoints);
 
   private:
     TOMATH::TSpline1D3<TParticleTrajectoryPoint> fP;

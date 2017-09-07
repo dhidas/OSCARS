@@ -183,6 +183,14 @@ template <class T> class TSpline1D3
       return;
     }
 
+    void Clear ()
+    {
+      // Clear all vectors
+      fX.clear();
+      fY.clear();
+      fYPP.clear();
+    }
+
 
   private:
     std::vector<double> fX;   // x-values

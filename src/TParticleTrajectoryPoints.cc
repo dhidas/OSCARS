@@ -112,6 +112,18 @@ size_t TParticleTrajectoryPoints::GetNPoints () const
 
 
 
+
+void TParticleTrajectoryPoints::AddPoint (TParticleTrajectoryPoint const& P, double const T)
+{
+  fP.push_back(P);
+  //fT.push_back(T);
+
+  return;
+}
+
+
+
+
 void TParticleTrajectoryPoints::AddPoint (TVector3D const& X, TVector3D const& B, TVector3D const& AoverC, double const T)
 {
   fP.push_back( TParticleTrajectoryPoint(X, B, AoverC) );
@@ -119,6 +131,7 @@ void TParticleTrajectoryPoints::AddPoint (TVector3D const& X, TVector3D const& B
 
   return;
 }
+
 
 
 
