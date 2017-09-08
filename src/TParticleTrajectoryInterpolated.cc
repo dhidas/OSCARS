@@ -202,7 +202,7 @@ int TParticleTrajectoryInterpolated::GetNPointsInclusiveToLevel (int const Level
 
 
 
-double TParticleTrajectoryInterpolated::GetDeltaTInclusiveToLevel(int const Level) const
+double TParticleTrajectoryInterpolated::GetDeltaTInclusiveToLevel (int const Level) const
 {
   // DeltaT for all points from level 0 up to this level
 
@@ -210,6 +210,20 @@ double TParticleTrajectoryInterpolated::GetDeltaTInclusiveToLevel(int const Leve
   this->LevelCheck(Level);
     
   return (fTStop - fTStart) / pow(2., Level + 1);
+
+}
+
+
+
+
+double TParticleTrajectoryInterpolated::GetDeltaTThisLevel (int const Level) const
+{
+  // DeltaT for all points from level 0 up to this level
+
+  // Level checking
+  this->LevelCheck(Level);
+    
+  return (fTStop - fTStart) / pow(2., Level); 
 
 }
 

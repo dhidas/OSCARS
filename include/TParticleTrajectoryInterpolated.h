@@ -48,6 +48,7 @@ class TParticleTrajectoryInterpolated
 
     int    GetNPointsInclusiveToLevel (int const Level) const;
     double GetDeltaTInclusiveToLevel  (int const Level) const;
+    double GetDeltaTThisLevel         (int const Level) const;
 
   private:
     void LevelCheck (int const Level) const;

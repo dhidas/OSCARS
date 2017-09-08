@@ -876,9 +876,6 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
   double x[N];
   double dxdt[N];
 
-  std::cout << P.GetX0() << std::endl;
-  std::cout << "B0: " << P.GetB0() << std::endl;
-
   // Initial conditions for the forward propogation
   x[0] = P.GetX0().GetX();
   x[1] = P.GetB0().GetX() * TOSCARSSR::C();
@@ -955,15 +952,12 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
 
 
 
-  std::cout << "trying to create it" << std::endl;
-  TParticleTrajectoryInterpolated TPTI(ParticleTrajectory);
-
-  std::cout << "Created it" << std::endl;
-
-  TParticleTrajectoryPoints TPTP;
-
-  std::cout << "Trying to fill" << std::endl;
-  TPTI.FillTParticleTrajectoryPointsLevel(TPTP, 2);
+  //std::cout << "Testing TPTI.FillTParticleTrajectoryPointsLevel" << std::endl;
+  //TParticleTrajectoryInterpolated TPTI(ParticleTrajectory);
+  //TParticleTrajectoryPoints TPTP;
+  //TPTI.FillTParticleTrajectoryPointsLevel(TPTP, 2);
+  //ParticleTrajectory.Clear();
+  //TPTI.FillTParticleTrajectoryPointsLevel(ParticleTrajectory, 12);
 
 
   return;
