@@ -30,6 +30,8 @@ class TParticleTrajectoryPoints
     void   SetDeltaT (double const);
     size_t GetNPoints () const;
 
+    std::vector<TParticleTrajectoryPoint> const& GetTrajectory() const;
+
     void AddPoint (TParticleTrajectoryPoint const& P, double const T = 0);
     void AddPoint (TVector3D const&, TVector3D const&, TVector3D const&, double const T = 0);
     void AddPoint (double const, double const, double const, double const, double const, double const, double const, double const, double const, double const T = 0);
@@ -53,7 +55,6 @@ class TParticleTrajectoryPoints
 
     // For equidistant time steps use single DeltaT
     double fDeltaT;
-
 
 };
 

@@ -23,6 +23,9 @@ class TParticleTrajectoryInterpolated
 {
   public:
     TParticleTrajectoryInterpolated ();
+
+    TParticleTrajectoryInterpolated (TParticleTrajectoryPoints const& TPTP);
+
     TParticleTrajectoryInterpolated (std::vector<double> const& T,
                                      std::vector<TParticleTrajectoryPoint> const& P);
 
@@ -35,13 +38,25 @@ class TParticleTrajectoryInterpolated
 
     void Clear ();
 
+    void FillTParticleTrajectoryPointsLevel (TParticleTrajectoryPoints& TPTP,
+                                             int const Level);
+
     void FillTParticleTrajectoryPoints (TParticleTrajectoryPoints& TPTP,
                                         double const TStart,
                                         double const TStop,
                                         int const NPoints);
 
+    int    GetNPointsInclusiveToLevel (int const Level) const;
+    double GetDeltaTInclusiveToLevel  (int const Level) const;
+
   private:
+    void LevelCheck (int const Level) const;
+
     TOMATH::TSpline1D3<TParticleTrajectoryPoint> fP;
+
+    // First and last point in time for input trajectory
+    double fTStart;
+    double fTStop;
 
 
 };

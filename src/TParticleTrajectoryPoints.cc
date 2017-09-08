@@ -113,6 +113,14 @@ size_t TParticleTrajectoryPoints::GetNPoints () const
 
 
 
+std::vector<TParticleTrajectoryPoint> const& TParticleTrajectoryPoints::GetTrajectory() const
+{
+  return fP;
+}
+
+
+
+
 void TParticleTrajectoryPoints::AddPoint (TParticleTrajectoryPoint const& P, double const T)
 {
   fP.push_back(P);

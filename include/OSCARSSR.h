@@ -23,6 +23,7 @@
 #include "TSurfacePoints.h"
 #include "TSpectrumContainer.h"
 #include "T3DScalarContainer.h"
+#include "TParticleTrajectoryInterpolated.h"
 #include "TRandomA.h"
 
 

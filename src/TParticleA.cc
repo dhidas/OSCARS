@@ -192,6 +192,7 @@ void TParticleA::SetX0 (TVector3D const& X0)
 void TParticleA::SetB0 (TVector3D const& B0)
 {
   // Set initial Beta (V/c) for this particle
+  std::cout << "Setting fB0: " << B0 << std::endl;
   fB0 = B0;
 
   SetGamma();
@@ -353,12 +354,12 @@ TParticleTrajectoryPoints& TParticleA::GetTrajectory ()
 void TParticleA::SetGamma ()
 {
   // Set gamma variable for fast readback
-  double const Beta2 = fB0.Mag2();
+  double const Beta2 = fB0.Mag2() > 0 ? fB0.Mag2() : 0;
   if (Beta2 == 1) {
     return;
   }
 
-  fGamma = 1.0 / sqrt(1.0 - Beta2);
+  fGamma = Beta2 != 0 ? 1.0 / sqrt(1.0 - Beta2) : 1;
 
   // Need to adjust variable for fast readback
   SetQoverMGamma();
