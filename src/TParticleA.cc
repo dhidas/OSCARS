@@ -192,7 +192,6 @@ void TParticleA::SetX0 (TVector3D const& X0)
 void TParticleA::SetB0 (TVector3D const& B0)
 {
   // Set initial Beta (V/c) for this particle
-  std::cout << "Setting fB0: " << B0 << std::endl;
   fB0 = B0;
 
   SetGamma();
