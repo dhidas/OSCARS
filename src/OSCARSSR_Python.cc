@@ -4138,8 +4138,10 @@ static PyObject* OSCARSSR_GetTrajectory (OSCARSSRObject* self)
     PyObject *PList2 = PyList_New(0);
 
     // Add position and Beta to list
+    PyList_Append(PList2, Py_BuildValue("f", T.GetT(iT)));
     PyList_Append(PList2, OSCARSPY::TVector3DAsList(T.GetX(iT)));
     PyList_Append(PList2, OSCARSPY::TVector3DAsList(T.GetB(iT)));
+    PyList_Append(PList2, OSCARSPY::TVector3DAsList(T.GetA(iT)));
     PyList_Append(PList, PList2);
   }
 
