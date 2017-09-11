@@ -31,6 +31,8 @@ class TParticleTrajectoryInterpolated
 
     ~TParticleTrajectoryInterpolated ();
 
+    void Set (TParticleTrajectoryPoints const& TPTP);
+
     void Set (std::vector<double> const& T,
               std::vector<TParticleTrajectoryPoint> const& P);
 
