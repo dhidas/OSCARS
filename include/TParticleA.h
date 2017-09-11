@@ -12,9 +12,11 @@
 ////////////////////////////////////////////////////////////////////
 
 #include <string>
+#include <map>
 
 #include "TVector3D.h"
 #include "TParticleTrajectoryPoints.h"
+#include "TParticleTrajectoryInterpolated.h"
 
 class TParticleA
 {
@@ -55,6 +57,11 @@ class TParticleA
 
     TParticleTrajectoryPoints& GetTrajectory ();
 
+    void SetupTrajectoryInterpolated ();
+    TParticleTrajectoryPoints const& GetTrajectoryLevel (int const Level);
+
+    void Clear ();
+
 
 
   private:
@@ -72,6 +79,8 @@ class TParticleA
     double    fT0;  // Time at initial conditions
 
     TParticleTrajectoryPoints fTrajectory;
+    TParticleTrajectoryInterpolated fTrajectoryInterpolated;
+    std::map<int, TParticleTrajectoryPoints> fTrajectoryLevels;
 
     // This is a funny one so I'll explain it here.
     // This is here because TParticleBeam inherits this class
