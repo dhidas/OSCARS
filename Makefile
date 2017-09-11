@@ -16,7 +16,7 @@ CUDACFLAGS = -DCUDA -cudart static -std=c++11 -shared --compiler-options '-fPIC'
 
 # Flags for the c++ compiler
 CFLAGS = -std=c++11 -fPIC -I$(PYINCLUDE)
-LDFLAGS = -L$(PYLIBDIR) -l$(PYLIB)
+LDFLAGS = -L$(PYLIBDIR) -l$(PYLIB) -O3
 
 # c++ exe file names taken from what is in directories
 EXECS = $(patsubst exe/%.cc,bin/%,$(wildcard exe/*.cc))
