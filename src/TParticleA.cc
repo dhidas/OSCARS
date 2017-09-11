@@ -51,6 +51,7 @@ TParticleA::TParticleA (std::string const& Type, TVector3D const& X0, TVector3D 
 TParticleA::~TParticleA ()
 {
   // Destroy me
+  this->Clear();
 }
 
 
@@ -341,11 +342,80 @@ void TParticleA::SetInitialParticleConditions (TVector3D const& X0, TVector3D co
 
 
 
+void TParticleA::SetupTrajectoryInterpolated ()
+{
+  // Setup the internal interpolated trajectory structure
+
+  if (fTrajectory.GetNPoints() < 2) {
+    std::cerr << "ERROR: TParticleA::SetupTrajectoryInterpolated Trajectory.GetNPoints() < 2" << std::endl;
+    throw;
+  }
+  
+  fTrajectoryInterpolated.Set(fTrajectory);
+
+  return;
+}
+
+
+
+
 TParticleTrajectoryPoints& TParticleA::GetTrajectory ()
 {
   // Get reference to the trajectory member
   return fTrajectory;
 }
+
+
+
+
+TParticleTrajectoryPoints const& TParticleA::GetTrajectoryLevel (int const Level)
+{
+  // Get reference to the trajectory member at specific level.  If this level
+  // does not exist, mutex lock for thread safety, create this level, unlock,
+  // and return it
+  //
+  // The size of fTrajectoryLevels is misleading.  Just because the i_th element
+  // exists does NOT mean the trajectory at that level exists.  You must check
+  // NPoints and the mutex lock to make sure it is complete.
+  //
+  // THIS function should be the only entry point for getting a Trajectory
+  // at a level
+  //
+  // See also: TrajectoryLevelExists and TrajectoryLevelComplete
+
+  std::cout << "in TParticleA::GetTrajectoryLevel at Level: " << Level << std::endl;
+  fTrajectoryLevels[Level].Lock();
+  std::cout << "Locked" << std::endl;
+  if (fTrajectoryLevels[Level].GetNPoints() == 0) {
+    std::cout << "NPoints zero, calculate" << std::endl;
+    fTrajectoryInterpolated.FillTParticleTrajectoryPointsLevel(fTrajectoryLevels[Level], Level);
+    std::cout << "Finised calculation" << std::endl;
+  }
+  fTrajectoryLevels[Level].UnLock();
+  std::cout << "Unlocked" << std::endl;
+
+  return fTrajectoryLevels[Level];
+}
+
+
+
+
+void TParticleA::Clear ()
+{
+  // Clear particle data and trajectories
+
+  fTrajectory.Clear();
+  fTrajectoryInterpolated.Clear();
+  fTrajectoryLevels.clear();
+}
+
+
+
+
+
+
+
+
 
 
 
