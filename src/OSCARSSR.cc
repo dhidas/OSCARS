@@ -952,19 +952,8 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
   // Re-Reverse the trajectory to be in the proper time order
   ParticleTrajectory.ReverseArrays();
 
-
-
-  //std::cout << "Testing TPTI.FillTParticleTrajectoryPointsLevel" << std::endl;
-  //TParticleTrajectoryInterpolated TPTI(ParticleTrajectory);
-  //TParticleTrajectoryPoints TPTP;
-  //TPTI.FillTParticleTrajectoryPointsLevel(TPTP, 2);
-  //ParticleTrajectory.Clear();
-  //TPTI.FillTParticleTrajectoryPointsLevel(ParticleTrajectory, 6);
-
   P.SetupTrajectoryInterpolated();
-  std::cout << "Tryign to get Level" << std::endl;
   P.GetTrajectoryLevel(5);
-  std::cout << "finshed Tryign to get Level" << std::endl;
 
   return;
 }
