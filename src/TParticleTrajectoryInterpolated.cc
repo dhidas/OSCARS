@@ -26,7 +26,6 @@ TParticleTrajectoryInterpolated::TParticleTrajectoryInterpolated (TParticleTraje
 {
   // Constructor
 
-  std::cout << "in constructor" << std::endl;
   // Number of points in inpt
   size_t const NPoints = TPTP.GetNPoints();
   if (NPoints < 2) {
@@ -34,18 +33,7 @@ TParticleTrajectoryInterpolated::TParticleTrajectoryInterpolated (TParticleTraje
     throw;
   }
 
-  double const DeltaT = TPTP.GetDeltaT();
-  fTStart = 0;
-  fTStop = fTStart + DeltaT * NPoints;
-
-  std::vector<double> T;
-  T.reserve(NPoints);
-  for (size_t i = 0; i != NPoints; ++i) {
-    T.push_back(DeltaT * (double) i);
-    //std::cout << "DeltaT * (double) i: " << DeltaT * (double) i << "  " << TPTP.GetX(i) << std::endl;
-  }
-
-  this->Set(T, TPTP.GetTrajectory());
+  this->Set(TPTP.GetTimePoints(), TPTP.GetTrajectory());
 }
 
 
@@ -69,20 +57,39 @@ TParticleTrajectoryInterpolated::~TParticleTrajectoryInterpolated ()
 
 
 
+void TParticleTrajectoryInterpolated::Set (TParticleTrajectoryPoints const& TPTP)
+{
+  // Check that there are at least two points
+  if (TPTP.GetNPoints() < 2) {
+    std::cerr << "ERROR: TParticleTrajectoryInterpolated::Set NPoints is too small" << std::endl;
+    throw;
+  }
+
+  // Set the interpolating structure
+  fP.Set(TPTP.GetTimePoints(), TPTP.GetTrajectory());
+
+  // Get the start and stop times (first and last).  These times will be "inclusive"
+  fTStart = TPTP.GetTStart();
+  fTStop  = TPTP.GetTStop();
+
+  return;
+}
+
+
+
+
 void TParticleTrajectoryInterpolated::Set (std::vector<double> const& T,
                                            std::vector<TParticleTrajectoryPoint> const& P)
 {
   // Check that there are at least two points and that the number of points is
   // the same as the number of time points
   if (T.size() < 2 || T.size() != P.size()) {
-    std::cerr << "T is too small" << std::endl;
+    std::cerr << "ERROR: TParticleTrajectoryInterpolated::Set NPoints is too small or T and P do not match" << std::endl;
     throw;
   }
 
-  std::cout << "trying to Set T, P" << std::endl;
   // Set the interpolating structure
   fP.Set(T, P);
-  std::cout << "done Set T, P" << std::endl;
 
   // Get the start and stop times (first and last).  These times will be "inclusive"
   fTStart = T.front();
@@ -152,8 +159,7 @@ void TParticleTrajectoryInterpolated::FillTParticleTrajectoryPointsLevel (TParti
 
   for (int i = 0; i < NPoints; ++i) {
     double const T = ThisTStart + ThisTSpacing * (double) i;
-    TPTP.AddPoint( this->GetTrajectoryPoint(T) );
-    std::cout << "Added point: T, P: " << T << "  " << this->GetTrajectoryPoint(T) << std::endl;
+    TPTP.AddPoint( this->GetTrajectoryPoint(T), T);
   }
 
   return;
@@ -182,7 +188,7 @@ void TParticleTrajectoryInterpolated::FillTParticleTrajectoryPoints (TParticleTr
 
   for (int i = 0; i < NPoints; ++i) {
     double const T = TStart + DeltaT * (double) i;
-    TPTP.AddPoint( this->GetTrajectoryPoint(T) );
+    TPTP.AddPoint( this->GetTrajectoryPoint(T), T );
   }
 
   return;
