@@ -706,7 +706,7 @@ TParticleA TParticleBeam::GetNewParticle (std::string const& IdealOrRandom)
     double const Beta = Gamma != 1 ? sqrt(1.0 - 1.0 / (Gamma * Gamma)) : 0;
 
     // Copy this particle and set ideal conditions
-    TParticleA NewParticle = (TParticleA) *this;
+    TParticleA NewParticle((TParticleA) *this);
     NewParticle.SetInitialParticleConditions(fX0, Beta * fU0, fT0);
     return NewParticle;
   }
@@ -733,6 +733,7 @@ TParticleA TParticleBeam::GetNewParticle ()
   double    ENew = fE0 + fSigmaEnergyGeV * gRandomA->Normal(); // correlated with BNew, not sure how to handle this yet
   if (ENew < TOSCARSSR::kgToGeV(this->GetM())) {
     std::cerr << "WARNING in TParticleBeam::GetNewParticle(): ENew < mc^2.  Setting to mc^2" << std::endl;
+    std::cerr << "  ENew fSigmaEnergyGeV: " << ENew << "  " << fSigmaEnergyGeV << std::endl;
     ENew = TOSCARSSR::kgToGeV(this->GetM());
   }
 
@@ -774,7 +775,7 @@ TParticleA TParticleBeam::GetNewParticle ()
 
   double    TNew = fT0;
 
-  TParticleA NewParticle = (TParticleA) *this;
+  TParticleA NewParticle((TParticleA) *this);
   NewParticle.SetInitialParticleConditions(XNew, BetaNew, TNew);
 
 
