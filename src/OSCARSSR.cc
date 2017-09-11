@@ -842,6 +842,7 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
 
   // Check that CTStart is not after T0 of particle
   if (this->GetCTStart() > P.GetT0()) {
+    std::cerr << "GetCTStart() P.GetT0(): " << this->GetCTStart() << " " << P.GetT0() << std::endl;
     throw std::out_of_range("start time is greater than T0");
   }
 
@@ -897,6 +898,7 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
     // This time
     double t = P.GetT0() + DeltaT * i;
 
+    std::cout << "t: " << t << std::endl;
 
     // UPDATE: dhidas dhidas dhidas
     if (fDriftVolumeContainer.IsInside(TVector3D(x[0], x[2], x[4]))) {
@@ -905,7 +907,7 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
       x[4] += DeltaT * x[5];
     } else {
       // Add this point to the trajectory
-      ParticleTrajectory.AddPoint(x[0], x[2], x[4], x[1] / TOSCARSSR::C(), x[3] / TOSCARSSR::C(), x[5] / TOSCARSSR::C(), dxdt[1] / TOSCARSSR::C(), dxdt[3] / TOSCARSSR::C(), dxdt[5] / TOSCARSSR::C());
+      ParticleTrajectory.AddPoint(x[0], x[2], x[4], x[1] / TOSCARSSR::C(), x[3] / TOSCARSSR::C(), x[5] / TOSCARSSR::C(), dxdt[1] / TOSCARSSR::C(), dxdt[3] / TOSCARSSR::C(), dxdt[5] / TOSCARSSR::C(), t);
 
       // Propogate
       (this->*fDerivativesFunction)(t, x, dxdt, P);
@@ -943,7 +945,7 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
       RK4(x, dxdt, N, t, DeltaTReversed, x, P);
 
       // Add the point to the trajectory
-      ParticleTrajectory.AddPoint(x[0], x[2], x[4], x[1] / TOSCARSSR::C(), x[3] / TOSCARSSR::C(), x[5] / TOSCARSSR::C(), dxdt[1] / TOSCARSSR::C(), dxdt[3] / TOSCARSSR::C(), dxdt[5] / TOSCARSSR::C());
+      ParticleTrajectory.AddPoint(x[0], x[2], x[4], x[1] / TOSCARSSR::C(), x[3] / TOSCARSSR::C(), x[5] / TOSCARSSR::C(), dxdt[1] / TOSCARSSR::C(), dxdt[3] / TOSCARSSR::C(), dxdt[5] / TOSCARSSR::C(), t);
     }
   }
 
@@ -957,8 +959,12 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
   //TParticleTrajectoryPoints TPTP;
   //TPTI.FillTParticleTrajectoryPointsLevel(TPTP, 2);
   //ParticleTrajectory.Clear();
-  //TPTI.FillTParticleTrajectoryPointsLevel(ParticleTrajectory, 12);
+  //TPTI.FillTParticleTrajectoryPointsLevel(ParticleTrajectory, 6);
 
+  P.SetupTrajectoryInterpolated();
+  std::cout << "Tryign to get Level" << std::endl;
+  P.GetTrajectoryLevel(5);
+  std::cout << "finshed Tryign to get Level" << std::endl;
 
   return;
 }
