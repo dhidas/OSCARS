@@ -772,12 +772,15 @@ void OSCARSSR::DerivativesE (double t, double x[], double dxdt[], TParticleA con
   // BField at this point
   TVector3D const E = this->GetE(x[0], x[2], x[4]);
 
+  double const QoverMTimesSqrtOneMinusBetaSquared = P.GetQ() / P.GetM() * sqrt(1. - (x[1]*x[1] + x[3]*x[3] + x[5]*x[5]) / (TOSCARSSR::C() * TOSCARSSR::C()));
+  double const BetaDotE = (x[1] * E.GetX() + x[3] * E.GetY() + x[5] * E.GetZ()) / TOSCARSSR::C();
+
   dxdt[0] = x[1];
-  dxdt[1] = P.GetQoverMGamma() * E.GetX();
-  dxdt[2] = x[3];                                                        
-  dxdt[3] = P.GetQoverMGamma() * E.GetY();
-  dxdt[4] = x[5];                                                        
-  dxdt[5] = P.GetQoverMGamma() * E.GetZ();
+  dxdt[1] = QoverMTimesSqrtOneMinusBetaSquared * (E.GetX() - x[1] * BetaDotE / TOSCARSSR::C());
+  dxdt[2] = x[3];                                          
+  dxdt[3] = QoverMTimesSqrtOneMinusBetaSquared * (E.GetY() - x[3] * BetaDotE / TOSCARSSR::C());
+  dxdt[4] = x[5];                                          
+  dxdt[5] = QoverMTimesSqrtOneMinusBetaSquared * (E.GetZ() - x[5] * BetaDotE / TOSCARSSR::C());
 
   return;
 }
@@ -829,12 +832,16 @@ void OSCARSSR::DerivativesEB (double t, double x[], double dxdt[], TParticleA co
   TVector3D const B = this->GetB(x[0], x[2], x[4]);
   TVector3D const E = this->GetE(x[0], x[2], x[4]);
 
+  double const QoverMTimesSqrtOneMinusBetaSquared = P.GetQ() / P.GetM() * sqrt(1. - (x[1]*x[1] + x[3]*x[3] + x[5]*x[5]) / (TOSCARSSR::C() * TOSCARSSR::C()));
+  double const BetaDotE = (x[1] * E.GetX() + x[3] * E.GetY() + x[5] * E.GetZ()) / TOSCARSSR::C();
+
   dxdt[0] = x[1];
-  dxdt[1] = P.GetQoverMGamma() * (E.GetX() - x[5] * B.GetY() + x[3] * B.GetZ());
-  dxdt[2] = x[3];                                                                                            
-  dxdt[3] = P.GetQoverMGamma() * (E.GetY() + x[5] * B.GetX() - x[1] * B.GetZ());
-  dxdt[4] = x[5];                                                                                            
-  dxdt[5] = P.GetQoverMGamma() * (E.GetZ() + x[1] * B.GetY() - x[3] * B.GetX());
+  dxdt[1] = QoverMTimesSqrtOneMinusBetaSquared * (E.GetX() - x[5] * B.GetY() + x[3] * B.GetZ() - x[1] * BetaDotE / TOSCARSSR::C());
+  dxdt[2] = x[3];                                                                          
+  dxdt[3] = QoverMTimesSqrtOneMinusBetaSquared * (E.GetY() + x[5] * B.GetX() - x[1] * B.GetZ() - x[3] * BetaDotE / TOSCARSSR::C());
+  dxdt[4] = x[5];                                                                          
+  dxdt[5] = QoverMTimesSqrtOneMinusBetaSquared * (E.GetZ() + x[1] * B.GetY() - x[3] * B.GetX() - x[5] * BetaDotE / TOSCARSSR::C());
+
 
   return;
 }
