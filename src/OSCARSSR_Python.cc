@@ -4492,7 +4492,7 @@ static PyObject* OSCARSSR_CalculateTotalPower (OSCARSSRObject* self)
 
 
 const char* DOC_OSCARSSR_CalculatePowerDensity = R"docstring(
-calculate_power_density(points [, normal, rotations, translation, nparticles, gpu, nthreads, ofile])
+calculate_power_density(points [, normal, rotations, translation, nparticles, gpu, nthreads, precision, max_level, ofile])
 
 Calculate the power density for each point in the list *points*.
 
@@ -4522,6 +4522,12 @@ gpu : int
 nthreads : int
     Number of threads to use
 
+precision : float
+    Calculation precision parameter (typically 0.01 which is 1%)
+
+max_level: int
+    Maximum "level" to us for trajectory in the calculation.  Level N corresponds to a total of 2**(N+2) trajectory points.  You cannot go beyond the internal maximum.  You are not guaranteed precision parameter is met if this is used.
+
 ofile : str
     Output file name
 
@@ -4542,6 +4548,8 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
   int         NParticles = 0;
   int         GPU = -1;
   int         NThreads = 0;
+  double      Precision = 0.01;
+  int         MaxLevel = 0;
   char const* OutFileName = "";
 
 
@@ -4552,10 +4560,12 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
                                  "nparticles",
                                  "gpu",
                                  "nthreads",
+                                 "precision",
+                                 "max_level",
                                  "ofile",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|iOOiiis",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|iOOiiidis",
                                    const_cast<char **>(kwlist),
                                    &List_Points,
                                    &NormalDirection,
@@ -4564,6 +4574,8 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
                                    &NParticles,
                                    &GPU,
                                    &NThreads,
+                                   &Precision,
+                                   &MaxLevel,
                                    &OutFileName)) {
     return NULL;
   }
@@ -4679,7 +4691,7 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
   bool const Directional = NormalDirection == 0 ? false : true;
 
   try {
-    self->obj->CalculatePowerDensity(Surface, PowerDensityContainer, Dim, Directional, NParticles, NThreads, GPU);
+    self->obj->CalculatePowerDensity(Surface, PowerDensityContainer, Dim, Directional, Precision, MaxLevel, NParticles, NThreads, GPU);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -4724,7 +4736,7 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
 
 
 const char* DOC_OSCARSSR_CalculatePowerDensityRectangle = R"docstring(
-calculate_power_density_rectangle(npoints [, plane, width, x0x1x2, rotations, translation, ofile, bofile, normal, nparticles, gpu, nthreads, dim])
+calculate_power_density_rectangle(npoints [, plane, width, x0x1x2, rotations, translation, ofile, bofile, normal, nparticles, gpu, nthreads, precision, max_level, dim])
 
 Calculate the power density in a rectangle either defined by three points, or by defining the plane the rectangle is in and the width, and then rotating and translating it to where it needs be.  The simplest is outlined in the first example below.  By default (dim=2) this returns a list whose position coordinates are in the local coordinate space x1 and x2 (*ie* they do not include the rotations and translation).  if dim=3 the coordinates in the return list are in absolute 3D space.
 
@@ -4770,6 +4782,12 @@ gpu : int
 nthreads : int
     Number of threads to use
 
+precision : float
+    Calculation precision parameter (typically 0.01 which is 1%)
+
+max_level: int
+    Maximum "level" to us for trajectory in the calculation.  Level N corresponds to a total of 2**(N+2) trajectory points.  You cannot go beyond the internal maximum.  You are not guaranteed precision parameter is met if this is used.
+
 dim : int
     Defaults to 2 where output is in the local plane coordinates X1 and X2.  If you want the return to be given in 3D set dim=3 which will return with X, Y, and Z in absolute coordinates.
 
@@ -4811,6 +4829,8 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
   int         GPU = -1;
   int         NThreads = 0;
   int         Dim = 2;
+  double      Precision = 0.01;
+  int         MaxLevel = 0;
   const char* OutFileNameText = "";
   const char* OutFileNameBinary = "";
 
@@ -4827,10 +4847,12 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
                                  "nparticles",
                                  "gpu",
                                  "nthreads",
+                                 "precision",
+                                 "max_level",
                                  "dim",
                                   NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|sOOOOssiiiii",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|sOOOOssiiiidii",
                                    const_cast<char **>(kwlist),
                                    &List_NPoints,
                                    &SurfacePlane,
@@ -4844,6 +4866,8 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
                                    &NParticles,
                                    &GPU,
                                    &NThreads,
+                                   &Precision,
+                                   &MaxLevel,
                                    &Dim)) {
     return NULL;
   }
@@ -4987,7 +5011,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
   // Actually calculate the spectrum
   bool const Directional = NormalDirection == 0 ? false : true;
   try {
-    self->obj->CalculatePowerDensity(Surface, PowerDensityContainer, Dim, Directional, NParticles, NThreads, GPU);
+    self->obj->CalculatePowerDensity(Surface, PowerDensityContainer, Dim, Directional, Precision, MaxLevel, NParticles, NThreads, GPU);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -5055,7 +5079,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
 
 
 const char* DOC_OSCARSSR_CalculatePowerDensityLine = R"docstring(
-calculate_power_density_line(x1, x2, normal_direction, npoints [, ofile, bofile, normal, nparticles, gpu, nthreads])
+calculate_power_density_line(x1, x2, normal_direction, npoints [, ofile, bofile, normal, nparticles, gpu, nthreads, precision, max_level])
 
 See the :doc:`MathematicalNotes` section for the expression used in this calculation.
 
@@ -5091,6 +5115,12 @@ gpu : int
 nthreads : int
     Number of threads to use
 
+precision : float
+    Calculation precision parameter (typically 0.01 which is 1%)
+
+max_level: int
+    Maximum "level" to us for trajectory in the calculation.  Level N corresponds to a total of 2**(N+2) trajectory points.  You cannot go beyond the internal maximum.  You are not guaranteed precision parameter is met if this is used.
+
 Returns
 -------
 power_density_1d : list
@@ -5110,6 +5140,8 @@ static PyObject* OSCARSSR_CalculatePowerDensityLine (OSCARSSRObject* self, PyObj
   int         NThreads = 0;
   const char* OutFileNameText = "";
   const char* OutFileNameBinary = "";
+  double      Precision = 0.01;
+  int         MaxLevel = 0;
   int         Dim = 1;
 
 
@@ -5122,10 +5154,12 @@ static PyObject* OSCARSSR_CalculatePowerDensityLine (OSCARSSRObject* self, PyObj
                                  "nparticles",
                                  "gpu",
                                  "nthreads",
+                                 "precision",
+                                 "max_level",
                                  "dim",
                                   NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OO|issiiiii",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OO|issiiiidii",
                                    const_cast<char **>(kwlist),
                                    &List_x1,
                                    &List_x2,
@@ -5136,6 +5170,8 @@ static PyObject* OSCARSSR_CalculatePowerDensityLine (OSCARSSRObject* self, PyObj
                                    &NParticles,
                                    &GPU,
                                    &NThreads,
+                                   &Precision,
+                                   &MaxLevel,
                                    &Dim
                                    )) {
     return NULL;
@@ -5224,7 +5260,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityLine (OSCARSSRObject* self, PyObj
   // Actually calculate the spectrum
   bool const Directional = NormalDirection == 0 ? false : true;
   try {
-    self->obj->CalculatePowerDensity(Surface, PowerDensityContainer, Dim, Directional, NParticles, NThreads, GPU);
+    self->obj->CalculatePowerDensity(Surface, PowerDensityContainer, Dim, Directional, Precision, MaxLevel, NParticles, NThreads, GPU);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -5327,6 +5363,12 @@ ngpu : int or list
     If ngpu is an int, use that number of gpus (if available).
     If ngpu is a list, the list should be a list of gpus you wish to use
 
+precision : float
+    Calculation precision parameter (typically 0.01 which is 1%)
+
+max_level: int
+    Maximum "level" to us for trajectory in the calculation.  Level N corresponds to a total of 2**(N+2) trajectory points.  You cannot go beyond the internal maximum.  You are not guaranteed precision parameter is met if this is used.
+
 ofile : str
     Output file name
 
@@ -5353,6 +5395,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
   int         GPU = -1;
   PyObject*   NGPU;
   double      Precision = 0.01;
+  int         MaxLevel = 0;
   char const* OutFileNameText = "";
   char const* OutFileNameBinary = "";
 
@@ -5367,11 +5410,12 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
                                  "gpu",
                                  "ngpu",
                                  "precision",
+                                 "max_level",
                                  "ofile",
                                  "bofile",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|dOiOOiiiOdss",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|dOiOOiiiOdiss",
                                    const_cast<char **>(kwlist),
                                    &Energy_eV,
                                    &List_Points,
@@ -5383,6 +5427,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
                                    &GPU,
                                    &NGPU,
                                    &Precision,
+                                   &MaxLevel,
                                    &OutFileNameText,
                                    &OutFileNameBinary)) {
     return NULL;
@@ -5498,7 +5543,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
   try {
     throw;
     // UPDATE: Must fix single flux to accept polarizaton and angle
-    self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, "all", 0, TVector3D(1, 0, 0), TVector3D(0, 1, 0), NParticles, NThreads, GPU, NumberOfGPUs, GPUVector, Precision, Dim);
+    self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, "all", 0, TVector3D(1, 0, 0), TVector3D(0, 1, 0), NParticles, NThreads, GPU, NumberOfGPUs, GPUVector, Precision, MaxLevel, Dim);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -5555,7 +5600,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
 
 
 const char* DOC_OSCARSSR_CalculateFluxRectangle = R"docstring(
-calculate_flux_rectangle(energy_eV, npoints [, plane, normal, dim, width, rotations, translation, x0x1x2, polarization, angle, horizontal_direction, propogation_direction, nparticles, nthreads, gpu, ngpu, precision, ofile, bofile])
+calculate_flux_rectangle(energy_eV, npoints [, plane, normal, dim, width, rotations, translation, x0x1x2, polarization, angle, horizontal_direction, propogation_direction, nparticles, nthreads, gpu, ngpu, precision, max_level, ofile, bofile])
 
 Calculate the flux density in a rectangle either defined by three points, or by defining the plane the rectangle is in and the width, and then rotating and translating it to where it needs be.  The simplest is outlined in the first example below.  By default (dim=2) this returns a list whose position coordinates are in the local coordinate space x1 and x2 (*ie* they do not include the rotations and translation).  if dim=3 the coordinates in the return list are in absolute 3D space.
 
@@ -5620,6 +5665,9 @@ ngpu : int or list
 precision : float
     Calculation precision parameter (typically 0.01 which is 1%)
 
+max_level: int
+    Maximum "level" to us for trajectory in the calculation.  Level N corresponds to a total of 2**(N+2) trajectory points.  You cannot go beyond the internal maximum.  You are not guaranteed precision parameter is met if this is used.
+
 ofile : str
     Output file name
 
@@ -5657,6 +5705,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   int         GPU = -1;
   PyObject*   NGPU = 0x0;
   double      Precision = 0.01;
+  int         MaxLevel = 0;
   char const* OutFileNameText = "";
   char const* OutFileNameBinary = "";
 
@@ -5679,11 +5728,12 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
                                  "gpu",
                                  "ngpu",
                                  "precision",
+                                 "max_level",
                                  "ofile",
                                  "bofile",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dO|siiOOOOsdOOiiiOdss",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dO|siiOOOOsdOOiiiOdiss",
                                    const_cast<char **>(kwlist),
                                    &Energy_eV,
                                    &List_NPoints,
@@ -5703,6 +5753,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
                                    &GPU,
                                    &NGPU,
                                    &Precision,
+                                   &MaxLevel,
                                    &OutFileNameText,
                                    &OutFileNameBinary)) {
     return NULL;
@@ -5889,7 +5940,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   //bool const Directional = NormalDirection == 0 ? false : true;
 
   try {
-    self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NParticles, NThreads, GPU, NumberOfGPUs, GPUVector, Precision, Dim);
+    self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NParticles, NThreads, GPU, NumberOfGPUs, GPUVector, Precision, MaxLevel, Dim);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;

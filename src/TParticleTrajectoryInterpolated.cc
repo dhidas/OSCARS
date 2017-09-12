@@ -125,7 +125,7 @@ TParticleTrajectoryPoint TParticleTrajectoryInterpolated::GetTrajectoryPoint (do
 
 
 void TParticleTrajectoryInterpolated::FillTParticleTrajectoryPointsLevel (TParticleTrajectoryPoints& TPTP,
-                                                                          int const Level)
+                                                                          int const Level) const
 {
   // Fill a TParticleTrajectoryPoints object with trajectory points from this interpolation
 
@@ -165,10 +165,27 @@ void TParticleTrajectoryInterpolated::FillTParticleTrajectoryPointsLevel (TParti
   return;
 }
 
+
+
+
+
 void TParticleTrajectoryInterpolated::FillTParticleTrajectoryPoints (TParticleTrajectoryPoints& TPTP,
+                                                                     int    const NPoints) const
+{
+  // Fill a TParticleTrajectoryPoints object with trajectory points from this interpolation
+
+  this->FillTParticleTrajectoryPoints(TPTP, NPoints, fTStart, fTStop);
+
+  return;
+}
+
+
+
+
+void TParticleTrajectoryInterpolated::FillTParticleTrajectoryPoints (TParticleTrajectoryPoints& TPTP,
+                                                                     int    const NPoints,
                                                                      double const TStart,
-                                                                     double const TStop,
-                                                                     int    const NPoints)
+                                                                     double const TStop) const
 {
   // Fill a TParticleTrajectoryPoints object with trajectory points from this interpolation
 

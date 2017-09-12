@@ -41,12 +41,16 @@ class TParticleTrajectoryInterpolated
     void Clear ();
 
     void FillTParticleTrajectoryPointsLevel (TParticleTrajectoryPoints& TPTP,
-                                             int const Level);
+                                             int const Level) const;
+
 
     void FillTParticleTrajectoryPoints (TParticleTrajectoryPoints& TPTP,
+                                        int const NPoints) const;
+
+    void FillTParticleTrajectoryPoints (TParticleTrajectoryPoints& TPTP,
+                                        int const NPoints,
                                         double const TStart,
-                                        double const TStop,
-                                        int const NPoints);
+                                        double const TStop) const;
 
     int    GetNPointsInclusiveToLevel (int const Level) const;
     double GetDeltaTInclusiveToLevel  (int const Level) const;

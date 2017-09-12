@@ -256,17 +256,32 @@ class OSCARSSR
                                 TSurfacePoints const& Surface,
                                 T3DScalarContainer& PowerDensityContainer,
                                 bool const Directional,
+                                double const Precision,
+                                int    const MaxLevel,
                                 double const Weight);
 
     void CalculatePowerDensity (TSurfacePoints const& Surface,
                                 T3DScalarContainer& PowerDensityContainer,
                                 int const Dimension,
                                 bool const Directional,
+                                double const Precision,
+                                int    const MaxLevel,
                                 int const NParticles,
                                 int const NThreads,
                                 int const GPU);
 
     void CalculatePowerDensityPoints (TParticleA& Particle,
+                                      TSurfacePoints const& Surface,
+                                      T3DScalarContainer& PowerDensityContainer,
+                                      size_t const iFirst,
+                                      size_t const iLast,
+                                      bool& Done,
+                                      bool const Directional,
+                                      double const Precision,
+                                      int    const MaxLevel,
+                                      double const Weight);
+
+    void CalculatePowerDensityPointsOLD (TParticleA& Particle,
                                       TSurfacePoints const& Surface,
                                       T3DScalarContainer& PowerDensityContainer,
                                       size_t const iFirst,
@@ -280,12 +295,16 @@ class OSCARSSR
                                        T3DScalarContainer& PowerDensityContainer,
                                        int const NThreads,
                                        bool const Directional,
+                                       double const Precision,
+                                       int    const MaxLevel,
                                        double const Weight);
 
     void CalculatePowerDensityGPU (TParticleA& Particle,
                                    TSurfacePoints const& Surface,
                                    T3DScalarContainer& PowerDensityContainer,
                                    bool const Directional,
+                                   double const Precision,
+                                   int    const MaxLevel,
                                    double const Weight);
 
     double CalculateTotalPower ();
@@ -302,6 +321,7 @@ class OSCARSSR
                         TVector3D const& HorizontalDirection,
                         TVector3D const& PropogationDirection,
                         double const Precision,
+                        int    const MaxLevel,
                         double const Weight);
 
     void CalculateFlux (TSurfacePoints const& Surface,
@@ -317,20 +337,8 @@ class OSCARSSR
                         int const NGPU = -1,
                         std::vector<int> VGPU = std::vector<int>(),
                         double const Precision = 0.01,
+                        int    const MaxLevel = 0,
                         int const Dimension = 3);
-
-    void CalculateFluxPointsORIG (TParticleA& Particle,
-                              TSurfacePoints const& Surface,
-                              double const Energy_eV,
-                              T3DScalarContainer& FluxContainer,
-                              size_t const iFirst,
-                              size_t const iLast,
-                              bool& Done,
-                              std::string const& Polarization = "all",
-                              double const Angle = 0,
-                              TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
-                              TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
-                              double const Weight = 1);
 
     void CalculateFluxPoints (TParticleA& Particle,
                               TSurfacePoints const& Surface,
@@ -344,20 +352,7 @@ class OSCARSSR
                               TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
                               TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
                               double const Precision = 0.01,
-                              double const Weight = 1);
-
-    void CalculateFluxPointsLevels (TParticleA& Particle,
-                              TSurfacePoints const& Surface,
-                              double const Energy_eV,
-                              T3DScalarContainer& FluxContainer,
-                              size_t const iFirst,
-                              size_t const iLast,
-                              bool& Done,
-                              std::string const& Polarization = "all",
-                              double const Angle = 0,
-                              TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
-                              TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
-                              double const Precision = 0.01,
+                              int    const MaxLevel = 0,
                               double const Weight = 1);
 
     void CalculateFluxThreads (TParticleA& Particle,
@@ -370,6 +365,7 @@ class OSCARSSR
                                TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
                                int const NThreads = 0,
                                double const Precision = 0.01,
+                               int    const MaxLevel = 0,
                                double const Weight = 1);
 
     void CalculateFluxGPU (TSurfacePoints const& Surface,
@@ -381,7 +377,8 @@ class OSCARSSR
                            TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
                            int const NParticles = 0,
                            std::vector<int> GPUVector = std::vector<int>(),
-                           double const Precision = 0.01);
+                           double const Precision = 0.01,
+                           int    const MaxLevel = 0);
 
     // Electric Field Calculations
     void CalculateElectricFieldTimeDomain (TVector3D const& Observer, T3DScalarContainer&);
