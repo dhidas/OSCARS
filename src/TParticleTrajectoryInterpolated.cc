@@ -147,7 +147,7 @@ void TParticleTrajectoryInterpolated::FillTParticleTrajectoryPointsLevel (TParti
   double const ThisTSpacing = (fTStop - fTStart) / pow(2., Level);
 
   // DeltaT including all points up to and including this level
-  double const DeltaTAllLevels = Offset;
+  //double const DeltaTAllLevels = (fTStop - fTStart) / pow(2., Level + 1);
 
 
 

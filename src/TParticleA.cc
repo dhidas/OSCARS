@@ -7,7 +7,6 @@
 ////////////////////////////////////////////////////////////////////
 
 #include "TParticleA.h"
-#include "TOSCARSSR.h"
 
 #include <algorithm>
 #include <cmath>
@@ -17,6 +16,8 @@
 TParticleA::TParticleA ()
 {
   // Default constructor
+  fTrajectoryLevels.resize(TParticleA::kMaxTrajectoryLevel + 1);
+  fTrajectoryLevelComplete.resize(TParticleA::kMaxTrajectoryLevel + 1, false);
 }
 
 
@@ -26,6 +27,8 @@ TParticleA::TParticleA (std::string const& Type)
 {
   // Constructor.  This requires a valid type name
   this->SetParticleType(Type);
+  fTrajectoryLevels.resize(TParticleA::kMaxTrajectoryLevel + 1);
+  fTrajectoryLevelComplete.resize(TParticleA::kMaxTrajectoryLevel + 1, false);
 }
 
 
@@ -40,6 +43,8 @@ TParticleA::TParticleA (std::string const& Type, TVector3D const& X0, TVector3D 
   this->SetX0(X0);
   this->SetB0(B0);
   this->SetT0(T0);
+  fTrajectoryLevels.resize(TParticleA::kMaxTrajectoryLevel + 1);
+  fTrajectoryLevelComplete.resize(TParticleA::kMaxTrajectoryLevel + 1, false);
 
   // Set the "gamma" variable
   SetGamma();
@@ -383,18 +388,26 @@ TParticleTrajectoryPoints const& TParticleA::GetTrajectoryLevel (int const Level
   //
   // See also: TrajectoryLevelExists and TrajectoryLevelComplete
 
-  std::cout << "in TParticleA::GetTrajectoryLevel at Level: " << Level << std::endl;
+  if (fTrajectoryLevelComplete[Level]) {
+    return fTrajectoryLevels[Level];
+  }
+
   fTrajectoryLevels[Level].Lock();
-  std::cout << "Locked" << std::endl;
   if (fTrajectoryLevels[Level].GetNPoints() == 0) {
-    std::cout << "NPoints zero, calculate" << std::endl;
     fTrajectoryInterpolated.FillTParticleTrajectoryPointsLevel(fTrajectoryLevels[Level], Level);
-    std::cout << "Finised calculation" << std::endl;
+    fTrajectoryLevelComplete[Level] = true;
   }
   fTrajectoryLevels[Level].UnLock();
-  std::cout << "Unlocked" << std::endl;
 
   return fTrajectoryLevels[Level];
+}
+
+
+
+
+TParticleTrajectoryInterpolated const& TParticleA::GetTrajectoryInterpolated () const
+{
+  return fTrajectoryInterpolated;
 }
 
 
@@ -407,6 +420,7 @@ void TParticleA::Clear ()
   fTrajectory.Clear();
   fTrajectoryInterpolated.Clear();
   fTrajectoryLevels.clear();
+  fTrajectoryLevelComplete.clear();
 }
 
 

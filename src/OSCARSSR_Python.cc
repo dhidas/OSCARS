@@ -5352,6 +5352,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
   int         NThreads = 0;
   int         GPU = -1;
   PyObject*   NGPU;
+  double      Precision = 0.01;
   char const* OutFileNameText = "";
   char const* OutFileNameBinary = "";
 
@@ -5365,11 +5366,12 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
                                  "nthreads",
                                  "gpu",
                                  "ngpu",
+                                 "precision",
                                  "ofile",
                                  "bofile",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|dOiOOiiiOss",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|dOiOOiiiOdss",
                                    const_cast<char **>(kwlist),
                                    &Energy_eV,
                                    &List_Points,
@@ -5380,6 +5382,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
                                    &NThreads,
                                    &GPU,
                                    &NGPU,
+                                   &Precision,
                                    &OutFileNameText,
                                    &OutFileNameBinary)) {
     return NULL;
@@ -5495,7 +5498,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
   try {
     throw;
     // UPDATE: Must fix single flux to accept polarizaton and angle
-    self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, "all", 0, TVector3D(1, 0, 0), TVector3D(0, 1, 0), NParticles, NThreads, GPU, NumberOfGPUs, GPUVector, Dim);
+    self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, "all", 0, TVector3D(1, 0, 0), TVector3D(0, 1, 0), NParticles, NThreads, GPU, NumberOfGPUs, GPUVector, Precision, Dim);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -5552,7 +5555,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
 
 
 const char* DOC_OSCARSSR_CalculateFluxRectangle = R"docstring(
-calculate_flux_rectangle(energy_eV, npoints [, plane, normal, dim, width, rotations, translation, x0x1x2, polarization, angle, horizontal_direction, propogation_direction, nparticles, nthreads, gpu, ngpu, ofile, bofile])
+calculate_flux_rectangle(energy_eV, npoints [, plane, normal, dim, width, rotations, translation, x0x1x2, polarization, angle, horizontal_direction, propogation_direction, nparticles, nthreads, gpu, ngpu, precision, ofile, bofile])
 
 Calculate the flux density in a rectangle either defined by three points, or by defining the plane the rectangle is in and the width, and then rotating and translating it to where it needs be.  The simplest is outlined in the first example below.  By default (dim=2) this returns a list whose position coordinates are in the local coordinate space x1 and x2 (*ie* they do not include the rotations and translation).  if dim=3 the coordinates in the return list are in absolute 3D space.
 
@@ -5614,6 +5617,8 @@ ngpu : int or list
     If ngpu is an int, use that number of gpus (if available).
     If ngpu is a list, the list should be a list of gpus you wish to use
 
+precision : float
+    Calculation precision parameter (typically 0.01 which is 1%)
 
 ofile : str
     Output file name
@@ -5651,6 +5656,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   int         NThreads = 0;
   int         GPU = -1;
   PyObject*   NGPU = 0x0;
+  double      Precision = 0.01;
   char const* OutFileNameText = "";
   char const* OutFileNameBinary = "";
 
@@ -5672,11 +5678,12 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
                                  "nthreads",
                                  "gpu",
                                  "ngpu",
+                                 "precision",
                                  "ofile",
                                  "bofile",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dO|siiOOOOsdOOiiiOss",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dO|siiOOOOsdOOiiiOdss",
                                    const_cast<char **>(kwlist),
                                    &Energy_eV,
                                    &List_NPoints,
@@ -5695,6 +5702,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
                                    &NThreads,
                                    &GPU,
                                    &NGPU,
+                                   &Precision,
                                    &OutFileNameText,
                                    &OutFileNameBinary)) {
     return NULL;
@@ -5881,7 +5889,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   //bool const Directional = NormalDirection == 0 ? false : true;
 
   try {
-    self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NParticles, NThreads, GPU, NumberOfGPUs, GPUVector, Dim);
+    self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NParticles, NThreads, GPU, NumberOfGPUs, GPUVector, Precision, Dim);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;

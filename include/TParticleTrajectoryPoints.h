@@ -57,13 +57,11 @@ class TParticleTrajectoryPoints
     void Clear ();
 
     TParticleTrajectoryPoints& operator=( const TParticleTrajectoryPoints& other ) {
-      std::cout << "TParticleTrajectoryPoints& operator=( const TParticleTrajectoryPoints& other )" << std::endl;
       fLock_mutex = new std::mutex();
       return *this;
     }
 
     TParticleTrajectoryPoints& operator=( TParticleTrajectoryPoints& rhs ) {
-      std::cout << "TParticleTrajectoryPoints& operator=( TParticleTrajectoryPoints& other )" << std::endl;
       fLock_mutex = new std::mutex();
       return *this;
     };
