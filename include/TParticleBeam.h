@@ -149,11 +149,13 @@ class TParticleBeam : public TParticleA
     // Types of beam distributions supported
     enum TParticleBeam_BeamDistribution {
       kBeamDistribution_None,
+      kBeamDistribution_Filament,
       kBeamDistribution_Gaussian,
       kBeamDistribution_KV
     };
 
     void SetBeamDistribution (TParticleBeam_BeamDistribution const D);
+    TParticleBeam_BeamDistribution const GetBeamDistribution () const;
 
     std::string GetBeamDistributionName () const;
 

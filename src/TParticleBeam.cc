@@ -144,9 +144,9 @@ void TParticleBeam::SetPredefinedBeam (std::string const& Beam)
     this->SetEmittance(TVector2D(0.55e-9, 0.008e-9));
     this->SetTwissLatticeReference(TVector3D(0, 0, 0));
     this->SetTwissBetaAlpha(TVector2D(1.5, 0.8), TVector2D(0, 0));
-    this->SetSigmaEnergyGeV(3. * 0.001);
+    this->SetSigmaEnergyGeV(0);
     this->SetVerticalDirection(TVector3D(0, 1, 0));
-    this->SetBeamDistribution(kBeamDistribution_None);
+    this->SetBeamDistribution(kBeamDistribution_Filament);
 
   } else if (BeamU == "NSLSII-LONGSTRAIGHT" || BeamU == "NSLS2-LONGSTRAIGHT" || BeamU == "NSLS-II-LONGSTRAIGHT") {
     this->SetParticleType("electron");
@@ -727,6 +727,11 @@ TParticleA TParticleBeam::GetNewParticle ()
   // UPDATE: not just below, but all
   this->GetTrajectory().Clear();
 
+  // If this is a filament beam return the ideal case
+  if (this->GetBeamDistribution() == kBeamDistribution_Filament) {
+    return this->GetNewParticle("ideal");
+  }
+
   // UPDATE: Needs rand for twiss, or other beam configurations...
   // UPDATE: Could also take a python function
 
@@ -791,6 +796,15 @@ void TParticleBeam::SetBeamDistribution (TParticleBeam_BeamDistribution const D)
   // Set the beam distribution type
   fBeamDistribution = D;
   return;
+}
+
+
+
+
+
+TParticleBeam::TParticleBeam_BeamDistribution const TParticleBeam::GetBeamDistribution () const
+{
+  return fBeamDistribution;
 }
 
 
