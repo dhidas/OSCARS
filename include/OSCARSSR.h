@@ -328,6 +328,7 @@ class OSCARSSR
                         TVector3D const& PropogationDirection,
                         double const Precision,
                         int    const MaxLevel,
+                        int    const MaxLevelExtended,
                         double const Weight);
 
     void CalculateFlux (TSurfacePoints const& Surface,
@@ -344,6 +345,7 @@ class OSCARSSR
                         std::vector<int> VGPU = std::vector<int>(),
                         double const Precision = 0.01,
                         int    const MaxLevel = -1,
+                        int    const MaxLevelExtended = 0,
                         int const Dimension = 3);
 
     void CalculateFluxPoints (TParticleA& Particle,
@@ -359,6 +361,7 @@ class OSCARSSR
                               TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
                               double const Precision = 0.01,
                               int    const MaxLevel = -1,
+                              int    const MaxLevelExtended = 0,
                               double const Weight = 1);
 
     void CalculateFluxThreads (TParticleA& Particle,
@@ -372,6 +375,7 @@ class OSCARSSR
                                int const NThreads = 0,
                                double const Precision = 0.01,
                                int    const MaxLevel = -1,
+                               int    const MaxLevelExtended = 0,
                                double const Weight = 1);
 
     void CalculateFluxGPU (TSurfacePoints const& Surface,
@@ -384,7 +388,8 @@ class OSCARSSR
                            int const NParticles = 0,
                            std::vector<int> GPUVector = std::vector<int>(),
                            double const Precision = 0.01,
-                           int    const MaxLevel = -1);
+                           int    const MaxLevel = -1,
+                           int    const MaxLevelExtended = 0);
 
     // Electric Field Calculations
     void CalculateElectricFieldTimeDomain (TVector3D const& Observer, T3DScalarContainer&);

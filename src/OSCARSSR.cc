@@ -2359,6 +2359,7 @@ void OSCARSSR::CalculateFlux (TParticleA& Particle,
                               TVector3D const& PropogationDirection,
                               double const Precision,
                               int    const MaxLevel,
+                              int    const MaxLevelExtended,
                               double const Weight)
 {
   // Calculates the single particle flux
@@ -2386,6 +2387,7 @@ void OSCARSSR::CalculateFlux (TParticleA& Particle,
                       PropogationDirection,
                       Precision,
                       MaxLevel,
+                      MaxLevelExtended,
                       Weight);
 
   return;
@@ -2409,6 +2411,7 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
                               std::vector<int> VGPU,
                               double const Precision,
                               int    const MaxLevel,
+                              int    const MaxLevelExtended,
                               int const Dimension)
 {
   // Calculate flux on surface
@@ -2473,7 +2476,8 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
                      NParticles,
                      GPUVector,
                      Precision,
-                     MaxLevel);
+                     MaxLevel,
+                     MaxLevelExtended);
   } else {
     if (NParticles == 0) {
       if (NThreadsToUse == 1) {
@@ -2487,6 +2491,7 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
                             PropogationDirection,
                             Precision,
                             MaxLevel,
+                            MaxLevelExtended,
                             1);
       } else {
         this->CalculateFluxThreads(fParticle,
@@ -2500,6 +2505,7 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
                                    NThreadsToUse,
                                    Precision,
                                    MaxLevel,
+                                   MaxLevelExtended,
                                    1);
       }
     } else {
@@ -2523,6 +2529,7 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
                               PropogationDirection,
                               Precision,
                               MaxLevel,
+                              MaxLevelExtended,
                               Weight);
         } else {
           this->CalculateFluxThreads(fParticle,
@@ -2536,6 +2543,7 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
                                      NThreadsToUse,
                                      Precision,
                                      MaxLevel,
+                                     MaxLevelExtended,
                                      Weight);
         }
       }
@@ -2564,6 +2572,7 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
                                     TVector3D const& PropogationDirection,
                                     double const Precision,
                                     int    const MaxLevel,
+                                    int    const MaxLevelExtended,
                                     double const Weight)
 {
   // Calculates the single particle flux at a given observation point
@@ -2582,7 +2591,8 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
   }
 
   // Set the level to stop at if requested, but not above the hard limit
-  int const LevelStop = MaxLevel > 0  && MaxLevel <= TParticleA::kMaxTrajectoryLevel ? MaxLevel : TParticleA::kMaxTrajectoryLevel;
+  int const LevelStopMemory = MaxLevel >= 0  && MaxLevel <= TParticleA::kMaxTrajectoryLevel ? MaxLevel : TParticleA::kMaxTrajectoryLevel;
+  int const LevelStopWithExtended = MaxLevelExtended > LevelStopMemory ? MaxLevelExtended : LevelStopMemory;
 
   // Constant C0 for calculation
   double const C0 = Particle.GetQ() / (TOSCARSSR::FourPi() * TOSCARSSR::C() * TOSCARSSR::Epsilon0() * TOSCARSSR::Sqrt2Pi());
@@ -2602,6 +2612,9 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
   // Angular frequency
   double const Omega = TOSCARSSR::EvToAngularFrequency(Energy_eV);;
 
+  // Extended trajectory (not using memory for storage of arrays
+  TParticleTrajectoryInterpolatedPoints TE;
+
   // Loop over all points in the spectrum container
   for (size_t i = iFirst; i <= iLast; ++i) {
 
@@ -2618,27 +2631,31 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
     double MaxDPhase = 0;
     int    LastLevel = 0;
 
-    for (int iLevel = 0; iLevel <= LevelStop; ++iLevel) {
+    for (int iLevel = 0; iLevel <= LevelStopWithExtended; ++iLevel) {
       LastLevel = iLevel;
 
-      // Grab the Trajectory
-      TParticleTrajectoryPoints const& T = Particle.GetTrajectoryLevel(iLevel);
-
-      // Time step.  Expecting it to be constant throughout calculation
-      double const DeltaT = T.GetDeltaT();
+      // Grab the Trajectory (using memory arrays) if below level threshold, else set NULL
+      TParticleTrajectoryPoints const& TM = Particle.GetTrajectoryLevel(iLevel <= LevelStopMemory ? iLevel : 0);
+      if (iLevel > LevelStopMemory) {
+        TE = Particle.GetTrajectoryExtendedLevel(iLevel);
+      }
 
       // Number of points in the trajectory
-      size_t const NTPoints = T.GetNPoints();
+      size_t const NTPoints = iLevel <= LevelStopMemory ? TM.GetNPoints() : TE.GetNPoints();
+
 
       MaxDPhase = 0;
       // Loop over trajectory points
       for (int iT = 0; iT != NTPoints; ++iT) {
 
+        TParticleTrajectoryPoint const& PP = (iLevel <= LevelStopMemory ? TM.GetPoint(iT) : TE.GetTrajectoryPoint(iT));
+
         // Get position, Beta, and Acceleration (over c)
-        TVector3D const& X = T.GetX(iT);
-        TVector3D const& B = T.GetB(iT);
-        TVector3D const& AoverC = T.GetAoverC(iT);
-        double    const  Time = T.GetT(iT);
+        TVector3D const& X = PP.GetX();
+        TVector3D const& B = PP.GetB();
+        TVector3D const& AoverC = PP.GetAoverC();
+        double    const  Time = iLevel <= LevelStopMemory ? TM.GetT(iT) : TE.GetT(iT);
+
 
         // Define R and unit vector in direction of R, and D (distance to observer)
         TVector3D const R = ObservationPoint - X;
@@ -2726,6 +2743,7 @@ void OSCARSSR::CalculateFluxThreads (TParticleA& Particle,
                                      int const NThreads,
                                      double const Precision,
                                      int    const MaxLevel,
+                                     int    const MaxLevelExtended,
                                      double const Weight)
 {
   // Calculates the single particle flux on a surface
@@ -2782,6 +2800,7 @@ void OSCARSSR::CalculateFluxThreads (TParticleA& Particle,
                                   PropogationDirection,
                                   Precision,
                                   MaxLevel,
+                                  MaxLevelExtended,
                                   Weight));
   }
 
@@ -2833,7 +2852,8 @@ void OSCARSSR::CalculateFluxGPU (TSurfacePoints const& Surface,
                                  int const NParticles,
                                  std::vector<int> GPUVector,
                                  double const Precision,
-                                 int    const MaxLevel)
+                                 int    const MaxLevel,
+                                 int    const MaxLevelExtended)
 {
   // If you compile for Cuda use the GPU in this function, else throw
 
