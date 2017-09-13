@@ -4182,7 +4182,7 @@ static PyObject* OSCARSSR_GetTrajectory (OSCARSSRObject* self)
 
 
 const char* DOC_OSCARSSR_CalculateSpectrum = R"docstring(
-calculate_spectrum(obs [, npoints, energy_range_eV, energy_points_eV, points_eV, polarization, angle, horizontal_direction, propogation_direction, nparticles, nthreads, gpu, ofile, bofile])
+calculate_spectrum(obs [, npoints, energy_range_eV, energy_points_eV, points_eV, polarization, angle, horizontal_direction, propogation_direction, precision, max_level, nparticles, nthreads, gpu, ofile, bofile])
 
 Calculate the spectrum given a point in space, the range in energy, and the number of points.  The calculation uses the current particle and its initial conditions.  If the trajectory has not been calculated it is calculated first.  The units of this calculation are [:math:`photons / mm^2 / 0.1% bw / s`]
 
@@ -4212,6 +4212,12 @@ horizontal_direction : list
 
 vertical_direction : list
     Same as horizontal_direction but the vertical direction
+
+precision : float
+    Calculation precision parameter (typically 0.01 which is 1%)
+
+max_level: int
+    Maximum "level" to us for trajectory in the calculation.  Level N corresponds to a total of 2**(N+2) trajectory points.  You cannot go beyond the internal maximum.  You are not guaranteed precision parameter is met if this is used.
 
 angle : float
     Only used if polarization='linear' is specified.  The 'angle' is that from the horizontal_direction for the polarization directino you are interested in
@@ -4255,6 +4261,8 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
   double      Angle                     = 0;
   PyObject*   List_HorizontalDirection  = PyList_New(0);
   PyObject*   List_PropogationDirection = PyList_New(0);
+  double      Precision                 = 0.01;
+  int         MaxLevel                  = 0;
   int         NParticles                = 0;
   int         NThreads                  = 0;
   int         GPU                       = -1;
@@ -4271,6 +4279,8 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
                                  "angle",
                                  "horizontal_direction",
                                  "propogation_direction",
+                                 "precision",
+                                 "max_level",
                                  "nparticles",
                                  "nthreads",
                                  "gpu",
@@ -4279,7 +4289,7 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
                                  NULL};
 
   // Parse inputs
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|iOOOsdOOiiiss",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|iOOOsdOOdiiiiss",
                                    const_cast<char **>(kwlist),
                                    &List_Obs,
                                    &NPoints,
@@ -4290,6 +4300,8 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
                                    &Angle,
                                    &List_HorizontalDirection,
                                    &List_PropogationDirection,
+                                   &Precision,
+                                   &MaxLevel,
                                    &NParticles,
                                    &NThreads,
                                    &GPU,
@@ -4405,7 +4417,7 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
 
   // Actually calculate the spectrum
   try {
-    self->obj->CalculateSpectrum(Obs, SpectrumContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NParticles, NThreads, GPU);
+    self->obj->CalculateSpectrum(Obs, SpectrumContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NParticles, NThreads, GPU, -1, std::vector<int>(), Precision, MaxLevel);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;

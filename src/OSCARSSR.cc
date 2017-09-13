@@ -1181,6 +1181,8 @@ void OSCARSSR::CalculateSpectrum (TParticleA& Particle,
                                   double const Angle,
                                   TVector3D const& HorizontalDirection,
                                   TVector3D const& PropogationDirection,
+                                  double const Precision,
+                                  int    const MaxLevel,
                                   double const Weight)
 {
   // Calculates the single particle spectrum at a given observation point
@@ -1196,19 +1198,19 @@ void OSCARSSR::CalculateSpectrum (TParticleA& Particle,
 
   // Extra inpts for calculation
   bool Done = false;
-  size_t const iFirst = 0;
-  size_t const iLast = Spectrum.GetNPoints() - 1;
 
   this->CalculateSpectrumPoints(Particle,
                                 ObservationPoint,
                                 Spectrum,
-                                iFirst,
-                                iLast,
+                                0,
+                                1,
                                 Done,
                                 Polarization,
                                 Angle,
                                 HorizontalDirection,
                                 PropogationDirection,
+                                Precision,
+                                MaxLevel,
                                 Weight);
 
   return;
@@ -1228,7 +1230,9 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
                                   int const NThreads,
                                   int const GPU,
                                   int const NGPU,
-                                  std::vector<int> VGPU)
+                                  std::vector<int> VGPU,
+                                  double const Precision,
+                                  int    const MaxLevel)
 {
   // Calculate the spectrum at an observaton point.
   // THIS is the ENTRY POINT typically
@@ -1277,7 +1281,9 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
                                HorizontalDirection,
                                PropogationDirection,
                                NParticles,
-                               GPUVector);
+                               GPUVector,
+                               Precision,
+                               MaxLevel);
   } else {
     if (NParticles == 0) {
       if (NThreadsToUse == 1) {
@@ -1288,6 +1294,8 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
                                 Angle,
                                 HorizontalDirection,
                                 PropogationDirection,
+                                Precision,
+                                MaxLevel,
                                 1);
       } else {
         this->CalculateSpectrumThreads(fParticle,
@@ -1298,6 +1306,8 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
                                        Angle,
                                        HorizontalDirection,
                                        PropogationDirection,
+                                       Precision,
+                                       MaxLevel,
                                        1);
       }
     } else {
@@ -1318,6 +1328,8 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
                                   Angle,
                                   HorizontalDirection,
                                   PropogationDirection,
+                                  Precision,
+                                  MaxLevel,
                                   Weight);
         } else {
           this->CalculateSpectrumThreads(fParticle,
@@ -1328,6 +1340,8 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
                                          Angle,
                                          HorizontalDirection,
                                          PropogationDirection,
+                                         Precision,
+                                         MaxLevel,
                                          Weight);
         }
       }
@@ -1345,13 +1359,15 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
 void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
                                         TVector3D const& ObservationPoint,
                                         TSpectrumContainer& Spectrum,
-                                        size_t const iFirst,
-                                        size_t const iLast,
+                                        size_t const iThread,
+                                        size_t const NThreads,
                                         bool& Done,
                                         std::string const& Polarization,
                                         double const Angle,
                                         TVector3D const& HorizontalDirection,
                                         TVector3D const& PropogationDirection,
+                                        double const Precision,
+                                        int    const MaxLevel,
                                         double const Weight)
 {
   // Calculates the single particle spectrum at a given observation point
@@ -1367,23 +1383,19 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
     throw std::out_of_range("no particle defined");
   }
 
-  // Grab the Trajectory
-  TParticleTrajectoryPoints& T = Particle.GetTrajectory();
-
-  // Time step.  Expecting it to be constant throughout calculation
-  double const DeltaT = T.GetDeltaT();
-
-  // Number of points in the trajectory
-  size_t const NTPoints = T.GetNPoints();
-
-  // Make sure there is a trajectory
-  if (NTPoints < 1) {
-    throw std::length_error("no points in trajectory.  Is particle or beam defined?");
+  // Check you are not requesting a level above the maximum
+  if (MaxLevel > TParticleA::kMaxTrajectoryLevel) {
+    std::cerr << "WARNING: MaxLevel > TParticleA::kMaxTrajectoryLevel.  Setting MaxLevel to TParticleA::kMaxTrajectoryLevel" << std::endl;
   }
 
+  // Set the level to stop at if requested, but not above the hard limit
+  int const LevelStop = MaxLevel > 0  && MaxLevel <= TParticleA::kMaxTrajectoryLevel ? MaxLevel : TParticleA::kMaxTrajectoryLevel;
+
+  int const NSpectrumPoints = Spectrum.GetNPoints();
+
   // Check input spectrum range numbers
-  if (iLast < iFirst || iLast >= Spectrum.GetNPoints()) {
-    throw std::out_of_range("spectrum range is incorrect.  Please report this error.");
+  if (iThread >= NThreads) {
+    throw std::out_of_range("spectrum thread range is incorrect.  Please report this error.");
   }
 
   // Constant C0 for calculation
@@ -1403,47 +1415,79 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
 
 
   // Loop over all points in the spectrum container
-  for (size_t i = iFirst; i <= iLast; ++i) {
+  for (size_t i = iThread; i < NSpectrumPoints; i += NThreads) {
 
     // Angular frequency
     double const Omega = Spectrum.GetAngularFrequency(i);
 
-    // Constant for field calculation
-    std::complex<double> ICoverOmega = I * TOSCARSSR::C() / Omega;
-
-    // Constant for calculation
-    std::complex<double> const C1(0, C0 * Omega);
-
     // Electric field summation in frequency space
     TVector3DC SumE(0, 0, 0);
 
-    // Loop over all points in trajectory
-    for (size_t iT = 0; iT != NTPoints; ++iT) {
+    double ThisMag = -1;
+    double LastMag = -1;
+    double ThisPhase = -1;
+    double LastPhase = -1;
+    double MaxDPhase = 0;
+    int    LastLevel = 0;
 
-      // Particle position
-      TVector3D const& X = T.GetX(iT);
+    for (int iLevel = 0; iLevel <= LevelStop; ++iLevel) {
+      LastLevel = iLevel;
 
-      // Particle "Beta" (velocity over speed of light)
-      TVector3D const& B = T.GetB(iT);
+      // Grab the Trajectory
+      TParticleTrajectoryPoints const& T = Particle.GetTrajectoryLevel(iLevel);
 
-      // Vector pointing from particle to observer
-      TVector3D const R = ObservationPoint - X;
+      // Time step.  Expecting it to be constant throughout calculation
+      double const DeltaT = T.GetDeltaT();
 
-      // Unit vector pointing from particl to observer
-      TVector3D const N = R.UnitVector();
+      // Number of points in the trajectory
+      size_t const NTPoints = T.GetNPoints();
 
-      // Distance from particle to observer
-      double const D = R.Mag();
+      MaxDPhase = 0;
+      // Loop over trajectory points
+      for (int iT = 0; iT != NTPoints; ++iT) {
 
-      // Exponent for fourier transformed field
-      std::complex<double> Exponent(0, Omega * (DeltaT * iT + D / TOSCARSSR::C()));
+        // Get position, Beta, and Acceleration (over c)
+        TVector3D const& X = T.GetX(iT);
+        TVector3D const& B = T.GetB(iT);
+        TVector3D const& AoverC = T.GetAoverC(iT);
+        double    const  Time = T.GetT(iT);
 
-      // Sum in fourier transformed field (integral)
-      SumE += (TVector3DC(B) - (N * ( One + (ICoverOmega / (D))))) / D * std::exp(Exponent);
+        // Define R and unit vector in direction of R, and D (distance to observer)
+        TVector3D const R = ObservationPoint - X;
+        TVector3D const N = R.UnitVector();
+        double const D = R.Mag();
+
+        // Exponent in transformed field
+        ThisPhase = -Omega * (Time + D / TOSCARSSR::C());
+        if (iT != 0 && fabs(ThisPhase - LastPhase) > MaxDPhase) {
+          MaxDPhase = fabs(ThisPhase - LastPhase);
+        }
+        LastPhase = ThisPhase;
+        std::complex<double> Exponent(0, -Omega * (Time + D / TOSCARSSR::C()));
+
+        TVector3DC const ThisEw = ( ( (1 - (B).Mag2()) * (N - B) ) / ( D * D * (pow(1 - N.Dot(B), 2)) )
+            + ( N.Cross( (N - B).Cross(AoverC) ) ) / ( D * pow(1 - N.Dot(B), 2) ) ) * std::exp(Exponent); // NF + FF
+
+        // Add this contribution
+        SumE += ThisEw;
+
+      }
+
+      TVector3DC const ThisSumE = SumE * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(iLevel);
+      ThisMag = ThisSumE.Dot( ThisSumE.CC() ).real();
+      if (iLevel > 8 && fabs(ThisMag - LastMag) / LastMag < Precision) {
+        break;
+      }
+
+      LastMag = ThisMag;
+
+      if (iLevel == TParticleA::kMaxTrajectoryLevel) {
+        std::cout << "Max Level reached" << std::endl;
+      }
     }
 
-    // Multiply field by Constant C1 and time step
-    SumE *= C1 * DeltaT;
+    // Multiply by constant factor
+    SumE *= C0 * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(LastLevel);
 
     // If a polarization is specified, calculate it
     if (Polarization == "all") {
@@ -1479,6 +1523,7 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
 
 
 
+
 void OSCARSSR::CalculateSpectrumThreads (TParticleA& Particle,
                                          TVector3D const& Obs,
                                          TSpectrumContainer& Spectrum,
@@ -1487,6 +1532,8 @@ void OSCARSSR::CalculateSpectrumThreads (TParticleA& Particle,
                                          double const Angle,
                                          TVector3D const& HorizontalDirection,
                                          TVector3D const& PropogationDirection,
+                                         double const Precision,
+                                         int    const MaxLevel,
                                          double const Weight)
 {
   // Calculates spectrum for the given particle and observation point
@@ -1531,13 +1578,15 @@ void OSCARSSR::CalculateSpectrumThreads (TParticleA& Particle,
                                   std::ref(Particle),
                                   std::ref(Obs),
                                   std::ref(Spectrum),
-                                  iFirst,
-                                  iLast,
+                                  it,
+                                  NThreadsActual,
                                   std::ref(Done[it]),
                                   std::ref(Polarization),
                                   Angle,
                                   std::ref(HorizontalDirection),
                                   std::ref(PropogationDirection),
+                                  Precision,
+                                  MaxLevel,
                                   Weight));
 
   }
@@ -1591,7 +1640,9 @@ void OSCARSSR::CalculateSpectrumGPU (TParticleA& Particle,
                                      TVector3D const& HorizontalDirection,
                                      TVector3D const& PropogationDirection,
                                      int const NParticles,
-                                     std::vector<int> GPUVector)
+                                     std::vector<int> GPUVector,
+                                     double const Precision,
+                                     int    const MaxLevel)
 {
   // If you compile for Cuda use the GPU in this function, else throw
 
@@ -2051,113 +2102,6 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
 
   } // POINTS
 
-
-  // Set done to true
-  Done = true;
-
-  return;
-}
-
-
-
-
-void OSCARSSR::CalculatePowerDensityPointsOLD (TParticleA& Particle,
-                                            TSurfacePoints const& Surface,
-                                            T3DScalarContainer& PowerDensityContainer,
-                                            size_t const iFirst,
-                                            size_t const iLast,
-                                            bool& Done,
-                                            bool const Directional,
-                                            double const Weight)
-{
-  // Calculates the single particle power density in a range of points
-  // in units of [watts / second / mm^2]
-
-
-  // Grab the Trajectory
-  TParticleTrajectoryPoints& T = Particle.GetTrajectory();
-
-  // Timestep from trajectory
-  double const DeltaT = T.GetDeltaT();
-
-  // Number of points in Trajectory
-  size_t const NTPoints = T.GetNPoints();
-
-  // Check number of points
-  if (NTPoints < 1) {
-    throw std::length_error("no points in trajectory.  Is particle or beam defined?");
-  }
-
-  // Variables for parts of the numerator and denominator of power density equation
-  TVector3D Numerator;
-  double Denominator;
-
-  //std::cout << "Directional: " << Directional << std::endl;
-
-  bool const HasNormal = Surface.HasNormal();;
-  // Loop over all points in the given surface
-  for (size_t io = iFirst; io <= iLast; ++io) {
-
-    // Get the observation point (on the surface, and its "normal"
-    TVector3D const Obs    = Surface.GetPoint(io).GetPoint();
-    TVector3D const Normal = Surface.GetPoint(io).GetNormal();
-
-
-
-    // For summing power contributions
-    double Sum = 0;
-
-    // Loop over all points in the trajectory
-    for (size_t iT = 0; iT != NTPoints ; ++iT) {
-
-      // Get current position, Beta, and Acceleration(over c)
-      TVector3D const& X = T.GetX(iT);
-      TVector3D const& B = T.GetB(iT);
-      TVector3D const& AoverC = T.GetAoverC(iT);
-
-      // Define the three normal vectors.  N1 is in the direction of propogation,
-      // N2 and N3 are in a plane perpendicular to N1
-      TVector3D const N1 = (Obs - X).UnitVector();
-      TVector3D const N2 = N1.Orthogonal().UnitVector();
-      TVector3D const N3 = N1.Cross(N2).UnitVector();
-
-      // For computing non-normally incidence
-      double const N1DotNormal = HasNormal ? N1.Dot(Normal) : 1;
-      // UPDATE: URGENT: Check this
-      if (Directional && N1DotNormal <= 0) {
-        continue;
-      }
-
-      // Compute Numerator and denominator
-      Numerator = N1.Cross( ( (N1 - B).Cross((AoverC)) ) );
-      Denominator = pow(1 - (B).Dot(N1), 5);
-
-      // Add contributions from both N2 and N3
-      Sum += pow(Numerator.Dot(N2), 2) / Denominator / (Obs - X).Mag2() * N1DotNormal;
-      Sum += pow(Numerator.Dot(N3), 2) / Denominator / (Obs - X).Mag2() * N1DotNormal;
-    }
-
-    // Undulators, Wigglers and their applications, p42
-    Sum *= fabs(Particle.GetQ() * Particle.GetCurrent()) / (16 * TOSCARSSR::Pi2() * TOSCARSSR::Epsilon0() * TOSCARSSR::C()) * DeltaT;
-
-    // m^2 to mm^2
-    Sum /= 1e6;
-
-    // Weighting
-    Sum *= Weight;
-
-
-    // If you don't care about the direction of the normal vector
-    // UPDATE: Check
-    if (!Directional) {
-      if (Sum < 0) {
-        Sum *= -1;
-      }
-    }
-
-    // Add to container
-    PowerDensityContainer.AddToPoint(io, Sum);
-  }
 
   // Set done to true
   Done = true;
