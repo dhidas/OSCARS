@@ -1401,8 +1401,6 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
   int const LevelStopMemory = MaxLevel >= 0  && MaxLevel <= TParticleA::kMaxTrajectoryLevel ? MaxLevel : TParticleA::kMaxTrajectoryLevel;
   int const LevelStopWithExtended = MaxLevelExtended > LevelStopMemory ? MaxLevelExtended : LevelStopMemory;
 
-  std::cout << "LevelStopWithExtended: " << LevelStopWithExtended << std::endl;
-
   // Number of points in spectrum
   int const NSpectrumPoints = Spectrum.GetNPoints();
 
