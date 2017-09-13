@@ -4217,7 +4217,10 @@ precision : float
     Calculation precision parameter (typically 0.01 which is 1%)
 
 max_level: int
-    Maximum "level" to us for trajectory in the calculation.  Level N corresponds to a total of 2**(N+2) trajectory points.  You cannot go beyond the internal maximum.  You are not guaranteed precision parameter is met if this is used.
+    Maximum "level" to use for trajectory in the calculation.  Level N corresponds to a total of 2**(N+2) trajectory points.  You cannot go beyond the internal maximum.  You are not guaranteed precision parameter is met if this is used.
+
+max_level_extended: int
+    Maximum "level" to us for trajectory in the calculation.  If set to higher than max_level the computation will proceed beyond max_level without creating trajectory arrays in memory (but it will be slower)
 
 angle : float
     Only used if polarization='linear' is specified.  The 'angle' is that from the horizontal_direction for the polarization directino you are interested in
@@ -4262,7 +4265,8 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
   PyObject*   List_HorizontalDirection  = PyList_New(0);
   PyObject*   List_PropogationDirection = PyList_New(0);
   double      Precision                 = 0.01;
-  int         MaxLevel                  = 0;
+  int         MaxLevel                  = -1;
+  int         MaxLevelExtended          = 0;
   int         NParticles                = 0;
   int         NThreads                  = 0;
   int         GPU                       = -1;
@@ -4281,6 +4285,7 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
                                  "propogation_direction",
                                  "precision",
                                  "max_level",
+                                 "max_level_extended",
                                  "nparticles",
                                  "nthreads",
                                  "gpu",
@@ -4289,7 +4294,7 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
                                  NULL};
 
   // Parse inputs
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|iOOOsdOOdiiiiss",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|iOOOsdOOdiiiiiss",
                                    const_cast<char **>(kwlist),
                                    &List_Obs,
                                    &NPoints,
@@ -4302,6 +4307,7 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
                                    &List_PropogationDirection,
                                    &Precision,
                                    &MaxLevel,
+                                   &MaxLevelExtended,
                                    &NParticles,
                                    &NThreads,
                                    &GPU,
@@ -4417,7 +4423,7 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
 
   // Actually calculate the spectrum
   try {
-    self->obj->CalculateSpectrum(Obs, SpectrumContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NParticles, NThreads, GPU, -1, std::vector<int>(), Precision, MaxLevel);
+    self->obj->CalculateSpectrum(Obs, SpectrumContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NParticles, NThreads, GPU, -1, std::vector<int>(), Precision, MaxLevel, MaxLevelExtended);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -4561,7 +4567,7 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
   int         GPU = -1;
   int         NThreads = 0;
   double      Precision = 0.01;
-  int         MaxLevel = 0;
+  int         MaxLevel = -1;
   char const* OutFileName = "";
 
 
@@ -4842,7 +4848,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
   int         NThreads = 0;
   int         Dim = 2;
   double      Precision = 0.01;
-  int         MaxLevel = 0;
+  int         MaxLevel = -1;
   const char* OutFileNameText = "";
   const char* OutFileNameBinary = "";
 
@@ -5153,7 +5159,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityLine (OSCARSSRObject* self, PyObj
   const char* OutFileNameText = "";
   const char* OutFileNameBinary = "";
   double      Precision = 0.01;
-  int         MaxLevel = 0;
+  int         MaxLevel = -1;
   int         Dim = 1;
 
 
@@ -5407,7 +5413,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
   int         GPU = -1;
   PyObject*   NGPU;
   double      Precision = 0.01;
-  int         MaxLevel = 0;
+  int         MaxLevel = -1;
   char const* OutFileNameText = "";
   char const* OutFileNameBinary = "";
 
@@ -5717,7 +5723,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   int         GPU = -1;
   PyObject*   NGPU = 0x0;
   double      Precision = 0.01;
-  int         MaxLevel = 0;
+  int         MaxLevel = -1;
   char const* OutFileNameText = "";
   char const* OutFileNameBinary = "";
 

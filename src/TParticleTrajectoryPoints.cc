@@ -69,6 +69,15 @@ TParticleTrajectoryPoints::~TParticleTrajectoryPoints ()
 
 
 
+TParticleTrajectoryPoint const& TParticleTrajectoryPoints::GetPoint (size_t const i) const
+{
+  return fP[i];
+}
+
+
+
+
+
 TVector3D const& TParticleTrajectoryPoints::GetX (size_t const i) const
 {
   return fP[i].GetX();

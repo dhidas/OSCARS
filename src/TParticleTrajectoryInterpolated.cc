@@ -140,9 +140,6 @@ void TParticleTrajectoryInterpolated::FillTParticleTrajectoryPointsLevel (TParti
   // Number of points in this level
   int const NPoints = pow(2, Level);
 
-  // Offset for first point
-  double const Offset = (fTStop - fTStart) / pow(2., Level + 1);
-
   // Spacing of points in THIS level
   double const ThisTSpacing = (fTStop - fTStart) / pow(2., Level);
 
@@ -155,7 +152,7 @@ void TParticleTrajectoryInterpolated::FillTParticleTrajectoryPointsLevel (TParti
   TPTP.SetDeltaT(ThisTSpacing);
 
   // First point of this trajectory is at:
-  double const ThisTStart = fTStart + Offset;
+  double const ThisTStart = this->GetTStartThisLevel(Level);
 
   for (int i = 0; i < NPoints; ++i) {
     double const T = ThisTStart + ThisTSpacing * (double) i;
@@ -214,6 +211,14 @@ void TParticleTrajectoryInterpolated::FillTParticleTrajectoryPoints (TParticleTr
 
 
 
+int TParticleTrajectoryInterpolated::GetNPointsThisLevel (int const Level) const
+{
+  return pow(2, Level);
+}
+
+
+
+
 int TParticleTrajectoryInterpolated::GetNPointsInclusiveToLevel (int const Level) const
 {
   // Level checking
@@ -247,6 +252,17 @@ double TParticleTrajectoryInterpolated::GetDeltaTThisLevel (int const Level) con
   this->LevelCheck(Level);
     
   return (fTStop - fTStart) / pow(2., Level); 
+
+}
+
+
+
+
+double TParticleTrajectoryInterpolated::GetTStartThisLevel (int const Level) const
+{
+  // DeltaT for all points from level 0 up to this level
+
+  return fTStart + (fTStop - fTStart) / pow(2., Level + 1); 
 
 }
 

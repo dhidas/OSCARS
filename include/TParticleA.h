@@ -18,6 +18,7 @@
 #include "TVector3D.h"
 #include "TParticleTrajectoryPoints.h"
 #include "TParticleTrajectoryInterpolated.h"
+#include "TParticleTrajectoryInterpolatedPoints.h"
 
 class TParticleA
 {
@@ -61,6 +62,7 @@ class TParticleA
     void SetupTrajectoryInterpolated ();
     TParticleTrajectoryPoints const& GetTrajectoryLevel (int const Level);
     TParticleTrajectoryInterpolated const& GetTrajectoryInterpolated () const;
+    TParticleTrajectoryInterpolatedPoints const GetTrajectoryExtendedLevel (int const Level);
 
     void Clear ();
 

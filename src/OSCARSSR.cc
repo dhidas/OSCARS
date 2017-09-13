@@ -1183,6 +1183,7 @@ void OSCARSSR::CalculateSpectrum (TParticleA& Particle,
                                   TVector3D const& PropogationDirection,
                                   double const Precision,
                                   int    const MaxLevel,
+                                  int    const MaxLevelExtended,
                                   double const Weight)
 {
   // Calculates the single particle spectrum at a given observation point
@@ -1211,6 +1212,7 @@ void OSCARSSR::CalculateSpectrum (TParticleA& Particle,
                                 PropogationDirection,
                                 Precision,
                                 MaxLevel,
+                                MaxLevelExtended,
                                 Weight);
 
   return;
@@ -1232,7 +1234,8 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
                                   int const NGPU,
                                   std::vector<int> VGPU,
                                   double const Precision,
-                                  int    const MaxLevel)
+                                  int    const MaxLevel,
+                                  int    const MaxLevelExtended)
 {
   // Calculate the spectrum at an observaton point.
   // THIS is the ENTRY POINT typically
@@ -1283,7 +1286,8 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
                                NParticles,
                                GPUVector,
                                Precision,
-                               MaxLevel);
+                               MaxLevel,
+                               MaxLevelExtended);
   } else {
     if (NParticles == 0) {
       if (NThreadsToUse == 1) {
@@ -1296,6 +1300,7 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
                                 PropogationDirection,
                                 Precision,
                                 MaxLevel,
+                                MaxLevelExtended,
                                 1);
       } else {
         this->CalculateSpectrumThreads(fParticle,
@@ -1308,6 +1313,7 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
                                        PropogationDirection,
                                        Precision,
                                        MaxLevel,
+                                       MaxLevelExtended,
                                        1);
       }
     } else {
@@ -1330,6 +1336,7 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
                                   PropogationDirection,
                                   Precision,
                                   MaxLevel,
+                                  MaxLevelExtended,
                                   Weight);
         } else {
           this->CalculateSpectrumThreads(fParticle,
@@ -1342,6 +1349,7 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
                                          PropogationDirection,
                                          Precision,
                                          MaxLevel,
+                                         MaxLevelExtended,
                                          Weight);
         }
       }
@@ -1368,6 +1376,7 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
                                         TVector3D const& PropogationDirection,
                                         double const Precision,
                                         int    const MaxLevel,
+                                        int    const MaxLevelExtended,
                                         double const Weight)
 {
   // Calculates the single particle spectrum at a given observation point
@@ -1389,8 +1398,12 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
   }
 
   // Set the level to stop at if requested, but not above the hard limit
-  int const LevelStop = MaxLevel > 0  && MaxLevel <= TParticleA::kMaxTrajectoryLevel ? MaxLevel : TParticleA::kMaxTrajectoryLevel;
+  int const LevelStopMemory = MaxLevel >= 0  && MaxLevel <= TParticleA::kMaxTrajectoryLevel ? MaxLevel : TParticleA::kMaxTrajectoryLevel;
+  int const LevelStopWithExtended = MaxLevelExtended > LevelStopMemory ? MaxLevelExtended : LevelStopMemory;
 
+  std::cout << "LevelStopWithExtended: " << LevelStopWithExtended << std::endl;
+
+  // Number of points in spectrum
   int const NSpectrumPoints = Spectrum.GetNPoints();
 
   // Check input spectrum range numbers
@@ -1414,6 +1427,9 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
   TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * I );
 
 
+  // Extended trajectory (not using memory for storage of arrays
+  TParticleTrajectoryInterpolatedPoints TE;
+
   // Loop over all points in the spectrum container
   for (size_t i = iThread; i < NSpectrumPoints; i += NThreads) {
 
@@ -1430,27 +1446,30 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
     double MaxDPhase = 0;
     int    LastLevel = 0;
 
-    for (int iLevel = 0; iLevel <= LevelStop; ++iLevel) {
+    for (int iLevel = 0; iLevel <= LevelStopWithExtended; ++iLevel) {
       LastLevel = iLevel;
 
-      // Grab the Trajectory
-      TParticleTrajectoryPoints const& T = Particle.GetTrajectoryLevel(iLevel);
+      // Grab the Trajectory (using memory arrays) if below level threshold, else set NULL
+      TParticleTrajectoryPoints const& TM = Particle.GetTrajectoryLevel(iLevel <= LevelStopMemory ? iLevel : 0);
+      if (iLevel > LevelStopMemory) {
+        TE = Particle.GetTrajectoryExtendedLevel(iLevel);
+      }
 
-      // Time step.  Expecting it to be constant throughout calculation
-      double const DeltaT = T.GetDeltaT();
 
       // Number of points in the trajectory
-      size_t const NTPoints = T.GetNPoints();
+      size_t const NTPoints = iLevel <= LevelStopMemory ? TM.GetNPoints() : TE.GetNPoints();
+
 
       MaxDPhase = 0;
       // Loop over trajectory points
       for (int iT = 0; iT != NTPoints; ++iT) {
+        TParticleTrajectoryPoint const& PP = (iLevel <= LevelStopMemory ? TM.GetPoint(iT) : TE.GetTrajectoryPoint(iT));
 
         // Get position, Beta, and Acceleration (over c)
-        TVector3D const& X = T.GetX(iT);
-        TVector3D const& B = T.GetB(iT);
-        TVector3D const& AoverC = T.GetAoverC(iT);
-        double    const  Time = T.GetT(iT);
+        TVector3D const& X = PP.GetX();
+        TVector3D const& B = PP.GetB();
+        TVector3D const& AoverC = PP.GetAoverC();
+        double    const  Time = iLevel <= LevelStopMemory ? TM.GetT(iT) : TE.GetT(iT);
 
         // Define R and unit vector in direction of R, and D (distance to observer)
         TVector3D const R = ObservationPoint - X;
@@ -1482,8 +1501,13 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
       LastMag = ThisMag;
 
       if (iLevel == TParticleA::kMaxTrajectoryLevel) {
-        std::cout << "Max Level reached" << std::endl;
+        std::cout << "Max Memory Level reached iLevel: " << iLevel << std::endl;
       }
+    }
+
+    //Test
+    if (LastLevel == LevelStopWithExtended) {
+      std::cout << "LastLevelReached" << std::endl;
     }
 
     // Multiply by constant factor
@@ -1534,6 +1558,7 @@ void OSCARSSR::CalculateSpectrumThreads (TParticleA& Particle,
                                          TVector3D const& PropogationDirection,
                                          double const Precision,
                                          int    const MaxLevel,
+                                         int    const MaxLevelExtended,
                                          double const Weight)
 {
   // Calculates spectrum for the given particle and observation point
@@ -1587,6 +1612,7 @@ void OSCARSSR::CalculateSpectrumThreads (TParticleA& Particle,
                                   std::ref(PropogationDirection),
                                   Precision,
                                   MaxLevel,
+                                  MaxLevelExtended,
                                   Weight));
 
   }
@@ -1642,7 +1668,8 @@ void OSCARSSR::CalculateSpectrumGPU (TParticleA& Particle,
                                      int const NParticles,
                                      std::vector<int> GPUVector,
                                      double const Precision,
-                                     int    const MaxLevel)
+                                     int    const MaxLevel,
+                                     int    const MaxLevelExtended)
 {
   // If you compile for Cuda use the GPU in this function, else throw
 

@@ -196,6 +196,7 @@ class OSCARSSR
                             TVector3D const& PropogationDirection,
                             double const Precision,
                             int    const MaxLevel,
+                            int    const MaxLevelExtended,
                             double const Weight);
 
     void CalculateSpectrum (TVector3D const& ObservationPoint,
@@ -210,7 +211,8 @@ class OSCARSSR
                             int const NGPU = -1,
                             std::vector<int> VGPU = std::vector<int>(),
                             double const Precision = 0.01,
-                            int    const MaxLevel = 0);
+                            int    const MaxLevel = -1,
+                            int    const MaxLevelExtended = 0);
 
     void CalculateSpectrumPoints (TParticleA& Particle,
                                   TVector3D const& ObservationPoint,
@@ -224,6 +226,7 @@ class OSCARSSR
                                   TVector3D const& PropogationDirection,
                                   double const Precision,
                                   int    const MaxLevel,
+                                  int    const MaxLevelExtended,
                                   double const Weight);
 
     void CalculateSpectrumThreads (TParticleA& Particle,
@@ -235,7 +238,8 @@ class OSCARSSR
                                    TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
                                    TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
                                    double const Precision = 0.01,
-                                   int    const MaxLevel = 0,
+                                   int    const MaxLevel = -1,
+                                   int    const MaxLevelExtended = 0,
                                    double const Weight = 1);
 
     void CalculateSpectrumGPU (TParticleA& Particle,
@@ -248,7 +252,8 @@ class OSCARSSR
                                int const NParticles = 0,
                                std::vector<int> GPUVector = std::vector<int>(),
                                double const Precision = 0.01,
-                               int    const MaxLevel = 0);
+                               int    const MaxLevel = -1,
+                               int    const MaxLevelExtended = 0);
 
     void AddToSpectrum (TSpectrumContainer const&, double const Weight = 1);
     void AddToFlux (T3DScalarContainer const&, double const Weight = 1);
@@ -338,7 +343,7 @@ class OSCARSSR
                         int const NGPU = -1,
                         std::vector<int> VGPU = std::vector<int>(),
                         double const Precision = 0.01,
-                        int    const MaxLevel = 0,
+                        int    const MaxLevel = -1,
                         int const Dimension = 3);
 
     void CalculateFluxPoints (TParticleA& Particle,
@@ -353,7 +358,7 @@ class OSCARSSR
                               TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
                               TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
                               double const Precision = 0.01,
-                              int    const MaxLevel = 0,
+                              int    const MaxLevel = -1,
                               double const Weight = 1);
 
     void CalculateFluxThreads (TParticleA& Particle,
@@ -366,7 +371,7 @@ class OSCARSSR
                                TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
                                int const NThreads = 0,
                                double const Precision = 0.01,
-                               int    const MaxLevel = 0,
+                               int    const MaxLevel = -1,
                                double const Weight = 1);
 
     void CalculateFluxGPU (TSurfacePoints const& Surface,
@@ -379,7 +384,7 @@ class OSCARSSR
                            int const NParticles = 0,
                            std::vector<int> GPUVector = std::vector<int>(),
                            double const Precision = 0.01,
-                           int    const MaxLevel = 0);
+                           int    const MaxLevel = -1);
 
     // Electric Field Calculations
     void CalculateElectricFieldTimeDomain (TVector3D const& Observer, T3DScalarContainer&);

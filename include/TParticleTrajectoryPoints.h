@@ -22,6 +22,8 @@ class TParticleTrajectoryPoints
     TParticleTrajectoryPoints (double const);
     ~TParticleTrajectoryPoints ();
 
+    TParticleTrajectoryPoint const& GetPoint  (size_t const) const;
+
     TVector3D const& GetX      (size_t const) const;
     TVector3D const& GetB      (size_t const) const;
     TVector3D        GetV      (size_t const) const;
