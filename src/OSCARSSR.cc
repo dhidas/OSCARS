@@ -1398,7 +1398,7 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
   }
 
   // Set the level to stop at if requested, but not above the hard limit
-  int const LevelStopMemory = MaxLevel >= 0  && MaxLevel <= TParticleA::kMaxTrajectoryLevel ? MaxLevel : TParticleA::kMaxTrajectoryLevel;
+  int const LevelStopMemory = MaxLevel >= -1  && MaxLevel <= TParticleA::kMaxTrajectoryLevel ? MaxLevel : TParticleA::kMaxTrajectoryLevel;
   int const LevelStopWithExtended = MaxLevelExtended > LevelStopMemory ? MaxLevelExtended : LevelStopMemory;
 
   // Number of points in spectrum
@@ -1859,6 +1859,7 @@ void OSCARSSR::CalculatePowerDensity (TParticleA& Particle,
                                       bool const Directional,
                                       double const Precision,
                                       int    const MaxLevel,
+                                      int    const MaxLevelExtended,
                                       double const Weight)
 {
   // Calculates the single particle spectrum at a given observation point
@@ -1885,6 +1886,7 @@ void OSCARSSR::CalculatePowerDensity (TParticleA& Particle,
                               Directional,
                               Precision,
                               MaxLevel,
+                              MaxLevelExtended,
                               Weight);
 
   return;
@@ -1899,6 +1901,7 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface,
                                       bool   const Directional,
                                       double const Precision,
                                       int    const MaxLevel,
+                                      int    const MaxLevelExtended,
                                       int    const NParticles,
                                       int    const NThreads,
                                       int    const GPU)
@@ -1964,12 +1967,12 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface,
 
     if (UseGPU == 0) {
       if (NThreadsToUse == 1) {
-        this->CalculatePowerDensity(fParticle, Surface, PowerDensityContainer, Directional, Precision, MaxLevel, 1);
+        this->CalculatePowerDensity(fParticle, Surface, PowerDensityContainer, Directional, Precision, MaxLevel, MaxLevelExtended, 1);
       } else {
-        this->CalculatePowerDensityThreads(fParticle, Surface, PowerDensityContainer, NThreadsToUse, Directional, Precision, MaxLevel, 1);
+        this->CalculatePowerDensityThreads(fParticle, Surface, PowerDensityContainer, NThreadsToUse, Directional, Precision, MaxLevel, MaxLevelExtended, 1);
       }
     } else if (UseGPU == 1) {
-      this->CalculatePowerDensityGPU(fParticle, Surface, PowerDensityContainer, Directional, Precision, MaxLevel, 1);
+      this->CalculatePowerDensityGPU(fParticle, Surface, PowerDensityContainer, Directional, Precision, MaxLevel, MaxLevelExtended, 1);
     }
   } else {
     double const Weight = 1.0 / (double) NParticles;
@@ -1977,12 +1980,12 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface,
       this->SetNewParticle();
       if (UseGPU == 0) {
         if (NThreadsToUse == 1) {
-          this->CalculatePowerDensity(fParticle, Surface, PowerDensityContainer, Directional, Precision, MaxLevel, Weight);
+          this->CalculatePowerDensity(fParticle, Surface, PowerDensityContainer, Directional, Precision, MaxLevel, MaxLevelExtended, Weight);
         } else {
-          this->CalculatePowerDensityThreads(fParticle, Surface, PowerDensityContainer,  NThreadsToUse, Directional, Precision, MaxLevel, Weight);
+          this->CalculatePowerDensityThreads(fParticle, Surface, PowerDensityContainer,  NThreadsToUse, Directional, Precision, MaxLevel, MaxLevelExtended, Weight);
         }
       } else if (UseGPU == 1) {
-        this->CalculatePowerDensityGPU(fParticle, Surface, PowerDensityContainer, Directional, Precision, MaxLevel, Weight);
+        this->CalculatePowerDensityGPU(fParticle, Surface, PowerDensityContainer, Directional, Precision, MaxLevel, MaxLevelExtended, Weight);
       }
     }
   }
@@ -2004,6 +2007,7 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
                                             bool const Directional,
                                             double const Precision,
                                             int    const MaxLevel,
+                                            int    const MaxLevelExtended,
                                             double const Weight)
 {
   // Calculates the single particle power density in a range of points
@@ -2015,8 +2019,8 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
   }
 
   // Set the level to stop at if requested, but not above the hard limit
-  int const LevelStop = MaxLevel > 0  && MaxLevel <= TParticleA::kMaxTrajectoryLevel ? MaxLevel : TParticleA::kMaxTrajectoryLevel;
-
+  int const LevelStopMemory = MaxLevel >= -1  && MaxLevel <= TParticleA::kMaxTrajectoryLevel ? MaxLevel : TParticleA::kMaxTrajectoryLevel;
+  int const LevelStopWithExtended = MaxLevelExtended > LevelStopMemory ? MaxLevelExtended : LevelStopMemory;
 
   // Grab the Trajectory
   TParticleTrajectoryPoints& T = Particle.GetTrajectory();
@@ -2041,6 +2045,9 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
   bool const HasNormal = Surface.HasNormal();
 
 
+  // Extended trajectory (not using memory for storage of arrays
+  TParticleTrajectoryInterpolatedPoints TE;
+
 
   // Loop over all points in the spectrum container
   for (size_t i = iFirst; i <= iLast; ++i) {
@@ -2056,22 +2063,27 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
     // Summing for this power density
     double Sum = 0;
 
-    for (int iLevel = 0; iLevel <= LevelStop; ++iLevel) {
+    for (int iLevel = 0; iLevel <= LevelStopWithExtended; ++iLevel) {
       LastLevel = iLevel;
 
-      // Grab the Trajectory
-      TParticleTrajectoryPoints const& T = Particle.GetTrajectoryLevel(iLevel);
+      // Grab the Trajectory (using memory arrays) if below level threshold, else set NULL
+      TParticleTrajectoryPoints const& TM = Particle.GetTrajectoryLevel(iLevel <= LevelStopMemory ? iLevel : 0);
+      if (iLevel > LevelStopMemory) {
+        TE = Particle.GetTrajectoryExtendedLevel(iLevel);
+      }
 
       // Number of points in the trajectory
-      size_t const NTPoints = T.GetNPoints();
+      size_t const NTPoints = iLevel <= LevelStopMemory ? TM.GetNPoints() : TE.GetNPoints();
 
       // Loop over trajectory points
       for (int iT = 0; iT != NTPoints; ++iT) {
 
-        // Get current position, Beta, and Acceleration(over c)
-        TVector3D const& X = T.GetX(iT);
-        TVector3D const& B = T.GetB(iT);
-        TVector3D const& AoverC = T.GetAoverC(iT);
+        TParticleTrajectoryPoint const& PP = (iLevel <= LevelStopMemory ? TM.GetPoint(iT) : TE.GetTrajectoryPoint(iT));
+
+        // Get position, Beta, and Acceleration (over c)
+        TVector3D const& X = PP.GetX();
+        TVector3D const& B = PP.GetB();
+        TVector3D const& AoverC = PP.GetAoverC();
 
         // Define the three normal vectors.  N1 is in the direction of propogation,
         // N2 and N3 are in a plane perpendicular to N1
@@ -2144,6 +2156,7 @@ void OSCARSSR::CalculatePowerDensityThreads (TParticleA& Particle,
                                              bool const Directional,
                                              double const Precision,
                                              int    const MaxLevel,
+                                             int    const MaxLevelExtended,
                                              double const Weight)
 {
   // Calculates the single particle power density on surface
@@ -2197,6 +2210,7 @@ void OSCARSSR::CalculatePowerDensityThreads (TParticleA& Particle,
                                   Directional,
                                   Precision,
                                   MaxLevel,
+                                  MaxLevelExtended,
                                   Weight));
   }
 
@@ -2250,6 +2264,7 @@ void OSCARSSR::CalculatePowerDensityGPU (TParticleA& Particle,
                                          bool const Directional,
                                          double const Precision,
                                          int    const MaxLevel,
+                                         int    const MaxLevelExtended,
                                          double const Weight)
 {
   // If you compile for Cuda use the GPU in this function, else throw
@@ -2591,7 +2606,7 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
   }
 
   // Set the level to stop at if requested, but not above the hard limit
-  int const LevelStopMemory = MaxLevel >= 0  && MaxLevel <= TParticleA::kMaxTrajectoryLevel ? MaxLevel : TParticleA::kMaxTrajectoryLevel;
+  int const LevelStopMemory = MaxLevel >= -1  && MaxLevel <= TParticleA::kMaxTrajectoryLevel ? MaxLevel : TParticleA::kMaxTrajectoryLevel;
   int const LevelStopWithExtended = MaxLevelExtended > LevelStopMemory ? MaxLevelExtended : LevelStopMemory;
 
   // Constant C0 for calculation

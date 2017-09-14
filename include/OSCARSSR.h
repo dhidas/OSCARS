@@ -211,7 +211,7 @@ class OSCARSSR
                             int const NGPU = -1,
                             std::vector<int> VGPU = std::vector<int>(),
                             double const Precision = 0.01,
-                            int    const MaxLevel = -1,
+                            int    const MaxLevel = -2,
                             int    const MaxLevelExtended = 0);
 
     void CalculateSpectrumPoints (TParticleA& Particle,
@@ -238,7 +238,7 @@ class OSCARSSR
                                    TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
                                    TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
                                    double const Precision = 0.01,
-                                   int    const MaxLevel = -1,
+                                   int    const MaxLevel = -2,
                                    int    const MaxLevelExtended = 0,
                                    double const Weight = 1);
 
@@ -252,7 +252,7 @@ class OSCARSSR
                                int const NParticles = 0,
                                std::vector<int> GPUVector = std::vector<int>(),
                                double const Precision = 0.01,
-                               int    const MaxLevel = -1,
+                               int    const MaxLevel = -2,
                                int    const MaxLevelExtended = 0);
 
     void AddToSpectrum (TSpectrumContainer const&, double const Weight = 1);
@@ -273,6 +273,7 @@ class OSCARSSR
                                 bool const Directional,
                                 double const Precision,
                                 int    const MaxLevel,
+                                int    const MaxLevelExtended,
                                 double const Weight);
 
     void CalculatePowerDensity (TSurfacePoints const& Surface,
@@ -281,6 +282,7 @@ class OSCARSSR
                                 bool const Directional,
                                 double const Precision,
                                 int    const MaxLevel,
+                                int    const MaxLevelExtended,
                                 int const NParticles,
                                 int const NThreads,
                                 int const GPU);
@@ -294,6 +296,7 @@ class OSCARSSR
                                       bool const Directional,
                                       double const Precision,
                                       int    const MaxLevel,
+                                      int    const MaxLevelExtended,
                                       double const Weight);
 
     void CalculatePowerDensityThreads (TParticleA& Particle,
@@ -303,6 +306,7 @@ class OSCARSSR
                                        bool const Directional,
                                        double const Precision,
                                        int    const MaxLevel,
+                                       int    const MaxLevelExtended,
                                        double const Weight);
 
     void CalculatePowerDensityGPU (TParticleA& Particle,
@@ -311,6 +315,7 @@ class OSCARSSR
                                    bool const Directional,
                                    double const Precision,
                                    int    const MaxLevel,
+                                   int    const MaxLevelExtended,
                                    double const Weight);
 
     double CalculateTotalPower ();
@@ -344,7 +349,7 @@ class OSCARSSR
                         int const NGPU = -1,
                         std::vector<int> VGPU = std::vector<int>(),
                         double const Precision = 0.01,
-                        int    const MaxLevel = -1,
+                        int    const MaxLevel = -2,
                         int    const MaxLevelExtended = 0,
                         int const Dimension = 3);
 
@@ -360,7 +365,7 @@ class OSCARSSR
                               TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
                               TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
                               double const Precision = 0.01,
-                              int    const MaxLevel = -1,
+                              int    const MaxLevel = -2,
                               int    const MaxLevelExtended = 0,
                               double const Weight = 1);
 
@@ -374,7 +379,7 @@ class OSCARSSR
                                TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
                                int const NThreads = 0,
                                double const Precision = 0.01,
-                               int    const MaxLevel = -1,
+                               int    const MaxLevel = -2,
                                int    const MaxLevelExtended = 0,
                                double const Weight = 1);
 
@@ -388,7 +393,7 @@ class OSCARSSR
                            int const NParticles = 0,
                            std::vector<int> GPUVector = std::vector<int>(),
                            double const Precision = 0.01,
-                           int    const MaxLevel = -1,
+                           int    const MaxLevel = -2,
                            int    const MaxLevelExtended = 0);
 
     // Electric Field Calculations
