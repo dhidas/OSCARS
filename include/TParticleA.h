@@ -64,7 +64,7 @@ class TParticleA
     TParticleTrajectoryInterpolated const& GetTrajectoryInterpolated () const;
     TParticleTrajectoryInterpolatedPoints const GetTrajectoryExtendedLevel (int const Level);
 
-    void Clear ();
+    void ResetTrajectoryData ();
 
     // Static constants
     static int const kMaxTrajectoryLevel = 24;
@@ -84,10 +84,10 @@ class TParticleA
     TVector3D fB0;  // Initial Beta (velocity / c)
     double    fT0;  // Time at initial conditions [m]
 
-    TParticleTrajectoryPoints fTrajectory;
-    TParticleTrajectoryInterpolated fTrajectoryInterpolated;
+    TParticleTrajectoryPoints              fTrajectory;
+    TParticleTrajectoryInterpolated        fTrajectoryInterpolated;
     std::vector<TParticleTrajectoryPoints> fTrajectoryLevels;
-    std::vector<bool> fTrajectoryLevelComplete;
+    std::vector<bool>                      fTrajectoryLevelComplete;
 
     // This is a funny one so I'll explain it here.
     // This is here because TParticleBeam inherits this class

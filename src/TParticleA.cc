@@ -56,7 +56,7 @@ TParticleA::TParticleA (std::string const& Type, TVector3D const& X0, TVector3D 
 TParticleA::~TParticleA ()
 {
   // Destroy me
-  this->Clear();
+  this->ResetTrajectoryData();
 }
 
 
@@ -423,7 +423,7 @@ TParticleTrajectoryInterpolatedPoints const TParticleA::GetTrajectoryExtendedLev
 
 
 
-void TParticleA::Clear ()
+void TParticleA::ResetTrajectoryData ()
 {
   // Clear particle data and trajectories
 
@@ -431,6 +431,8 @@ void TParticleA::Clear ()
   fTrajectoryInterpolated.Clear();
   fTrajectoryLevels.clear();
   fTrajectoryLevelComplete.clear();
+  fTrajectoryLevels.resize(TParticleA::kMaxTrajectoryLevel + 1);
+  fTrajectoryLevelComplete.resize(TParticleA::kMaxTrajectoryLevel + 1, false);
 }
 
 

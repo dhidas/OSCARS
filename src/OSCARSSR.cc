@@ -800,8 +800,7 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
   }
 
   // Clear any current trajectory
-  P.GetTrajectory().Clear();
-
+  P.ResetTrajectoryData();
 
   // Calculate the total DeltaT in seconds
   double const DeltaT = ((this->GetCTStop() - this->GetCTStart()) / TOSCARSSR::C() / (fNPointsTrajectory - 1));
@@ -1190,6 +1189,9 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
       throw std::out_of_range("no beam defined");
     }
   }
+
+  //this->SetNewParticle();
+  //this->CalculateTrajectory();
 
   // Number of threads to possibly use
   int const NThreadsToUse = NThreads < 1 ? fNThreadsGlobal : NThreads;

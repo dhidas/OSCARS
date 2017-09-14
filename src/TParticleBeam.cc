@@ -815,6 +815,8 @@ std::string TParticleBeam::GetBeamDistributionName () const
   switch (fBeamDistribution) {
     case kBeamDistribution_None:
       return std::string("none");
+    case kBeamDistribution_Filament:
+      return std::string("filament");
     case kBeamDistribution_Gaussian:
       return std::string("gaussian");
     case kBeamDistribution_KV:
