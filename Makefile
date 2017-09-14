@@ -12,10 +12,10 @@ PYLIB = python3.6m
 
 # CUDA Objects for the nvcc compiler
 CUDAOBJS  = $(patsubst src/%.cu,lib/%.o,$(wildcard src/*.cu))
-CUDACFLAGS = -DCUDA -cudart static -std=c++11 -shared --compiler-options '-fPIC' -Wall
+CUDACFLAGS = -DCUDA -cudart static -std=c++11 -shared --compiler-options '-fPIC'
 
 # Flags for the c++ compiler
-CFLAGS = -std=c++11 -fPIC -I$(PYINCLUDE)
+CFLAGS = -std=c++11 -fPIC -I$(PYINCLUDE) -Wall
 LDFLAGS = -L$(PYLIBDIR) -l$(PYLIB) -O3
 
 # c++ exe file names taken from what is in directories
