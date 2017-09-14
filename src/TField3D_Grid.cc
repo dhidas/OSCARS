@@ -115,31 +115,6 @@ TField3D_Grid::~TField3D_Grid ()
 
 
 
-double TField3D_Grid::GetFx (double const X, double const Y, double const Z) const
-{
-  return this->GetF(TVector3D(X, Y, Z)).GetX();
-}
-
-
-
-
-double TField3D_Grid::GetFy (double const X, double const Y, double const Z) const
-{
-  return this->GetF(TVector3D(X, Y, Z)).GetY();
-}
-
-
-
-
-double TField3D_Grid::GetFz (double const X, double const Y, double const Z) const
-{
-  return this->GetF(TVector3D(X, Y, Z)).GetZ();
-}
-
-
-
-
-
 TVector3D TField3D_Grid::GetF (double const X, double const Y, double const Z) const
 {
   return this->GetF(TVector3D(X, Y, Z));

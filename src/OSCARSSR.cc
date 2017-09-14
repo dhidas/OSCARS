@@ -164,35 +164,6 @@ void OSCARSSR::ClearMagneticFields ()
 
 
 
-double OSCARSSR::GetBx (double const X, double const Y, double const Z) const
-{
-  // Return summed Bx from container
-  return this->fBFieldContainer.GetFx(X, Y, Z);
-}
-
-
-
-
-
-double OSCARSSR::GetBy (double const X, double const Y, double const Z) const
-{
-  // Return summed By from container
-  return this->fBFieldContainer.GetFy(X, Y, Z);
-}
-
-
-
-
-
-double OSCARSSR::GetBz (double const X, double const Y, double const Z) const
-{
-  // Return summed Bx from container
-  return this->fBFieldContainer.GetFz(X, Y, Z);
-}
-
-
-
-
 TVector3D OSCARSSR::GetB (double const X, double const Y, double const Z) const
 {
   // Return summed Bx from container
@@ -358,39 +329,10 @@ void OSCARSSR::WriteFieldBinary (std::string const& BorE,
 
 
 
-double OSCARSSR::GetEx (double const X, double const Y, double const Z) const
-{
-  // Return summed Ex from container
-  return this->fEFieldContainer.GetFx(X, Y, Z);
-}
-
-
-
-
-
-double OSCARSSR::GetEy (double const X, double const Y, double const Z) const
-{
-  // Return summed Ey from container
-  return this->fEFieldContainer.GetFy(X, Y, Z);
-}
-
-
-
-
-
-double OSCARSSR::GetEz (double const X, double const Y, double const Z) const
-{
-  // Return summed Ez from container
-  return this->fEFieldContainer.GetFz(X, Y, Z);
-}
-
-
-
-
 TVector3D OSCARSSR::GetE (double const X, double const Y, double const Z) const
 {
   // Return summed E from container
-  return this->fEFieldContainer.GetF(X, Y, Z);
+  return this->fEFieldContainer.GetF(TVector3D(X, Y, Z));
 }
 
 
@@ -1497,16 +1439,12 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
       }
 
       LastMag = ThisMag;
-
-      if (iLevel == TParticleA::kMaxTrajectoryLevel) {
-        std::cout << "Max Memory Level reached iLevel: " << iLevel << std::endl;
-      }
     }
 
-    //Test
-    if (LastLevel == LevelStopWithExtended) {
-      std::cout << "LastLevelReached" << std::endl;
-    }
+    // UPDATE: max level reached warn
+    //if (LastLevel == LevelStopWithExtended) {
+    //  std::cout << "LastLevelReached" << std::endl;
+    //}
 
     // Multiply by constant factor
     SumE *= C0 * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(LastLevel);
@@ -2114,11 +2052,12 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
       }
 
       LastSum = ThisSum;
-
-      if (iLevel == TParticleA::kMaxTrajectoryLevel) {
-        std::cout << "Max Level reached" << std::endl;
-      }
     }
+
+    // UPDATE: max level reached warn
+    //if (LastLevel == LevelStopWithExtended) {
+    //  std::cout << "LastLevelReached" << std::endl;
+    //}
 
     Sum *= fabs(Particle.GetQ() * Particle.GetCurrent()) / (16 * TOSCARSSR::Pi2() * TOSCARSSR::Epsilon0() * TOSCARSSR::C()) * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(LastLevel);
 
@@ -2700,11 +2639,12 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
       }
 
       LastMag = ThisMag;
-
-      if (iLevel == TParticleA::kMaxTrajectoryLevel) {
-        std::cout << "Max Level reached" << std::endl;
-      }
     }
+
+    // UPDATE: max level reached warn
+    //if (LastLevel == LevelStopWithExtended) {
+    //  std::cout << "LastLevelReached" << std::endl;
+    //}
 
     // Multiply by constant factor
     SumE *= C0 * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(LastLevel);

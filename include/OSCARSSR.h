@@ -103,15 +103,9 @@ class OSCARSSR
                            int const Version);
 
 
-    double    GetBx (double const, double const, double const) const;
-    double    GetBy (double const, double const, double const) const;
-    double    GetBz (double const, double const, double const) const;
     TVector3D GetB  (double const, double const, double const) const;
     TVector3D GetB  (TVector3D const&) const;
 
-    double    GetEx (double const, double const, double const) const;
-    double    GetEy (double const, double const, double const) const;
-    double    GetEz (double const, double const, double const) const;
     TVector3D GetE  (double const, double const, double const) const;
     TVector3D GetE  (TVector3D const&) const;
 
