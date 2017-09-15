@@ -58,6 +58,9 @@ class TParticleTrajectoryInterpolated
     double GetDeltaTThisLevel         (int const Level) const;
     double GetTStartThisLevel         (int const Level) const;
 
+    double GetTStart () const;
+    double GetTStop () const;
+
   private:
     void LevelCheck (int const Level) const;
 

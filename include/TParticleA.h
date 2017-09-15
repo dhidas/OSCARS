@@ -60,9 +60,9 @@ class TParticleA
     TParticleTrajectoryPoints& GetTrajectory ();
 
     void SetupTrajectoryInterpolated ();
-    TParticleTrajectoryPoints const& GetTrajectoryLevel (int const Level);
-    TParticleTrajectoryInterpolated const& GetTrajectoryInterpolated () const;
-    TParticleTrajectoryInterpolatedPoints const GetTrajectoryExtendedLevel (int const Level);
+    TParticleTrajectoryPoints             const&         GetTrajectoryLevel (int const Level);
+    TParticleTrajectoryInterpolated       const&  GetTrajectoryInterpolated () const;
+    TParticleTrajectoryInterpolatedPoints const  GetTrajectoryExtendedLevel (int const Level);
 
     void ResetTrajectoryData ();
 

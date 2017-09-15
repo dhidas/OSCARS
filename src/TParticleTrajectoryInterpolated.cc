@@ -260,9 +260,31 @@ double TParticleTrajectoryInterpolated::GetDeltaTThisLevel (int const Level) con
 
 double TParticleTrajectoryInterpolated::GetTStartThisLevel (int const Level) const
 {
-  // DeltaT for all points from level 0 up to this level
+  // TSTart for this level
 
   return fTStart + (fTStop - fTStart) / pow(2., Level + 1); 
+
+}
+
+
+
+
+double TParticleTrajectoryInterpolated::GetTStart () const
+{
+  // TStart for interpolation
+
+  return fTStart; 
+
+}
+
+
+
+
+double TParticleTrajectoryInterpolated::GetTStop () const
+{
+  // TStop for interpolation
+
+  return fTStop; 
 
 }
 

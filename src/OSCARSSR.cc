@@ -720,8 +720,6 @@ void OSCARSSR::CorrectTrajectory ()
   TVector3D V0 = Direction.Perp();
   TVector3D V1 = Direction.Cross(V0);
 
-  this->CalculateTrajectory(fParticle);
-
   TParticleTrajectoryPoints& ParticleTrajectory = fParticle.GetTrajectory();
 
   // Closest approach to point and direction
@@ -780,8 +778,6 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
   // Function to calculate the particle trajectory given initial conditions.
   // This function uses the internal Trajectory member to store results
 
-  // UPDATE: Check this hits correct points in trajectory and correct number of points
-  // UPDATE: Do a detailed check of forward and back prop of X, V, and A
 
   // Check that CTStart is not after T0 of particle
   if (this->GetCTStart() > P.GetT0()) {
@@ -1135,8 +1131,11 @@ void OSCARSSR::CalculateSpectrum (TParticleA& Particle,
   // ObservationPoint - Observation Point
   // Spectrum - Spectrum container
 
-  // Calculate the trajectory from scratch
-  this->CalculateTrajectory(Particle);
+  // Calculate trajectory if it doesn't exist
+  if (Particle.GetTrajectory().GetNPoints() == 0) {
+    this->CalculateTrajectory(Particle);
+  }
+
 
   // Extra inpts for calculation
   bool Done = false;
@@ -1190,8 +1189,10 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
     }
   }
 
-  //this->SetNewParticle();
-  //this->CalculateTrajectory();
+  // Calculate trajectory if it doesn't exist
+  if (fParticle.GetTrajectory().GetNPoints() == 0) {
+    this->CalculateTrajectory(fParticle);
+  }
 
   // Number of threads to possibly use
   int const NThreadsToUse = NThreads < 1 ? fNThreadsGlobal : NThreads;
@@ -1269,6 +1270,7 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
 
         // Set a new random particle
         this->SetNewParticle();
+        this->CalculateTrajectory();
 
         if (NThreadsToUse == 1) {
           this->CalculateSpectrum(fParticle,
@@ -1504,8 +1506,10 @@ void OSCARSSR::CalculateSpectrumThreads (TParticleA& Particle,
   //
   // Surface - Observation Point
 
-  // Calculate the trajectory from scratch
-  this->CalculateTrajectory(Particle);
+  // Calculate trajectory if it doesn't exist
+  if (Particle.GetTrajectory().GetNPoints() == 0) {
+    this->CalculateTrajectory(Particle);
+  }
 
   // Vector container for threads
   std::vector<std::thread> Threads;
@@ -1808,8 +1812,10 @@ void OSCARSSR::CalculatePowerDensity (TParticleA& Particle,
   // Particle - Particle, contains trajectory (or if not, calculate it)
   // Surface - Observation Point
 
-  // Calculate trajectory
-  this->CalculateTrajectory(Particle);
+  // Calculate trajectory if it doesn't exist
+  if (Particle.GetTrajectory().GetNPoints() == 0) {
+    this->CalculateTrajectory(Particle);
+  }
 
   // Extra inpts for calculation
   bool Done = false;
@@ -1900,10 +1906,6 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface,
 
   // GPU will outrank NThreads...
   if (NParticles == 0) {
-    // nparticles = 0 has special meaning.  Set new ideal particle.  Of course if you have multiple
-    // beams defined this is a bit strange as it will pick randomly
-    // UPDATE: Consider adding "beam" as an input
-    this->SetNewParticle("", "ideal");
 
     if (UseGPU == 0) {
       if (NThreadsToUse == 1) {
@@ -1918,6 +1920,7 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface,
     double const Weight = 1.0 / (double) NParticles;
     for (int i = 0; i != NParticles; ++i) {
       this->SetNewParticle();
+      this->CalculateTrajectory();
       if (UseGPU == 0) {
         if (NThreadsToUse == 1) {
           this->CalculatePowerDensity(fParticle, Surface, PowerDensityContainer, Directional, Precision, MaxLevel, MaxLevelExtended, Weight);
@@ -1962,28 +1965,11 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
   int const LevelStopMemory = MaxLevel >= -1  && MaxLevel <= TParticleA::kMaxTrajectoryLevel ? MaxLevel : TParticleA::kMaxTrajectoryLevel;
   int const LevelStopWithExtended = MaxLevelExtended > LevelStopMemory ? MaxLevelExtended : LevelStopMemory;
 
-  // Grab the Trajectory
-  TParticleTrajectoryPoints& T = Particle.GetTrajectory();
-
-  // Timestep from trajectory
-  double const DeltaT = T.GetDeltaT();
-
-  // Number of points in Trajectory
-  size_t const NTPoints = T.GetNPoints();
-
-  // Check number of points
-  if (NTPoints < 1) {
-    throw std::length_error("no points in trajectory.  Is particle or beam defined?");
-  }
-
   // Variables for parts of the numerator and denominator of power density equation
   TVector3D Numerator;
   double Denominator;
 
-  //std::cout << "Directional: " << Directional << std::endl;
-
   bool const HasNormal = Surface.HasNormal();
-
 
   // Extended trajectory (not using memory for storage of arrays
   TParticleTrajectoryInterpolatedPoints TE;
@@ -2105,11 +2091,12 @@ void OSCARSSR::CalculatePowerDensityThreads (TParticleA& Particle,
   //
   // Surface - Observation Points
 
-  // Calculate the trajectory from scratch
-  this->CalculateTrajectory(Particle);
+  // Calculate trajectory if it doesn't exist
+  if (Particle.GetTrajectory().GetNPoints() == 0) {
+    this->CalculateTrajectory(Particle);
+  }
 
-  // Calculate the trajectory from scratch
-  this->CalculateTrajectory(Particle);
+
 
   // Vector for storing threads to rejoin
   std::vector<std::thread> Threads;
@@ -2215,8 +2202,10 @@ void OSCARSSR::CalculatePowerDensityGPU (TParticleA& Particle,
     throw std::out_of_range("no particle defined");
   }
 
-  // Calculate the trajectory from scratch
-  this->CalculateTrajectory(Particle);
+  // Calculate trajectory if it doesn't exist
+  if (Particle.GetTrajectory().GetNPoints() == 0) {
+    this->CalculateTrajectory(Particle);
+  }
 
   #ifdef CUDA
   // Check that the GPU exists
@@ -2268,8 +2257,11 @@ double OSCARSSR::CalculateTotalPower (TParticleA& Particle)
   // Grab the Trajectory
   TParticleTrajectoryPoints& T = Particle.GetTrajectory();
 
-  // Calculate Trajectory from scratch
-  this->CalculateTrajectory(Particle);
+  // Calculate trajectory if it doesn't exist
+  if (Particle.GetTrajectory().GetNPoints() == 0) {
+    this->CalculateTrajectory(Particle);
+  }
+
 
   // Number of points in Trajectory
   size_t const NTPoints = T.GetNPoints();
@@ -2321,8 +2313,10 @@ void OSCARSSR::CalculateFlux (TParticleA& Particle,
   // Calculates the single particle flux
   // in units of [photons / second / 0.001% BW / mm^2]
 
-  // Calculate trajectory
-  this->CalculateTrajectory(Particle);
+  // Calculate trajectory if it doesn't exist
+  if (Particle.GetTrajectory().GetNPoints() == 0) {
+    this->CalculateTrajectory(Particle);
+  }
 
   // Extra inpts for calculation
   bool Done = false;
@@ -2473,6 +2467,7 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
 
         // Set a new random particle
         this->SetNewParticle();
+        this->CalculateTrajectory();
 
         if (NThreadsToUse == 1) {
           this->CalculateFlux(fParticle,
@@ -2709,7 +2704,7 @@ void OSCARSSR::CalculateFluxThreads (TParticleA& Particle,
   // Surface - Observation Point
 
   // Calculate the trajectory only if it doesn't exist yet
-  if (this->GetTrajectory().GetNPoints() == 0) {
+  if (Particle.GetTrajectory().GetNPoints() == 0) {
     this->CalculateTrajectory(Particle);
   }
 
@@ -2866,8 +2861,11 @@ void OSCARSSR::CalculateElectricFieldTimeDomain (TVector3D const& Observer, T3DS
     throw std::out_of_range("no beam defined");
   }
 
-  // Calculate Trajectory
-  this->CalculateTrajectory(Particle);
+  // Calculate trajectory if it doesn't exist
+  if (Particle.GetTrajectory().GetNPoints() == 0) {
+    this->CalculateTrajectory(Particle);
+  }
+
 
   // Grab the Trajectory
   TParticleTrajectoryPoints& T = Particle.GetTrajectory();
