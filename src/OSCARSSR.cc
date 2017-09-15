@@ -451,6 +451,7 @@ void OSCARSSR::SetNewParticle ()
   // Set this new particle as *the* particle in OSCARSSR fParticle
   fParticle = fParticleBeamContainer.GetNewParticle();
 
+  fParticle.ResetTrajectoryData();
   return;
 }
 
@@ -467,6 +468,8 @@ void OSCARSSR::SetNewParticle (std::string const& BeamName, std::string const& I
   } else {
     fParticle = fParticleBeamContainer.GetParticleBeam(BeamName).GetNewParticle(IdealOrRandom);
   }
+
+  fParticle.ResetTrajectoryData();
 
   return;
 }
@@ -1187,11 +1190,6 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
     } catch (std::exception e) {
       throw std::out_of_range("no beam defined");
     }
-  }
-
-  // Calculate trajectory if it doesn't exist
-  if (fParticle.GetTrajectory().GetNPoints() == 0) {
-    this->CalculateTrajectory(fParticle);
   }
 
   // Number of threads to possibly use

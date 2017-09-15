@@ -301,7 +301,7 @@ def plot_power_density_1d(V, title='Power Density [$W / mm^2$]', xlabel='[$m$]',
     return
 
 
-def plot_flux(V, title='Flux [$\gamma / mm^2 / 0.1\%bw / s]$', xlabel='X1 Axis [$m$]', ylabel='X2 Axis [$m$]', clim=None, show=True, ofile='', figsize=None, ylim=None, xlim=None, colorbar=True, ret=False, nticks_cb=None):
+def plot_flux(V, title='Flux [$\gamma / mm^2 / 0.1\%bw / s$]', xlabel='X1 Axis [$m$]', ylabel='X2 Axis [$m$]', clim=None, show=True, ofile='', figsize=None, ylim=None, xlim=None, colorbar=True, ret=False, nticks_cb=None):
     """Plot a 2D histogram with equal spacing"""
         
     X = [item[0][0] for item in V]
