@@ -347,7 +347,7 @@ def plot_flux(V, title='Flux [$\gamma / mm^2 / 0.1\%bw / s]$', xlabel='X1 Axis [
     if ret:
         return plt
 
-    plt.clf()
+    plt.close()
     return
 
 
