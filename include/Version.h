@@ -3,7 +3,7 @@
 
 #define OSCARS_VMAJOR 1
 #define OSCARS_VMINOR 37
-#define OSCARS_REVISION 8
+#define OSCARS_REVISION 10
 #define OSCARS_RELEASE "multi-gpu"
 
 #endif

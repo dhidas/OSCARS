@@ -12,9 +12,13 @@
 ////////////////////////////////////////////////////////////////////
 
 #include <string>
+#include <map>
 
+#include "TOSCARSSR.h"
 #include "TVector3D.h"
 #include "TParticleTrajectoryPoints.h"
+#include "TParticleTrajectoryInterpolated.h"
+#include "TParticleTrajectoryInterpolatedPoints.h"
 
 class TParticleA
 {
@@ -55,6 +59,15 @@ class TParticleA
 
     TParticleTrajectoryPoints& GetTrajectory ();
 
+    void SetupTrajectoryInterpolated ();
+    TParticleTrajectoryPoints             const&         GetTrajectoryLevel (int const Level);
+    TParticleTrajectoryInterpolated       const&  GetTrajectoryInterpolated () const;
+    TParticleTrajectoryInterpolatedPoints const  GetTrajectoryExtendedLevel (int const Level);
+
+    void ResetTrajectoryData ();
+
+    // Static constants
+    static int const kMaxTrajectoryLevel = 24;
 
 
   private:
@@ -69,9 +82,12 @@ class TParticleA
 
     TVector3D fX0;  // Coordinates of initial conditions
     TVector3D fB0;  // Initial Beta (velocity / c)
-    double    fT0;  // Time at initial conditions
+    double    fT0;  // Time at initial conditions [m]
 
-    TParticleTrajectoryPoints fTrajectory;
+    TParticleTrajectoryPoints              fTrajectory;
+    TParticleTrajectoryInterpolated        fTrajectoryInterpolated;
+    std::vector<TParticleTrajectoryPoints> fTrajectoryLevels;
+    std::vector<bool>                      fTrajectoryLevelComplete;
 
     // This is a funny one so I'll explain it here.
     // This is here because TParticleBeam inherits this class
@@ -96,7 +112,7 @@ inline std::ostream& operator << (std::ostream& os, TParticleA const& o)
      << "QoverMGamma:  " << o.GetQoverMGamma()  << "\n"
      << "X0:           " << o.GetX0() << "\n"
      << "U0:           " << o.GetB0() << "\n"
-     << "T0:           " << o.GetT0() << "\n";
+     << "T0:           " << o.GetT0() << " [m]  " << o.GetT0() / TOSCARSSR::C() << " [s]\n";
 
   return os;
 }

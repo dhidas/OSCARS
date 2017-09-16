@@ -52,7 +52,7 @@ TParticleBeam::TParticleBeam (std::string const& ParticleType, std::string const
 
   this->SetParticleType(ParticleType);
   this->SetName(Name);
-  fE0 = Energy;
+  fE0 = Energy < TOSCARSSR::kgToGeV(this->GetM()) ? this->GetM() : Energy;
 
   this->SetCurrent(Current);
   this->SetWeight(Weight);
@@ -74,8 +74,8 @@ TParticleBeam::TParticleBeam (std::string const& ParticleType, std::string const
   this->SetName(Name);
 
   fX0 = X0;
-  fU0 = D0.UnitVector();
-  fE0 = Energy;
+  fU0 = D0.Mag2() > 0 ? D0.UnitVector() : TVector3D(0, 0, 0);
+  fE0 = Energy < TOSCARSSR::kgToGeV(this->GetM()) ? this->GetM() : Energy;
   fT0 = 0;
 
   this->SetCurrent(Current);
@@ -101,8 +101,8 @@ TParticleBeam::TParticleBeam (std::string const& ParticleType, std::string const
 
   this->SetName(Name);
   fX0 = X0;
-  fU0 = D0.UnitVector();
-  fE0 = Energy;
+  fU0 = D0.Mag2() > 0 ? D0.UnitVector() : TVector3D(0, 0, 0);
+  fE0 = Energy < TOSCARSSR::kgToGeV(this->GetM()) ? this->GetM() : Energy;
   fT0 = T0;
 
   this->SetCurrent(Current);
@@ -144,9 +144,9 @@ void TParticleBeam::SetPredefinedBeam (std::string const& Beam)
     this->SetEmittance(TVector2D(0.55e-9, 0.008e-9));
     this->SetTwissLatticeReference(TVector3D(0, 0, 0));
     this->SetTwissBetaAlpha(TVector2D(1.5, 0.8), TVector2D(0, 0));
-    this->SetSigmaEnergyGeV(3. * 0.001);
+    this->SetSigmaEnergyGeV(0);
     this->SetVerticalDirection(TVector3D(0, 1, 0));
-    this->SetBeamDistribution(kBeamDistribution_None);
+    this->SetBeamDistribution(kBeamDistribution_Filament);
 
   } else if (BeamU == "NSLSII-LONGSTRAIGHT" || BeamU == "NSLS2-LONGSTRAIGHT" || BeamU == "NSLS-II-LONGSTRAIGHT") {
     this->SetParticleType("electron");
@@ -351,7 +351,7 @@ void TParticleBeam::SetInitialConditions (TVector3D const& X, TVector3D const& D
 
   this->fX0 = X;
   this->fU0 = D.UnitVector();
-  this->fE0 = E0;
+  this->fE0 = E0 < TOSCARSSR::kgToGeV(this->GetM()) ? this->GetM() : E0;
   this->fT0 = T0;
 
   return;
@@ -630,7 +630,7 @@ void TParticleBeam::SetU0 (TVector3D const& U)
 void TParticleBeam::SetE0 (double const En)
 {
   // Set energy of the beam [GeV]
-  fE0 = En;
+  fE0 = En < TOSCARSSR::kgToGeV(this->GetM()) ? this->GetM() : En;
   return;
 }
 
@@ -702,11 +702,11 @@ TParticleA TParticleBeam::GetNewParticle (std::string const& IdealOrRandom)
   // The ideal trajectory
   if (idor == "ideal") {
     // Calculate Beta from original beam E0
-    double const Gamma = fE0 / TOSCARSSR::kgToGeV(this->GetM());
-    double const Beta = sqrt(1.0 - 1.0 / (Gamma * Gamma));
+    double const Gamma = fE0 / TOSCARSSR::kgToGeV(this->GetM()) < 1 ? 1 : fE0 / TOSCARSSR::kgToGeV(this->GetM());
+    double const Beta = Gamma != 1 ? sqrt(1.0 - 1.0 / (Gamma * Gamma)) : 0;
 
     // Copy this particle and set ideal conditions
-    TParticleA NewParticle = (TParticleA) *this;
+    TParticleA NewParticle((TParticleA) *this);
     NewParticle.SetInitialParticleConditions(fX0, Beta * fU0, fT0);
     return NewParticle;
   }
@@ -727,13 +727,23 @@ TParticleA TParticleBeam::GetNewParticle ()
   // UPDATE: not just below, but all
   this->GetTrajectory().Clear();
 
+  // If this is a filament beam return the ideal case
+  if (this->GetBeamDistribution() == kBeamDistribution_Filament) {
+    return this->GetNewParticle("ideal");
+  }
+
   // UPDATE: Needs rand for twiss, or other beam configurations...
   // UPDATE: Could also take a python function
 
   double    ENew = fE0 + fSigmaEnergyGeV * gRandomA->Normal(); // correlated with BNew, not sure how to handle this yet
+  if (ENew < TOSCARSSR::kgToGeV(this->GetM())) {
+    std::cerr << "WARNING in TParticleBeam::GetNewParticle(): ENew < mc^2.  Setting to mc^2" << std::endl;
+    std::cerr << "  ENew fSigmaEnergyGeV: " << ENew << "  " << fSigmaEnergyGeV << std::endl;
+    ENew = TOSCARSSR::kgToGeV(this->GetM());
+  }
 
-  double const Gamma = ENew / TOSCARSSR::kgToGeV(this->GetM());
-  double const Beta = sqrt(1.0 - 1.0 / (Gamma * Gamma));
+  double const Gamma = ENew / TOSCARSSR::kgToGeV(this->GetM()) < 1 ? 1 : ENew / TOSCARSSR::kgToGeV(this->GetM());
+  double const Beta = Gamma != 1 ? sqrt(1.0 - 1.0 / (Gamma * Gamma)) : 0;
 
   double const Ellipse_VA = sqrt(fEmittance[0] * (fTwissBetaX0[0] + fTwissGammaX0[0]));
   double const Ellipse_HA = sqrt(fEmittance[1] * (fTwissBetaX0[1] + fTwissGammaX0[1]));
@@ -770,7 +780,7 @@ TParticleA TParticleBeam::GetNewParticle ()
 
   double    TNew = fT0;
 
-  TParticleA NewParticle = (TParticleA) *this;
+  TParticleA NewParticle((TParticleA) *this);
   NewParticle.SetInitialParticleConditions(XNew, BetaNew, TNew);
 
 
@@ -791,11 +801,22 @@ void TParticleBeam::SetBeamDistribution (TParticleBeam_BeamDistribution const D)
 
 
 
+
+TParticleBeam::TParticleBeam_BeamDistribution const TParticleBeam::GetBeamDistribution () const
+{
+  return fBeamDistribution;
+}
+
+
+
+
 std::string TParticleBeam::GetBeamDistributionName () const
 {
   switch (fBeamDistribution) {
     case kBeamDistribution_None:
       return std::string("none");
+    case kBeamDistribution_Filament:
+      return std::string("filament");
     case kBeamDistribution_Gaussian:
       return std::string("gaussian");
     case kBeamDistribution_KV:

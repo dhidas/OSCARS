@@ -68,6 +68,11 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (TParticleA& Particle,
                                                         bool const Directional,
                                                         double const Weight);
 
+extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPUWithA (OSCARSSR& OSR,
+                                                             TSurfacePoints const& Surface,
+                                                             T3DScalarContainer& PowerDensityContainer,
+                                                             int const NParticles,
+                                                             std::vector<int> const& GPUVector);
 
 
 

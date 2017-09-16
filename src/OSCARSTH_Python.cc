@@ -79,6 +79,24 @@ static PyObject* OSCARSTH_new (PyTypeObject* type, PyObject* args, PyObject* kwd
 
 
 
+const char* DOC_OSCARSTH_Version = R"docstring(
+version()
+
+Version ID
+
+Returns
+-------
+version : str
+)docstring";
+static PyObject* OSCARSTH_Version (OSCARSTHObject* self, PyObject* arg)
+{
+  return Py_BuildValue("s", OSCARSPY::GetVersionString().c_str());
+}
+
+
+
+
+
 
 
 
@@ -2183,6 +2201,7 @@ static PyMethodDef OSCARSTH_methods[] = {
   // We must tell python about the function we allow access as well as give them nice
   // python names, and tell python the method of input parameters.
 
+  {"version",                                    (PyCFunction) OSCARSTH_Version,                                 METH_NOARGS,                                   DOC_OSCARSTH_Version},
   {"undulator_K",                                (PyCFunction) OSCARSTH_UndulatorK,                              METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorK},
   {"undulator_bfield",                           (PyCFunction) OSCARSTH_UndulatorBField,                         METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorBField},
   {"undulator_period",                           (PyCFunction) OSCARSTH_UndulatorPeriod,                         METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorPeriod},
@@ -2217,6 +2236,7 @@ static PyMethodDef OSCARSTH_methods_fake[] = {
   // We must tell python about the function we allow access as well as give them nice
   // python names, and tell python the method of input parameters.
 
+  {"version",                                    (PyCFunction) OSCARSTH_Version, METH_NOARGS,                                DOC_OSCARSTH_Version},
   {"undulator_K",                                (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorK},
   {"undulator_bfield",                           (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorBField},
   {"undulator_period",                           (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorPeriod},

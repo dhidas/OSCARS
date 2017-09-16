@@ -6,7 +6,9 @@ from math import sqrt
 
 def power_density_3d(srs, surface,
                     normal=1, rotations=[0, 0, 0], translation=[0, 0, 0], nparticles=0, gpu=0, nthreads=0, ret=False,
-                    title='Power Density [$W / mm^2$]', xlim=None, ylim=None, zlim=None, colorbar=True, figsize=None, alpha=0.4, ofile=None, show=True, view_init=None, axis=None, transparent=True, xticks=None, yticks=None, zticks=None, bbox_inches='tight'):
+                    title='Power Density [$W / mm^2$]', xlim=None, ylim=None, zlim=None, colorbar=True, figsize=None,
+                    alpha=0.4, ofile=None, show=True, view_init=None, axis=None, transparent=True,
+                    xticks=None, yticks=None, zticks=None, bbox_inches='tight', max_level=24):
     """calculate power density for and plot a parametric surface in 3d"""
 
     points = []
@@ -17,7 +19,7 @@ def power_density_3d(srs, surface,
             points.append([surface.position(u, v), surface.normal(u, v)])
 
 
-    power_density = srs.calculate_power_density(points=points, normal=normal, rotations=rotations, translation=translation, nparticles=nparticles, gpu=gpu, nthreads=nthreads)
+    power_density = srs.calculate_power_density(points=points, normal=normal, rotations=rotations, translation=translation, nparticles=nparticles, gpu=gpu, nthreads=nthreads, max_level=max_level)
     P = [item[1] for item in power_density]
 
     X2 = []
@@ -37,6 +39,9 @@ def power_density_3d(srs, surface,
 
     colors =[]
     MAXP = max(P)
+    print('MAXP', MAXP)
+    if MAXP == 0:
+        MAXP=1
     PP = []
     for i in range(surface.nu):
         tmpP = []

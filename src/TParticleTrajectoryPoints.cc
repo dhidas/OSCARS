@@ -22,6 +22,20 @@ TParticleTrajectoryPoints::TParticleTrajectoryPoints ()
 
   // Default DeltaT for this mode to zero
   fDeltaT = 0;
+
+  // Create mutex locking structure
+  fLock_mutex = new std::mutex();
+}
+
+
+
+
+TParticleTrajectoryPoints::TParticleTrajectoryPoints (const TParticleTrajectoryPoints& TPTP)
+{
+  // Copy constructor
+
+  // Create mutex locking structure
+  fLock_mutex = new std::mutex();
 }
 
 
@@ -31,6 +45,9 @@ TParticleTrajectoryPoints::TParticleTrajectoryPoints (double const dt)
   // Default constructor
 
   fDeltaT = dt;
+
+  // Create mutex locking structure
+  fLock_mutex = new std::mutex();
 }
 
 
@@ -41,7 +58,22 @@ TParticleTrajectoryPoints::~TParticleTrajectoryPoints ()
 
   this->Clear();
 
+  // Delete locking if it exists
+  if (fLock_mutex != 0x0) {
+    delete fLock_mutex;
+    //fLock_mutex=NULL;
+  }
+
 }
+
+
+
+
+TParticleTrajectoryPoint const& TParticleTrajectoryPoints::GetPoint (size_t const i) const
+{
+  return fP[i];
+}
+
 
 
 
@@ -88,6 +120,30 @@ TVector3D TParticleTrajectoryPoints::GetA (size_t const i) const
 
 
 
+double TParticleTrajectoryPoints::GetT (size_t const i) const
+{
+  return fT[i];
+}
+
+
+
+
+double TParticleTrajectoryPoints::GetTStart () const
+{
+  return fT.front();
+}
+
+
+
+
+double TParticleTrajectoryPoints::GetTStop () const
+{
+  return fT.back();
+}
+
+
+
+
 double TParticleTrajectoryPoints::GetDeltaT () const
 {
   return fDeltaT;
@@ -112,13 +168,42 @@ size_t TParticleTrajectoryPoints::GetNPoints () const
 
 
 
-void TParticleTrajectoryPoints::AddPoint (TVector3D const& X, TVector3D const& B, TVector3D const& AoverC, double const T)
+
+std::vector<TParticleTrajectoryPoint> const& TParticleTrajectoryPoints::GetTrajectory() const
 {
-  fP.push_back( TParticleTrajectoryPoint(X, B, AoverC) );
-  //fT.push_back(T);
+  return fP;
+}
+
+
+
+
+std::vector<double> const& TParticleTrajectoryPoints::GetTimePoints () const
+{
+  return fT;
+}
+
+
+
+
+void TParticleTrajectoryPoints::AddPoint (TParticleTrajectoryPoint const& P, double const T)
+{
+  fP.push_back(P);
+  fT.push_back(T);
 
   return;
 }
+
+
+
+
+void TParticleTrajectoryPoints::AddPoint (TVector3D const& X, TVector3D const& B, TVector3D const& AoverC, double const T)
+{
+  fP.push_back( TParticleTrajectoryPoint(X, B, AoverC) );
+  fT.push_back(T);
+
+  return;
+}
+
 
 
 
@@ -135,7 +220,7 @@ void TParticleTrajectoryPoints::AddPoint (double const X1, double const X2, doub
 void TParticleTrajectoryPoints::ReverseArrays ()
 {
   std::reverse(fP.begin(), fP.end());
-  //std::reverse(fT.begin(), fT.end());
+  std::reverse(fT.begin(), fT.end());
 
   return;
 }
@@ -162,7 +247,7 @@ void TParticleTrajectoryPoints::WriteToFile (std::string const& FileName) const
 
   // Loop over all points and print to file
   for (size_t i = 0; i != fP.size(); ++i) {
-    f << fDeltaT * (double) i
+    f << fT[i]
       << " "
       << fP[i].GetX().GetX()
       << " "
@@ -209,7 +294,7 @@ void TParticleTrajectoryPoints::WriteToFileBinary (std::string const& FileName) 
   // Loop over all points and print to file
   for (size_t i = 0; i != fP.size(); ++i) {
 
-    v = (float) fDeltaT;
+    v = (float) fT[i];
     f.write((char*) &v, sizeof(float));
     v = (float) fP[i].GetX().GetX();
     f.write((char*) &v, sizeof(float));
@@ -279,7 +364,7 @@ void TParticleTrajectoryPoints::ReadFromFile (std::string const& FileName)
     LineStream >> x >> y >> z >> bx >> by >> bz >> aocx >> aocy >> aocz;
 
     if (!LineStream.fail()) { // check for error
-      this->AddPoint( TVector3D(x, y, z), TVector3D(bx, by, bz), TVector3D(aocx, aocy, aocz) );
+      this->AddPoint( TVector3D(x, y, z), TVector3D(bx, by, bz), TVector3D(aocx, aocy, aocz), t );
     } else {
       throw;
     }
@@ -332,10 +417,30 @@ void TParticleTrajectoryPoints::ReadFromFileBinary (std::string const& FileName)
     if (f.eof()) {
       break;
     } else {
-      this->AddPoint( TVector3D(x, y, z), TVector3D(bx, by, bz), TVector3D(aocx, aocy, aocz) );
+      this->AddPoint( TVector3D(x, y, z), TVector3D(bx, by, bz), TVector3D(aocx, aocy, aocz), t );
     }
   }
 
+  return;
+}
+
+
+
+
+void TParticleTrajectoryPoints::Lock ()
+{
+  // Lock mutex for trajectory writing, test, etc
+  fLock_mutex->lock();
+  return;
+}
+
+
+
+
+void TParticleTrajectoryPoints::UnLock ()
+{
+  // unlock mutex
+  fLock_mutex->unlock();
   return;
 }
 
@@ -347,6 +452,7 @@ void TParticleTrajectoryPoints::Clear ()
   // Clear all vectors and free all memory that this object owns
 
   fP.clear();
+  fT.clear();
 
   return;
 }

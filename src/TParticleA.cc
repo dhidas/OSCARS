@@ -7,7 +7,6 @@
 ////////////////////////////////////////////////////////////////////
 
 #include "TParticleA.h"
-#include "TOSCARSSR.h"
 
 #include <algorithm>
 #include <cmath>
@@ -17,6 +16,8 @@
 TParticleA::TParticleA ()
 {
   // Default constructor
+  fTrajectoryLevels.resize(TParticleA::kMaxTrajectoryLevel + 1);
+  fTrajectoryLevelComplete.resize(TParticleA::kMaxTrajectoryLevel + 1, false);
 }
 
 
@@ -26,6 +27,8 @@ TParticleA::TParticleA (std::string const& Type)
 {
   // Constructor.  This requires a valid type name
   this->SetParticleType(Type);
+  fTrajectoryLevels.resize(TParticleA::kMaxTrajectoryLevel + 1);
+  fTrajectoryLevelComplete.resize(TParticleA::kMaxTrajectoryLevel + 1, false);
 }
 
 
@@ -40,6 +43,8 @@ TParticleA::TParticleA (std::string const& Type, TVector3D const& X0, TVector3D 
   this->SetX0(X0);
   this->SetB0(B0);
   this->SetT0(T0);
+  fTrajectoryLevels.resize(TParticleA::kMaxTrajectoryLevel + 1);
+  fTrajectoryLevelComplete.resize(TParticleA::kMaxTrajectoryLevel + 1, false);
 
   // Set the "gamma" variable
   SetGamma();
@@ -51,6 +56,7 @@ TParticleA::TParticleA (std::string const& Type, TVector3D const& X0, TVector3D 
 TParticleA::~TParticleA ()
 {
   // Destroy me
+  this->ResetTrajectoryData();
 }
 
 
@@ -341,6 +347,23 @@ void TParticleA::SetInitialParticleConditions (TVector3D const& X0, TVector3D co
 
 
 
+void TParticleA::SetupTrajectoryInterpolated ()
+{
+  // Setup the internal interpolated trajectory structure
+
+  if (fTrajectory.GetNPoints() < 2) {
+    std::cerr << "ERROR: TParticleA::SetupTrajectoryInterpolated Trajectory.GetNPoints() < 2" << std::endl;
+    throw;
+  }
+  
+  fTrajectoryInterpolated.Set(fTrajectory);
+
+  return;
+}
+
+
+
+
 TParticleTrajectoryPoints& TParticleA::GetTrajectory ()
 {
   // Get reference to the trajectory member
@@ -350,15 +373,88 @@ TParticleTrajectoryPoints& TParticleA::GetTrajectory ()
 
 
 
+TParticleTrajectoryPoints const& TParticleA::GetTrajectoryLevel (int const Level)
+{
+  // Get reference to the trajectory member at specific level.  If this level
+  // does not exist, mutex lock for thread safety, create this level, unlock,
+  // and return it
+  //
+  // The size of fTrajectoryLevels is misleading.  Just because the i_th element
+  // exists does NOT mean the trajectory at that level exists.  You must check
+  // NPoints and the mutex lock to make sure it is complete.
+  //
+  // THIS function should be the only entry point for getting a Trajectory
+  // at a level
+  //
+  // See also: TrajectoryLevelExists and TrajectoryLevelComplete
+
+  if (fTrajectoryLevelComplete[Level]) {
+    return fTrajectoryLevels[Level];
+  }
+
+  fTrajectoryLevels[Level].Lock();
+  if (fTrajectoryLevels[Level].GetNPoints() == 0) {
+    fTrajectoryInterpolated.FillTParticleTrajectoryPointsLevel(fTrajectoryLevels[Level], Level);
+    fTrajectoryLevelComplete[Level] = true;
+  }
+  fTrajectoryLevels[Level].UnLock();
+
+  return fTrajectoryLevels[Level];
+}
+
+
+
+
+TParticleTrajectoryInterpolated const& TParticleA::GetTrajectoryInterpolated () const
+{
+  return fTrajectoryInterpolated;
+}
+
+
+
+
+TParticleTrajectoryInterpolatedPoints const TParticleA::GetTrajectoryExtendedLevel (int const Level)
+{
+
+
+  return TParticleTrajectoryInterpolatedPoints(&fTrajectoryInterpolated, Level);
+}
+
+
+
+
+void TParticleA::ResetTrajectoryData ()
+{
+  // Clear particle data and trajectories
+
+  fTrajectory.Clear();
+  fTrajectoryInterpolated.Clear();
+  fTrajectoryLevels.clear();
+  fTrajectoryLevelComplete.clear();
+  fTrajectoryLevels.resize(TParticleA::kMaxTrajectoryLevel + 1);
+  fTrajectoryLevelComplete.resize(TParticleA::kMaxTrajectoryLevel + 1, false);
+}
+
+
+
+
+
+
+
+
+
+
+
+
 void TParticleA::SetGamma ()
 {
   // Set gamma variable for fast readback
-  double const Beta2 = fB0.Mag2();
+  double const Beta2 = fB0.Mag2() > 0 ? fB0.Mag2() : 0;
   if (Beta2 == 1) {
     return;
   }
 
-  fGamma = 1.0 / sqrt(1.0 - Beta2);
+  fGamma = Beta2 != 0 ? 1.0 / sqrt(1.0 - Beta2) : 1;
 
   // Need to adjust variable for fast readback
   SetQoverMGamma();

@@ -149,11 +149,13 @@ class TParticleBeam : public TParticleA
     // Types of beam distributions supported
     enum TParticleBeam_BeamDistribution {
       kBeamDistribution_None,
+      kBeamDistribution_Filament,
       kBeamDistribution_Gaussian,
       kBeamDistribution_KV
     };
 
     void SetBeamDistribution (TParticleBeam_BeamDistribution const D);
+    TParticleBeam_BeamDistribution const GetBeamDistribution () const;
 
     std::string GetBeamDistributionName () const;
 
@@ -204,7 +206,7 @@ inline std::ostream& operator << (std::ostream& os, TParticleBeam const& o)
      << "Weight:           " << o.GetWeight() << "\n"
      << "X0:               " << o.GetX0() << "\n"
      << "U0:               " << o.GetU0() << "\n"
-     << "T0:               " << o.GetT0() << "\n"
+     << "T0:               " << o.GetT0() << " [m]  " << o.GetT0() / TOSCARSSR::C() << " [s]\n"
      << "E0:               " << o.GetE0() << "\n"
      << "SigmaE:           " << o.GetSigmaEnergyGeV() << "\n"
      << "Current           " << o.GetCurrent() << "\n"
