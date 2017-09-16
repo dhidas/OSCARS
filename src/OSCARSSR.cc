@@ -1841,28 +1841,20 @@ void OSCARSSR::CalculatePowerDensity (TParticleA& Particle,
 
 void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface,
                                       T3DScalarContainer& PowerDensityContainer,
-                                      int    const Dimension,
-                                      bool   const Directional,
+                                      int const Dimension,
+                                      bool const Directional,
                                       double const Precision,
                                       int    const MaxLevel,
                                       int    const MaxLevelExtended,
-                                      int    const NParticles,
-                                      int    const NThreads,
-                                      int    const GPU)
+                                      int const NParticles,
+                                      int const NThreads,
+                                      int const GPU,
+                                      int const NGPU,
+                                      std::vector<int> VGPU)
 {
   // Calculates the power density in units of [W / mm^2]
   // THIS is the ENTRY POINT typically
   //
-  // UPDATE: inputs
-
-  // How many threads to use.
-  int const NThreadsToUse = NThreads < 1 ? fNThreadsGlobal : NThreads;
-  if (NThreadsToUse <= 0) {
-    throw std::out_of_range("NThreads or NThreadsGlobal must be >= 1");
-  }
-
-  // Should we use the GPU or not?
-  bool const UseGPU = GPU == 0 ? false : this->GetUseGPUGlobal() && (this->CheckGPU() > 0) ? true : false;
 
   // Check that particle has been set yet.  If fType is "" it has not been set yet
   if (fParticle.GetType() == "") {
@@ -1872,6 +1864,33 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface,
       throw std::out_of_range("no beam defined");
     }
   }
+
+  // Number of threads to possibly use
+  int const NThreadsToUse = NThreads < 1 ? fNThreadsGlobal : NThreads;
+  if (NThreadsToUse <= 0) {
+    throw std::out_of_range("NThreads or NThreadsGlobal must be >= 1");
+  }
+
+  // Should we use the GPU or not?
+  int const NGPUAvailable = this->CheckGPU();
+  bool const UseGPU = GPU == 0 ? false : this->GetUseGPUGlobal() && (NGPUAvailable > 0) ? true : (GPU == 1) && (NGPUAvailable > 0);
+
+  // If use GPU, let's check the GPU vector, or construct one if we must
+  std::vector<int> GPUVector;
+  for (std::vector<int>::const_iterator it = VGPU.begin(); it != VGPU.end(); ++it) {
+    GPUVector.push_back(*it);
+  }
+  if (GPUVector.size() == 0) {
+    for (int i = 0; i < NGPU; ++i) {
+      GPUVector.push_back(i);
+    }
+  }
+  if (NGPU != -1 && NGPU < (int) GPUVector.size()) {
+    GPUVector.resize(NGPU);
+  }
+
+
+
 
   PowerDensityContainer.Clear();
   // Set the output flux container and with correct dimensions
@@ -1902,37 +1921,82 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface,
     throw std::out_of_range("Wrong dimension");
   }
 
-  // GPU will outrank NThreads...
-  if (NParticles == 0) {
 
-    if (UseGPU == 0) {
-      if (NThreadsToUse == 1) {
-        this->CalculatePowerDensity(fParticle, Surface, PowerDensityContainer, Directional, Precision, MaxLevel, MaxLevelExtended, 1);
-      } else {
-        this->CalculatePowerDensityThreads(fParticle, Surface, PowerDensityContainer, NThreadsToUse, Directional, Precision, MaxLevel, MaxLevelExtended, 1);
-      }
-    } else if (UseGPU == 1) {
-      this->CalculatePowerDensityGPU(fParticle, Surface, PowerDensityContainer, Directional, Precision, MaxLevel, MaxLevelExtended, 1);
-    }
+
+
+  // Which cpmpute method will we use, gpu, multi-thread, or single-thread
+  if (UseGPU) {
+    // Send to GPU function
+    CalculatePowerDensityGPU(Surface,
+                             PowerDensityContainer,
+                             NParticles,
+                             GPUVector,
+                             Directional,
+                             Precision,
+                             MaxLevel,
+                             MaxLevelExtended);
   } else {
-    double const Weight = 1.0 / (double) NParticles;
-    for (int i = 0; i != NParticles; ++i) {
-      this->SetNewParticle();
-      this->CalculateTrajectory();
-      if (UseGPU == 0) {
+    if (NParticles == 0) {
+      if (NThreadsToUse == 1) {
+        this->CalculatePowerDensity(fParticle,
+                                    Surface,
+                                    PowerDensityContainer,
+                                    Directional,
+                                    Precision,
+                                    MaxLevel,
+                                    MaxLevelExtended,
+                                    1);
+      } else {
+        this->CalculatePowerDensityThreads(fParticle,
+                                           Surface,
+                                           PowerDensityContainer,
+                                           NThreadsToUse,
+                                           Directional,
+                                           Precision,
+                                           MaxLevel,
+                                           MaxLevelExtended,
+                                           1);
+      }
+    } else {
+      // Weight this by the number of particles
+      double const Weight = 1.0 / (double) NParticles;
+
+      // Loop over particles
+      for (int i = 0; i != NParticles; ++i) {
+
+        // Set a new random particle
+        this->SetNewParticle();
+        this->CalculateTrajectory();
+
         if (NThreadsToUse == 1) {
-          this->CalculatePowerDensity(fParticle, Surface, PowerDensityContainer, Directional, Precision, MaxLevel, MaxLevelExtended, Weight);
+          this->CalculatePowerDensity(fParticle,
+                                      Surface,
+                                      PowerDensityContainer,
+                                      Directional,
+                                      Precision,
+                                      MaxLevel,
+                                      MaxLevelExtended,
+                                      Weight);
         } else {
-          this->CalculatePowerDensityThreads(fParticle, Surface, PowerDensityContainer,  NThreadsToUse, Directional, Precision, MaxLevel, MaxLevelExtended, Weight);
+          this->CalculatePowerDensityThreads(fParticle,
+                                             Surface,
+                                             PowerDensityContainer,
+                                             NThreadsToUse,
+                                             Directional,
+                                             Precision,
+                                             MaxLevel,
+                                             MaxLevelExtended,
+                                             Weight);
         }
-      } else if (UseGPU == 1) {
-        this->CalculatePowerDensityGPU(fParticle, Surface, PowerDensityContainer, Directional, Precision, MaxLevel, MaxLevelExtended, Weight);
       }
     }
   }
 
   return;
 }
+
+
+
 
 
 
@@ -2184,25 +2248,23 @@ void OSCARSSR::CalculatePowerDensityThreads (TParticleA& Particle,
 
 
 
-void OSCARSSR::CalculatePowerDensityGPU (TParticleA& Particle,
-                                         TSurfacePoints const& Surface,
+void OSCARSSR::CalculatePowerDensityGPU (TSurfacePoints const& Surface,
                                          T3DScalarContainer& PowerDensityContainer,
+                                         int const NParticles,
+                                         std::vector<int> GPUVector,
                                          bool const Directional,
                                          double const Precision,
                                          int    const MaxLevel,
-                                         int    const MaxLevelExtended,
-                                         double const Weight)
+                                         int    const MaxLevelExtended)
 {
   // If you compile for Cuda use the GPU in this function, else throw
 
-  // Check that particle has been set yet.  If fType is "" it has not been set yet
-  if (Particle.GetType() == "") {
-    throw std::out_of_range("no particle defined");
-  }
-
-  // Calculate trajectory if it doesn't exist
-  if (Particle.GetTrajectory().GetNPoints() == 0) {
-    this->CalculateTrajectory(Particle);
+  // If GPUVector is empty assume you want to use ALL GPUs available
+  if (GPUVector.size() == 0) {
+    int const NGPUAvailable = this->CheckGPU();
+    for (int i = 0; i < NGPUAvailable; ++i) {
+      GPUVector.push_back(i);
+    }
   }
 
   #ifdef CUDA
@@ -2211,7 +2273,8 @@ void OSCARSSR::CalculatePowerDensityGPU (TParticleA& Particle,
     throw std::invalid_argument("You are requesting the GPU, but none were found");
   }
 
-  return OSCARSSR_Cuda_CalculatePowerDensityGPU (Particle, Surface, PowerDensityContainer, Directional, Weight);
+
+  return OSCARSSR_Cuda_CalculatePowerDensityGPUWithA (*this, Surface, PowerDensityContainer, NParticles, GPUVector);
   #else
   throw std::invalid_argument("GPU functionality not compiled into this binary distribution");
   #endif

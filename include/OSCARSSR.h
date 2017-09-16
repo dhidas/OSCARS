@@ -279,7 +279,9 @@ class OSCARSSR
                                 int    const MaxLevelExtended,
                                 int const NParticles,
                                 int const NThreads,
-                                int const GPU);
+                                int const GPU,
+                                int const NGPU = -1,
+                                std::vector<int> VGPU = std::vector<int>());
 
     void CalculatePowerDensityPoints (TParticleA& Particle,
                                       TSurfacePoints const& Surface,
@@ -303,14 +305,14 @@ class OSCARSSR
                                        int    const MaxLevelExtended,
                                        double const Weight);
 
-    void CalculatePowerDensityGPU (TParticleA& Particle,
-                                   TSurfacePoints const& Surface,
+    void CalculatePowerDensityGPU (TSurfacePoints const& Surface,
                                    T3DScalarContainer& PowerDensityContainer,
+                                   int const NParticles,
+                                   std::vector<int> GPUVector,
                                    bool const Directional,
                                    double const Precision,
                                    int    const MaxLevel,
-                                   int    const MaxLevelExtended,
-                                   double const Weight);
+                                   int    const MaxLevelExtended);
 
     double CalculateTotalPower ();
     double CalculateTotalPower (TParticleA&);
