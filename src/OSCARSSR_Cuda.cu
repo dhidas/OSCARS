@@ -1912,7 +1912,6 @@ __global__ void OSCARSSR_Cuda_PowerDensityGPUMultiWithA (double  *x, double  *y,
                                                          double *dt,                          // DeltaT
                                                          int *nt,                             // number of trajectory points
                                                          int *ns,                             // number of surface elements
-                                                         double *C0, double *C2, double *C,   // constants
                                                          int *shn,                            // use normal
                                                          int *ifirst,                         // first index for this thread
                                                          double *power_density)
@@ -2220,7 +2219,7 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPUWithA (OSCARSSR& OSR,
   }
 
   // Memory allocation for Host
-  double  *h_x,  *h_y,  *h_z,  *h_bx,  *h_by,  *h_bz,  *h_ax, *h_ay, *h_az, *h_sx,  *h_sy,  *h_sz, *h_nx, *h_ny, *h_nz, *h_c0,  *h_c2,  *h_c;
+  double  *h_x,  *h_y,  *h_z,  *h_bx,  *h_by,  *h_bz,  *h_ax, *h_ay, *h_az, *h_sx,  *h_sy,  *h_sz, *h_nx, *h_ny, *h_nz;
   int     *h_ifirst, *h_shn;
   double **h_pd;
   cudaHostAlloc((void**) &h_x,       *h_nt_max * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
@@ -2238,9 +2237,6 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPUWithA (OSCARSSR& OSR,
   cudaHostAlloc((void**) &h_nx,          *h_ns * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void**) &h_ny,          *h_ns * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void**) &h_nz,          *h_ns * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
-  cudaHostAlloc((void**) &h_c0,                  sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
-  cudaHostAlloc((void**) &h_c2,                  sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
-  cudaHostAlloc((void**) &h_c,                   sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void**) &h_ifirst, NGPUsToUse * sizeof(int),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void**) &h_shn,                 sizeof(int),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
 
@@ -2276,9 +2272,6 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPUWithA (OSCARSSR& OSR,
   double **d_nx;
   double **d_ny;
   double **d_nz;
-  double **d_c0;
-  double **d_c2;
-  double **d_c;
   int    **d_ifirst;
   int    **d_shn;
   double **d_pd;
@@ -2301,9 +2294,6 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPUWithA (OSCARSSR& OSR,
   cudaHostAlloc((void **) &d_nx,     NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void **) &d_ny,     NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void **) &d_nz,     NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
-  cudaHostAlloc((void **) &d_c0,     NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
-  cudaHostAlloc((void **) &d_c2,     NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
-  cudaHostAlloc((void **) &d_c,      NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void **) &d_ifirst, NGPUsToUse * sizeof(int*),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void **) &d_shn,    NGPUsToUse * sizeof(int*),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void **) &d_pd,     NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
@@ -2331,9 +2321,6 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPUWithA (OSCARSSR& OSR,
     cudaMalloc((void **) &d_nx[i],         *h_ns * sizeof(double));
     cudaMalloc((void **) &d_ny[i],         *h_ns * sizeof(double));
     cudaMalloc((void **) &d_nz[i],         *h_ns * sizeof(double));
-    cudaMalloc((void **) &d_c0[i],                 sizeof(double));
-    cudaMalloc((void **) &d_c2[i],                 sizeof(double));
-    cudaMalloc((void **) &d_c[i],                  sizeof(double));
     cudaMalloc((void **) &d_ifirst[i],             sizeof(int));
     cudaMalloc((void **) &d_shn[i],                sizeof(int));
     cudaMalloc((void **) &d_pd[i], NPowerDensity * sizeof(double));
@@ -2343,9 +2330,6 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPUWithA (OSCARSSR& OSR,
   }
 
   // Compute known host values
-  *h_c0    = OSR.GetCurrentParticle().GetQ() / (TOSCARSSR::FourPi() * TOSCARSSR::C() * TOSCARSSR::Epsilon0() * TOSCARSSR::Sqrt2Pi());
-  *h_c2    = TOSCARSSR::FourPi() * OSR.GetCurrentParticle().GetCurrent() / (TOSCARSSR::H() * fabs(OSR.GetCurrentParticle().GetQ()) * TOSCARSSR::Mu0() * TOSCARSSR::C()) * 1e-6 * 0.001;
-  *h_c     = TOSCARSSR::C();
   *h_shn   = Surface.HasNormal() ? 1 : 0;
   for (size_t i = 0; i < *h_ns; ++i) {
     h_sx[i] = Surface.GetPoint(i).GetX();
@@ -2362,9 +2346,6 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPUWithA (OSCARSSR& OSR,
   cudaSetDevice(d0);
   cudaMemcpyAsync(d_ns[0],    h_ns,          sizeof(int),    cudaMemcpyHostToDevice);
   cudaMemcpyAsync(d_dt[0],    h_dt,          sizeof(double), cudaMemcpyHostToDevice);
-  cudaMemcpyAsync(d_c0[0],    h_c0,          sizeof(double), cudaMemcpyHostToDevice);
-  cudaMemcpyAsync(d_c2[0],    h_c2,          sizeof(double), cudaMemcpyHostToDevice);
-  cudaMemcpyAsync(d_c[0],     h_c,           sizeof(double), cudaMemcpyHostToDevice);
   cudaMemcpyAsync(d_shn[0],   h_shn,         sizeof(int),    cudaMemcpyHostToDevice);
   cudaMemcpyAsync(d_sx[0],    h_sx,  *h_ns * sizeof(double), cudaMemcpyHostToDevice);
   cudaMemcpyAsync(d_sy[0],    h_sy,  *h_ns * sizeof(double), cudaMemcpyHostToDevice);
@@ -2379,9 +2360,6 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPUWithA (OSCARSSR& OSR,
     cudaSetDevice(d);
     cudaMemcpyPeerAsync( d_ns[i+1],     d1, d_ns[i],     d, sizeof(int));
     cudaMemcpyPeerAsync( d_dt[i+1],     d1, d_dt[i],     d, sizeof(double));
-    cudaMemcpyPeerAsync( d_c0[i+1],     d1, d_c0[i],     d, sizeof(double));
-    cudaMemcpyPeerAsync( d_c2[i+1],     d1, d_c2[i],     d, sizeof(double));
-    cudaMemcpyPeerAsync( d_c[i+1],      d1, d_c[i],      d, sizeof(double));
     cudaMemcpyPeerAsync( d_shn[i+1],    d1, d_shn[i],    d, sizeof(int));
     cudaMemcpyPeerAsync( d_sx[i+1],     d1, d_sx[i],     d, *h_ns * sizeof(double));
     cudaMemcpyPeerAsync( d_sy[i+1],     d1, d_sy[i],     d, *h_ns * sizeof(double));
@@ -2486,7 +2464,6 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPUWithA (OSCARSSR& OSR,
                                                                            d_dt[ig],
                                                                            d_nt[ig],
                                                                            d_ns[ig],
-                                                                           d_c0[ig], d_c2[ig], d_c[ig],
                                                                            d_shn[ig],
                                                                            d_ifirst[ig],
                                                                            d_pd[ig]);
@@ -2502,7 +2479,7 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPUWithA (OSCARSSR& OSR,
             break;
           }
           int iss = ith + NThreadsPerBlock * NBlocksUsed;
-          PowerDensityContainer.AddToPoint(iss, h_pd[ig][ith]);
+          PowerDensityContainer.AddToPoint(iss, h_pd[ig][ith] * fabs(OSR.GetCurrentParticle().GetQ() * OSR.GetCurrentParticle().GetCurrent()) / (16 * TOSCARSSR::Pi2() * TOSCARSSR::Epsilon0() * TOSCARSSR::C()) / 1e6);
         }
         NBlocksUsed += NBlocksThisGPU[ig];
       }
@@ -2552,7 +2529,7 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPUWithA (OSCARSSR& OSR,
         break;
       }
       int iss = ith + NThreadsPerBlock * NBlocksUsed;
-      PowerDensityContainer.AddToPoint(iss, h_pd[ig][ith]);
+      PowerDensityContainer.AddToPoint(iss, h_pd[ig][ith] * fabs(OSR.GetCurrentParticle().GetQ() * OSR.GetCurrentParticle().GetCurrent()) / (16 * TOSCARSSR::Pi2() * TOSCARSSR::Epsilon0() * TOSCARSSR::C()) / 1e6);
     }
     NBlocksUsed += NBlocksThisGPU[ig];
   }
@@ -2581,9 +2558,6 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPUWithA (OSCARSSR& OSR,
   cudaFreeHost(h_nx);
   cudaFreeHost(h_ny);
   cudaFreeHost(h_nz);
-  cudaFreeHost(h_c0);
-  cudaFreeHost(h_c2);
-  cudaFreeHost(h_c);
   cudaFreeHost(h_shn);
   cudaFreeHost(h_ifirst);
   // Free host and GPU memory
@@ -2613,9 +2587,6 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPUWithA (OSCARSSR& OSR,
     cudaFree(d_nx[i]);
     cudaFree(d_ny[i]);
     cudaFree(d_nz[i]);
-    cudaFree(d_c0[i]);
-    cudaFree(d_c2[i]);
-    cudaFree(d_c[i]);
     cudaFree(d_shn[i]);
     cudaFree(d_ifirst[i]);
     cudaFree(d_pd[i]);
@@ -2640,9 +2611,6 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPUWithA (OSCARSSR& OSR,
   cudaFree(d_nx);
   cudaFree(d_ny);
   cudaFree(d_nz);
-  cudaFree(d_c0);
-  cudaFree(d_c2);
-  cudaFree(d_c);
   cudaFree(d_shn);
   cudaFree(h_ifirst);
   cudaFree(d_pd);
