@@ -58,8 +58,11 @@ class TParticleTrajectoryInterpolated
     double GetDeltaTThisLevel         (int const Level) const;
     double GetTStartThisLevel         (int const Level) const;
 
+    size_t GetNPoints () const;
     double GetTStart () const;
     double GetTStop () const;
+
+    TOMATH::TSpline1D3<TParticleTrajectoryPoint> const& GetSpline () const;
 
   private:
     void LevelCheck (int const Level) const;

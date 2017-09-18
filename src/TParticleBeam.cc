@@ -305,7 +305,7 @@ void TParticleBeam::SetTwissParametersAtX0 ()
 
   // Calculate distance to transform
   double const D = (fTwissLatticeReference - fX0).Mag();
-  double const L = D ? (fTwissLatticeReference - fX0).Dot(fU0) >= 0 : -1. * D;
+  double const L = (fTwissLatticeReference - fX0).Dot(fU0) >= 0 ? D : -1. * D;
 
   fTwissBetaX0 = fTwissBeta - 2 * L * fTwissAlpha + L * L * fTwissGamma;
   fTwissAlphaX0 = fTwissAlpha - L * fTwissGamma;
@@ -745,13 +745,13 @@ TParticleA TParticleBeam::GetNewParticle ()
   double const Gamma = ENew / TOSCARSSR::kgToGeV(this->GetM()) < 1 ? 1 : ENew / TOSCARSSR::kgToGeV(this->GetM());
   double const Beta = Gamma != 1 ? sqrt(1.0 - 1.0 / (Gamma * Gamma)) : 0;
 
-  double const Ellipse_VA = sqrt(fEmittance[0] * (fTwissBetaX0[0] + fTwissGammaX0[0]));
-  double const Ellipse_HA = sqrt(fEmittance[1] * (fTwissBetaX0[1] + fTwissGammaX0[1]));
+  double const Ellipse_HA = sqrt(fEmittance[0] * (fTwissBetaX0[0] + fTwissGammaX0[0]));   // aa
+  double const Ellipse_VA = sqrt(fEmittance[1] * (fTwissBetaX0[1] + fTwissGammaX0[1]));
 
-  double const Ellipse_VB = fEmittance[0] / Ellipse_VA;
-  double const Ellipse_HB = fEmittance[1] / Ellipse_HA;
+  double const Ellipse_HB = fEmittance[0] / Ellipse_HA; // ba
+  double const Ellipse_VB = fEmittance[1] / Ellipse_VA;
 
-  double const Angle_H = 0.5*atan(2.*fTwissAlphaX0[0] / (fTwissGammaX0[0] - fTwissBetaX0[0]));
+  double const Angle_H = 0.5*atan(2.*fTwissAlphaX0[0] / (fTwissGammaX0[0] - fTwissBetaX0[0]));  // myangle
   double const Angle_V = 0.5*atan(2.*fTwissAlphaX0[1] / (fTwissGammaX0[1] - fTwissBetaX0[1]));
 
   double const RHA = Ellipse_HA * gRandomA->Normal();
