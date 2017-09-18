@@ -392,6 +392,20 @@ class OSCARSSR
                            int    const MaxLevel = -2,
                            int    const MaxLevelExtended = 0);
 
+
+    void CalculateFluxGPUNew (TSurfacePoints const& Surface,
+                           double const Energy_eV,
+                           T3DScalarContainer& FluxContainer,
+                           std::string const& Polarization = "all",
+                           double const Angle = 0,
+                           TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
+                           TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
+                           int const NParticles = 0,
+                           std::vector<int> GPUVector = std::vector<int>(),
+                           double const Precision = 0.01,
+                           int    const MaxLevel = -2,
+                           int    const MaxLevelExtended = 0);
+
     // Electric Field Calculations
     void CalculateElectricFieldTimeDomain (TVector3D const& Observer, T3DScalarContainer&);
     void CalculateElectricFieldTimeDomain (TVector3D const& Observer, T3DScalarContainer&, TParticleA& Particle);

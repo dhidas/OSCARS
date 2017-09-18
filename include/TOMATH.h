@@ -191,6 +191,35 @@ template <class T> class TSpline1D3
       fYPP.clear();
     }
 
+    size_t GetNPoints () const
+    {
+      return fX.size();
+    }
+
+    double GetXStart () const
+    {
+      return fX.front();
+    }
+
+    double GetXStop () const
+    {
+      return fX.back();
+    }
+
+    double GetX (int const i) const
+    {
+      return fX[i];
+    }
+
+    T const& GetY (int const i) const
+    {
+      return fY[i];
+    }
+
+    T const& GetYPP (int const i) const
+    {
+      return fYPP[i];
+    }
 
   private:
     std::vector<double> fX;   // x-values

@@ -258,6 +258,14 @@ double TParticleTrajectoryInterpolated::GetDeltaTThisLevel (int const Level) con
 
 
 
+size_t TParticleTrajectoryInterpolated::GetNPoints () const
+{
+  return fP.GetNPoints();
+}
+
+
+
+
 double TParticleTrajectoryInterpolated::GetTStartThisLevel (int const Level) const
 {
   // TSTart for this level
@@ -286,6 +294,14 @@ double TParticleTrajectoryInterpolated::GetTStop () const
 
   return fTStop; 
 
+}
+
+
+
+
+TOMATH::TSpline1D3<TParticleTrajectoryPoint> const& TParticleTrajectoryInterpolated::GetSpline () const
+{
+  return fP;
 }
 
 
