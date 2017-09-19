@@ -328,14 +328,11 @@ __global__ void OSCARSSR_Cuda_FluxGPUMultiWithAInterpolated (double *t,
   // Check that this is within the number of spectrum points requested
   int const ith = threadIdx.x + blockIdx.x * blockDim.x;
   int const is = ith + *ifirst;
-  if (is >= *ns) {
-    return;
-  }
 
 
-  double const ox = sx[is];
-  double const oy = sy[is];
-  double const oz = sz[is];
+  double const ox = is >= *ns ? 0 : sx[is];
+  double const oy = is >= *ns ? 0 : sy[is];
+  double const oz = is >= *ns ? 0 : sz[is];
 
   // E-field components sum
   cuDoubleComplex SumEX = make_cuDoubleComplex(0, 0);
@@ -354,29 +351,43 @@ __global__ void OSCARSSR_Cuda_FluxGPUMultiWithAInterpolated (double *t,
   __shared__ double _ax[32*16];
   __shared__ double _ay[32*16];
   __shared__ double _az[32*16];
-  __shared__ bool   _not_done;
+
+  __shared__ bool   _done[32*16];
+  __shared__ bool   _all_done;
+
+  double precision = 999;
+
+  if (threadIdx.x == 1) {
+    _all_done = false;
+  }
+
+  _done[threadIdx.x] = false;
+  if (is >= *ns) {
+    _done[threadIdx.x] = true;
+  }
+  
+  __syncthreads();
 
   int this_nt = 1;
 
   double this_result = 0;
-  double last_result = 0;
+  double last_result = 1;
 
+  double result = -1;
   double dt_total = 0;
-  for (int ilevel = 0; ilevel <= *ml; ++ilevel) {
-
-    _not_done = false;
+  for (int ilevel = 0; !_all_done && (ilevel <= 15); ++ilevel) {
 
     // DeltaT inclusive up to this level
-    dt_total = (*tstop - *tstart) / (2 * this_nt);
+    dt_total = (*tstop - *tstart) / pow(2., ilevel+1);//(*tstop - *tstart) / (2 * this_nt);
 
     // deltaT this level and Time start this level
-    double const dt = (*tstop - *tstart) / this_nt;
-    double const ts = *tstart + (*tstop - *tstart) / (2. * this_nt);
+    double const dt = (*tstop - *tstart) / pow(2., ilevel);//(*tstop - *tstart) / this_nt;
+    double const ts = *tstart + (*tstop - *tstart) / pow(2., ilevel + 1);//*tstart + (*tstop - *tstart) / (2. * this_nt);
 
     int const NTrajectoryBlocks = this_nt / blockDim.x + (this_nt % blockDim.x == 0 ? 0 : 1);
 
     for (int itb = 0; itb < NTrajectoryBlocks; ++itb) {
-      _t[threadIdx.x] = dt * (itb * blockDim.x + threadIdx.x) + *tstart;
+      _t[threadIdx.x] = dt * (itb * blockDim.x + threadIdx.x) + ts;
 
       if (_t[threadIdx.x] < *tstop) {
         int imin, imax;
@@ -395,13 +406,10 @@ __global__ void OSCARSSR_Cuda_FluxGPUMultiWithAInterpolated (double *t,
 
       __syncthreads();
 
-
       for (int i = 0; i < blockDim.x; ++i) {
 
         // Check if we are over the limit of trajectory points
-        if (_t[i] < *tstop) {
-          break;
-        }
+        if (is < *ns && (_t[i] < *tstop)) {
 
         // DO MATH HERE
         // Distance to observer
@@ -450,6 +458,7 @@ __global__ void OSCARSSR_Cuda_FluxGPUMultiWithAInterpolated (double *t,
         SumEY = cuCadd(SumEY, Y2);
         SumEZ = cuCadd(SumEZ, Z2);
 
+        }
       }
 
     }
@@ -458,27 +467,36 @@ __global__ void OSCARSSR_Cuda_FluxGPUMultiWithAInterpolated (double *t,
     cuDoubleComplex TSumEY = cuCmul(make_cuDoubleComplex((*C0) * (dt_total), 0), SumEY);
     cuDoubleComplex TSumEZ = cuCmul(make_cuDoubleComplex((*C0) * (dt_total), 0), SumEZ);
 
-
     double const EX = (TSumEX.x * TSumEX.x + TSumEX.y * TSumEX.y);
     double const EY = (TSumEY.x * TSumEY.x + TSumEY.y * TSumEY.y);
     double const EZ = (TSumEZ.x * TSumEZ.x + TSumEZ.y * TSumEZ.y);
 
-    this_result = (*C2) * (EX + EY + EZ);
+    this_result = fabs((*C2) * (EX + EY + EZ));
 
-    if (ilevel > 7 && fabs((last_result - this_result) / last_result) > 0.01) {
-      _not_done = true;
+    if (!_done[threadIdx.x] && (ilevel > 8) && (fabs((this_result - last_result) / last_result) < 0.01) ) {
+      _done[threadIdx.x] = true;
     }
 
     last_result = this_result;
 
 
     __syncthreads();
-
-    if (!_not_done) {
-      break;
+    if (threadIdx.x == 1) {
+      for (int ith = 0; ith < 32*16; ++ith) {
+        _all_done = true;
+        if (!_done[ith]) {
+          _all_done = false;
+        }
+      }
     }
 
     this_nt *= 2;
+
+    __syncthreads();
+  }
+
+  if (is >= *ns) {
+    return;
   }
 
   flux[ith] = this_result;
@@ -1720,7 +1738,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPUWithAInterpolated (OSCARSSR& OSR,
 
   // Number of threads per block is constant
   *h_ntpb = NThreadsPerBlock;
-  *h_ml = 11; //UPDATE: max level should be an input
+  *h_ml = 25; //UPDATE: max level should be an input
 
 
   // Memor allocations for GPU
