@@ -2884,8 +2884,20 @@ void OSCARSSR::CalculateFluxGPU (TSurfacePoints const& Surface,
     throw std::invalid_argument("You are requesting the GPU, but none were found");
   }
 
-  return OSCARSSR_Cuda_CalculateFluxGPUWithAInterpolated(*this, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NParticles, GPUVector);
-  //return OSCARSSR_Cuda_CalculateFluxGPUWithA(*this, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NParticles, GPUVector);
+  int const MaxLevelTotal = MaxLevel > MaxLevelExtended ? MaxLevel : MaxLevelExtended;
+
+  return OSCARSSR_Cuda_CalculateFluxGPUWithAInterpolated(*this,
+                                                         Surface,
+                                                         Energy_eV,
+                                                         FluxContainer,
+                                                         Polarization,
+                                                         Angle,
+                                                         HorizontalDirection,
+                                                         PropogationDirection,
+                                                         NParticles,
+                                                         GPUVector,
+                                                         Precision,
+                                                         MaxLevelTotal);
   #else
   throw std::invalid_argument("GPU functionality not compiled into this binary distribution");
   #endif
@@ -2897,42 +2909,6 @@ void OSCARSSR::CalculateFluxGPU (TSurfacePoints const& Surface,
 
 
 
-void OSCARSSR::CalculateFluxGPUNew (TSurfacePoints const& Surface,
-                                 double const Energy_eV,
-                                 T3DScalarContainer& FluxContainer,
-                                 std::string const& Polarization,
-                                 double const Angle,
-                                 TVector3D const& HorizontalDirection,
-                                 TVector3D const& PropogationDirection,
-                                 int const NParticles,
-                                 std::vector<int> GPUVector,
-                                 double const Precision,
-                                 int    const MaxLevel,
-                                 int    const MaxLevelExtended)
-{
-  // If you compile for Cuda use the GPU in this function, else throw
-
-  // If GPUVector is empty assume you want to use ALL GPUs available
-  if (GPUVector.size() == 0) {
-    int const NGPUAvailable = this->CheckGPU();
-    for (int i = 0; i < NGPUAvailable; ++i) {
-      GPUVector.push_back(i);
-    }
-  }
-
-  #ifdef CUDA
-  // Check that the GPU exists
-  if (this->CheckGPU() < 1) {
-    throw std::invalid_argument("You are requesting the GPU, but none were found");
-  }
-
-  return OSCARSSR_Cuda_CalculateFluxGPUWithAInterpolated(*this, Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NParticles, GPUVector);
-  #else
-  throw std::invalid_argument("GPU functionality not compiled into this binary distribution");
-  #endif
-
-  return;
-}
 void OSCARSSR::CalculateElectricFieldTimeDomain (TVector3D const& Observer, T3DScalarContainer& XYZT)
 {
   // Check that particle has been set yet.  If fType is "" it has not been set yet

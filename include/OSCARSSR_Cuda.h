@@ -60,7 +60,9 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPUWithAInterpolated (OSCARSSR& OSR,
                                                 TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
                                                 TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
                                                 int const NParticles = 0,
-                                                std::vector<int> const& GPUVector = std::vector<int>());
+                                                std::vector<int> const& GPUVector = std::vector<int>(),
+                                                double const Precision = 0.01,
+                                                int const MaxLevel = 25);
 
 extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
                                                     TParticleA& Particle,

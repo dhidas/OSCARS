@@ -323,6 +323,7 @@ __global__ void OSCARSSR_Cuda_FluxGPUMultiWithAInterpolated (double *t,
                                                              double *Omega,
                                                              int *ifirst,
                                                              int *ml,
+                                                             double *prec,
                                                              double *flux)
 {
   // Check that this is within the number of spectrum points requested
@@ -341,30 +342,28 @@ __global__ void OSCARSSR_Cuda_FluxGPUMultiWithAInterpolated (double *t,
 
 
 
-  __shared__ double _t[32*16];
-  __shared__ double _x[32*16];
-  __shared__ double _y[32*16];
-  __shared__ double _z[32*16];
-  __shared__ double _bx[32*16];
-  __shared__ double _by[32*16];
-  __shared__ double _bz[32*16];
-  __shared__ double _ax[32*16];
-  __shared__ double _ay[32*16];
-  __shared__ double _az[32*16];
+  __shared__ double _t[NTHREADS_PER_BLOCK];
+  __shared__ double _x[NTHREADS_PER_BLOCK];
+  __shared__ double _y[NTHREADS_PER_BLOCK];
+  __shared__ double _z[NTHREADS_PER_BLOCK];
+  __shared__ double _bx[NTHREADS_PER_BLOCK];
+  __shared__ double _by[NTHREADS_PER_BLOCK];
+  __shared__ double _bz[NTHREADS_PER_BLOCK];
+  __shared__ double _ax[NTHREADS_PER_BLOCK];
+  __shared__ double _ay[NTHREADS_PER_BLOCK];
+  __shared__ double _az[NTHREADS_PER_BLOCK];
 
-  __shared__ bool   _done[32*16];
+  __shared__ bool   _done[NTHREADS_PER_BLOCK];
   __shared__ bool   _all_done;
 
-  double precision = 999;
 
   if (threadIdx.x == 1) {
     _all_done = false;
   }
 
-  _done[threadIdx.x] = false;
-  if (is >= *ns) {
-    _done[threadIdx.x] = true;
-  }
+  // initialize _done.  If not a surface point, we're going to use
+  // the thread to do trajectory calculation anyways
+  _done[threadIdx.x] = is >= *ns ? true : false;
   
   __syncthreads();
 
@@ -375,7 +374,7 @@ __global__ void OSCARSSR_Cuda_FluxGPUMultiWithAInterpolated (double *t,
 
   double result = -1;
   double dt_total = 0;
-  for (int ilevel = 0; !_all_done && (ilevel <= 15); ++ilevel) {
+  for (int ilevel = 0; !_all_done && (ilevel <= *ml); ++ilevel) {
 
     // DeltaT inclusive up to this level
     dt_total = (*tstop - *tstart) / pow(2., ilevel+1);//(*tstop - *tstart) / (2 * this_nt);
@@ -406,6 +405,7 @@ __global__ void OSCARSSR_Cuda_FluxGPUMultiWithAInterpolated (double *t,
 
       __syncthreads();
 
+      if (!_done[threadIdx.x]) {
       for (int i = 0; i < blockDim.x; ++i) {
 
         // Check if we are over the limit of trajectory points
@@ -460,9 +460,11 @@ __global__ void OSCARSSR_Cuda_FluxGPUMultiWithAInterpolated (double *t,
 
         }
       }
+      }
 
     }
 
+    if (!_done[threadIdx.x]) {
     cuDoubleComplex TSumEX = cuCmul(make_cuDoubleComplex((*C0) * (dt_total), 0), SumEX);
     cuDoubleComplex TSumEY = cuCmul(make_cuDoubleComplex((*C0) * (dt_total), 0), SumEY);
     cuDoubleComplex TSumEZ = cuCmul(make_cuDoubleComplex((*C0) * (dt_total), 0), SumEZ);
@@ -473,16 +475,18 @@ __global__ void OSCARSSR_Cuda_FluxGPUMultiWithAInterpolated (double *t,
 
     this_result = fabs((*C2) * (EX + EY + EZ));
 
-    if (!_done[threadIdx.x] && (ilevel > 8) && (fabs((this_result - last_result) / last_result) < 0.01) ) {
+    if (!_done[threadIdx.x] && (ilevel > 8) && (fabs((this_result - last_result) / last_result) < *prec) ) {
       _done[threadIdx.x] = true;
+      result = this_result;
     }
 
     last_result = this_result;
+    }
 
 
     __syncthreads();
     if (threadIdx.x == 1) {
-      for (int ith = 0; ith < 32*16; ++ith) {
+      for (int ith = 0; ith < NTHREADS_PER_BLOCK; ++ith) {
         _all_done = true;
         if (!_done[ith]) {
           _all_done = false;
@@ -499,7 +503,7 @@ __global__ void OSCARSSR_Cuda_FluxGPUMultiWithAInterpolated (double *t,
     return;
   }
 
-  flux[ith] = this_result;
+  flux[ith] = (double) is; //result;
 
   return;
 }
@@ -682,7 +686,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
 
 
   int const NThreads = *h_ns;
-  int const NThreadsPerBlock = 32*16;
+  int const NThreadsPerBlock = NTHREADS_PER_BLOCK;
   int const NThreadsRemainder = NThreads % NThreadsPerBlock;
   int const NBlocksTotal = (NThreads - 1) / NThreadsPerBlock + 1;
   int const NBlocksPerGPU = NBlocksTotal / NGPUsToUse;
@@ -1142,7 +1146,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPUWithA (OSCARSSR& OSR,
 
 
   int const NThreads = *h_ns;
-  int const NThreadsPerBlock = 32*16;
+  int const NThreadsPerBlock = NTHREADS_PER_BLOCK;
   int const NThreadsRemainder = NThreads % NThreadsPerBlock;
   int const NBlocksTotal = (NThreads - 1) / NThreadsPerBlock + 1;
   int const NBlocksPerGPU = NBlocksTotal / NGPUsToUse;
@@ -1590,7 +1594,9 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPUWithAInterpolated (OSCARSSR& OSR,
                                                 TVector3D const& HorizontalDirection,
                                                 TVector3D const& PropogationDirection,
                                                 int const NParticles,
-                                                std::vector<int> const& GPUVector)
+                                                std::vector<int> const& GPUVector,
+                                                double const Precision,
+                                                int const MaxLevel)
 {
   // Calculate the flux for NParticles using the GPUs given in GPUVector.  Each particle's
   // trajectory will be sent to all GPUs for processing, meanwhile a new trajectory will
@@ -1650,7 +1656,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPUWithAInterpolated (OSCARSSR& OSR,
 
 
   int const NThreads = *h_ns;
-  int const NThreadsPerBlock = 32*16;
+  int const NThreadsPerBlock = NTHREADS_PER_BLOCK;
   int const NThreadsRemainder = NThreads % NThreadsPerBlock;
   int const NBlocksTotal = (NThreads - 1) / NThreadsPerBlock + 1;
   int const NBlocksPerGPU = NBlocksTotal / NGPUsToUse;
@@ -1683,8 +1689,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPUWithAInterpolated (OSCARSSR& OSR,
   int     *h_ifirst;
   int     *h_ml;
 
-  // Number of threads per block
-  int *h_ntpb;
+  double *h_prec;
 
   // Results
   double **h_flux;
@@ -1722,7 +1727,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPUWithAInterpolated (OSCARSSR& OSR,
   cudaHostAlloc((void**) &h_omega,               sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void**) &h_ifirst, NGPUsToUse * sizeof(int),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void**) &h_ml,                  sizeof(int),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
-  cudaHostAlloc((void**) &h_ntpb,                sizeof(int),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_prec,                sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
 
   cudaHostAlloc((void**) &h_flux,   NGPUsToUse * sizeof(double*), cudaHostAllocWriteCombined | cudaHostAllocMapped);
   for (size_t i = 0; i < GPUsToUse.size(); ++i) {
@@ -1736,10 +1741,10 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPUWithAInterpolated (OSCARSSR& OSR,
     NBlocksUsed += NBlocksThisGPU[i];
   }
 
-  // Number of threads per block is constant
-  *h_ntpb = NThreadsPerBlock;
-  *h_ml = 25; //UPDATE: max level should be an input
+  *h_ml = MaxLevel; //UPDATE: max level should be an input
 
+  // Precision
+  *h_prec = Precision;
 
   // Memor allocations for GPU
   int    **d_nt;
@@ -1781,7 +1786,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPUWithAInterpolated (OSCARSSR& OSR,
 
   int    **d_ifirst;
   int    **d_ml;
-  int    **d_ntpb;
+  double **d_prec;
   double **d_flux;
 
   cudaHostAlloc((void **) &d_nt,     NGPUsToUse * sizeof(int*),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
@@ -1822,8 +1827,8 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPUWithAInterpolated (OSCARSSR& OSR,
   cudaHostAlloc((void **) &d_omega,  NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
 
   cudaHostAlloc((void **) &d_ifirst, NGPUsToUse * sizeof(int*),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
-  cudaHostAlloc((void **) &d_ntpb,   NGPUsToUse * sizeof(int*),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void **) &d_ml,     NGPUsToUse * sizeof(int*),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_prec,   NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void **) &d_flux,   NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
 
   for (size_t i = 0; i < GPUsToUse.size(); ++i) {
@@ -1869,8 +1874,8 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPUWithAInterpolated (OSCARSSR& OSR,
     cudaMalloc((void **) &d_omega[i],              sizeof(double));
 
     cudaMalloc((void **) &d_ifirst[i],             sizeof(int));
-    cudaMalloc((void **) &d_ntpb[i],               sizeof(int));
-    cudaMalloc((void **) &d_ml[i],          sizeof(int));
+    cudaMalloc((void **) &d_ml[i],                 sizeof(int));
+    cudaMalloc((void **) &d_prec[i],               sizeof(double));
     cudaMalloc((void **) &d_flux[i],       NFlux * sizeof(double));
 
     // Copy device number to device
@@ -1899,8 +1904,8 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPUWithAInterpolated (OSCARSSR& OSR,
   cudaMemcpyAsync(d_sx[0],    h_sx,  *h_ns * sizeof(double), cudaMemcpyHostToDevice);
   cudaMemcpyAsync(d_sy[0],    h_sy,  *h_ns * sizeof(double), cudaMemcpyHostToDevice);
   cudaMemcpyAsync(d_sz[0],    h_sz,  *h_ns * sizeof(double), cudaMemcpyHostToDevice);
-  cudaMemcpyAsync(d_ntpb[0],  h_ntpb,        sizeof(int),    cudaMemcpyHostToDevice);
   cudaMemcpyAsync(d_ml[0],    h_ml,          sizeof(int),    cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_prec[0],  h_prec,        sizeof(double), cudaMemcpyHostToDevice);
   for (size_t i = 0; i < GPUsToUse.size() - 1; ++i) {
     // Device number
     int const d  = GPUsToUse[i];
@@ -1914,8 +1919,8 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPUWithAInterpolated (OSCARSSR& OSR,
     cudaMemcpyPeerAsync( d_sx[i+1],     d1, d_sx[i],     d, *h_ns * sizeof(double));
     cudaMemcpyPeerAsync( d_sy[i+1],     d1, d_sy[i],     d, *h_ns * sizeof(double));
     cudaMemcpyPeerAsync( d_sz[i+1],     d1, d_sz[i],     d, *h_ns * sizeof(double));
-    cudaMemcpyPeerAsync( d_ntpb[i+1],   d1, d_ntpb[i],   d, sizeof(int));
     cudaMemcpyPeerAsync( d_ml[i+1],     d1, d_ml[i],     d, sizeof(int));
+    cudaMemcpyPeerAsync( d_prec[i+1],   d1, d_prec[i],   d, sizeof(double));
   }
 
   // Set first trajectory
@@ -2039,13 +2044,13 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPUWithAInterpolated (OSCARSSR& OSR,
       cudaEventSynchronize(event_fluxcopy[ig]);
       OSCARSSR_Cuda_FluxGPUMultiWithAInterpolated<<<NBlocksThisGPU[ig], NThreadsPerBlock>>>(
                                                                            d_t[ig],
-                                                                           d_x[ig],  d_y[ig],  d_z[ig],
+                                                                           d_x[ig],   d_y[ig],   d_z[ig],
                                                                            d_xp[ig],  d_yp[ig],  d_zp[ig],
-                                                                           d_bx[ig], d_by[ig], d_bz[ig],
+                                                                           d_bx[ig],  d_by[ig],  d_bz[ig],
                                                                            d_bxp[ig], d_byp[ig], d_bzp[ig],
-                                                                           d_ax[ig], d_ay[ig], d_az[ig],
+                                                                           d_ax[ig],  d_ay[ig],  d_az[ig],
                                                                            d_axp[ig], d_ayp[ig], d_azp[ig],
-                                                                           d_sx[ig], d_sy[ig], d_sz[ig],
+                                                                           d_sx[ig],  d_sy[ig],  d_sz[ig],
                                                                            d_tstart[ig], d_tstop[ig],
                                                                            d_nt[ig],
                                                                            d_ns[ig],
@@ -2053,6 +2058,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPUWithAInterpolated (OSCARSSR& OSR,
                                                                            d_omega[ig],
                                                                            d_ifirst[ig],
                                                                            d_ml[ig],
+                                                                           d_prec[ig],
                                                                            d_flux[ig]);
     }
 
@@ -2170,7 +2176,8 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPUWithAInterpolated (OSCARSSR& OSR,
   cudaFreeHost(h_c);
   cudaFreeHost(h_omega);
   cudaFreeHost(h_ifirst);
-  cudaFreeHost(h_ntpb);
+  cudaFreeHost(h_ml);
+  cudaFreeHost(h_prec);
   // Free host and GPU memory
   for (size_t i = 0; i < GPUsToUse.size(); ++i) {
 
@@ -2209,7 +2216,8 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPUWithAInterpolated (OSCARSSR& OSR,
     cudaFree(d_c[i]);
     cudaFree(d_omega[i]);
     cudaFree(d_ifirst[i]);
-    cudaFree(d_ntpb[i]);
+    cudaFree(d_ml[i]);
+    cudaFree(d_prec[i]);
     cudaFree(d_flux[i]);
   }
   cudaFree(h_flux);
@@ -2243,7 +2251,8 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPUWithAInterpolated (OSCARSSR& OSR,
   cudaFree(d_c);
   cudaFree(d_omega);
   cudaFree(h_ifirst);
-  cudaFree(h_ntpb);
+  cudaFree(d_ml);
+  cudaFree(d_prec);
   cudaFree(d_flux);
 
   // Delete host gpu pointer arrays
@@ -2529,7 +2538,7 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
 
 
   int const NThreads = *h_ns;
-  int const NThreadsPerBlock = 32*16;
+  int const NThreadsPerBlock = NTHREADS_PER_BLOCK;
   int const NThreadsRemainder = NThreads % NThreadsPerBlock;
   int const NBlocksTotal = (NThreads - 1) / NThreadsPerBlock + 1;
   int const NBlocksPerGPU = NBlocksTotal / NGPUsToUse;
@@ -3213,7 +3222,7 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPUWithA (OSCARSSR& OSR,
 
 
   int const NThreads = *h_ns;
-  int const NThreadsPerBlock = 32*16;
+  int const NThreadsPerBlock = NTHREADS_PER_BLOCK;
   int const NThreadsRemainder = NThreads % NThreadsPerBlock;
   int const NBlocksTotal = (NThreads - 1) / NThreadsPerBlock + 1;
   int const NBlocksPerGPU = NBlocksTotal / NGPUsToUse;
