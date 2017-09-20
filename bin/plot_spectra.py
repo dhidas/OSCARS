@@ -16,5 +16,5 @@ for i in range(1, len(sys.argv)):
     labels.append(i)
 
 
-plot_spectra(spectra, labels)
+plot_spectra(spectra, labels, show=True, ofile='Spectrum.pdf', figsize=[12, 3])
 

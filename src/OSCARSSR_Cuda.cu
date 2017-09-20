@@ -353,28 +353,28 @@ __global__ void OSCARSSR_Cuda_FluxGPUMultiWithAInterpolated (double *t,
   __shared__ double _ay[NTHREADS_PER_BLOCK];
   __shared__ double _az[NTHREADS_PER_BLOCK];
 
-  __shared__ bool   _done[NTHREADS_PER_BLOCK];
-  __shared__ bool   _all_done;
+
+  __shared__ bool _all_done;
+
+  bool const in_surface = ((is < *ns) ? true : false);
+
+  bool done = is >= *ns ? true : false;
+  _all_done = false;
 
 
-  if (threadIdx.x == 1) {
-    _all_done = false;
-  }
-
-  // initialize _done.  If not a surface point, we're going to use
-  // the thread to do trajectory calculation anyways
-  _done[threadIdx.x] = is >= *ns ? true : false;
-  
-  __syncthreads();
-
+  // Number of trajectory points in current level
   int this_nt = 1;
 
+
+  // Result up to this level and from last level for comparison
   double this_result = 0;
   double last_result = 1;
 
-  double result = -1;
+  // DeltaT for all levels up to this level
   double dt_total = 0;
-  for (int ilevel = 0; !_all_done && (ilevel <= *ml); ++ilevel) {
+
+  // Loop over all levels 
+  for (int ilevel = 0; (ilevel <= *ml) && !_all_done; ++ilevel) {
 
     // DeltaT inclusive up to this level
     dt_total = (*tstop - *tstart) / pow(2., ilevel+1);//(*tstop - *tstart) / (2 * this_nt);
@@ -386,6 +386,8 @@ __global__ void OSCARSSR_Cuda_FluxGPUMultiWithAInterpolated (double *t,
     int const NTrajectoryBlocks = this_nt / blockDim.x + (this_nt % blockDim.x == 0 ? 0 : 1);
 
     for (int itb = 0; itb < NTrajectoryBlocks; ++itb) {
+
+      __syncthreads();
       _t[threadIdx.x] = dt * (itb * blockDim.x + threadIdx.x) + ts;
 
       if (_t[threadIdx.x] < *tstop) {
@@ -405,105 +407,98 @@ __global__ void OSCARSSR_Cuda_FluxGPUMultiWithAInterpolated (double *t,
 
       __syncthreads();
 
-      if (!_done[threadIdx.x]) {
-      for (int i = 0; i < blockDim.x; ++i) {
+      if (!done) {
+        for (int i = 0; i < blockDim.x; ++i) {
 
-        // Check if we are over the limit of trajectory points
-        if (is < *ns && (_t[i] < *tstop)) {
+          // Check if we are over the limit of trajectory points
+          if (is < *ns && (_t[i] < *tstop)) {
 
-        // DO MATH HERE
-        // Distance to observer
-        double const D = sqrt( pow( (ox) - _x[i], 2) + pow( (oy) - _y[i], 2) + pow((oz) - _z[i], 2) );
+            // DO MATH HERE
+            // Distance to observer
+            double const D = sqrt( pow( (ox) - _x[i], 2) + pow( (oy) - _y[i], 2) + pow((oz) - _z[i], 2) );
 
-        // Normal in direction of observer
-        double const NX = ((ox) - _x[i]) / D;
-        double const NY = ((oy) - _y[i]) / D;
-        double const NZ = ((oz) - _z[i]) / D;
+            // Normal in direction of observer
+            double const NX = ((ox) - _x[i]) / D;
+            double const NY = ((oy) - _y[i]) / D;
+            double const NZ = ((oz) - _z[i]) / D;
 
-        // Magnitude of Beta squared
-        double const One_Minus_BMag2 = 1. -  (_bx[i] * _bx[i] + _by[i] * _by[i] + _bz[i] * _bz[i]);
+            // Magnitude of Beta squared
+            double const One_Minus_BMag2 = 1. -  (_bx[i] * _bx[i] + _by[i] * _by[i] + _bz[i] * _bz[i]);
 
-        // N dot Beta
-        double const NDotBeta = NX * _bx[i] + NY * _by[i] + NZ * _bz[i];
+            // N dot Beta
+            double const NDotBeta = NX * _bx[i] + NY * _by[i] + NZ * _bz[i];
 
-        double const FarFieldDenominator =  D * (pow(1. - NDotBeta, 2));
-        double const NearFieldDenominator = D * FarFieldDenominator;
-        double const NearField_X = One_Minus_BMag2 * (NX - _bx[i]) / NearFieldDenominator;
-        double const NearField_Y = One_Minus_BMag2 * (NY - _by[i]) / NearFieldDenominator;
-        double const NearField_Z = One_Minus_BMag2 * (NZ - _bz[i]) / NearFieldDenominator;
+            double const FarFieldDenominator =  D * (pow(1. - NDotBeta, 2));
+            double const NearFieldDenominator = D * FarFieldDenominator;
+            double const NearField_X = One_Minus_BMag2 * (NX - _bx[i]) / NearFieldDenominator;
+            double const NearField_Y = One_Minus_BMag2 * (NY - _by[i]) / NearFieldDenominator;
+            double const NearField_Z = One_Minus_BMag2 * (NZ - _bz[i]) / NearFieldDenominator;
 
-        double const FFX = (NY - _by[i]) * _az[i] - (NZ - _bz[i]) * _ay[i];
-        double const FFY = (NZ - _bz[i]) * _ax[i] - (NX - _bx[i]) * _az[i];
-        double const FFZ = (NX - _bx[i]) * _ay[i] - (NY - _by[i]) * _ax[i];
+            double const FFX = (NY - _by[i]) * _az[i] - (NZ - _bz[i]) * _ay[i];
+            double const FFY = (NZ - _bz[i]) * _ax[i] - (NX - _bx[i]) * _az[i];
+            double const FFZ = (NX - _bx[i]) * _ay[i] - (NY - _by[i]) * _ax[i];
 
-        double const FarField_X = (NY * FFZ - NZ * FFY) / FarFieldDenominator;
-        double const FarField_Y = (NZ * FFX - NX * FFZ) / FarFieldDenominator;
-        double const FarField_Z = (NX * FFY - NY * FFX) / FarFieldDenominator;
+            double const FarField_X = (NY * FFZ - NZ * FFY) / FarFieldDenominator;
+            double const FarField_Y = (NZ * FFX - NX * FFZ) / FarFieldDenominator;
+            double const FarField_Z = (NX * FFY - NY * FFX) / FarFieldDenominator;
 
 
-        // Exponent for fourier transformed field
-        cuDoubleComplex Exponent = make_cuDoubleComplex(0, -(*Omega) * (_t[i] + D / (*C)));
+            // Exponent for fourier transformed field
+            cuDoubleComplex Exponent = make_cuDoubleComplex(0, -(*Omega) * (_t[i] + D / (*C)));
 
-        cuDoubleComplex X1 = make_cuDoubleComplex(NearField_X + FarField_X, 0);
-        cuDoubleComplex Y1 = make_cuDoubleComplex(NearField_Y + FarField_Y, 0);
-        cuDoubleComplex Z1 = make_cuDoubleComplex(NearField_Z + FarField_Z, 0);
+            cuDoubleComplex X1 = make_cuDoubleComplex(NearField_X + FarField_X, 0);
+            cuDoubleComplex Y1 = make_cuDoubleComplex(NearField_Y + FarField_Y, 0);
+            cuDoubleComplex Z1 = make_cuDoubleComplex(NearField_Z + FarField_Z, 0);
 
-        cuDoubleComplex MyEXP = cuCexp(Exponent);
+            cuDoubleComplex MyEXP = cuCexp(Exponent);
 
-        cuDoubleComplex X2 = cuCmul(X1, MyEXP);
-        cuDoubleComplex Y2 = cuCmul(Y1, MyEXP);
-        cuDoubleComplex Z2 = cuCmul(Z1, MyEXP);
+            cuDoubleComplex X2 = cuCmul(X1, MyEXP);
+            cuDoubleComplex Y2 = cuCmul(Y1, MyEXP);
+            cuDoubleComplex Z2 = cuCmul(Z1, MyEXP);
 
-        SumEX = cuCadd(SumEX, X2);
-        SumEY = cuCadd(SumEY, Y2);
-        SumEZ = cuCadd(SumEZ, Z2);
+            SumEX = cuCadd(SumEX, X2);
+            SumEY = cuCadd(SumEY, Y2);
+            SumEZ = cuCadd(SumEZ, Z2);
 
+          }
         }
       }
+    }
+
+    if (in_surface && !done) {
+      cuDoubleComplex TSumEX = cuCmul(make_cuDoubleComplex((*C0) * (dt_total), 0), SumEX);
+      cuDoubleComplex TSumEY = cuCmul(make_cuDoubleComplex((*C0) * (dt_total), 0), SumEY);
+      cuDoubleComplex TSumEZ = cuCmul(make_cuDoubleComplex((*C0) * (dt_total), 0), SumEZ);
+
+      double const EX = (TSumEX.x * TSumEX.x + TSumEX.y * TSumEX.y);
+      double const EY = (TSumEY.x * TSumEY.x + TSumEY.y * TSumEY.y);
+      double const EZ = (TSumEZ.x * TSumEZ.x + TSumEZ.y * TSumEZ.y);
+
+      this_result = fabs((*C2) * (EX + EY + EZ));
+
+      if ( ilevel > 8 && fabs((last_result - this_result) / last_result) < *prec ) {
+        done = true;
+        //ret = (double) ilevel;
       }
 
+      last_result = this_result;
     }
 
-    if (!_done[threadIdx.x]) {
-    cuDoubleComplex TSumEX = cuCmul(make_cuDoubleComplex((*C0) * (dt_total), 0), SumEX);
-    cuDoubleComplex TSumEY = cuCmul(make_cuDoubleComplex((*C0) * (dt_total), 0), SumEY);
-    cuDoubleComplex TSumEZ = cuCmul(make_cuDoubleComplex((*C0) * (dt_total), 0), SumEZ);
-
-    double const EX = (TSumEX.x * TSumEX.x + TSumEX.y * TSumEX.y);
-    double const EY = (TSumEY.x * TSumEY.x + TSumEY.y * TSumEY.y);
-    double const EZ = (TSumEZ.x * TSumEZ.x + TSumEZ.y * TSumEZ.y);
-
-    this_result = fabs((*C2) * (EX + EY + EZ));
-
-    if (!_done[threadIdx.x] && (ilevel > 8) && (fabs((this_result - last_result) / last_result) < *prec) ) {
-      _done[threadIdx.x] = true;
-      result = this_result;
-    }
-
-    last_result = this_result;
-    }
-
-
+    _all_done = true;
     __syncthreads();
-    if (threadIdx.x == 1) {
-      for (int ith = 0; ith < NTHREADS_PER_BLOCK; ++ith) {
-        _all_done = true;
-        if (!_done[ith]) {
-          _all_done = false;
-        }
-      }
+    if (!done) {
+      _all_done = false;
     }
+    __syncthreads();
 
     this_nt *= 2;
-
-    __syncthreads();
   }
 
-  if (is >= *ns) {
+  if (!in_surface) {
     return;
   }
 
-  flux[ith] = (double) is; //result;
+  flux[ith] = this_result;
 
   return;
 }
