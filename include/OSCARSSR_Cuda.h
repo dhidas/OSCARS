@@ -38,28 +38,6 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
                                                 TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
                                                 TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
                                                 int const NParticles = 0,
-                                                std::vector<int> const& GPUVector = std::vector<int>());
-
-extern "C" void OSCARSSR_Cuda_CalculateFluxGPUWithA (OSCARSSR& OSR,
-                                                TSurfacePoints const& Surface,
-                                                double const Energy_eV,
-                                                T3DScalarContainer& FluxContainer,
-                                                std::string const& Polarization = "all",
-                                                double const Angle = 0,
-                                                TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
-                                                TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
-                                                int const NParticles = 0,
-                                                std::vector<int> const& GPUVector = std::vector<int>());
-
-extern "C" void OSCARSSR_Cuda_CalculateFluxGPUWithAInterpolated (OSCARSSR& OSR,
-                                                TSurfacePoints const& Surface,
-                                                double const Energy_eV,
-                                                T3DScalarContainer& FluxContainer,
-                                                std::string const& Polarization = "all",
-                                                double const Angle = 0,
-                                                TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
-                                                TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
-                                                int const NParticles = 0,
                                                 std::vector<int> const& GPUVector = std::vector<int>(),
                                                 double const Precision = 0.01,
                                                 int const MaxLevel = 25);
@@ -75,11 +53,13 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
                                                     int const NParticles = 0,
                                                     std::vector<int> const& GPUVector = std::vector<int>());
 
-extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (TParticleA& Particle,
+extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
                                                         TSurfacePoints const& Surface,
                                                         T3DScalarContainer& PowerDensityContainer,
-                                                        bool const Directional,
-                                                        double const Weight);
+                                                        int const NParticles,
+                                                        std::vector<int> const& GPUVector,
+                                                        double const Precision,
+                                                        int const MaxLevel);
 
 extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPUWithA (OSCARSSR& OSR,
                                                              TSurfacePoints const& Surface,

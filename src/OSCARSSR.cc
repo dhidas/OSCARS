@@ -2886,18 +2886,18 @@ void OSCARSSR::CalculateFluxGPU (TSurfacePoints const& Surface,
 
   int const MaxLevelTotal = MaxLevel > MaxLevelExtended ? MaxLevel : MaxLevelExtended;
 
-  return OSCARSSR_Cuda_CalculateFluxGPUWithAInterpolated(*this,
-                                                         Surface,
-                                                         Energy_eV,
-                                                         FluxContainer,
-                                                         Polarization,
-                                                         Angle,
-                                                         HorizontalDirection,
-                                                         PropogationDirection,
-                                                         NParticles,
-                                                         GPUVector,
-                                                         Precision,
-                                                         MaxLevelTotal);
+  return OSCARSSR_Cuda_CalculateFluxGPU (*this,
+                                         Surface,
+                                         Energy_eV,
+                                         FluxContainer,
+                                         Polarization,
+                                         Angle,
+                                         HorizontalDirection,
+                                         PropogationDirection,
+                                         NParticles,
+                                         GPUVector,
+                                         Precision,
+                                         MaxLevelTotal);
   #else
   throw std::invalid_argument("GPU functionality not compiled into this binary distribution");
   #endif
