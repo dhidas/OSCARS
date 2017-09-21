@@ -1808,7 +1808,8 @@ void OSCARSSR::CalculatePowerDensity (TParticleA& Particle,
                                       double const Precision,
                                       int    const MaxLevel,
                                       int    const MaxLevelExtended,
-                                      double const Weight)
+                                      double const Weight,
+                                      int    const ReturnQuantity)
 {
   // Calculates the single particle spectrum at a given observation point
   // in units of [photons / second / 0.001% BW / mm^2]
@@ -1837,7 +1838,8 @@ void OSCARSSR::CalculatePowerDensity (TParticleA& Particle,
                               Precision,
                               MaxLevel,
                               MaxLevelExtended,
-                              Weight);
+                              Weight,
+                              ReturnQuantity);
 
   return;
 }
@@ -1953,7 +1955,8 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface,
                                     Precision,
                                     MaxLevel,
                                     MaxLevelExtended,
-                                    1);
+                                    1,
+                                    ReturnQuantity);
       } else {
         this->CalculatePowerDensityThreads(fParticle,
                                            Surface,
@@ -1963,7 +1966,8 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface,
                                            Precision,
                                            MaxLevel,
                                            MaxLevelExtended,
-                                           1);
+                                           1,
+                                           ReturnQuantity);
       }
     } else {
       // Weight this by the number of particles
@@ -1984,7 +1988,8 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface,
                                       Precision,
                                       MaxLevel,
                                       MaxLevelExtended,
-                                      Weight);
+                                      Weight,
+                                      ReturnQuantity);
         } else {
           this->CalculatePowerDensityThreads(fParticle,
                                              Surface,
@@ -1994,7 +1999,8 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface,
                                              Precision,
                                              MaxLevel,
                                              MaxLevelExtended,
-                                             Weight);
+                                             Weight,
+                                             ReturnQuantity);
         }
       }
     }
@@ -2021,7 +2027,8 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
                                             double const Precision,
                                             int    const MaxLevel,
                                             int    const MaxLevelExtended,
-                                            double const Weight)
+                                            double const Weight,
+                                            int    const ReturnQuantity)
 {
   // Calculates the single particle power density in a range of points
   // in units of [watts / second / mm^2]
@@ -2044,6 +2051,9 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
   // Extended trajectory (not using memory for storage of arrays
   TParticleTrajectoryInterpolatedPoints TE;
 
+  // Alternative outputs
+  double Result_Precision = -1;
+  int    Result_Level     = -1;
 
   // Loop over all points in the spectrum container
   for (size_t i = iFirst; i <= iLast; ++i) {
@@ -2105,7 +2115,10 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
       }
 
       double const ThisSum = Sum * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(iLevel);
-      if (iLevel > 8 && fabs(ThisSum - LastSum) / LastSum < Precision) {
+
+      Result_Precision = fabs(ThisSum - LastSum) / LastSum;
+      if (iLevel > 8 && Result_Precision < Precision) {
+        Result_Level = iLevel;
         break;
       }
 
@@ -2132,7 +2145,18 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
     }
 
     // Add to container
-    PowerDensityContainer.AddToPoint(i, Sum);
+    // Set result and return
+    switch (ReturnQuantity) {
+      case 1:
+        PowerDensityContainer.AddToPoint(i, Result_Precision);
+        break;
+      case 2:
+        PowerDensityContainer.AddToPoint(i, (double) Result_Level);
+        break;
+      default:
+        PowerDensityContainer.AddToPoint(i, Sum);
+        break;
+    }
 
   } // POINTS
 
@@ -2154,7 +2178,8 @@ void OSCARSSR::CalculatePowerDensityThreads (TParticleA& Particle,
                                              double const Precision,
                                              int    const MaxLevel,
                                              int    const MaxLevelExtended,
-                                             double const Weight)
+                                             double const Weight,
+                                             int    const ReturnQuantity)
 {
   // Calculates the single particle power density on surface
   // in units of [watts / second / mm^2]
@@ -2209,7 +2234,8 @@ void OSCARSSR::CalculatePowerDensityThreads (TParticleA& Particle,
                                   Precision,
                                   MaxLevel,
                                   MaxLevelExtended,
-                                  Weight));
+                                  Weight,
+                                  ReturnQuantity));
   }
 
   // Are all of the threads finished or not?  Continue loop until all come back.

@@ -268,7 +268,8 @@ class OSCARSSR
                                 double const Precision,
                                 int    const MaxLevel,
                                 int    const MaxLevelExtended,
-                                double const Weight);
+                                double const Weight,
+                                int    const ReturnQuantity);
 
     void CalculatePowerDensity (TSurfacePoints const& Surface,
                                 T3DScalarContainer& PowerDensityContainer,
@@ -294,7 +295,8 @@ class OSCARSSR
                                       double const Precision,
                                       int    const MaxLevel,
                                       int    const MaxLevelExtended,
-                                      double const Weight);
+                                      double const Weight,
+                                      int    const ReturnQuantity);
 
     void CalculatePowerDensityThreads (TParticleA& Particle,
                                        TSurfacePoints const& Surface,
@@ -304,7 +306,8 @@ class OSCARSSR
                                        double const Precision,
                                        int    const MaxLevel,
                                        int    const MaxLevelExtended,
-                                       double const Weight);
+                                       double const Weight,
+                                       int    const ReturnQuantity);
 
     void CalculatePowerDensityGPU (TSurfacePoints const& Surface,
                                    T3DScalarContainer& PowerDensityContainer,
