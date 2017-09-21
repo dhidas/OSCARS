@@ -40,7 +40,8 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
                                                 int const NParticles = 0,
                                                 std::vector<int> const& GPUVector = std::vector<int>(),
                                                 double const Precision = 0.01,
-                                                int const MaxLevel = 25);
+                                                int const MaxLevel = 25,
+                                                int    const ReturnQuantity = 0);
 
 extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU2 (OSCARSSR& OSR,
                                                     TParticleA& Particle,

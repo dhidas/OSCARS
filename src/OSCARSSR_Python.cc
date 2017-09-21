@@ -5429,7 +5429,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityLine (OSCARSSRObject* self, PyObj
 
 
 const char* DOC_OSCARSSR_CalculateFlux = R"docstring(
-calculate_flux(energy_eV, points [, normal, rotations, translation, nparticles, nthreads, gpu, ngpu, precisio, max_level, max_level_extended, ofile, bofile])
+calculate_flux(energy_eV, points [, normal, rotations, translation, nparticles, nthreads, gpu, ngpu, precisio, max_level, max_level_extended, ofile, bofile, quantity])
 
 Calculates the flux at a given set of points
 
@@ -5481,6 +5481,13 @@ ofile : str
 bofile : str
     Binary output file name
 
+quantity: str
+    Quantity to return.
+    Available are:
+        'power density' (default)
+        'precision' - Estimated precision for each point
+        'level'     - Trajectory level reached (npoints = 2**(n+1) - 1), if return is -1 the requested precision was not reached
+
 Returns
 -------
 power_density : list
@@ -5505,6 +5512,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
   int         MaxLevelExtended = 0;
   char const* OutFileNameText = "";
   char const* OutFileNameBinary = "";
+  char const* ReturnQuantityChars = "flux";
 
 
   static const char *kwlist[] = {"energy_eV",
@@ -5521,9 +5529,10 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
                                  "max_level_extended",
                                  "ofile",
                                  "bofile",
+                                 "quantity",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|dOiOOiiiOdiiss",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|dOiOOiiiOdiisss",
                                    const_cast<char **>(kwlist),
                                    &Energy_eV,
                                    &List_Points,
@@ -5538,7 +5547,8 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
                                    &MaxLevel,
                                    &MaxLevelExtended,
                                    &OutFileNameText,
-                                   &OutFileNameBinary)) {
+                                   &OutFileNameBinary,
+                                   &ReturnQuantityChars)) {
     return NULL;
   }
 
@@ -5646,13 +5656,28 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
     OSCARSPY::ListToVectorInt(NGPU, GPUVector);
   }
 
+  int ReturnQuantity = 0;
+  std::string ReturnQuantityStr = ReturnQuantityChars;
+  std::transform(ReturnQuantityStr.begin(), ReturnQuantityStr.end(), ReturnQuantityStr.begin(), ::toupper);
+  if (ReturnQuantityStr == "FLUX") {
+    ReturnQuantity = 0;
+  } else if (ReturnQuantityStr == "PRECISION") {
+    ReturnQuantity = 1;
+  } else if (ReturnQuantityStr == "LEVEL") {
+    ReturnQuantity = 2;
+  } else {
+    PyErr_SetString(PyExc_ValueError, "'quantity' must be: 'flux', 'precision', 'level', or blank");
+    return NULL;
+  }
+
+
   // Container for Point plus scalar
   T3DScalarContainer FluxContainer;
 
   try {
     throw;
     // UPDATE: Must fix single flux to accept polarizaton and angle
-    self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, "all", 0, TVector3D(1, 0, 0), TVector3D(0, 1, 0), NParticles, NThreads, GPU, NumberOfGPUs, GPUVector, Precision, MaxLevel, MaxLevelExtended, Dim);
+    self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, "all", 0, TVector3D(1, 0, 0), TVector3D(0, 1, 0), NParticles, NThreads, GPU, NumberOfGPUs, GPUVector, Precision, MaxLevel, MaxLevelExtended, Dim, ReturnQuantity);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -5709,7 +5734,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
 
 
 const char* DOC_OSCARSSR_CalculateFluxRectangle = R"docstring(
-calculate_flux_rectangle(energy_eV, npoints [, plane, normal, dim, width, rotations, translation, x0x1x2, polarization, angle, horizontal_direction, propogation_direction, nparticles, nthreads, gpu, ngpu, precision, max_level, max_level_extended, ofile, bofile])
+calculate_flux_rectangle(energy_eV, npoints [, plane, normal, dim, width, rotations, translation, x0x1x2, polarization, angle, horizontal_direction, propogation_direction, nparticles, nthreads, gpu, ngpu, precision, max_level, max_level_extended, quantity, ofile, bofile])
 
 Calculate the flux density in a rectangle either defined by three points, or by defining the plane the rectangle is in and the width, and then rotating and translating it to where it needs be.  The simplest is outlined in the first example below.  By default (dim=2) this returns a list whose position coordinates are in the local coordinate space x1 and x2 (*ie* they do not include the rotations and translation).  if dim=3 the coordinates in the return list are in absolute 3D space.
 
@@ -5780,6 +5805,13 @@ max_level: int
 max_level_extended: int
     Maximum "level" to use for trajectory in the calculation.  If set to higher than max_level the computation will proceed beyond max_level without creating trajectory arrays in memory (but it will be slower)
 
+quantity: str
+    Quantity to return.
+    Available are:
+        'flux'        (default)
+        'precision' - Estimated precision for each point
+        'level'     - Trajectory level reached (npoints = 2**(n+1) - 1), if return is -1 the requested precision was not reached
+
 ofile : str
     Output file name
 
@@ -5819,6 +5851,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   double      Precision = 0.01;
   int         MaxLevel = -2;
   int         MaxLevelExtended = 0;
+  char const* ReturnQuantityChars = "flux";
   char const* OutFileNameText = "";
   char const* OutFileNameBinary = "";
 
@@ -5843,11 +5876,12 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
                                  "precision",
                                  "max_level",
                                  "max_level_extended",
+                                 "quantity",
                                  "ofile",
                                  "bofile",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dO|siiOOOOsdOOiiiOdiiss",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dO|siiOOOOsdOOiiiOdiisss",
                                    const_cast<char **>(kwlist),
                                    &Energy_eV,
                                    &List_NPoints,
@@ -5869,6 +5903,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
                                    &Precision,
                                    &MaxLevel,
                                    &MaxLevelExtended,
+                                   &ReturnQuantityChars,
                                    &OutFileNameText,
                                    &OutFileNameBinary)) {
     return NULL;
@@ -6047,15 +6082,29 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
     }
   }
 
+  int ReturnQuantity = 0;
+  std::string ReturnQuantityStr = ReturnQuantityChars;
+  std::transform(ReturnQuantityStr.begin(), ReturnQuantityStr.end(), ReturnQuantityStr.begin(), ::toupper);
+  if (ReturnQuantityStr == "FLUX") {
+    ReturnQuantity = 0;
+  } else if (ReturnQuantityStr == "PRECISION") {
+    ReturnQuantity = 1;
+  } else if (ReturnQuantityStr == "LEVEL") {
+    ReturnQuantity = 2;
+  } else {
+    PyErr_SetString(PyExc_ValueError, "'quantity' must be: 'flux', 'precision', 'level', or blank");
+    return NULL;
+  }
+
+
   // Container for Point plus scalar
   T3DScalarContainer FluxContainer;
 
-  // Actually calculate the spectrum
   // UPDATE: Needed, directional?
   //bool const Directional = NormalDirection == 0 ? false : true;
 
   try {
-    self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NParticles, NThreads, GPU, NumberOfGPUs, GPUVector, Precision, MaxLevel, MaxLevelExtended, Dim);
+    self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NParticles, NThreads, GPU, NumberOfGPUs, GPUVector, Precision, MaxLevel, MaxLevelExtended, Dim, ReturnQuantity);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;

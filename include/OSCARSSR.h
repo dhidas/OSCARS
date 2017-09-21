@@ -335,7 +335,8 @@ class OSCARSSR
                         double const Precision,
                         int    const MaxLevel,
                         int    const MaxLevelExtended,
-                        double const Weight);
+                        double const Weight,
+                        int    const ReturnQuantity);
 
     void CalculateFlux (TSurfacePoints const& Surface,
                         double const Energy_eV,
@@ -352,7 +353,8 @@ class OSCARSSR
                         double const Precision = 0.01,
                         int    const MaxLevel = -2,
                         int    const MaxLevelExtended = 0,
-                        int const Dimension = 3);
+                        int    const Dimension = 3,
+                        int    const ReturnQuantity = 0);
 
     void CalculateFluxPoints (TParticleA& Particle,
                               TSurfacePoints const& Surface,
@@ -368,7 +370,8 @@ class OSCARSSR
                               double const Precision = 0.01,
                               int    const MaxLevel = -2,
                               int    const MaxLevelExtended = 0,
-                              double const Weight = 1);
+                              double const Weight = 1,
+                              int    const ReturnQuantity = 0);
 
     void CalculateFluxThreads (TParticleA& Particle,
                                TSurfacePoints const& Surface,
@@ -382,7 +385,8 @@ class OSCARSSR
                                double const Precision = 0.01,
                                int    const MaxLevel = -2,
                                int    const MaxLevelExtended = 0,
-                               double const Weight = 1);
+                               double const Weight = 1,
+                               int    const ReturnQuantity = 0);
 
     void CalculateFluxGPU (TSurfacePoints const& Surface,
                            double const Energy_eV,
@@ -395,7 +399,8 @@ class OSCARSSR
                            std::vector<int> GPUVector = std::vector<int>(),
                            double const Precision = 0.01,
                            int    const MaxLevel = -2,
-                           int    const MaxLevelExtended = 0);
+                           int    const MaxLevelExtended = 0,
+                           int    const ReturnQuantity = 0);
 
 
     void CalculateFluxGPUNew (TSurfacePoints const& Surface,
@@ -409,7 +414,8 @@ class OSCARSSR
                            std::vector<int> GPUVector = std::vector<int>(),
                            double const Precision = 0.01,
                            int    const MaxLevel = -2,
-                           int    const MaxLevelExtended = 0);
+                           int    const MaxLevelExtended = 0,
+                           int    const ReturnQuantity = 0);
 
     // Electric Field Calculations
     void CalculateElectricFieldTimeDomain (TVector3D const& Observer, T3DScalarContainer&);

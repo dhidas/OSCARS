@@ -246,12 +246,16 @@ __global__ void OSCARSSR_Cuda_FluxGPU (double *t,
                                        int *ifirst,
                                        int *ml,
                                        double *prec,
+                                       int    *rt,
                                        double *result)
 {
   // Thread number and surface number
   int const ith = threadIdx.x + blockIdx.x * blockDim.x;
   int const is = ith + *ifirst;
 
+  // Alternative returns
+  double result_precision = -1;
+  int    result_level = -1;
 
   // Observation point
   double const ox = is >= *ns ? 0 : sx[is];
@@ -418,9 +422,12 @@ __global__ void OSCARSSR_Cuda_FluxGPU (double *t,
       // Result up to this point
       this_result = fabs((*C2) * (EX + EY + EZ));
 
+      result_precision = fabs((last_result - this_result) / last_result);
+
       // If below desired precision set as done
-      if ( ilevel > 8 && fabs((last_result - this_result) / last_result) < *prec ) {
+      if ( ilevel > 8 && result_precision < *prec ) {
         done = true;
+        result_level = ilevel;
       }
 
       // Keep track of last result for precision test
@@ -445,7 +452,17 @@ __global__ void OSCARSSR_Cuda_FluxGPU (double *t,
   }
 
   // Set result and return
-  result[ith] = this_result;
+  switch (*rt) {
+    case 1:
+      result[ith] = result_precision;
+      break;
+    case 2:
+      result[ith] = (double) result_level;
+      break;
+    default:
+      result[ith] = this_result;
+      break;
+  }
 
   return;
 }
@@ -477,7 +494,8 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
                                                 int const NParticles,
                                                 std::vector<int> const& GPUVector,
                                                 double const Precision,
-                                                int const MaxLevel)
+                                                int const MaxLevel,
+                                                int    const ReturnQuantity)
 {
   // Calculate the flux for NParticles using the GPUs given in GPUVector.  Each particle's
   // trajectory will be sent to all GPUs for processing, meanwhile a new trajectory will
@@ -570,7 +588,11 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   int     *h_ifirst;
   int     *h_ml;
 
+  // Precision desired
   double *h_prec;
+
+  // Return quantity flag
+  int    *h_rt;
 
   // Results
   double **h_result;
@@ -609,6 +631,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   cudaHostAlloc((void**) &h_ifirst, NGPUsToUse * sizeof(int),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void**) &h_ml,                  sizeof(int),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void**) &h_prec,                sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_rt,                  sizeof(int),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
 
   cudaHostAlloc((void**) &h_result,   NGPUsToUse * sizeof(double*), cudaHostAllocWriteCombined | cudaHostAllocMapped);
   for (size_t i = 0; i < GPUsToUse.size(); ++i) {
@@ -626,6 +649,9 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
 
   // Precision
   *h_prec = Precision;
+
+  // Return quantity
+  *h_rt = ReturnQuantity;
 
   // Memor allocations for GPU
   int    **d_nt;
@@ -668,6 +694,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   int    **d_ifirst;
   int    **d_ml;
   double **d_prec;
+  int    **d_rt;
   double **d_result;
 
   cudaHostAlloc((void **) &d_nt,     NGPUsToUse * sizeof(int*),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
@@ -710,6 +737,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   cudaHostAlloc((void **) &d_ifirst, NGPUsToUse * sizeof(int*),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void **) &d_ml,     NGPUsToUse * sizeof(int*),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void **) &d_prec,   NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_rt,     NGPUsToUse * sizeof(int*),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void **) &d_result,   NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
 
   for (size_t i = 0; i < GPUsToUse.size(); ++i) {
@@ -757,6 +785,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
     cudaMalloc((void **) &d_ifirst[i],             sizeof(int));
     cudaMalloc((void **) &d_ml[i],                 sizeof(int));
     cudaMalloc((void **) &d_prec[i],               sizeof(double));
+    cudaMalloc((void **) &d_rt[i],                 sizeof(int));
     cudaMalloc((void **) &d_result[i],       NTT * sizeof(double));
 
     // Copy device number to device
@@ -787,6 +816,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   cudaMemcpyAsync(d_sz[0],    h_sz,  *h_ns * sizeof(double), cudaMemcpyHostToDevice);
   cudaMemcpyAsync(d_ml[0],    h_ml,          sizeof(int),    cudaMemcpyHostToDevice);
   cudaMemcpyAsync(d_prec[0],  h_prec,        sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_rt[0],    h_rt,          sizeof(int),    cudaMemcpyHostToDevice);
   for (size_t i = 0; i < GPUsToUse.size() - 1; ++i) {
     // Device number
     int const d  = GPUsToUse[i];
@@ -802,6 +832,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
     cudaMemcpyPeerAsync( d_sz[i+1],     d1, d_sz[i],     d, *h_ns * sizeof(double));
     cudaMemcpyPeerAsync( d_ml[i+1],     d1, d_ml[i],     d, sizeof(int));
     cudaMemcpyPeerAsync( d_prec[i+1],   d1, d_prec[i],   d, sizeof(double));
+    cudaMemcpyPeerAsync( d_rt[i+1],     d1, d_rt[i],     d, sizeof(int));
   }
 
   // Set first trajectory
@@ -940,6 +971,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
                                                                       d_ifirst[ig],
                                                                       d_ml[ig],
                                                                       d_prec[ig],
+                                                                      d_rt[ig],
                                                                       d_result[ig]);
     }
 
@@ -1059,6 +1091,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   cudaFreeHost(h_ifirst);
   cudaFreeHost(h_ml);
   cudaFreeHost(h_prec);
+  cudaFreeHost(h_rt);
   // Free host and GPU memory
   for (size_t i = 0; i < GPUsToUse.size(); ++i) {
 
@@ -1099,6 +1132,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
     cudaFree(d_ifirst[i]);
     cudaFree(d_ml[i]);
     cudaFree(d_prec[i]);
+    cudaFree(d_rt[i]);
     cudaFree(d_result[i]);
   }
   cudaFree(h_result);
@@ -1134,6 +1168,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   cudaFree(h_ifirst);
   cudaFree(d_ml);
   cudaFree(d_prec);
+  cudaFree(d_rt);
   cudaFree(d_result);
 
   // Delete host gpu pointer arrays
@@ -2779,6 +2814,7 @@ __global__ void OSCARSSR_Cuda_PowerDensityGPU (double  *t,
   int const ith = threadIdx.x + blockIdx.x * blockDim.x;
   int const is = ith + *ifirst;
 
+  // Alternative returns
   double result_precision = -1;
   int    result_level = -1;
 
@@ -3200,6 +3236,7 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
   // Precision
   *h_prec = Precision;
 
+  // Return quantity
   *h_rt = ReturnQuantity;
 
   // Memor allocations for GPU
@@ -3723,6 +3760,7 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
   cudaFree(d_shn);
   cudaFree(d_const);
   cudaFree(d_prec);
+  cudaFree(d_rt);
   cudaFree(d_result);
 
   // Delete host gpu pointer arrays

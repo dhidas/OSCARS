@@ -2145,7 +2145,6 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
     }
 
     // Add to container
-    // Set result and return
     switch (ReturnQuantity) {
       case 1:
         PowerDensityContainer.AddToPoint(i, Result_Precision);
@@ -2415,7 +2414,8 @@ void OSCARSSR::CalculateFlux (TParticleA& Particle,
                               double const Precision,
                               int    const MaxLevel,
                               int    const MaxLevelExtended,
-                              double const Weight)
+                              double const Weight,
+                              int    const ReturnQuantity)
 {
   // Calculates the single particle flux
   // in units of [photons / second / 0.001% BW / mm^2]
@@ -2445,7 +2445,8 @@ void OSCARSSR::CalculateFlux (TParticleA& Particle,
                       Precision,
                       MaxLevel,
                       MaxLevelExtended,
-                      Weight);
+                      Weight,
+                      ReturnQuantity);
 
   return;
 }
@@ -2469,7 +2470,8 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
                               double const Precision,
                               int    const MaxLevel,
                               int    const MaxLevelExtended,
-                              int const Dimension)
+                              int    const Dimension,
+                              int    const ReturnQuantity)
 {
   // Calculate flux on surface
   // THIS is the ENTRY POINT typically
@@ -2534,7 +2536,8 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
                      GPUVector,
                      Precision,
                      MaxLevel,
-                     MaxLevelExtended);
+                     MaxLevelExtended,
+                     ReturnQuantity);
   } else {
     if (NParticles == 0) {
       if (NThreadsToUse == 1) {
@@ -2549,7 +2552,8 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
                             Precision,
                             MaxLevel,
                             MaxLevelExtended,
-                            1);
+                            1,
+                            ReturnQuantity);
       } else {
         this->CalculateFluxThreads(fParticle,
                                    Surface,
@@ -2563,7 +2567,8 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
                                    Precision,
                                    MaxLevel,
                                    MaxLevelExtended,
-                                   1);
+                                   1,
+                                   ReturnQuantity);
       }
     } else {
       // Weight this by the number of particles
@@ -2588,7 +2593,8 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
                               Precision,
                               MaxLevel,
                               MaxLevelExtended,
-                              Weight);
+                              Weight,
+                              ReturnQuantity);
         } else {
           this->CalculateFluxThreads(fParticle,
                                      Surface,
@@ -2602,7 +2608,8 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
                                      Precision,
                                      MaxLevel,
                                      MaxLevelExtended,
-                                     Weight);
+                                     Weight,
+                                     ReturnQuantity);
         }
       }
     }
@@ -2631,7 +2638,8 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
                                     double const Precision,
                                     int    const MaxLevel,
                                     int    const MaxLevelExtended,
-                                    double const Weight)
+                                    double const Weight,
+                                    int    const ReturnQuantity)
 {
   // Calculates the single particle flux at a given observation point
   // in units of [photons / second / 0.001% BW / mm^2]
@@ -2672,6 +2680,10 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
 
   // Extended trajectory (not using memory for storage of arrays
   TParticleTrajectoryInterpolatedPoints TE;
+
+  // Alternative outputs
+  double Result_Precision = -1;
+  int    Result_Level     = -1;
 
   // Loop over all points in the spectrum container
   for (size_t i = iFirst; i <= iLast; ++i) {
@@ -2738,7 +2750,10 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
 
       TVector3DC const ThisSumE = SumE * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(iLevel);
       ThisMag = ThisSumE.Dot( ThisSumE.CC() ).real();
-      if (iLevel > 8 && fabs(ThisMag - LastMag) / LastMag < Precision) {
+
+      Result_Precision = fabs(ThisMag - LastMag) / LastMag;
+      if (iLevel > 8 && Result_Precision < Precision) {
+        Result_Level = iLevel;
         break;
       }
 
@@ -2777,8 +2792,18 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
     // Set the flux for this frequency / energy point
     double const ThisFlux = C2 *  SumE.Dot( SumE.CC() ).real() * Weight;
 
-    // All point to flux container
-    FluxContainer.AddToPoint(i, ThisFlux);
+    // Add to container
+    switch (ReturnQuantity) {
+      case 1:
+        FluxContainer.AddToPoint(i, Result_Precision);
+        break;
+      case 2:
+        FluxContainer.AddToPoint(i, (double) Result_Level);
+        break;
+      default:
+        FluxContainer.AddToPoint(i, ThisFlux);
+        break;
+    }
   } // POINTS
 
   // Set done to true
@@ -2803,7 +2828,8 @@ void OSCARSSR::CalculateFluxThreads (TParticleA& Particle,
                                      double const Precision,
                                      int    const MaxLevel,
                                      int    const MaxLevelExtended,
-                                     double const Weight)
+                                     double const Weight,
+                                     int    const ReturnQuantity)
 {
   // Calculates the single particle flux on a surface
   // in units of [photons / second / 0.001% BW / mm^2]
@@ -2860,7 +2886,8 @@ void OSCARSSR::CalculateFluxThreads (TParticleA& Particle,
                                   Precision,
                                   MaxLevel,
                                   MaxLevelExtended,
-                                  Weight));
+                                  Weight,
+                                  ReturnQuantity));
   }
 
   // Are all of the threads finished or not?  Continue loop until all come back.
@@ -2912,7 +2939,8 @@ void OSCARSSR::CalculateFluxGPU (TSurfacePoints const& Surface,
                                  std::vector<int> GPUVector,
                                  double const Precision,
                                  int    const MaxLevel,
-                                 int    const MaxLevelExtended)
+                                 int    const MaxLevelExtended,
+                                 int    const ReturnQuantity)
 {
   // If you compile for Cuda use the GPU in this function, else throw
 
@@ -2945,7 +2973,8 @@ void OSCARSSR::CalculateFluxGPU (TSurfacePoints const& Surface,
                                          NParticles,
                                          GPUVector,
                                          Precision,
-                                         LevelStopWithExtended);
+                                         LevelStopWithExtended,
+                                         ReturnQuantity);
   #else
   throw std::invalid_argument("GPU functionality not compiled into this binary distribution");
   #endif
