@@ -2276,8 +2276,16 @@ void OSCARSSR::CalculatePowerDensityGPU (TSurfacePoints const& Surface,
     throw std::invalid_argument("You are requesting the GPU, but none were found");
   }
 
+  int const MaxLevelTotal = MaxLevel > MaxLevelExtended ? MaxLevel : MaxLevelExtended;
 
-  return OSCARSSR_Cuda_CalculatePowerDensityGPUWithA (*this, Surface, PowerDensityContainer, NParticles, GPUVector);
+  return OSCARSSR_Cuda_CalculatePowerDensityGPU (*this,
+                                                 Surface,
+                                                 PowerDensityContainer,
+                                                 NParticles,
+                                                 GPUVector,
+                                                 Precision,
+                                                 MaxLevelTotal);
+  //return OSCARSSR_Cuda_CalculatePowerDensityGPUWithA (*this, Surface, PowerDensityContainer, NParticles, GPUVector);
   #else
   throw std::invalid_argument("GPU functionality not compiled into this binary distribution");
   #endif
