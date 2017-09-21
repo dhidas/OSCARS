@@ -1627,8 +1627,9 @@ void OSCARSSR::CalculateSpectrumGPU (TParticleA& Particle,
     throw std::invalid_argument("You are requesting the GPU, but none were found");
   }
 
+  int const MaxLevelTotal = MaxLevel > MaxLevelExtended ? MaxLevel : MaxLevelExtended;
+
   return OSCARSSR_Cuda_CalculateSpectrumGPU (*this,
-                                             Particle,
                                              ObservationPoint,
                                              Spectrum,
                                              Polarization,
@@ -1636,7 +1637,9 @@ void OSCARSSR::CalculateSpectrumGPU (TParticleA& Particle,
                                              HorizontalDirection,
                                              PropogationDirection,
                                              NParticles,
-                                             GPUVector);
+                                             GPUVector,
+                                             Precision,
+                                             MaxLevelTotal);
   #else
   throw std::invalid_argument("GPU functionality not compiled into this binary distribution");
   #endif

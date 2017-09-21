@@ -42,7 +42,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
                                                 double const Precision = 0.01,
                                                 int const MaxLevel = 25);
 
-extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
+extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU2 (OSCARSSR& OSR,
                                                     TParticleA& Particle,
                                                     TVector3D const& ObservationPoint,
                                                     TSpectrumContainer& Spectrum,
@@ -52,6 +52,18 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
                                                     TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
                                                     int const NParticles = 0,
                                                     std::vector<int> const& GPUVector = std::vector<int>());
+
+extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
+                                                    TVector3D const& ObservationPoint,
+                                                    TSpectrumContainer& Spectrum,
+                                                    std::string const& Polarization,
+                                                    double const Angle,
+                                                    TVector3D const& HorizontalDirection,
+                                                    TVector3D const& PropogationDirection,
+                                                    int const NParticles,
+                                                    std::vector<int> const& GPUVector,
+                                                    double const Precision,
+                                                    int const MaxLevel);
 
 extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
                                                         TSurfacePoints const& Surface,
