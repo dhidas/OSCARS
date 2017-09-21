@@ -4529,7 +4529,7 @@ static PyObject* OSCARSSR_CalculateTotalPower (OSCARSSRObject* self)
 
 
 const char* DOC_OSCARSSR_CalculatePowerDensity = R"docstring(
-calculate_power_density(points [, normal, rotations, translation, nparticles, gpu, nthreads, precision, max_level, max_level_extended, ofile])
+calculate_power_density(points [, normal, rotations, translation, nparticles, gpu, nthreads, precision, max_level, max_level_extended, quantity, ofile])
 
 Calculate the power density for each point in the list *points*.
 
@@ -4569,6 +4569,13 @@ max_level: int
 max_level_extended: int
     Maximum "level" to use for trajectory in the calculation.  If set to higher than max_level the computation will proceed beyond max_level without creating trajectory arrays in memory (but it will be slower)
 
+quantity: str
+    Quantity to return.
+    Available are:
+        'power density' (default)
+        'precision' - Estimated precision for each point
+        'level'     - Trajectory level reached (npoints = 2**(n+1) - 1), if return is -1 the requested precision was not reached
+
 ofile : str
     Output file name
 
@@ -4592,6 +4599,7 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
   double      Precision = 0.01;
   int         MaxLevel = -2;
   int         MaxLevelExtended = 0;
+  char const* ReturnQuantityChars = "power density";
   char const* OutFileName = "";
 
 
@@ -4605,10 +4613,11 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
                                  "precision",
                                  "max_level",
                                  "max_level_extended",
+                                 "quantity",
                                  "ofile",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|iOOiiidiis",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|iOOiiidiiss",
                                    const_cast<char **>(kwlist),
                                    &List_Points,
                                    &NormalDirection,
@@ -4620,6 +4629,7 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
                                    &Precision,
                                    &MaxLevel,
                                    &MaxLevelExtended,
+                                   &ReturnQuantityChars,
                                    &OutFileName)) {
     return NULL;
   }
@@ -4724,8 +4734,20 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
     PyErr_SetString(PyExc_ValueError, "gpu is 1 and nthreads > 0.  Both are not currently allowed.");
     return NULL;
   }
-    
 
+  int ReturnQuantity = 0;
+  std::string ReturnQuantityStr = ReturnQuantityChars;
+  std::transform(ReturnQuantityStr.begin(), ReturnQuantityStr.end(), ReturnQuantityStr.begin(), ::toupper);
+  if (ReturnQuantityStr == "POWER DENSITY" || ReturnQuantityStr == "POWERDENSITY") {
+    ReturnQuantity = 0;
+  } else if (ReturnQuantityStr == "PRECISION") {
+    ReturnQuantity = 1;
+  } else if (ReturnQuantityStr == "LEVEL") {
+    ReturnQuantity = 2;
+  } else {
+    PyErr_SetString(PyExc_ValueError, "'quantity' must be: 'power density', 'precision', 'level', or blank");
+    return NULL;
+  }
 
   // Container for Point plus scalar
   T3DScalarContainer PowerDensityContainer;
@@ -4735,7 +4757,7 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
   bool const Directional = NormalDirection == 0 ? false : true;
 
   try {
-    self->obj->CalculatePowerDensity(Surface, PowerDensityContainer, Dim, Directional, Precision, MaxLevel, MaxLevelExtended, NParticles, NThreads, GPU);
+    self->obj->CalculatePowerDensity(Surface, PowerDensityContainer, Dim, Directional, Precision, MaxLevel, MaxLevelExtended, NParticles, NThreads, GPU, ReturnQuantity);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -4780,7 +4802,7 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
 
 
 const char* DOC_OSCARSSR_CalculatePowerDensityRectangle = R"docstring(
-calculate_power_density_rectangle(npoints [, plane, width, x0x1x2, rotations, translation, ofile, bofile, normal, nparticles, gpu, nthreads, precision, max_level, max_level_extended, dim])
+calculate_power_density_rectangle(npoints [, plane, width, x0x1x2, rotations, translation, ofile, bofile, normal, nparticles, gpu, nthreads, precision, max_level, max_level_extended, dim, quantity])
 
 Calculate the power density in a rectangle either defined by three points, or by defining the plane the rectangle is in and the width, and then rotating and translating it to where it needs be.  The simplest is outlined in the first example below.  By default (dim=2) this returns a list whose position coordinates are in the local coordinate space x1 and x2 (*ie* they do not include the rotations and translation).  if dim=3 the coordinates in the return list are in absolute 3D space.
 
@@ -4838,6 +4860,13 @@ max_level_extended: int
 dim : int
     Defaults to 2 where output is in the local plane coordinates X1 and X2.  If you want the return to be given in 3D set dim=3 which will return with X, Y, and Z in absolute coordinates.
 
+quantity: str
+    Quantity to return.
+    Available are:
+        'power density' (default)
+        'precision' - Estimated precision for each point
+        'level'     - Trajectory level reached (npoints = 2**(n+1) - 1), if return is -1 the requested precision was not reached
+
 Returns
 -------
 power_density : list
@@ -4879,6 +4908,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
   double      Precision = 0.01;
   int         MaxLevel = -2;
   int         MaxLevelExtended = 0;
+  char const* ReturnQuantityChars = "power density";
   const char* OutFileNameText = "";
   const char* OutFileNameBinary = "";
 
@@ -4899,9 +4929,10 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
                                  "max_level",
                                  "max_level_extended",
                                  "dim",
+                                 "quantity",
                                   NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|sOOOOssiiiidiii",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|sOOOOssiiiidiiis",
                                    const_cast<char **>(kwlist),
                                    &List_NPoints,
                                    &SurfacePlane,
@@ -4918,7 +4949,8 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
                                    &Precision,
                                    &MaxLevel,
                                    &MaxLevelExtended,
-                                   &Dim)) {
+                                   &Dim,
+                                   &ReturnQuantityChars)) {
     return NULL;
   }
 
@@ -5055,13 +5087,28 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
     return NULL;
   }
 
+  int ReturnQuantity = 0;
+  std::string ReturnQuantityStr = ReturnQuantityChars;
+  std::transform(ReturnQuantityStr.begin(), ReturnQuantityStr.end(), ReturnQuantityStr.begin(), ::toupper);
+  if (ReturnQuantityStr == "POWER DENSITY" || ReturnQuantityStr == "POWERDENSITY") {
+    ReturnQuantity = 0;
+  } else if (ReturnQuantityStr == "PRECISION") {
+    ReturnQuantity = 1;
+  } else if (ReturnQuantityStr == "LEVEL") {
+    ReturnQuantity = 2;
+  } else {
+    PyErr_SetString(PyExc_ValueError, "'quantity' must be: 'power density', 'precision', 'level', or blank");
+    return NULL;
+  }
+
+
   // Container for Point plus scalar
   T3DScalarContainer PowerDensityContainer;
 
   // Actually calculate the spectrum
   bool const Directional = NormalDirection == 0 ? false : true;
   try {
-    self->obj->CalculatePowerDensity(Surface, PowerDensityContainer, Dim, Directional, Precision, MaxLevel, MaxLevelExtended, NParticles, NThreads, GPU);
+    self->obj->CalculatePowerDensity(Surface, PowerDensityContainer, Dim, Directional, Precision, MaxLevel, MaxLevelExtended, NParticles, NThreads, GPU, -1, std::vector<int>(), ReturnQuantity);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;

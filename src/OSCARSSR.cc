@@ -1627,7 +1627,10 @@ void OSCARSSR::CalculateSpectrumGPU (TParticleA& Particle,
     throw std::invalid_argument("You are requesting the GPU, but none were found");
   }
 
-  int const MaxLevelTotal = MaxLevel > MaxLevelExtended ? MaxLevel : MaxLevelExtended;
+  // Set the level to stop at if requested, but not above the hard limit
+  int const LevelStopMemory = MaxLevel >= -1  && MaxLevel <= TParticleA::kMaxTrajectoryLevel ? MaxLevel : TParticleA::kMaxTrajectoryLevel;
+  int const LevelStopWithExtended = MaxLevelExtended > LevelStopMemory ? MaxLevelExtended : LevelStopMemory;
+
 
   return OSCARSSR_Cuda_CalculateSpectrumGPU (*this,
                                              ObservationPoint,
@@ -1639,7 +1642,7 @@ void OSCARSSR::CalculateSpectrumGPU (TParticleA& Particle,
                                              NParticles,
                                              GPUVector,
                                              Precision,
-                                             MaxLevelTotal);
+                                             LevelStopWithExtended);
   #else
   throw std::invalid_argument("GPU functionality not compiled into this binary distribution");
   #endif
@@ -1853,7 +1856,8 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface,
                                       int const NThreads,
                                       int const GPU,
                                       int const NGPU,
-                                      std::vector<int> VGPU)
+                                      std::vector<int> VGPU,
+                                      int const ReturnQuantity)
 {
   // Calculates the power density in units of [W / mm^2]
   // THIS is the ENTRY POINT typically
@@ -1937,7 +1941,8 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface,
                              Directional,
                              Precision,
                              MaxLevel,
-                             MaxLevelExtended);
+                             MaxLevelExtended,
+                             ReturnQuantity);
   } else {
     if (NParticles == 0) {
       if (NThreadsToUse == 1) {
@@ -2258,7 +2263,8 @@ void OSCARSSR::CalculatePowerDensityGPU (TSurfacePoints const& Surface,
                                          bool const Directional,
                                          double const Precision,
                                          int    const MaxLevel,
-                                         int    const MaxLevelExtended)
+                                         int    const MaxLevelExtended,
+                                         int    const ReturnQuantity)
 {
   // If you compile for Cuda use the GPU in this function, else throw
 
@@ -2276,7 +2282,10 @@ void OSCARSSR::CalculatePowerDensityGPU (TSurfacePoints const& Surface,
     throw std::invalid_argument("You are requesting the GPU, but none were found");
   }
 
-  int const MaxLevelTotal = MaxLevel > MaxLevelExtended ? MaxLevel : MaxLevelExtended;
+  // Set the level to stop at if requested, but not above the hard limit
+  int const LevelStopMemory = MaxLevel >= -1  && MaxLevel <= TParticleA::kMaxTrajectoryLevel ? MaxLevel : TParticleA::kMaxTrajectoryLevel;
+  int const LevelStopWithExtended = MaxLevelExtended > LevelStopMemory ? MaxLevelExtended : LevelStopMemory;
+
 
   return OSCARSSR_Cuda_CalculatePowerDensityGPU (*this,
                                                  Surface,
@@ -2284,8 +2293,8 @@ void OSCARSSR::CalculatePowerDensityGPU (TSurfacePoints const& Surface,
                                                  NParticles,
                                                  GPUVector,
                                                  Precision,
-                                                 MaxLevelTotal);
-  //return OSCARSSR_Cuda_CalculatePowerDensityGPUWithA (*this, Surface, PowerDensityContainer, NParticles, GPUVector);
+                                                 LevelStopWithExtended,
+                                                 ReturnQuantity);
   #else
   throw std::invalid_argument("GPU functionality not compiled into this binary distribution");
   #endif
@@ -2895,7 +2904,9 @@ void OSCARSSR::CalculateFluxGPU (TSurfacePoints const& Surface,
     throw std::invalid_argument("You are requesting the GPU, but none were found");
   }
 
-  int const MaxLevelTotal = MaxLevel > MaxLevelExtended ? MaxLevel : MaxLevelExtended;
+  // Set the level to stop at if requested, but not above the hard limit
+  int const LevelStopMemory = MaxLevel >= -1  && MaxLevel <= TParticleA::kMaxTrajectoryLevel ? MaxLevel : TParticleA::kMaxTrajectoryLevel;
+  int const LevelStopWithExtended = MaxLevelExtended > LevelStopMemory ? MaxLevelExtended : LevelStopMemory;
 
   return OSCARSSR_Cuda_CalculateFluxGPU (*this,
                                          Surface,
@@ -2908,7 +2919,7 @@ void OSCARSSR::CalculateFluxGPU (TSurfacePoints const& Surface,
                                          NParticles,
                                          GPUVector,
                                          Precision,
-                                         MaxLevelTotal);
+                                         LevelStopWithExtended);
   #else
   throw std::invalid_argument("GPU functionality not compiled into this binary distribution");
   #endif

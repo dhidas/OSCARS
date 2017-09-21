@@ -281,7 +281,8 @@ class OSCARSSR
                                 int const NThreads,
                                 int const GPU,
                                 int const NGPU = -1,
-                                std::vector<int> VGPU = std::vector<int>());
+                                std::vector<int> VGPU = std::vector<int>(),
+                                int const ReturnQuantity = 0);
 
     void CalculatePowerDensityPoints (TParticleA& Particle,
                                       TSurfacePoints const& Surface,
@@ -312,7 +313,8 @@ class OSCARSSR
                                    bool const Directional,
                                    double const Precision,
                                    int    const MaxLevel,
-                                   int    const MaxLevelExtended);
+                                   int    const MaxLevelExtended,
+                                   int    const ReturnQuantity);
 
     double CalculateTotalPower ();
     double CalculateTotalPower (TParticleA&);

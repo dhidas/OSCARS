@@ -71,27 +71,8 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
                                                         int const NParticles,
                                                         std::vector<int> const& GPUVector,
                                                         double const Precision,
-                                                        int const MaxLevel);
-
-extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPUWithA (OSCARSSR& OSR,
-                                                             TSurfacePoints const& Surface,
-                                                             T3DScalarContainer& PowerDensityContainer,
-                                                             int const NParticles,
-                                                             std::vector<int> const& GPUVector);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+                                                        int const MaxLevel,
+                                                        int const ReturnQuantity = 0);
 
 
 
