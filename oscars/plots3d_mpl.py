@@ -373,8 +373,35 @@ def plot_trajectory3d(trajectory, figsize=None):
 
 
 
+def plot_power_density_scatter (V):
 
+    if len(V) == 0:
+        return
 
+    X = [item[0][0] for item in V]
+    Y = [item[0][1] for item in V]
+    Z = [item[0][2] for item in V]
+    P = [item[1]    for item in V]
+
+    pmax = max(P)
+    pmin = min(P)
+
+    C = []
+    if pmax == pmin:
+        C=[0] * len(P)
+    else:
+        C = [p / pmax for p in P]
+
+    Cen3D = plt.figure()
+    ax = Cen3D.add_subplot(111, projection='3d')
+
+    ax.scatter(X, Z, Y, c=C)
+    ax.invert_xaxis()
+
+    ax.set_xlabel('X [m]')
+    ax.set_ylabel('Z [m]')
+    ax.set_zlabel('Y [m]')
+    plt.show()
 
 
 

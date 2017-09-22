@@ -53,11 +53,12 @@ class PSRectangle:
 
 
 class PSCurvedRectangle:
-    """A Parametric surface - rectangle"""
+    """A Parametric surface - curved rectangle"""
 
     # This shape specific parameters
     L = 1
     W = 1
+    R = 0
     
 
     # Required for all PS shapes
@@ -70,9 +71,10 @@ class PSCurvedRectangle:
     nu = 10
     nv = 10
  
-    def __init__ (self, L=1, W=1, ustart=-L/2., ustop=L/2., nu=10, vstart=-W/2., vstop=W/2., nv=10):
+    def __init__ (self, L=1, W=1, R=0, ustart=-L/2., ustop=L/2., nu=10, vstart=-W/2., vstop=W/2., nv=10):
         self.L = L
         self.W = W
+        self.R = R
         self.ustart = -L/2.
         self.ustop = L/2.
         self.nu = nu
