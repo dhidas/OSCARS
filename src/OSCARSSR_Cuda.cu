@@ -1231,24 +1231,25 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
 
 
 
-__global__ void OSCARSSR_Cuda_SpectrumGPU (double *t,                               // trj time
-                                           double *x,   double *y,   double *z,     // trj position
-                                           double *xp,  double *yp,  double *zp,    // trj pos deriv
-                                           double *bx,  double *by,  double *bz,    // trj beta
-                                           double *bxp, double *byp, double *bzp,   // trj beta deriv
-                                           double *ax,  double *ay,  double *az,    // trj a/c
-                                           double *axp, double *ayp, double *azp,   // trj a/c deriv
-                                           double *obs,                             // observation point [3]
-                                           double *tstart,           double *tstop, // start and stop time of trj
-                                           int    *nt,                              // number of trj points
-                                           double *om,                              // omega (energy) array
-                                           int    *no,                              // number of om elements
-                                           double *C0,  double *C2,  double *C,     // constants
-                                           int    *ifirst,                          // first in om array for this block
-                                           int    *ml,                              // max_level
-                                           double *prec,                            // precision requested
-                                           int    *rt,                              // return quantity requested
-                                           double *result)                          // result array
+__global__ void OSCARSSR_Cuda_SpectrumGPU (double          *t,                               // trj time
+                                           double          *x,   double *y,   double *z,     // trj position
+                                           double          *xp,  double *yp,  double *zp,    // trj pos deriv
+                                           double          *bx,  double *by,  double *bz,    // trj beta
+                                           double          *bxp, double *byp, double *bzp,   // trj beta deriv
+                                           double          *ax,  double *ay,  double *az,    // trj a/c
+                                           double          *axp, double *ayp, double *azp,   // trj a/c deriv
+                                           double          *obs,                             // observation point [3]
+                                           cuDoubleComplex *pol,                             // photon polarization vector [3]
+                                           double          *tstart,           double *tstop, // start and stop time of trj
+                                           int             *nt,                              // number of trj points
+                                           double          *om,                              // omega (energy) array
+                                           int             *no,                              // number of om elements
+                                           double          *C0,  double *C2,  double *C,     // constants
+                                           int             *ifirst,                          // first in om array for this block
+                                           int             *ml,                              // max_level
+                                           double          *prec,                            // precision requested
+                                           int             *rt,                              // return quantity requested
+                                           double          *result)                          // result array
 {
   // Thread number and spectrum omega number
   int const ith = threadIdx.x + blockIdx.x * blockDim.x;
@@ -1272,6 +1273,7 @@ __global__ void OSCARSSR_Cuda_SpectrumGPU (double *t,                           
   cuDoubleComplex SumEZ = make_cuDoubleComplex(0, 0);
 
 
+  bool use_pol = cuCabs(pol[0]) > 0.1 || cuCabs(pol[1]) > 0.1 || cuCabs(pol[2]) > 0.1 ? true : false;
 
   // Trajectory interpolated on fly and stored in shared memory for this block
   __shared__ double _t[NTHREADS_PER_BLOCK];
@@ -1419,6 +1421,14 @@ __global__ void OSCARSSR_Cuda_SpectrumGPU (double *t,                           
       cuDoubleComplex TSumEY = cuCmul(make_cuDoubleComplex((*C0) * (dt_total), 0), SumEY);
       cuDoubleComplex TSumEZ = cuCmul(make_cuDoubleComplex((*C0) * (dt_total), 0), SumEZ);
 
+      if (use_pol) {
+        cuDoubleComplex DotProduct = cuCadd(cuCadd(cuCmul(cuConj(TSumEX), pol[0]), cuCmul(cuConj(TSumEY), pol[1])), cuCmul(cuConj(TSumEZ), pol[2]));
+
+        TSumEX = cuCmul(pol[0], DotProduct);
+        TSumEY = cuCmul(pol[1], DotProduct);
+        TSumEZ = cuCmul(pol[2], DotProduct);
+      }
+
       double const EX = (TSumEX.x * TSumEX.x + TSumEX.y * TSumEX.y);
       double const EY = (TSumEY.x * TSumEY.x + TSumEY.y * TSumEY.y);
       double const EZ = (TSumEZ.x * TSumEZ.x + TSumEZ.y * TSumEZ.y);
@@ -1523,13 +1533,40 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
   int  const NParticlesReally = ThisParticleOnly ? 1 : NParticles;
 
 
+  // Calculate polarization vector to use (0, 0, 0) for 'all'
+  TVector3D  const VerticalDirection = PropogationDirection.Cross(HorizontalDirection).UnitVector();
+  TVector3DC const Positive = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) + VerticalDirection * std::complex<double>(0, 1) );
+  TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * std::complex<double>(0, 1) );
+  TVector3DC PhotonPolarizationVector(0, 0, 0);
+  if (Polarization == "all") {
+    // Do nothing, it is already ALL
+  } else if (Polarization == "linear-horizontal") {
+    PhotonPolarizationVector = HorizontalDirection;
+  } else if (Polarization == "linear-vertical") {
+    PhotonPolarizationVector = VerticalDirection;
+  } else if (Polarization == "linear") {
+    TVector3D PolarizationAngle = HorizontalDirection;
+    PolarizationAngle.RotateSelf(Angle, PropogationDirection);
+    PhotonPolarizationVector = PolarizationAngle;
+  } else if (Polarization == "circular-left") {
+    PhotonPolarizationVector = Positive;
+  } else if (Polarization == "circular-right") {
+    PhotonPolarizationVector = Negative;
+  } else {
+    // Throw invalid argument if polarization is not recognized
+    throw std::invalid_argument("Polarization requested not recognized");
+  }
+
+
   // Observation point, number of spectrum points, and trajectory points
   double *h_obs;
   int    *h_no;
   int    *h_nt;
+  cuDoubleComplex *h_pol;
   cudaHostAlloc((void**) &h_obs, 3 * sizeof(double), cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void**) &h_no,      sizeof(int),    cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void**) &h_nt,      sizeof(int),    cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_pol, 3 * sizeof(cuDoubleComplex), cudaHostAllocWriteCombined | cudaHostAllocMapped);
 
   // Set observation point values
   h_obs[0] = ObservationPoint.GetX();
@@ -1548,6 +1585,10 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
   *h_nt     = (int) OSR.GetCurrentParticle().GetTrajectoryInterpolated().GetNPoints();
   *h_no     = (int) Spectrum.GetNPoints();
 
+  // Photon polarization
+  h_pol[0] = make_cuDoubleComplex(PhotonPolarizationVector.GetX().real(), PhotonPolarizationVector.GetX().imag());
+  h_pol[1] = make_cuDoubleComplex(PhotonPolarizationVector.GetY().real(), PhotonPolarizationVector.GetX().imag());
+  h_pol[2] = make_cuDoubleComplex(PhotonPolarizationVector.GetZ().real(), PhotonPolarizationVector.GetX().imag());
 
   int const NThreads = *h_no;
   int const NThreadsPerBlock = NTHREADS_PER_BLOCK;
@@ -1652,6 +1693,7 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
   int    **d_no;
 
   double **d_obs;
+  cuDoubleComplex **d_pol;
 
   double **d_t;
 
@@ -1694,6 +1736,7 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
   cudaHostAlloc((void **) &d_no,     NGPUsToUse * sizeof(int*),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
 
   cudaHostAlloc((void **) &d_obs,    NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_pol,    NGPUsToUse * sizeof(cuDoubleComplex*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
 
   cudaHostAlloc((void **) &d_t,      NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
 
@@ -1741,6 +1784,7 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
     cudaMalloc((void **) &d_no[i],                 sizeof(int));
 
     cudaMalloc((void **) &d_obs[i],            3 * sizeof(double));
+    cudaMalloc((void **) &d_pol[i],            3 * sizeof(cuDoubleComplex));
 
     cudaMalloc((void **) &d_t[i],          *h_nt * sizeof(double));
 
@@ -1794,6 +1838,7 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
   cudaSetDevice(d0);
   cudaMemcpyAsync(d_no[0],    h_no,          sizeof(int),    cudaMemcpyHostToDevice);
   cudaMemcpyAsync(d_obs[0],   h_obs,     3 * sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_pol[0],   h_pol,     3 * sizeof(cuDoubleComplex), cudaMemcpyHostToDevice);
   cudaMemcpyAsync(d_c0[0],    h_c0,          sizeof(double), cudaMemcpyHostToDevice);
   cudaMemcpyAsync(d_c2[0],    h_c2,          sizeof(double), cudaMemcpyHostToDevice);
   cudaMemcpyAsync(d_c[0],     h_c,           sizeof(double), cudaMemcpyHostToDevice);
@@ -1808,6 +1853,7 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
     cudaSetDevice(d);
     cudaMemcpyPeerAsync( d_no[i+1],     d1, d_no[i],     d, sizeof(int));
     cudaMemcpyPeerAsync( d_obs[i+1],    d1, d_obs[i],    d, 3 * sizeof(double));
+    cudaMemcpyPeerAsync( d_pol[i+1],    d1, d_pol[i],    d, 3 * sizeof(cuDoubleComplex));
     cudaMemcpyPeerAsync( d_c0[i+1],     d1, d_c0[i],     d, sizeof(double));
     cudaMemcpyPeerAsync( d_c2[i+1],     d1, d_c2[i],     d, sizeof(double));
     cudaMemcpyPeerAsync( d_c[i+1],      d1, d_c[i],      d, sizeof(double));
@@ -1945,6 +1991,7 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
                                                                            d_ax[ig],  d_ay[ig],  d_az[ig],
                                                                            d_axp[ig], d_ayp[ig], d_azp[ig],
                                                                            d_obs[ig],
+                                                                           d_pol[ig],
                                                                            d_tstart[ig], d_tstop[ig],
                                                                            d_nt[ig],
                                                                            d_om[ig],
@@ -2046,6 +2093,7 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
   cudaFreeHost(h_t);
   cudaFreeHost(h_no);
   cudaFreeHost(h_obs);
+  cudaFreeHost(h_pol);
   cudaFreeHost(h_x);
   cudaFreeHost(h_y);
   cudaFreeHost(h_z);
@@ -2085,6 +2133,7 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
     cudaFree(d_t[i]);
     cudaFree(d_no[i]);
     cudaFree(d_obs[i]);
+    cudaFree(d_pol[i]);
     cudaFree(d_x[i]);
     cudaFree(d_y[i]);
     cudaFree(d_z[i]);
@@ -2119,6 +2168,7 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
   cudaFree(d_t);
   cudaFree(d_no);
   cudaFree(d_obs);
+  cudaFree(d_pol);
   cudaFree(d_x);
   cudaFree(d_y);
   cudaFree(d_z);

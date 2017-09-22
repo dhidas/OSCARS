@@ -1373,7 +1373,7 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
   std::complex<double> const One(1, 0);
 
   // Photon vertical direction and positive and negative helicity
-  TVector3D const VerticalDirection = PropogationDirection.Cross(HorizontalDirection).UnitVector();
+  TVector3D  const VerticalDirection = PropogationDirection.Cross(HorizontalDirection).UnitVector();
   TVector3DC const Positive = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) + VerticalDirection * I );
   TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * I );
 
