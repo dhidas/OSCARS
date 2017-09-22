@@ -1124,7 +1124,8 @@ void OSCARSSR::CalculateSpectrum (TParticleA& Particle,
                                   double const Precision,
                                   int    const MaxLevel,
                                   int    const MaxLevelExtended,
-                                  double const Weight)
+                                  double const Weight,
+                                  int    const ReturnQuantity)
 {
   // Calculates the single particle spectrum at a given observation point
   // in units of [photons / second / 0.001% BW / mm^2]
@@ -1156,7 +1157,8 @@ void OSCARSSR::CalculateSpectrum (TParticleA& Particle,
                                 Precision,
                                 MaxLevel,
                                 MaxLevelExtended,
-                                Weight);
+                                Weight,
+                                ReturnQuantity);
 
   return;
 }
@@ -1178,7 +1180,8 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
                                   std::vector<int> VGPU,
                                   double const Precision,
                                   int    const MaxLevel,
-                                  int    const MaxLevelExtended)
+                                  int    const MaxLevelExtended,
+                                  int    const ReturnQuantity)
 {
   // Calculate the spectrum at an observaton point.
   // THIS is the ENTRY POINT typically
@@ -1230,7 +1233,8 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
                                GPUVector,
                                Precision,
                                MaxLevel,
-                               MaxLevelExtended);
+                               MaxLevelExtended,
+                               ReturnQuantity);
   } else {
     if (NParticles == 0) {
       if (NThreadsToUse == 1) {
@@ -1244,7 +1248,8 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
                                 Precision,
                                 MaxLevel,
                                 MaxLevelExtended,
-                                1);
+                                1,
+                                ReturnQuantity);
       } else {
         this->CalculateSpectrumThreads(fParticle,
                                        ObservationPoint,
@@ -1257,7 +1262,8 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
                                        Precision,
                                        MaxLevel,
                                        MaxLevelExtended,
-                                       1);
+                                       1,
+                                       ReturnQuantity);
       }
     } else {
       // Weight this by the number of particles
@@ -1281,7 +1287,8 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
                                   Precision,
                                   MaxLevel,
                                   MaxLevelExtended,
-                                  Weight);
+                                  Weight,
+                                  ReturnQuantity);
         } else {
           this->CalculateSpectrumThreads(fParticle,
                                          ObservationPoint,
@@ -1294,7 +1301,8 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
                                          Precision,
                                          MaxLevel,
                                          MaxLevelExtended,
-                                         Weight);
+                                         Weight,
+                                         ReturnQuantity);
         }
       }
     }
@@ -1321,7 +1329,8 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
                                         double const Precision,
                                         int    const MaxLevel,
                                         int    const MaxLevelExtended,
-                                        double const Weight)
+                                        double const Weight,
+                                        int    const ReturnQuantity)
 {
   // Calculates the single particle spectrum at a given observation point
   // in units of [photons / second / 0.001% BW / mm^2]
@@ -1371,6 +1380,11 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
 
   // Extended trajectory (not using memory for storage of arrays
   TParticleTrajectoryInterpolatedPoints TE;
+
+  // Alternative outputs
+  double Result_Precision = -1;
+  int    Result_Level     = -1;
+
 
   // Loop over all points in the spectrum container
   for (size_t i = iThread; i < NSpectrumPoints; i += NThreads) {
@@ -1436,7 +1450,10 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
 
       TVector3DC const ThisSumE = SumE * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(iLevel);
       ThisMag = ThisSumE.Dot( ThisSumE.CC() ).real();
-      if (iLevel > 8 && fabs(ThisMag - LastMag) / LastMag < Precision) {
+
+      Result_Precision = fabs(ThisMag - LastMag) / LastMag;
+      if (iLevel > 8 && Result_Precision < Precision) {
+        Result_Level = iLevel;
         break;
       }
 
@@ -1472,7 +1489,18 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
     }
 
     // Set the flux for this frequency / energy point
-    Spectrum.AddToFlux(i, C2 *  SumE.Dot( SumE.CC() ).real() * Weight);
+    // Add to container
+    switch (ReturnQuantity) {
+      case 1:
+        Spectrum.AddToFlux(i, Result_Precision * Weight);
+        break;
+      case 2:
+        Spectrum.AddToFlux(i, ((double) Result_Level) * Weight);
+        break;
+      default:
+        Spectrum.AddToFlux(i, C2 *  SumE.Dot( SumE.CC() ).real() * Weight);
+        break;
+    }
   }
 
 
@@ -1497,7 +1525,8 @@ void OSCARSSR::CalculateSpectrumThreads (TParticleA& Particle,
                                          double const Precision,
                                          int    const MaxLevel,
                                          int    const MaxLevelExtended,
-                                         double const Weight)
+                                         double const Weight,
+                                         int    const ReturnQuantity)
 {
   // Calculates spectrum for the given particle and observation point
   // in units of [photons / second / 0.001% BW / mm^2]
@@ -1553,7 +1582,8 @@ void OSCARSSR::CalculateSpectrumThreads (TParticleA& Particle,
                                   Precision,
                                   MaxLevel,
                                   MaxLevelExtended,
-                                  Weight));
+                                  Weight,
+                                  ReturnQuantity));
 
   }
 
@@ -1609,7 +1639,8 @@ void OSCARSSR::CalculateSpectrumGPU (TParticleA& Particle,
                                      std::vector<int> GPUVector,
                                      double const Precision,
                                      int    const MaxLevel,
-                                     int    const MaxLevelExtended)
+                                     int    const MaxLevelExtended,
+                                     int    const ReturnQuantity)
 {
   // If you compile for Cuda use the GPU in this function, else throw
 
@@ -1642,7 +1673,8 @@ void OSCARSSR::CalculateSpectrumGPU (TParticleA& Particle,
                                              NParticles,
                                              GPUVector,
                                              Precision,
-                                             LevelStopWithExtended);
+                                             LevelStopWithExtended,
+                                             ReturnQuantity);
   #else
   throw std::invalid_argument("GPU functionality not compiled into this binary distribution");
   #endif
@@ -2135,9 +2167,6 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
     // m^2 to mm^2
     Sum /= 1e6;
 
-    // Weighting
-    Sum *= Weight;
-
     if (!Directional) {
       if (Sum < 0) {
         Sum *= -1;
@@ -2147,13 +2176,13 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
     // Add to container
     switch (ReturnQuantity) {
       case 1:
-        PowerDensityContainer.AddToPoint(i, Result_Precision);
+        PowerDensityContainer.AddToPoint(i, Result_Precision * Weight);
         break;
       case 2:
-        PowerDensityContainer.AddToPoint(i, (double) Result_Level);
+        PowerDensityContainer.AddToPoint(i, ((double) Result_Level) * Weight);
         break;
       default:
-        PowerDensityContainer.AddToPoint(i, Sum);
+        PowerDensityContainer.AddToPoint(i, Sum * Weight);
         break;
     }
 
@@ -2789,19 +2818,17 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
       throw std::invalid_argument("Polarization requested not recognized");
     }
 
-    // Set the flux for this frequency / energy point
-    double const ThisFlux = C2 *  SumE.Dot( SumE.CC() ).real() * Weight;
 
     // Add to container
     switch (ReturnQuantity) {
       case 1:
-        FluxContainer.AddToPoint(i, Result_Precision);
+        FluxContainer.AddToPoint(i, Result_Precision * Weight);
         break;
       case 2:
-        FluxContainer.AddToPoint(i, (double) Result_Level);
+        FluxContainer.AddToPoint(i, ((double) Result_Level) * Weight);
         break;
       default:
-        FluxContainer.AddToPoint(i, ThisFlux);
+        FluxContainer.AddToPoint(i, C2 *  SumE.Dot( SumE.CC() ).real() * Weight);
         break;
     }
   } // POINTS

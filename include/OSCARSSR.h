@@ -191,7 +191,8 @@ class OSCARSSR
                             double const Precision,
                             int    const MaxLevel,
                             int    const MaxLevelExtended,
-                            double const Weight);
+                            double const Weight,
+                            int    const ReturnQuantity);
 
     void CalculateSpectrum (TVector3D const& ObservationPoint,
                             TSpectrumContainer& Spectrum,
@@ -206,7 +207,8 @@ class OSCARSSR
                             std::vector<int> VGPU = std::vector<int>(),
                             double const Precision = 0.01,
                             int    const MaxLevel = -2,
-                            int    const MaxLevelExtended = 0);
+                            int    const MaxLevelExtended = 0,
+                            int    const ReturnQuantity = 0);
 
     void CalculateSpectrumPoints (TParticleA& Particle,
                                   TVector3D const& ObservationPoint,
@@ -221,7 +223,8 @@ class OSCARSSR
                                   double const Precision,
                                   int    const MaxLevel,
                                   int    const MaxLevelExtended,
-                                  double const Weight);
+                                  double const Weight,
+                                  int    const ReturnQuantity);
 
     void CalculateSpectrumThreads (TParticleA& Particle,
                                    TVector3D const& Obs,
@@ -234,7 +237,8 @@ class OSCARSSR
                                    double const Precision = 0.01,
                                    int    const MaxLevel = -2,
                                    int    const MaxLevelExtended = 0,
-                                   double const Weight = 1);
+                                   double const Weight = 1,
+                                   int    const ReturnQuantity = 0);
 
     void CalculateSpectrumGPU (TParticleA& Particle,
                                TVector3D const& ObservationPoint,
@@ -247,7 +251,8 @@ class OSCARSSR
                                std::vector<int> GPUVector = std::vector<int>(),
                                double const Precision = 0.01,
                                int    const MaxLevel = -2,
-                               int    const MaxLevelExtended = 0);
+                               int    const MaxLevelExtended = 0,
+                               int    const ReturnQuantity = 0);
 
     void AddToSpectrum (TSpectrumContainer const&, double const Weight = 1);
     void AddToFlux (T3DScalarContainer const&, double const Weight = 1);

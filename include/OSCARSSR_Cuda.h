@@ -43,17 +43,6 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
                                                 int const MaxLevel = 25,
                                                 int    const ReturnQuantity = 0);
 
-extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU2 (OSCARSSR& OSR,
-                                                    TParticleA& Particle,
-                                                    TVector3D const& ObservationPoint,
-                                                    TSpectrumContainer& Spectrum,
-                                                    std::string const& Polarization = "all",
-                                                    double const Angle = 0,
-                                                    TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
-                                                    TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
-                                                    int const NParticles = 0,
-                                                    std::vector<int> const& GPUVector = std::vector<int>());
-
 extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
                                                     TVector3D const& ObservationPoint,
                                                     TSpectrumContainer& Spectrum,
@@ -64,7 +53,8 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
                                                     int const NParticles,
                                                     std::vector<int> const& GPUVector,
                                                     double const Precision,
-                                                    int const MaxLevel);
+                                                    int const MaxLevel,
+                                                    int const ReturnQuantity);
 
 extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
                                                         TSurfacePoints const& Surface,

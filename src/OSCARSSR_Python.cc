@@ -4201,7 +4201,7 @@ static PyObject* OSCARSSR_GetTrajectory (OSCARSSRObject* self)
 
 
 const char* DOC_OSCARSSR_CalculateSpectrum = R"docstring(
-calculate_spectrum(obs [, npoints, energy_range_eV, energy_points_eV, points_eV, polarization, angle, horizontal_direction, propogation_direction, precision, max_level, nparticles, nthreads, gpu, ofile, bofile])
+calculate_spectrum(obs [, npoints, energy_range_eV, energy_points_eV, points_eV, polarization, angle, horizontal_direction, propogation_direction, precision, max_level, nparticles, nthreads, gpu, ngpu, quantity, ofile, bofile])
 
 Calculate the spectrum given a point in space, the range in energy, and the number of points.  The calculation uses the current particle and its initial conditions.  If the trajectory has not been calculated it is calculated first.  The units of this calculation are [:math:`photons / mm^2 / 0.1% bw / s`]
 
@@ -4251,7 +4251,18 @@ nthreads : int
     Number of threads to use
 
 gpu : int
-    Use the gpu or not (0 or 1)
+    Use the gpu or not (0 or 1).  If 1 will attempt to use ALL gpus available.  This is overridden if you use the input 'ngpu'
+
+ngpu : int or list
+    If ngpu is an int, use that number of gpus (if available).
+    If ngpu is a list, the list should be a list of gpus you wish to use
+
+quantity: str
+    Quantity to return.
+    Available are:
+        'flux'        (default)
+        'precision' - Estimated precision for each point
+        'level'     - Trajectory level reached (npoints = 2**(n+1) - 1), if return is -1 the requested precision was not reached
 
 ofile : str
     Output file name
@@ -4289,6 +4300,8 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
   int         NParticles                = 0;
   int         NThreads                  = 0;
   int         GPU                       = -1;
+  PyObject*   NGPU;
+  char const* ReturnQuantityChars       = "flux";
   const char* OutFileNameText           = "";
   const char* OutFileNameBinary         = "";
 
@@ -4308,12 +4321,14 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
                                  "nparticles",
                                  "nthreads",
                                  "gpu",
+                                 "ngpu",
+                                 "quantity",
                                  "ofile",
                                  "bofile",
                                  NULL};
 
   // Parse inputs
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|iOOOsdOOdiiiiiss",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|iOOOsdOOdiiiiiOsss",
                                    const_cast<char **>(kwlist),
                                    &List_Obs,
                                    &NPoints,
@@ -4330,6 +4345,8 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
                                    &NParticles,
                                    &NThreads,
                                    &GPU,
+                                   &NGPU,
+                                   &ReturnQuantityChars,
                                    &OutFileNameText,
                                    &OutFileNameBinary)) {
     return NULL;
@@ -4440,9 +4457,48 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
     SpectrumContainer.Init(VPoints_eV);
   }
 
+  // Check ngpu input
+  int NumberOfGPUs = -1;
+  std::vector<int> GPUVector;
+  if (PyLong_Check(NGPU)) {
+    NumberOfGPUs = (int) PyLong_AsLong(NGPU);
+  } else if (PyList_Check(NGPU)) {
+    OSCARSPY::ListToVectorInt(NGPU, GPUVector);
+  }
+
+
+  int ReturnQuantity = 0;
+  std::string ReturnQuantityStr = ReturnQuantityChars;
+  std::transform(ReturnQuantityStr.begin(), ReturnQuantityStr.end(), ReturnQuantityStr.begin(), ::toupper);
+  if (ReturnQuantityStr == "FLUX") {
+    ReturnQuantity = 0;
+  } else if (ReturnQuantityStr == "PRECISION") {
+    ReturnQuantity = 1;
+  } else if (ReturnQuantityStr == "LEVEL") {
+    ReturnQuantity = 2;
+  } else {
+    PyErr_SetString(PyExc_ValueError, "'quantity' must be: 'flux', 'precision', 'level', or blank");
+    return NULL;
+  }
+
   // Actually calculate the spectrum
   try {
-    self->obj->CalculateSpectrum(Obs, SpectrumContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NParticles, NThreads, GPU, -1, std::vector<int>(), Precision, MaxLevel, MaxLevelExtended);
+    self->obj->CalculateSpectrum(Obs,
+                                 SpectrumContainer,
+                                 Polarization,
+                                 Angle,
+                                 HorizontalDirection,
+                                 PropogationDirection,
+                                 NParticles,
+                                 NThreads,
+                                 GPU,
+                                 NumberOfGPUs,
+                                 GPUVector,
+                                 Precision,
+                                 MaxLevel,
+                                 MaxLevelExtended,
+                                 ReturnQuantity);
+
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -5429,7 +5485,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityLine (OSCARSSRObject* self, PyObj
 
 
 const char* DOC_OSCARSSR_CalculateFlux = R"docstring(
-calculate_flux(energy_eV, points [, normal, rotations, translation, nparticles, nthreads, gpu, ngpu, precisio, max_level, max_level_extended, ofile, bofile, quantity])
+calculate_flux(energy_eV, points [, normal, rotations, translation, nparticles, nthreads, gpu, ngpu, precision, max_level, max_level_extended, ofile, bofile, quantity])
 
 Calculates the flux at a given set of points
 
