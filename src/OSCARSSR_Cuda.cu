@@ -238,6 +238,7 @@ __global__ void OSCARSSR_Cuda_FluxGPU (double *t,
                                        double  *ax,  double *ay,  double *az,
                                        double  *axp, double *ayp, double *azp,
                                        double  *sx,  double *sy,  double *sz,
+                                       cuDoubleComplex *pol,                             // photon polarization vector [3]
                                        double  *tstart, double *tstop,
                                        int *nt,
                                        int *ns,
@@ -268,6 +269,7 @@ __global__ void OSCARSSR_Cuda_FluxGPU (double *t,
   cuDoubleComplex SumEZ = make_cuDoubleComplex(0, 0);
 
 
+  bool use_pol = cuCabs(pol[0]) > 0.1 || cuCabs(pol[1]) > 0.1 || cuCabs(pol[2]) > 0.1 ? true : false;
 
   // Trajectory interpolated on fly and stored in shared memory for this block
   __shared__ double _t[NTHREADS_PER_BLOCK];
@@ -415,6 +417,14 @@ __global__ void OSCARSSR_Cuda_FluxGPU (double *t,
       cuDoubleComplex TSumEY = cuCmul(make_cuDoubleComplex((*C0) * (dt_total), 0), SumEY);
       cuDoubleComplex TSumEZ = cuCmul(make_cuDoubleComplex((*C0) * (dt_total), 0), SumEZ);
 
+      if (use_pol) {
+        cuDoubleComplex DotProduct = cuCadd(cuCadd(cuCmul(cuConj(TSumEX), pol[0]), cuCmul(cuConj(TSumEY), pol[1])), cuCmul(cuConj(TSumEZ), pol[2]));
+
+        TSumEX = cuCmul(pol[0], DotProduct);
+        TSumEY = cuCmul(pol[1], DotProduct);
+        TSumEZ = cuCmul(pol[2], DotProduct);
+      }
+
       double const EX = (TSumEX.x * TSumEX.x + TSumEX.y * TSumEX.y);
       double const EY = (TSumEY.x * TSumEY.x + TSumEY.y * TSumEY.y);
       double const EZ = (TSumEZ.x * TSumEZ.x + TSumEZ.y * TSumEZ.y);
@@ -525,21 +535,38 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   // Do we calculate for the current particle?
   bool const ThisParticleOnly = NParticles == 0 ? true : false;
   int  const NParticlesReally = ThisParticleOnly ? 1 : NParticles;
-  // Type check, new particle if no type
 
-  // nt - number of interpolated track points
-  // t  - array of timestamps in trajectory
-  // x, y, z; xp, yp, zp - position and derivs
-  // beta x, y, z; xp, yp, zp
-  // aOc x, y, z; xp, yp, zp
-  // max_level_extended or max_level
-  // surface points
-  // nthreads_per_block
+  // Calculate polarization vector to use (0, 0, 0) for 'all'
+  TVector3D  const VerticalDirection = PropogationDirection.Cross(HorizontalDirection).UnitVector();
+  TVector3DC const Positive = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) + VerticalDirection * std::complex<double>(0, 1) );
+  TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * std::complex<double>(0, 1) );
+  TVector3DC PhotonPolarizationVector(0, 0, 0);
+  if (Polarization == "all") {
+    // Do nothing, it is already ALL
+  } else if (Polarization == "linear-horizontal") {
+    PhotonPolarizationVector = HorizontalDirection;
+  } else if (Polarization == "linear-vertical") {
+    PhotonPolarizationVector = VerticalDirection;
+  } else if (Polarization == "linear") {
+    TVector3D PolarizationAngle = HorizontalDirection;
+    PolarizationAngle.RotateSelf(Angle, PropogationDirection);
+    PhotonPolarizationVector = PolarizationAngle;
+  } else if (Polarization == "circular-left") {
+    PhotonPolarizationVector = Positive;
+  } else if (Polarization == "circular-right") {
+    PhotonPolarizationVector = Negative;
+  } else {
+    // Throw invalid argument if polarization is not recognized
+    throw std::invalid_argument("Polarization requested not recognized");
+  }
+
 
   int *h_ns;
   int *h_nt;
+  cuDoubleComplex *h_pol;
   cudaHostAlloc((void**) &h_ns,     sizeof(int),    cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void**) &h_nt,     sizeof(int),    cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_pol, 3 * sizeof(cuDoubleComplex), cudaHostAllocWriteCombined | cudaHostAllocMapped);
 
   // First one, set particle and trajectory
   if (!ThisParticleOnly) {
@@ -553,6 +580,10 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   *h_nt     = (int) OSR.GetCurrentParticle().GetTrajectoryInterpolated().GetNPoints();
   *h_ns     = (int) Surface.GetNPoints();
 
+  // Photon polarization
+  h_pol[0] = make_cuDoubleComplex(PhotonPolarizationVector.GetX().real(), PhotonPolarizationVector.GetX().imag());
+  h_pol[1] = make_cuDoubleComplex(PhotonPolarizationVector.GetY().real(), PhotonPolarizationVector.GetY().imag());
+  h_pol[2] = make_cuDoubleComplex(PhotonPolarizationVector.GetZ().real(), PhotonPolarizationVector.GetZ().imag());
 
   int const NThreads = *h_ns;
   int const NThreadsPerBlock = NTHREADS_PER_BLOCK;
@@ -659,6 +690,8 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   double **d_tstop;
   int    **d_ns;
 
+  cuDoubleComplex **d_pol;
+
   double **d_t;
 
   double **d_x;
@@ -701,6 +734,8 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   cudaHostAlloc((void **) &d_tstart, NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void **) &d_tstop,  NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void **) &d_ns,     NGPUsToUse * sizeof(int*),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
+
+  cudaHostAlloc((void **) &d_pol,    NGPUsToUse * sizeof(cuDoubleComplex*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
 
   cudaHostAlloc((void **) &d_t,      NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
 
@@ -749,6 +784,8 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
     cudaMalloc((void **) &d_tstart[i],             sizeof(double));
     cudaMalloc((void **) &d_tstop[i],              sizeof(double));
     cudaMalloc((void **) &d_ns[i],                 sizeof(int));
+
+    cudaMalloc((void **) &d_pol[i],            3 * sizeof(cuDoubleComplex));
 
     cudaMalloc((void **) &d_t[i],          *h_nt * sizeof(double));
 
@@ -807,6 +844,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   int const d0 = GPUsToUse[0];
   cudaSetDevice(d0);
   cudaMemcpyAsync(d_ns[0],    h_ns,          sizeof(int),    cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_pol[0],   h_pol,     3 * sizeof(cuDoubleComplex), cudaMemcpyHostToDevice);
   cudaMemcpyAsync(d_c0[0],    h_c0,          sizeof(double), cudaMemcpyHostToDevice);
   cudaMemcpyAsync(d_c2[0],    h_c2,          sizeof(double), cudaMemcpyHostToDevice);
   cudaMemcpyAsync(d_c[0],     h_c,           sizeof(double), cudaMemcpyHostToDevice);
@@ -823,6 +861,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
     int const d1 = GPUsToUse[i+1];
     cudaSetDevice(d);
     cudaMemcpyPeerAsync( d_ns[i+1],     d1, d_ns[i],     d, sizeof(int));
+    cudaMemcpyPeerAsync( d_pol[i+1],    d1, d_pol[i],    d, 3 * sizeof(cuDoubleComplex));
     cudaMemcpyPeerAsync( d_c0[i+1],     d1, d_c0[i],     d, sizeof(double));
     cudaMemcpyPeerAsync( d_c2[i+1],     d1, d_c2[i],     d, sizeof(double));
     cudaMemcpyPeerAsync( d_c[i+1],      d1, d_c[i],      d, sizeof(double));
@@ -963,6 +1002,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
                                                                       d_ax[ig],  d_ay[ig],  d_az[ig],
                                                                       d_axp[ig], d_ayp[ig], d_azp[ig],
                                                                       d_sx[ig],  d_sy[ig],  d_sz[ig],
+                                                                      d_pol[ig],
                                                                       d_tstart[ig], d_tstop[ig],
                                                                       d_nt[ig],
                                                                       d_ns[ig],
@@ -1063,6 +1103,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   cudaFreeHost(h_nt);
   cudaFreeHost(h_t);
   cudaFreeHost(h_ns);
+  cudaFreeHost(h_pol);
   cudaFreeHost(h_x);
   cudaFreeHost(h_y);
   cudaFreeHost(h_z);
@@ -1104,6 +1145,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
     cudaFree(d_nt[i]);
     cudaFree(d_t[i]);
     cudaFree(d_ns[i]);
+    cudaFree(d_pol[i]);
     cudaFree(d_x[i]);
     cudaFree(d_y[i]);
     cudaFree(d_z[i]);
@@ -1140,6 +1182,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   cudaFree(d_nt);
   cudaFree(d_t);
   cudaFree(d_ns);
+  cudaFree(d_pol);
   cudaFree(d_x);
   cudaFree(d_y);
   cudaFree(d_z);
@@ -1587,8 +1630,8 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
 
   // Photon polarization
   h_pol[0] = make_cuDoubleComplex(PhotonPolarizationVector.GetX().real(), PhotonPolarizationVector.GetX().imag());
-  h_pol[1] = make_cuDoubleComplex(PhotonPolarizationVector.GetY().real(), PhotonPolarizationVector.GetX().imag());
-  h_pol[2] = make_cuDoubleComplex(PhotonPolarizationVector.GetZ().real(), PhotonPolarizationVector.GetX().imag());
+  h_pol[1] = make_cuDoubleComplex(PhotonPolarizationVector.GetY().real(), PhotonPolarizationVector.GetY().imag());
+  h_pol[2] = make_cuDoubleComplex(PhotonPolarizationVector.GetZ().real(), PhotonPolarizationVector.GetZ().imag());
 
   int const NThreads = *h_no;
   int const NThreadsPerBlock = NTHREADS_PER_BLOCK;

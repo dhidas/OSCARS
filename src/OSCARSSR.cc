@@ -1219,6 +1219,20 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
     GPUVector.resize(NGPU);
   }
 
+
+  // Check polarization
+  if (Polarization == "all" ||
+      Polarization == "linear-horizontal" ||
+      Polarization == "linear-vertical"   ||
+      Polarization == "linear"            ||
+      Polarization == "circular-left"     ||
+      Polarization == "circular-right") {
+    // Do nothing
+  } else {
+    throw std::invalid_argument("Polarization requested not recognized");
+  }
+
+
   // Which cpmpute method will we use, gpu, multi-thread, or single-thread
   if (UseGPU) {
     // Send to GPU function
@@ -1340,6 +1354,7 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
   // ObservationPoint - Observation Point
   // Spectrum - Spectrum container
 
+  std::cout << "in CalculateSpectrumPoints" << std::endl;
   // Check that particle has been set yet.  If fType is "" it has not been set yet
   if (Particle.GetType() == "") {
     throw std::out_of_range("no particle defined");
@@ -2550,6 +2565,19 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
   } else {
     throw std::out_of_range("wROng dimension");
   }
+
+  // Check polarization
+  if (Polarization == "all" ||
+      Polarization == "linear-horizontal" ||
+      Polarization == "linear-vertical"   ||
+      Polarization == "linear"            ||
+      Polarization == "circular-left"     ||
+      Polarization == "circular-right") {
+    // Do nothing
+  } else {
+    throw std::invalid_argument("Polarization requested not recognized");
+  }
+
 
   // Which cpmpute method will we use, gpu, multi-thread, or single-thread
   if (UseGPU) {

@@ -4300,7 +4300,7 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
   int         NParticles                = 0;
   int         NThreads                  = 0;
   int         GPU                       = -1;
-  PyObject*   NGPU;
+  PyObject*   NGPU = 0x0;
   char const* ReturnQuantityChars       = "flux";
   const char* OutFileNameText           = "";
   const char* OutFileNameBinary         = "";
@@ -4460,10 +4460,12 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
   // Check ngpu input
   int NumberOfGPUs = -1;
   std::vector<int> GPUVector;
-  if (PyLong_Check(NGPU)) {
-    NumberOfGPUs = (int) PyLong_AsLong(NGPU);
-  } else if (PyList_Check(NGPU)) {
-    OSCARSPY::ListToVectorInt(NGPU, GPUVector);
+  if (NGPU != 0x0) {
+    if (PyLong_Check(NGPU)) {
+      NumberOfGPUs = (int) PyLong_AsLong(NGPU);
+    } else if (PyList_Check(NGPU)) {
+      OSCARSPY::ListToVectorInt(NGPU, GPUVector);
+    }
   }
 
 
@@ -4858,7 +4860,7 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
 
 
 const char* DOC_OSCARSSR_CalculatePowerDensityRectangle = R"docstring(
-calculate_power_density_rectangle(npoints [, plane, width, x0x1x2, rotations, translation, ofile, bofile, normal, nparticles, gpu, nthreads, precision, max_level, max_level_extended, dim, quantity])
+calculate_power_density_rectangle(npoints [, plane, width, x0x1x2, rotations, translation, ofile, bofile, normal, nparticles, gpu, ngpu, nthreads, precision, max_level, max_level_extended, dim, quantity])
 
 Calculate the power density in a rectangle either defined by three points, or by defining the plane the rectangle is in and the width, and then rotating and translating it to where it needs be.  The simplest is outlined in the first example below.  By default (dim=2) this returns a list whose position coordinates are in the local coordinate space x1 and x2 (*ie* they do not include the rotations and translation).  if dim=3 the coordinates in the return list are in absolute 3D space.
 
@@ -4899,7 +4901,12 @@ nparticles : int
     Number of particles to use for multi-particle calculations
 
 gpu : int
-    Use the gpu or not (0 or 1)
+    Use the gpu or not (0 or 1).  If 1 will attempt to use ALL gpus available.  This is overridden if you use the input 'ngpu'
+
+ngpu : int or list
+    If ngpu is an int, use that number of gpus (if available).
+    If ngpu is a list, the list should be a list of gpus you wish to use
+
 
 nthreads : int
     Number of threads to use
@@ -4959,6 +4966,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
   int         NormalDirection = 0;
   int         NParticles = 0;
   int         GPU = -1;
+  PyObject*   NGPU = 0x0;
   int         NThreads = 0;
   int         Dim = 2;
   double      Precision = 0.01;
@@ -4980,6 +4988,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
                                  "normal",
                                  "nparticles",
                                  "gpu",
+                                 "ngpu",
                                  "nthreads",
                                  "precision",
                                  "max_level",
@@ -4988,7 +4997,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
                                  "quantity",
                                   NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|sOOOOssiiiidiiis",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|sOOOOssiiiOidiiis",
                                    const_cast<char **>(kwlist),
                                    &List_NPoints,
                                    &SurfacePlane,
@@ -5001,6 +5010,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
                                    &NormalDirection,
                                    &NParticles,
                                    &GPU,
+                                   &NGPU,
                                    &NThreads,
                                    &Precision,
                                    &MaxLevel,
@@ -5143,6 +5153,17 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
     return NULL;
   }
 
+  // Check ngpu input
+  int NumberOfGPUs = -1;
+  std::vector<int> GPUVector;
+  if (NGPU != 0x0) {
+    if (PyLong_Check(NGPU)) {
+      NumberOfGPUs = (int) PyLong_AsLong(NGPU);
+    } else if (PyList_Check(NGPU)) {
+      OSCARSPY::ListToVectorInt(NGPU, GPUVector);
+    }
+  }
+
   int ReturnQuantity = 0;
   std::string ReturnQuantityStr = ReturnQuantityChars;
   std::transform(ReturnQuantityStr.begin(), ReturnQuantityStr.end(), ReturnQuantityStr.begin(), ::toupper);
@@ -5164,7 +5185,20 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
   // Actually calculate the spectrum
   bool const Directional = NormalDirection == 0 ? false : true;
   try {
-    self->obj->CalculatePowerDensity(Surface, PowerDensityContainer, Dim, Directional, Precision, MaxLevel, MaxLevelExtended, NParticles, NThreads, GPU, -1, std::vector<int>(), ReturnQuantity);
+    self->obj->CalculatePowerDensity(Surface,
+                                     PowerDensityContainer,
+                                     Dim,
+                                     Directional,
+                                     Precision,
+                                     MaxLevel,
+                                     MaxLevelExtended,
+                                     NParticles,
+                                     NThreads,
+                                     GPU,
+                                     NumberOfGPUs,
+                                     GPUVector,
+                                     ReturnQuantity);
+
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -5562,7 +5596,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
   int         NParticles = 0;
   int         NThreads = 0;
   int         GPU = -1;
-  PyObject*   NGPU;
+  PyObject*   NGPU = 0x0;
   double      Precision = 0.01;
   int         MaxLevel = -2;
   int         MaxLevelExtended = 0;
@@ -5706,10 +5740,12 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
   // Check ngpu input
   int NumberOfGPUs = -1;
   std::vector<int> GPUVector;
-  if (PyLong_Check(NGPU)) {
-    NumberOfGPUs = (int) PyLong_AsLong(NGPU);
-  } else if (PyList_Check(NGPU)) {
-    OSCARSPY::ListToVectorInt(NGPU, GPUVector);
+  if (NGPU != 0x0) {
+    if (PyLong_Check(NGPU)) {
+      NumberOfGPUs = (int) PyLong_AsLong(NGPU);
+    } else if (PyList_Check(NGPU)) {
+      OSCARSPY::ListToVectorInt(NGPU, GPUVector);
+    }
   }
 
   int ReturnQuantity = 0;
