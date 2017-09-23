@@ -1,5 +1,6 @@
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from math import sqrt
@@ -373,7 +374,7 @@ def plot_trajectory3d(trajectory, figsize=None):
 
 
 
-def plot_power_density_scatter (V):
+def plot_power_density_scatter (V, s=10):
 
     if len(V) == 0:
         return
@@ -395,7 +396,7 @@ def plot_power_density_scatter (V):
     Cen3D = plt.figure()
     ax = Cen3D.add_subplot(111, projection='3d')
 
-    ax.scatter(X, Z, Y, c=C)
+    ax.scatter(X, Z, Y, c=C, s=s, alpha=1)
     ax.invert_xaxis()
 
     ax.set_xlabel('X [m]')
@@ -412,7 +413,38 @@ def plot_power_density_scatter (V):
 
 
 
+def plot_power_density_stl (P):
 
+    pmax = max([p[1] for p in P])
+
+    xmax = ymax = zmax = -99999
+    xmin = ymin = zmin = +99999
+    for p in P:
+        xmax = max([xmax, p[0][0][0], p[0][1][0], p[0][2][0]])
+        xmin = min([xmin, p[0][0][0], p[0][1][0], p[0][2][0]])
+        ymax = max([ymax, p[0][0][1], p[0][1][1], p[0][2][1]])
+        ymin = min([ymin, p[0][0][1], p[0][1][1], p[0][2][1]])
+        zmax = max([zmax, p[0][0][2], p[0][1][2], p[0][2][2]])
+        zmin = min([zmin, p[0][0][2], p[0][1][2], p[0][2][2]])
+
+
+    fig = plt.figure()
+    ax = Axes3D(fig)
+    for p in P:
+        triangle = Poly3DCollection([p[0]], alpha=0.5)
+        triangle.set_facecolor([1, 1-p[1]/pmax, 1-p[1]/pmax])
+        ax.add_collection3d(triangle)
+ 
+    ax.set_xlim([xmin, xmax])
+    ax.set_ylim([ymin, ymax])
+    ax.set_zlim([zmin, zmax])
+    ax.set_xlabel('X [m]')
+    ax.set_ylabel('Y [m]')
+    ax.set_zlabel('Z [m]')
+    #ax.view_init(elev=270, azim=90)
+    plt.show()
+
+    return
 
 
 

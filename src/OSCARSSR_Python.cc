@@ -28,6 +28,7 @@
 #include "TField3D_Quadrupole.h"
 #include "TDriftBox.h"
 #include "TRandomA.h"
+#include "TTriangle3DContainer.h"
 
 #include <iostream>
 #include <vector>
@@ -5265,6 +5266,328 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
 
 
 
+const char* DOC_OSCARSSR_CalculatePowerDensitySTL = R"docstring(
+calculate_power_density_stl(ifiles [, rotations, translation, ofile, normal, nparticles, gpu, ngpu, nthreads, precision, max_level, max_level_extended, quantity])
+
+Calculate the power density on surfaces described in STL format input files
+
+See the :doc:`MathematicalNotes` section for the expression used in this calculation.
+
+You **must** specify either both (*plane* and *width*) or *x0x1x2*
+
+Parameters
+----------
+ifiles : list[str]
+    A list of STL files to import.
+
+rotations : list, optional
+    3-element list representing rotations around x, y, and z axes: [:math:`\theta_x, \theta_y, \theta_z`]
+
+translation : list, optional
+    3-element list representing a translation in space [x, y, z]
+
+ofile : str
+    Output file name
+
+bofile : str
+    Binary output file name
+
+normal : int
+    -1 if you wish to reverse the normal vector, 0 if you wish to ignore the +/- direction in computations, 1 if you with to use the direction of the normal vector as given. 
+
+nparticles : int
+    Number of particles to use for multi-particle calculations
+
+gpu : int
+    Use the gpu or not (0 or 1).  If 1 will attempt to use ALL gpus available.  This is overridden if you use the input 'ngpu'
+
+ngpu : int or list
+    If ngpu is an int, use that number of gpus (if available).
+    If ngpu is a list, the list should be a list of gpus you wish to use
+
+
+nthreads : int
+    Number of threads to use
+
+precision : float
+    Calculation precision parameter (typically 0.01 which is 1%)
+
+max_level: int
+    Maximum "level" to use for trajectory in the calculation.  Level N corresponds to a total of 2**(N+2) trajectory points.  You cannot go beyond the internal maximum.  You are not guaranteed precision parameter is met if this is used.
+
+max_level_extended: int
+    Maximum "level" to use for trajectory in the calculation.  If set to higher than max_level the computation will proceed beyond max_level without creating trajectory arrays in memory (but it will be slower)
+
+quantity: str
+    Quantity to return.
+    Available are:
+        'power density' (default)
+        'precision' - Estimated precision for each point
+        'level'     - Trajectory level reached (npoints = 2**(n+1) - 1), if return is -1 the requested precision was not reached
+
+Returns
+-------
+power_density : list
+    Not sure yet what format
+
+Examples
+--------
+coming
+)docstring";
+static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObject* args, PyObject *keywds)
+{
+  // Calculate the spectrum given an observation point, and energy range
+
+  PyObject*   List_Files = PyList_New(0);
+  const char* InFileName = "";
+  PyObject*   List_Translation = PyList_New(0);
+  PyObject*   List_Rotations   = PyList_New(0);
+  int         NormalDirection = 0;
+  int         NParticles = 0;
+  int         GPU = -1;
+  PyObject*   NGPU = 0x0;
+  int         NThreads = 0;
+  double      Precision = 0.01;
+  int         MaxLevel = -2;
+  int         MaxLevelExtended = 0;
+  char const* ReturnQuantityChars = "power density";
+  const char* OutFileNameText = "";
+  const char* OutFileNameBinary = "";
+
+  int const Dim = 3;
+
+
+  static const char *kwlist[] = {"ifiles",
+                                 "ifile",
+                                 "rotations",
+                                 "translation",
+                                 "ofile",
+                                 "bofile",
+                                 "normal",
+                                 "nparticles",
+                                 "gpu",
+                                 "ngpu",
+                                 "nthreads",
+                                 "precision",
+                                 "max_level",
+                                 "max_level_extended",
+                                 "quantity",
+                                  NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|OsOOssiiiOidiii",
+                                   const_cast<char **>(kwlist),
+                                   &List_Files,
+                                   &InFileName,
+                                   &List_Rotations,
+                                   &List_Translation,
+                                   &OutFileNameText,
+                                   &OutFileNameBinary,
+                                   &NormalDirection,
+                                   &NParticles,
+                                   &GPU,
+                                   &NGPU,
+                                   &NThreads,
+                                   &Precision,
+                                   &MaxLevel,
+                                   &MaxLevelExtended,
+                                   &ReturnQuantityChars)) {
+    return NULL;
+  }
+
+  // Check if a beam is at least defined
+  if (self->obj->GetNParticleBeams() < 1) {
+    PyErr_SetString(PyExc_ValueError, "No particle beam defined");
+    return NULL;
+  }
+
+
+
+  // Vectors for rotations and translations.  Default to 0
+  TVector3D Rotations(0, 0, 0);
+  TVector3D Translation(0, 0, 0);
+
+  // Check for Rotations in the input
+  if (PyList_Size(List_Rotations) != 0) {
+    try {
+      Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
+      return NULL;
+    }
+  }
+
+
+  // Check for Translation in the input
+  if (PyList_Size(List_Translation) != 0) {
+    try {
+      Translation = OSCARSPY::ListAsTVector3D(List_Translation);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
+      return NULL;
+    }
+  }
+
+
+
+  // Check number of particles
+  if (NParticles < 0) {
+    PyErr_SetString(PyExc_ValueError, "'nparticles' must be >= 1 (sort of)");
+    return NULL;
+  }
+
+
+  // Check GPU parameter
+  if (GPU != 0 && GPU != 1 && GPU != -1) {
+    PyErr_SetString(PyExc_ValueError, "'gpu' must be 0 or 1");
+    return NULL;
+  }
+
+  // Check NThreads parameter
+  if (NThreads < 0) {
+    PyErr_SetString(PyExc_ValueError, "'nthreads' must be > 0");
+    return NULL;
+  }
+
+  // Check you are not trying to use threads and GPU
+  if (NThreads > 0 && GPU == 1) {
+    PyErr_SetString(PyExc_ValueError, "gpu is 1 and nthreads > 0.  Both are not currently allowed.");
+    return NULL;
+  }
+
+  // Check ngpu input
+  int NumberOfGPUs = -1;
+  std::vector<int> GPUVector;
+  if (NGPU != 0x0) {
+    if (PyLong_Check(NGPU)) {
+      NumberOfGPUs = (int) PyLong_AsLong(NGPU);
+    } else if (PyList_Check(NGPU)) {
+      OSCARSPY::ListToVectorInt(NGPU, GPUVector);
+    }
+  }
+
+  int ReturnQuantity = 0;
+  std::string ReturnQuantityStr = ReturnQuantityChars;
+  std::transform(ReturnQuantityStr.begin(), ReturnQuantityStr.end(), ReturnQuantityStr.begin(), ::toupper);
+  if (ReturnQuantityStr == "POWER DENSITY" || ReturnQuantityStr == "POWERDENSITY") {
+    ReturnQuantity = 0;
+  } else if (ReturnQuantityStr == "PRECISION") {
+    ReturnQuantity = 1;
+  } else if (ReturnQuantityStr == "LEVEL") {
+    ReturnQuantity = 2;
+  } else {
+    PyErr_SetString(PyExc_ValueError, "'quantity' must be: 'power density', 'precision', 'level', or blank");
+    return NULL;
+  }
+
+  TTriangle3DContainer STLContainer;
+  try {
+    STLContainer.ReadSTLFile(InFileName);
+  } catch (...) {
+    PyErr_SetString(PyExc_ValueError, "Cannot read STL file");
+    return NULL;
+  }
+  STLContainer.RotateSelfXYZ(Rotations);
+  STLContainer.TranslateSelf(Translation);
+
+
+  TSurfacePoints_3D Surface;
+
+  for (size_t istl = 0; istl != STLContainer.GetNPoints(); ++istl) {
+    TVector3D Center = STLContainer.GetPoint(istl).GetCenter();
+    Surface.AddPoint(Center, STLContainer.GetPoint(istl).GetNormal());
+  }
+
+  // Container for Point plus scalar
+  T3DScalarContainer PowerDensityContainer;
+
+  // Actually calculate the spectrum
+  bool const Directional = NormalDirection == 0 ? false : true;
+  try {
+    self->obj->CalculatePowerDensity(Surface,
+                                     PowerDensityContainer,
+                                     Dim,
+                                     Directional,
+                                     Precision,
+                                     MaxLevel,
+                                     MaxLevelExtended,
+                                     NParticles,
+                                     NThreads,
+                                     GPU,
+                                     NumberOfGPUs,
+                                     GPUVector,
+                                     ReturnQuantity);
+
+  } catch (std::length_error e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
+  } catch (std::out_of_range e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
+  } catch (std::invalid_argument e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
+  }
+
+  // Write the output file if requested
+  // Text output
+  if (std::string(OutFileNameText) != "") {
+    PowerDensityContainer.WriteToFileText(OutFileNameText, Dim);
+  }
+
+  // Binary output
+  if (std::string(OutFileNameBinary) != "") {
+    PowerDensityContainer.WriteToFileBinary(OutFileNameBinary, Dim);
+  }
+
+
+  // Build the output list of: [[[x, y, z], PowerDensity], [...]]
+  // Create a python list
+  PyObject *PList = PyList_New(0);
+
+  // UPDATE: URGENT: PD output ofile, bofile
+  size_t const NPoints = PowerDensityContainer.GetNPoints();
+
+  for (size_t i = 0; i != NPoints; ++i) {
+    T3DScalar P = PowerDensityContainer.GetPoint(i);
+    TTriangle3D T = STLContainer.GetPoint(i);
+
+    // Inner list for each point
+    PyObject *PList2 = PyList_New(0);
+
+    PyObject *PListT = PyList_New(0);
+    PyList_Append(PListT, OSCARSPY::TVector3DAsList(T[0]));
+    PyList_Append(PListT, OSCARSPY::TVector3DAsList(T[1]));
+    PyList_Append(PListT, OSCARSPY::TVector3DAsList(T[2]));
+
+    // Add position and value to list
+    PyList_Append(PList2, PListT);
+    PyList_Append(PList2, Py_BuildValue("f", P.GetV()));
+    PyList_Append(PList, PList2);
+
+  }
+
+  return PList;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 const char* DOC_OSCARSSR_CalculatePowerDensityLine = R"docstring(
 calculate_power_density_line(x1, x2, normal_direction, npoints [, ofile, bofile, normal, nparticles, gpu, nthreads, precision, max_level])
 
@@ -7073,6 +7396,7 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   {"calculate_total_power",             (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_CalculateTotalPower},
   {"calculate_power_density",           (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensity},
   {"calculate_power_density_rectangle", (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensityRectangle},
+  {"calculate_power_density_stl",       (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensitySTL},
   {"calculate_power_density_line",      (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensityLine},
 
   {"calculate_flux",                    (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateFlux},
@@ -7178,6 +7502,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"calculate_total_power",             (PyCFunction) OSCARSSR_CalculateTotalPower,             METH_NOARGS,                  DOC_OSCARSSR_CalculateTotalPower},
   {"calculate_power_density",           (PyCFunction) OSCARSSR_CalculatePowerDensity,           METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensity},
   {"calculate_power_density_rectangle", (PyCFunction) OSCARSSR_CalculatePowerDensityRectangle,  METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensityRectangle},
+  {"calculate_power_density_stl",       (PyCFunction) OSCARSSR_CalculatePowerDensitySTL,        METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensitySTL},
   {"calculate_power_density_line",      (PyCFunction) OSCARSSR_CalculatePowerDensityLine,       METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensityLine},
 
   {"calculate_flux",                    (PyCFunction) OSCARSSR_CalculateFlux,                   METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateFlux},
