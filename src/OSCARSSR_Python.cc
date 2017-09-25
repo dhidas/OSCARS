@@ -57,16 +57,52 @@ static void OSCARSSR_dealloc(OSCARSSRObject* self)
 
 
 
-static PyObject* OSCARSSR_new (PyTypeObject* type, PyObject* args, PyObject* kwds)
+static PyObject* OSCARSSR_new (PyTypeObject* type, PyObject* args, PyObject* keywds)
 {
   // Python needs to know how to create things in this struct
 
+  // Grab the values
+  int NThreads = 0;
+  int GPU = 0;
+
+  // Input variables and parsing
+  static const char *kwlist[] = {"nthreads",
+                                 "gpu",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ii",
+                                   const_cast<char **>(kwlist),
+                                   &NThreads,
+                                   &GPU)) {
+    PyErr_SetString(PyExc_ValueError, "allowed inputs are currentl: 'nthreads', 'gpu'");
+    return NULL;
+  }
+
+  // Allocate objects
   OSCARSSRObject* self = (OSCARSSRObject*) type->tp_alloc(type, 0);
   if (self != NULL) {
 
     // Create the new object for self
     self->obj = new OSCARSSR();
   }
+
+
+  if (NThreads > 0) {
+    self->obj->SetNThreadsGlobal(NThreads);
+  }
+  if (GPU != 0 && GPU != 1) {
+    PyErr_SetString(PyExc_ValueError, "global gpu settign must be 0 or 1");
+    return NULL;
+  }
+
+  // If it was not successful print an error message
+  if (!self->obj->SetUseGPUGlobal(GPU)) {
+    PyObject* sys = PyImport_ImportModule( "sys");
+    PyObject* s_out = PyObject_GetAttrString(sys, "stderr");
+    std::string Message = "GPU is not available: Setting gpu global setting to 0.\n";
+    PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+  }
+
 
   // Return myself
   return (PyObject*) self;
@@ -7245,7 +7281,7 @@ static PyObject* OSCARSSR_PrintGPU (OSCARSSRObject* self)
   std::ostringstream ostream;
   ostream << "*GPUs*\n";
   ostream << "Use GPU Globally: " << self->obj->GetUseGPUGlobal() << "\n";
-  ostream << "Number of GPUs: " << NGPU << std::endl;
+  ostream << "Number of GPUs: " << NGPU << "\n" << std::endl;
 
   if (NGPU == -1) {
     ostream << " GPU not enabled in this compiled binary\n";
@@ -7255,6 +7291,47 @@ static PyObject* OSCARSSR_PrintGPU (OSCARSSRObject* self)
     ostream << "GPU " << i << "\n";
     ostream << self->obj->GetGPUInfo(i) << "\n";
   }
+  ostream << std::endl;
+
+  // Python printing
+  PyObject* sys = PyImport_ImportModule( "sys");
+  PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
+  std::string Message = ostream.str();
+  PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
+
+const char* DOC_OSCARSSR_PrintNThreads = R"docstring(
+print_gpu()
+
+Print information about all gpus to standard out
+
+Parameters
+----------
+None
+
+Returns
+-------
+None
+)docstring";
+static PyObject* OSCARSSR_PrintNThreads (OSCARSSRObject* self)
+{
+  // Print all magnetic stored in OSCARSSR
+
+  int const NThreads = self->obj->GetNThreadsGlobal();
+  // Out string stream for printing beam information
+  std::ostringstream ostream;
+  ostream << "*NThreads Globals*\n";
+  ostream << "Number of Threads to use: " << NThreads << "\n" << std::endl;
 
   // Python printing
   PyObject* sys = PyImport_ImportModule( "sys");
@@ -7295,6 +7372,7 @@ static PyObject* OSCARSSR_PrintAll (OSCARSSRObject* self)
   OSCARSSR_PrintElectricFields(self);
   OSCARSSR_PrintDriftVolumes(self);
   OSCARSSR_PrintGPU(self);
+  OSCARSSR_PrintNThreads(self);
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
