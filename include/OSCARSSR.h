@@ -160,6 +160,7 @@ class OSCARSSR
     void CalculateTrajectory ();
     void CalculateTrajectory (TParticleA&);
     TParticleTrajectoryPoints const& GetTrajectory ();
+    void ClearTrajectory ();
 
     void SetNPointsTrajectory (size_t const);
     void SetNPointsPerMeterTrajectory (size_t const);
@@ -175,6 +176,7 @@ class OSCARSSR
     int  CheckGPU () const;
     std::string GetGPUInfo (int const) const;
     void SetNThreadsGlobal (int const);
+    int  GetNThreadsGlobal () const;
 
     // Random seed setting and random numbers
     void SetSeed (int const) const;
