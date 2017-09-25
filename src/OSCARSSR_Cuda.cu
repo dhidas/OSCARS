@@ -22,7 +22,7 @@
 
 
 #define NTHREADS_PER_BLOCK 512
-
+#define PI 3.14159265358979323846
 
 
 
@@ -310,6 +310,11 @@ __global__ void OSCARSSR_Cuda_FluxGPU (double *t,
   // Loop over all levels 
   for (int ilevel = 0; (ilevel <= *ml) && !_all_done; ++ilevel) {
 
+    // Keep track of phase for precision
+    double ThisPhase = 0;
+    double LastPhase = 0;
+    double MaxDPhase = 0;
+
     // DeltaT inclusive up to this level
     dt_total = (*tstop - *tstart) / pow(2., ilevel+1);//(*tstop - *tstart) / (2 * this_nt);
 
@@ -388,8 +393,14 @@ __global__ void OSCARSSR_Cuda_FluxGPU (double *t,
             double const FarField_Z = (NX * FFY - NY * FFX) / FarFieldDenominator;
 
 
-            // Exponent for fourier transformed field
-            cuDoubleComplex Exponent = make_cuDoubleComplex(0, -(*Omega) * (_t[i] + D / (*C)));
+            // Phase/Exponent for fourier transformed field
+            ThisPhase = -(*Omega) * (_t[i] + D / (*C));
+            double const PhaseTestValue = fabs(ThisPhase - LastPhase);
+            if (itb + i != 0 && PhaseTestValue > MaxDPhase) {
+              MaxDPhase = PhaseTestValue;
+            }
+            LastPhase = ThisPhase;
+            cuDoubleComplex Exponent = make_cuDoubleComplex(0, ThisPhase);
 
             cuDoubleComplex X1 = make_cuDoubleComplex(NearField_X + FarField_X, 0);
             cuDoubleComplex Y1 = make_cuDoubleComplex(NearField_Y + FarField_Y, 0);
@@ -435,7 +446,7 @@ __global__ void OSCARSSR_Cuda_FluxGPU (double *t,
       result_precision = fabs((last_result - this_result) / last_result);
 
       // If below desired precision set as done
-      if ( ilevel > 8 && result_precision < *prec ) {
+      if ( ilevel > 8 && result_precision < *prec && MaxDPhase < PI ) {
         done = true;
         result_level = ilevel;
       }
@@ -1357,6 +1368,11 @@ __global__ void OSCARSSR_Cuda_SpectrumGPU (double          *t,                  
   // Loop over all levels 
   for (int ilevel = 0; (ilevel <= *ml) && !_all_done; ++ilevel) {
 
+    // Keep track of phase for precision
+    double ThisPhase = 0;
+    double LastPhase = 0;
+    double MaxDPhase = 0;
+
     // DeltaT inclusive up to this level
     dt_total = (*tstop - *tstart) / pow(2., ilevel+1);//(*tstop - *tstart) / (2 * this_nt);
 
@@ -1435,8 +1451,14 @@ __global__ void OSCARSSR_Cuda_SpectrumGPU (double          *t,                  
             double const FarField_Z = (NX * FFY - NY * FFX) / FarFieldDenominator;
 
 
-            // Exponent for fourier transformed field
-            cuDoubleComplex Exponent = make_cuDoubleComplex(0, -(omega) * (_t[i] + D / (*C)));
+            // Phase/Exponent for fourier transformed field
+            ThisPhase = -(omega) * (_t[i] + D / (*C));
+            double const PhaseTestValue = fabs(ThisPhase - LastPhase);
+            if (itb + i != 0 && PhaseTestValue > MaxDPhase) {
+              MaxDPhase = PhaseTestValue;
+            }
+            LastPhase = ThisPhase;
+            cuDoubleComplex Exponent = make_cuDoubleComplex(0, ThisPhase);
 
             cuDoubleComplex X1 = make_cuDoubleComplex(NearField_X + FarField_X, 0);
             cuDoubleComplex Y1 = make_cuDoubleComplex(NearField_Y + FarField_Y, 0);
@@ -1482,7 +1504,7 @@ __global__ void OSCARSSR_Cuda_SpectrumGPU (double          *t,                  
       result_precision = fabs((last_result - this_result) / last_result);
 
       // If below desired precision set as done
-      if ( ilevel > 8 && result_precision < *prec ) {
+      if ( ilevel > 8 && result_precision < *prec & MaxDPhase < PI ) {
         done = true;
         result_level = ilevel;
       }
@@ -2272,6 +2294,7 @@ __global__ void OSCARSSR_Cuda_PowerDensityGPU (double  *t,
                                                double  *axp, double *ayp, double *azp,
                                                double  *sx,  double *sy,  double *sz,
                                                double  *nx,  double *ny,  double *nz,
+                                               double  *gamma,
                                                double  *cons,
                                                double  *tstart, double *tstop,
                                                int *nt,
@@ -2344,6 +2367,10 @@ __global__ void OSCARSSR_Cuda_PowerDensityGPU (double  *t,
   // Loop over all levels 
   for (int ilevel = 0; (ilevel <= *ml) && !_all_done; ++ilevel) {
 
+    // Keep track of Beta for precision
+    double Last_Beta = -1;
+    double BetaDiffMax = -1;
+
     // DeltaT inclusive up to this level
     dt_total = (*tstop - *tstart) / pow(2., ilevel+1);//(*tstop - *tstart) / (2 * this_nt);
 
@@ -2391,6 +2418,13 @@ __global__ void OSCARSSR_Cuda_PowerDensityGPU (double  *t,
 
           // Check if we are over the limit of trajectory points
           if (in_surface && (_t[i] < *tstop)) {
+
+            double const This_Beta = sqrt(_bx[i]*_bx[i] + _by[i]*_by[i] + _bz[i]*_bz[i]);
+            double const BetaDiff = fabs(This_Beta - Last_Beta);
+            if (itb + i > 0 && BetaDiff > BetaDiffMax) {
+              BetaDiffMax = BetaDiff;
+            }
+            Last_Beta = This_Beta;
 
             // Normal vector in direction of observation point
             double const R1 = sqrt( pow(ox - _x[i], 2) + pow(oy - _y[i], 2) + pow(oz - _z[i], 2) );
@@ -2474,7 +2508,7 @@ __global__ void OSCARSSR_Cuda_PowerDensityGPU (double  *t,
       result_precision = fabs((last_result - this_result) / last_result);
 
       // If below desired precision set as done
-      if ( ilevel > 8 && result_precision < *prec ) {
+      if ( ilevel > 8 && result_precision < *prec && BetaDiffMax < 2. / *gamma) {
         done = true;
         result_level = ilevel;
       }
@@ -2635,11 +2669,14 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
   double  *h_sx,  *h_sy,  *h_sz;
   double  *h_nx,  *h_ny,  *h_nz;
 
+  // Constant to multiply result by
+  double *h_const;
+
   // Invert or ignore normal
   int     *h_shn;
 
-  // Constant to multiply result by
-  double *h_const;
+  // Initial particle gamma
+  double *h_gamma;
 
   // first point for each thread, max level
   int     *h_ifirst;
@@ -2684,6 +2721,7 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
   cudaHostAlloc((void**) &h_ny,          *h_ns * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void**) &h_nz,          *h_ns * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void**) &h_shn,                 sizeof(int),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_gamma,               sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void**) &h_const,               sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
 
   cudaHostAlloc((void**) &h_ifirst, NGPUsToUse * sizeof(int),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
@@ -2749,6 +2787,7 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
   double **d_nz;
   int    **d_shn;
 
+  double **d_gamma;
   double **d_const;
 
   int    **d_ifirst;
@@ -2793,7 +2832,7 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
   cudaHostAlloc((void **) &d_nz,     NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void **) &d_shn,    NGPUsToUse * sizeof(int*),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
 
-  cudaHostAlloc((void **) &d_const,  NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_gamma,  NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
 
   cudaHostAlloc((void **) &d_ifirst, NGPUsToUse * sizeof(int*),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void **) &d_ml,     NGPUsToUse * sizeof(int*),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
@@ -2841,6 +2880,7 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
     cudaMalloc((void **) &d_ny[i],         *h_ns * sizeof(double));
     cudaMalloc((void **) &d_nz[i],         *h_ns * sizeof(double));
     cudaMalloc((void **) &d_shn[i],                sizeof(int));
+    cudaMalloc((void **) &d_gamma[i],              sizeof(double));
     cudaMalloc((void **) &d_const[i],              sizeof(double));
 
     cudaMalloc((void **) &d_ifirst[i],             sizeof(int));
@@ -2954,10 +2994,12 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
   // Loop over number of particles
   for (int ip = 0; ip < NParticlesReally; ++ip) {
     // Set constant for this particle
+    *h_gamma = OSR.GetCurrentParticle().GetGamma();
     *h_const = fabs(OSR.GetCurrentParticle().GetQ() * OSR.GetCurrentParticle().GetCurrent()) / (16 * TOSCARSSR::Pi2() * TOSCARSSR::Epsilon0() * TOSCARSSR::C()) / 1e6;
 
     // Copy trajectory to first GPU, then internal async transfers (where possible)
     cudaSetDevice(d0);
+    cudaMemcpyAsync(d_gamma[0], h_gamma,     sizeof(double), cudaMemcpyHostToDevice);
     cudaMemcpyAsync(d_const[0], h_const,     sizeof(double), cudaMemcpyHostToDevice);
     cudaMemcpyAsync(d_nt[0],  h_nt,          sizeof(int),    cudaMemcpyHostToDevice);
     cudaMemcpyAsync(d_t[0],   h_t,   *h_nt * sizeof(double), cudaMemcpyHostToDevice);
@@ -2986,6 +3028,7 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
       int const d  = GPUsToUse[ig];
       int const d1 = GPUsToUse[ig+1];
       cudaSetDevice(d);
+      cudaMemcpyPeerAsync(d_gamma[ig+1],  d1, d_gamma[ig], d,    sizeof(double));
       cudaMemcpyPeerAsync(d_const[ig+1],  d1, d_const[ig], d,    sizeof(double));
       cudaMemcpyPeerAsync(d_nt[ig+1],  d1, d_nt[ig],  d,         sizeof(int));
       cudaMemcpyPeerAsync(d_t[ig+1],   d1, d_t[ig],   d, *h_nt * sizeof(double));
@@ -3027,6 +3070,7 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
                                                                               d_axp[ig], d_ayp[ig], d_azp[ig],
                                                                               d_sx[ig],  d_sy[ig],  d_sz[ig],
                                                                               d_nx[ig],  d_ny[ig],  d_nz[ig],
+                                                                              d_gamma[ig],
                                                                               d_const[ig],
                                                                               d_tstart[ig], d_tstop[ig],
                                                                               d_nt[ig],
@@ -3151,6 +3195,7 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
   cudaFreeHost(h_ny);
   cudaFreeHost(h_nz);
   cudaFreeHost(h_shn);
+  cudaFreeHost(h_gamma);
   cudaFreeHost(h_const);
   cudaFreeHost(h_ifirst);
   cudaFreeHost(h_ml);
@@ -3193,6 +3238,7 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
     cudaFree(d_ny[i]);
     cudaFree(d_nz[i]);
     cudaFree(d_shn[i]);
+    cudaFree(d_gamma[i]);
     cudaFree(d_const[i]);
     cudaFree(d_ifirst[i]);
     cudaFree(d_ml[i]);
@@ -3231,6 +3277,7 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
   cudaFree(d_nz);
   cudaFree(h_ifirst);
   cudaFree(d_shn);
+  cudaFree(d_gamma);
   cudaFree(d_const);
   cudaFree(d_prec);
   cudaFree(d_rt);

@@ -84,6 +84,9 @@ void OSCARSSR::AddMagneticField (std::string const FileName,
   // Set the derivs function accordingly
   this->SetDerivativesFunction();
 
+  // Clear any previous fparticle trajectory data
+  this->ClearTrajectory();
+
   return;
 }
 
@@ -117,6 +120,9 @@ void OSCARSSR::AddMagneticFieldInterpolated (std::vector<std::pair<double, std::
   // Set the derivs function accordingly
   this->SetDerivativesFunction();
 
+  // Clear any previous fparticle trajectory data
+  this->ClearTrajectory();
+
   return;
 }
 
@@ -131,6 +137,9 @@ void OSCARSSR::AddMagneticField (TField* Field)
 
   // Set the derivs function accordingly
   this->SetDerivativesFunction();
+
+  // Clear any previous fparticle trajectory data
+  this->ClearTrajectory();
 
   return;
 }
@@ -201,6 +210,9 @@ void OSCARSSR::AddElectricField (std::string const FileName,
   // Set the derivs function accordingly
   this->SetDerivativesFunction();
 
+  // Clear any previous fparticle trajectory data
+  this->ClearTrajectory();
+
   return;
 }
 
@@ -234,6 +246,9 @@ void OSCARSSR::AddElectricFieldInterpolated (std::vector<std::pair<double, std::
   // Set the derivs function accordingly
   this->SetDerivativesFunction();
 
+  // Clear any previous fparticle trajectory data
+  this->ClearTrajectory();
+
   return;
 }
 
@@ -247,6 +262,9 @@ void OSCARSSR::AddElectricField (TField* F)
 
   // Set the derivs function accordingly
   this->SetDerivativesFunction();
+
+  // Clear any previous fparticle trajectory data
+  this->ClearTrajectory();
 
   return;
 }
@@ -687,6 +705,14 @@ void OSCARSSR::SetNThreadsGlobal (int const N)
 
 
 
+int OSCARSSR::GetNThreadsGlobal () const
+{
+  return fNThreadsGlobal;
+}
+
+
+
+
 void OSCARSSR::SetSeed (int const Seed) const
 {
   gRandomA->SetSeed(Seed);
@@ -907,6 +933,14 @@ TParticleTrajectoryPoints const& OSCARSSR::GetTrajectory ()
   return fParticle.GetTrajectory();
 }
 
+
+
+
+void OSCARSSR::ClearTrajectory ()
+{
+  fParticle.ResetTrajectoryData();
+  return;
+}
 
 
 
@@ -1392,6 +1426,26 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
   TVector3DC const Positive = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) + VerticalDirection * I );
   TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * I );
 
+  TVector3DC PolarizationVector(0, 0, 0);
+  if (Polarization == "all") {
+    // Do Nothing
+  } else if (Polarization == "linear-horizontal") {
+    PolarizationVector = HorizontalDirection;
+  } else if (Polarization == "linear-vertical") {
+    PolarizationVector = VerticalDirection;
+  } else if (Polarization == "linear") {
+    TVector3D PolarizationAngle = HorizontalDirection;
+    PolarizationAngle.RotateSelf(Angle, PropogationDirection);
+    PolarizationVector = PolarizationAngle;
+  } else if (Polarization == "circular-left") {
+    PolarizationVector = Positive;
+  } else if (Polarization == "circular-right") {
+    PolarizationVector = Negative;
+  } else {
+    // Throw invalid argument if polarization is not recognized
+    throw std::invalid_argument("Polarization requested not recognized");
+  }
+
 
   // Extended trajectory (not using memory for storage of arrays
   TParticleTrajectoryInterpolatedPoints TE;
@@ -1449,11 +1503,12 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
 
         // Exponent in transformed field
         ThisPhase = -Omega * (Time + D / TOSCARSSR::C());
-        if (iT != 0 && fabs(ThisPhase - LastPhase) > MaxDPhase) {
-          MaxDPhase = fabs(ThisPhase - LastPhase);
+        double const PhaseTestValue = fabs(ThisPhase - LastPhase);
+        if (iT != 0 && PhaseTestValue > MaxDPhase) {
+          MaxDPhase = PhaseTestValue;
         }
         LastPhase = ThisPhase;
-        std::complex<double> Exponent(0, -Omega * (Time + D / TOSCARSSR::C()));
+        std::complex<double> Exponent(0, ThisPhase);
 
         TVector3DC const ThisEw = ( ( (1 - (B).Mag2()) * (N - B) ) / ( D * D * (pow(1 - N.Dot(B), 2)) )
             + ( N.Cross( (N - B).Cross(AoverC) ) ) / ( D * pow(1 - N.Dot(B), 2) ) ) * std::exp(Exponent); // NF + FF
@@ -1463,11 +1518,14 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
 
       }
 
-      TVector3DC const ThisSumE = SumE * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(iLevel);
+      TVector3DC ThisSumE = SumE * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(iLevel);
+      if (PolarizationVector.Mag2() > 0.001) {
+        ThisSumE = ThisSumE.Dot(PolarizationVector) * PolarizationVector;
+      }
       ThisMag = ThisSumE.Dot( ThisSumE.CC() ).real();
 
       Result_Precision = fabs(ThisMag - LastMag) / LastMag;
-      if (iLevel > 8 && Result_Precision < Precision) {
+      if (iLevel > 8 && Result_Precision < Precision && MaxDPhase < TOSCARSSR::Pi()) {
         Result_Level = iLevel;
         break;
       }
@@ -1476,31 +1534,13 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
     }
 
     // UPDATE: max level reached warn
-    //if (LastLevel == LevelStopWithExtended) {
-    //  std::cout << "LastLevelReached" << std::endl;
-    //}
 
     // Multiply by constant factor
     SumE *= C0 * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(LastLevel);
 
-    // If a polarization is specified, calculate it
-    if (Polarization == "all") {
-      // Do nothing, it is already ALL
-    } else if (Polarization == "linear-horizontal") {
-      SumE = SumE.Dot(HorizontalDirection) * HorizontalDirection;
-    } else if (Polarization == "linear-vertical") {
-      SumE = SumE.Dot(VerticalDirection) * VerticalDirection;
-    } else if (Polarization == "linear") {
-      TVector3D PolarizationAngle = HorizontalDirection;
-      PolarizationAngle.RotateSelf(Angle, PropogationDirection);
-      SumE = SumE.Dot(PolarizationAngle) * PolarizationAngle;
-    } else if (Polarization == "circular-left") {
-      SumE = SumE.Dot(Positive.CC()) * Positive;
-    } else if (Polarization == "circular-right") {
-      SumE = SumE.Dot(Negative.CC()) * Negative;
-    } else {
-      // Throw invalid argument if polarization is not recognized
-      throw std::invalid_argument("Polarization requested not recognized");
+    // Correcr for polarization
+    if (PolarizationVector.Mag2() > 0.001) {
+      SumE = SumE.Dot(PolarizationVector) * PolarizationVector;
     }
 
     // Set the flux for this frequency / energy point
@@ -2105,6 +2145,7 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
   // Loop over all points in the spectrum container
   for (size_t i = iFirst; i <= iLast; ++i) {
 
+
     // Obs point
     TVector3D const Obs    = Surface.GetPoint(i).GetPoint();
     TVector3D const Normal = Surface.GetPoint(i).GetNormal();
@@ -2118,6 +2159,10 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
 
     for (int iLevel = 0; iLevel <= LevelStopWithExtended; ++iLevel) {
       LastLevel = iLevel;
+
+      // Keep track of Beta for precision
+      TVector3D Last_Beta(0, 0, 0);
+      double BetaDiffMax = -1;
 
       // Grab the Trajectory (using memory arrays) if below level threshold, else set NULL
       TParticleTrajectoryPoints const& TM = Particle.GetTrajectoryLevel(iLevel <= LevelStopMemory ? iLevel : 0);
@@ -2137,6 +2182,12 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
         TVector3D const& X = PP.GetX();
         TVector3D const& B = PP.GetB();
         TVector3D const& AoverC = PP.GetAoverC();
+
+        double const BetaDiff = (B - Last_Beta).Mag();
+        if (iT > 0 && BetaDiff > BetaDiffMax) {
+          BetaDiffMax = BetaDiff;
+        }
+        Last_Beta = B;
 
         // Define the three normal vectors.  N1 is in the direction of propogation,
         // N2 and N3 are in a plane perpendicular to N1
@@ -2164,7 +2215,7 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
       double const ThisSum = Sum * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(iLevel);
 
       Result_Precision = fabs(ThisSum - LastSum) / LastSum;
-      if (iLevel > 8 && Result_Precision < Precision) {
+      if (iLevel > 8 && Result_Precision < Precision && BetaDiffMax < 2. / (Particle.GetGamma())) {
         Result_Level = iLevel;
         break;
       }
@@ -2732,6 +2783,27 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
   TVector3DC const Positive = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) + VerticalDirection * I );
   TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * I );
 
+  TVector3DC PolarizationVector(0, 0, 0);
+  if (Polarization == "all") {
+    // Do Nothing
+  } else if (Polarization == "linear-horizontal") {
+    PolarizationVector = HorizontalDirection;
+  } else if (Polarization == "linear-vertical") {
+    PolarizationVector = VerticalDirection;
+  } else if (Polarization == "linear") {
+    TVector3D PolarizationAngle = HorizontalDirection;
+    PolarizationAngle.RotateSelf(Angle, PropogationDirection);
+    PolarizationVector = PolarizationAngle;
+  } else if (Polarization == "circular-left") {
+    PolarizationVector = Positive;
+  } else if (Polarization == "circular-right") {
+    PolarizationVector = Negative;
+  } else {
+    // Throw invalid argument if polarization is not recognized
+    throw std::invalid_argument("Polarization requested not recognized");
+  }
+
+
   // Angular frequency
   double const Omega = TOSCARSSR::EvToAngularFrequency(Energy_eV);;
 
@@ -2791,11 +2863,12 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
 
         // Exponent in transformed field
         ThisPhase = -Omega * (Time + D / TOSCARSSR::C());
-        if (iT != 0 && fabs(ThisPhase - LastPhase) > MaxDPhase) {
-          MaxDPhase = fabs(ThisPhase - LastPhase);
+        double const PhaseTestValue = fabs(ThisPhase - LastPhase);
+        if (iT != 0 && PhaseTestValue > MaxDPhase) {
+          MaxDPhase = PhaseTestValue;
         }
         LastPhase = ThisPhase;
-        std::complex<double> Exponent(0, -Omega * (Time + D / TOSCARSSR::C()));
+        std::complex<double> Exponent(0, ThisPhase);
 
         TVector3DC const ThisEw = ( ( (1 - (B).Mag2()) * (N - B) ) / ( D * D * (pow(1 - N.Dot(B), 2)) )
             + ( N.Cross( (N - B).Cross(AoverC) ) ) / ( D * pow(1 - N.Dot(B), 2) ) ) * std::exp(Exponent); // NF + FF
@@ -2805,11 +2878,15 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
 
       }
 
-      TVector3DC const ThisSumE = SumE * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(iLevel);
+      TVector3DC ThisSumE = SumE * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(iLevel);
+      if (PolarizationVector.Mag2() > 0.001) {
+        ThisSumE = ThisSumE.Dot(PolarizationVector) * PolarizationVector;
+      }
+
       ThisMag = ThisSumE.Dot( ThisSumE.CC() ).real();
 
       Result_Precision = fabs(ThisMag - LastMag) / LastMag;
-      if (iLevel > 8 && Result_Precision < Precision) {
+      if (iLevel > 8 && Result_Precision < Precision && MaxDPhase < TOSCARSSR::Pi()) {
         Result_Level = iLevel;
         break;
       }
@@ -2818,32 +2895,13 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
     }
 
     // UPDATE: max level reached warn
-    //if (LastLevel == LevelStopWithExtended) {
-    //  std::cout << "LastLevelReached" << std::endl;
-    //}
 
     // Multiply by constant factor
     SumE *= C0 * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(LastLevel);
 
-
-    // If a polarization is specified, calculate it
-    if (Polarization == "all") {
-      // Do nothing, it is already ALL
-    } else if (Polarization == "linear-horizontal") {
-      SumE = SumE.Dot(HorizontalDirection) * HorizontalDirection;
-    } else if (Polarization == "linear-vertical") {
-      SumE = SumE.Dot(VerticalDirection) * VerticalDirection;
-    } else if (Polarization == "linear") {
-      TVector3D PolarizationAngle = HorizontalDirection;
-      PolarizationAngle.RotateSelf(Angle, PropogationDirection);
-      SumE = SumE.Dot(PolarizationAngle) * PolarizationAngle;
-    } else if (Polarization == "circular-left") {
-      SumE = SumE.Dot(Positive.CC()) * Positive;
-    } else if (Polarization == "circular-right") {
-      SumE = SumE.Dot(Negative.CC()) * Negative;
-    } else {
-      // Throw invalid argument if polarization is not recognized
-      throw std::invalid_argument("Polarization requested not recognized");
+    // Correcr for polarization
+    if (PolarizationVector.Mag2() > 0.001) {
+      SumE = SumE.Dot(PolarizationVector) * PolarizationVector;
     }
 
 
