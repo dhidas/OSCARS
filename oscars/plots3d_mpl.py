@@ -431,7 +431,7 @@ def plot_power_density_stl (P):
     fig = plt.figure()
     ax = Axes3D(fig)
     for p in P:
-        triangle = Poly3DCollection([p[0]], alpha=0.5)
+        triangle = Poly3DCollection([p[0]], alpha=0.5, edgecolors='b', linewidths=0.05)
         triangle.set_facecolor([1, 1-p[1]/pmax, 1-p[1]/pmax])
         ax.add_collection3d(triangle)
  

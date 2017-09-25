@@ -182,7 +182,7 @@ def plot_power_density(V, title=None, xlabel='X1 Axis [$m$]', ylabel='X2 Axis [$
     return
 
 
-def plot_power_density_2d1d(V, x1=None, x2=None, title=None, xlabel='[$m$]', ylabel='[$W / mm^2$]', show=True, ofile='', figsize=None, ret=False):
+def plot_power_density_2d1d(V, x1=None, x2=None, title=None, xlabel='[$m$]', ylabel='[$W / mm^2$]', xlim=None, ylim=None, show=True, ofile='', figsize=None, ret=False):
     """Plot a 2D histogram with equal spacing"""
 
     if x1 is not None and x2 is not None:
@@ -254,6 +254,8 @@ def plot_power_density_2d1d(V, x1=None, x2=None, title=None, xlabel='[$m$]', yla
 
 
     plt.figure(1, figsize=figsize)
+    if ylim is not None: plt.ylim(ylim[0], ylim[1])
+    if xlim is not None: plt.xlim(xlim[0], xlim[1])
     plt.plot(YP, XC)
 
     plt.xlabel(xlabel)
@@ -276,7 +278,7 @@ def plot_power_density_2d1d(V, x1=None, x2=None, title=None, xlabel='[$m$]', yla
     return
 
 
-def plot_power_density_1d(V, title='Power Density [$W / mm^2$]', xlabel='[$m$]', ylabel='[$W / mm^2$]', show=True, ofile='', figsize=None, ret=False):
+def plot_power_density_1d(V, title='Power Density [$W / mm^2$]', xlabel='[$m$]', ylabel='[$W / mm^2$]', xlim=None, ylim=None, show=True, ofile='', figsize=None, ret=False):
     """Plot a 1D power density"""
 
     X = [item[0][0] for item in V]
@@ -284,6 +286,8 @@ def plot_power_density_1d(V, title='Power Density [$W / mm^2$]', xlabel='[$m$]',
 
     plt.figure(1, figsize=figsize)
     plt.plot(X, P)
+    if ylim is not None: plt.ylim(ylim[0], ylim[1])
+    if xlim is not None: plt.xlim(xlim[0], xlim[1])
 
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
