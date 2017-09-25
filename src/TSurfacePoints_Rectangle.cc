@@ -166,32 +166,80 @@ void TSurfacePoints_Rectangle::Init (std::string const& Plane, int const NX1, in
 
   // Which plane did you pick to start!?
   if (P == "XY") {
-    fStartVector.SetXYZ(-WidthX1 / 2., -WidthX2 / 2., 0);
+    if (fNX1 > 1 && fNX2 > 1) {
+      fStartVector.SetXYZ(-WidthX1 / 2., -WidthX2 / 2., 0);
+    } else if (fNX1 <= 1 && fNX2 <= 1) {
+      fStartVector.SetXYZ(0, 0, 0);
+    } else if (fNX1 <= 1) {
+      fStartVector.SetXYZ(0., -WidthX2 / 2., 0);
+    } else if (fNX2 <= 1) {
+      fStartVector.SetXYZ(-WidthX1 / 2., 0, 0);
+    }
     fX1Vector.SetXYZ(fX1StepSize, 0, 0);
     fX2Vector.SetXYZ(0, fX2StepSize, 0);
     NormalVector.SetXYZ(0, 0, 1);
   } else if (P == "YX") {
-    fStartVector.SetXYZ(-WidthX2 / 2., -WidthX1 / 2., 0);
+    if (fNX1 > 1 && fNX2 > 1) {
+      fStartVector.SetXYZ(-WidthX2 / 2., -WidthX1 / 2., 0);
+    } else if (fNX1 <= 1 && fNX2 <= 1) {
+      fStartVector.SetXYZ(0, 0, 0);
+    } else if (fNX1 <= 1) {
+      fStartVector.SetXYZ(-WidthX2 / 2., 0, 0);
+    } else if (fNX2 <= 1) {
+      fStartVector.SetXYZ(0, -WidthX1 / 2., 0);
+    }
     fX2Vector.SetXYZ(fX2StepSize, 0, 0);
     fX1Vector.SetXYZ(0, fX1StepSize, 0);
     NormalVector.SetXYZ(0, 0, -1);
   } else if (P == "XZ") {
-    fStartVector.SetXYZ(-WidthX1 / 2., 0, -WidthX2 / 2.);
+    if (fNX1 > 1 && fNX2 > 1) {
+      fStartVector.SetXYZ(-WidthX1 / 2., 0, -WidthX2 / 2.);
+    } else if (fNX1 <= 1 && fNX2 <= 1) {
+      fStartVector.SetXYZ(0, 0, 0);
+    } else if (fNX1 <= 1) {
+      fStartVector.SetXYZ(0, 0, -WidthX2 / 2.);
+    } else if (fNX2 <= 1) {
+      fStartVector.SetXYZ(-WidthX1 / 2., 0, 0);
+    }
     fX1Vector.SetXYZ(fX1StepSize, 0, 0);
     fX2Vector.SetXYZ(0, 0, fX2StepSize);
     NormalVector.SetXYZ(0, -1, 0);
   } else if (P == "ZX") {
-    fStartVector.SetXYZ(-WidthX2 / 2., 0, -WidthX1 / 2.);
+    if (fNX1 > 1 && fNX2 > 1) {
+      fStartVector.SetXYZ(-WidthX2 / 2., 0, -WidthX1 / 2.);
+    } else if (fNX1 <= 1 && fNX2 <= 1) {
+      fStartVector.SetXYZ(0, 0, 0);
+    } else if (fNX1 <= 1) {
+      fStartVector.SetXYZ(-WidthX2 / 2., 0, 0);
+    } else if (fNX2 <= 1) {
+      fStartVector.SetXYZ(0., 0, -WidthX1 / 2.);
+    }
     fX2Vector.SetXYZ(fX2StepSize, 0, 0);
     fX1Vector.SetXYZ(0, 0, fX1StepSize);
     NormalVector.SetXYZ(0, 1, 0);
   } else if (P == "YZ") {
-    fStartVector.SetXYZ(0, -WidthX1 / 2., -WidthX2 / 2.);
+    if (fNX1 > 1 && fNX2 > 1) {
+      fStartVector.SetXYZ(0, -WidthX1 / 2., -WidthX2 / 2.);
+    } else if (fNX1 <= 1 && fNX2 <= 1) {
+      fStartVector.SetXYZ(0, 0, 0);
+    } else if (fNX1 <= 1) {
+      fStartVector.SetXYZ(0, 0, -WidthX2 / 2.);
+    } else if (fNX2 <= 1) {
+      fStartVector.SetXYZ(0, -WidthX1 / 2., 0);
+    }
     fX1Vector.SetXYZ(0, fX1StepSize, 0);
     fX2Vector.SetXYZ(0, 0, fX2StepSize);
     NormalVector.SetXYZ(1, 0, 0);
   } else if (P == "ZY") {
-    fStartVector.SetXYZ(0, -WidthX2 / 2., -WidthX1 / 2.);
+    if (fNX1 > 1 && fNX2 > 1) {
+      fStartVector.SetXYZ(0, -WidthX2 / 2., -WidthX1 / 2.);
+    } else if (fNX1 <= 1 && fNX2 <= 1) {
+      fStartVector.SetXYZ(0, 0, 0);
+    } else if (fNX1 <= 1) {
+      fStartVector.SetXYZ(0, -WidthX2 / 2., 0);
+    } else if (fNX2 <= 1) {
+      fStartVector.SetXYZ(0, 0, -WidthX1 / 2.);
+    }
     fX2Vector.SetXYZ(0, fX2StepSize, 0);
     fX1Vector.SetXYZ(0, 0, fX1StepSize);
     NormalVector.SetXYZ(-1, 0, 0);
