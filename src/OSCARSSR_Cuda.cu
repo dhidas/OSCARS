@@ -2833,6 +2833,7 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
   cudaHostAlloc((void **) &d_shn,    NGPUsToUse * sizeof(int*),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
 
   cudaHostAlloc((void **) &d_gamma,  NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_const,  NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
 
   cudaHostAlloc((void **) &d_ifirst, NGPUsToUse * sizeof(int*),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void **) &d_ml,     NGPUsToUse * sizeof(int*),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
