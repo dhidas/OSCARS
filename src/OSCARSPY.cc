@@ -72,6 +72,8 @@ PyObject* GetSpectrumAsList (TSpectrumContainer const& Spectrum)
   // Create a python list
   PyObject *List = PyList_New(0);
 
+  PyObject* Value;
+
   // Number of points in trajectory calculation
   size_t NSPoints = Spectrum.GetNPoints();
 
@@ -80,10 +82,16 @@ PyObject* GetSpectrumAsList (TSpectrumContainer const& Spectrum)
     // Create a python list for X and Beta
     PyObject *List2 = PyList_New(0);
 
-    // Add position and Beta to list
-    PyList_Append(List2, Py_BuildValue("f", Spectrum.GetEnergy(iS)));
-    PyList_Append(List2, Py_BuildValue("f", Spectrum.GetFlux(iS)));
+    Value = Py_BuildValue("f", Spectrum.GetEnergy(iS));
+    PyList_Append(List2, Value);
+    Py_DECREF(Value);
+
+    Value = Py_BuildValue("f", Spectrum.GetFlux(iS));
+    PyList_Append(List2, Value);
+    Py_DECREF(Value);
+
     PyList_Append(List, List2);
+    Py_DECREF(List2);
   }
 
   // Return the python list
@@ -197,8 +205,12 @@ PyObject* VectorIntToList (std::vector<int>& V)
   // Create a python list
   PyObject *List = PyList_New(0);
 
+  PyObject* Value;
+
   for (std::vector<int>::const_iterator it = V.begin(); it != V.end(); ++it) {
-    PyList_Append(List, Py_BuildValue("i", *it));
+    Value = Py_BuildValue("i", *it);
+    PyList_Append(List, Value);
+    Py_DECREF(Value);
   }
 
   return List;
@@ -214,8 +226,16 @@ PyObject* TVector2DAsList (TVector2D const& V)
   // Create a python list
   PyObject *List = PyList_New(0);
 
-  PyList_Append(List, Py_BuildValue("f", V.GetX()));
-  PyList_Append(List, Py_BuildValue("f", V.GetY()));
+  // Value for input which can be Py_DECREF when done with
+  PyObject* Value;
+
+  Value = Py_BuildValue("f", V.GetX());
+  PyList_Append(List, Value);
+  Py_DECREF(Value);
+
+  Value = Py_BuildValue("f", V.GetY());
+  PyList_Append(List, Value);
+  Py_DECREF(Value);
 
   // Return the python list
   return List;
@@ -231,9 +251,20 @@ PyObject* TVector3DAsList (TVector3D const& V)
   // Create a python list
   PyObject *List = PyList_New(0);
 
-  PyList_Append(List, Py_BuildValue("f", V.GetX()));
-  PyList_Append(List, Py_BuildValue("f", V.GetY()));
-  PyList_Append(List, Py_BuildValue("f", V.GetZ()));
+  // Value for input which can be Py_DECREF when done with
+  PyObject* Value;
+
+  Value = Py_BuildValue("f", V.GetX());
+  PyList_Append(List, Value);
+  Py_DECREF(Value);
+
+  Value = Py_BuildValue("f", V.GetY());
+  PyList_Append(List, Value);
+  Py_DECREF(Value);
+
+  Value = Py_BuildValue("f", V.GetZ());
+  PyList_Append(List, Value);
+  Py_DECREF(Value);
 
   // Return the python list
   return List;

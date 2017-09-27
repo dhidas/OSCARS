@@ -1528,7 +1528,7 @@ static PyObject* OSCARSSR_GetBField (OSCARSSRObject* self, PyObject* args, PyObj
   // Get the magnetic field at a point as a 3D list [Bx, By, Bz]
 
   // Python list object
-  PyObject* List = PyList_New(0);;
+  PyObject* List = 0x0;//PyList_New(0);;
 
   static const char *kwlist[] = {"x",
                                  NULL};
@@ -4188,17 +4188,32 @@ static PyObject* OSCARSSR_GetTrajectory (OSCARSSRObject* self)
   // Number of points in trajectory calculation
   size_t NTPoints = T.GetNPoints();
 
+  PyObject* Value;
+
   // Loop over all points in trajectory
   for (size_t iT = 0; iT != NTPoints; ++iT) {
     // Create a python list for X and Beta
     PyObject *PList2 = PyList_New(0);
 
     // Add position and Beta to list
-    PyList_Append(PList2, Py_BuildValue("f", T.GetT(iT)));
-    PyList_Append(PList2, OSCARSPY::TVector3DAsList(T.GetX(iT)));
-    PyList_Append(PList2, OSCARSPY::TVector3DAsList(T.GetB(iT)));
-    PyList_Append(PList2, OSCARSPY::TVector3DAsList(T.GetA(iT)));
+    Value = Py_BuildValue("f", T.GetT(iT));
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
+    Value = OSCARSPY::TVector3DAsList(T.GetX(iT));
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
+    Value = OSCARSPY::TVector3DAsList(T.GetB(iT));
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
+    Value = OSCARSPY::TVector3DAsList(T.GetA(iT));
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
     PyList_Append(PList, PList2);
+    Py_DECREF(PList2);
   }
 
   // Return the python list
@@ -4872,6 +4887,8 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
   // UPDATE: URGENT: PD output ofile, bofile
   size_t const NPoints = PowerDensityContainer.GetNPoints();
 
+  PyObject* Value;
+
   for (size_t i = 0; i != NPoints; ++i) {
     T3DScalar P = PowerDensityContainer.GetPoint(i);
 
@@ -4880,9 +4897,16 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
 
 
     // Add position and value to list
-    PyList_Append(PList2, OSCARSPY::TVector3DAsList(P.GetX()));
-    PyList_Append(PList2, Py_BuildValue("f", P.GetV()));
+    Value = OSCARSPY::TVector3DAsList(P.GetX());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
+    Value = Py_BuildValue("f", P.GetV());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
     PyList_Append(PList, PList2);
+    Py_DECREF(PList2);
 
   }
 
@@ -5266,6 +5290,8 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
   // UPDATE: URGENT: PD output ofile, bofile
   size_t const NPoints = PowerDensityContainer.GetNPoints();
 
+  PyObject* Value;
+
   for (size_t i = 0; i != NPoints; ++i) {
     T3DScalar P = PowerDensityContainer.GetPoint(i);
 
@@ -5274,9 +5300,16 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
 
 
     // Add position and value to list
-    PyList_Append(PList2, OSCARSPY::TVector3DAsList(P.GetX()));
-    PyList_Append(PList2, Py_BuildValue("f", P.GetV()));
+    Value = OSCARSPY::TVector3DAsList(P.GetX());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
+    Value = Py_BuildValue("f", P.GetV());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
     PyList_Append(PList, PList2);
+    Py_DECREF(PList2);
 
   }
 
@@ -5364,7 +5397,9 @@ quantity: str
 Returns
 -------
 power_density : list
-    Not sure yet what format
+    This return list is NOT the same as other power density calculations.  The return format is as follows:
+    [ [[[T0x, T0y, T0z], [T1x, T1y, T1z], [T2x, T2y, T2z]], PD], [...], ...]
+    where the Ts are the triangle vertices, and PD is the power density in the center of that triangle.
 
 Examples
 --------
@@ -5587,6 +5622,8 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
   // UPDATE: URGENT: PD output ofile, bofile
   size_t const NPoints = PowerDensityContainer.GetNPoints();
 
+  PyObject* Value;
+
   for (size_t i = 0; i != NPoints; ++i) {
     T3DScalar P = PowerDensityContainer.GetPoint(i);
     TTriangle3D T = STLContainer.GetPoint(i);
@@ -5595,14 +5632,29 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
     PyObject *PList2 = PyList_New(0);
 
     PyObject *PListT = PyList_New(0);
-    PyList_Append(PListT, OSCARSPY::TVector3DAsList(T[0]));
-    PyList_Append(PListT, OSCARSPY::TVector3DAsList(T[1]));
-    PyList_Append(PListT, OSCARSPY::TVector3DAsList(T[2]));
+
+    Value = OSCARSPY::TVector3DAsList(T[0]);
+    PyList_Append(PListT, Value);
+    Py_DECREF(Value);
+
+    Value = OSCARSPY::TVector3DAsList(T[1]);
+    PyList_Append(PListT, Value);
+    Py_DECREF(Value);
+
+    Value = OSCARSPY::TVector3DAsList(T[2]);
+    PyList_Append(PListT, Value);
+    Py_DECREF(Value);
 
     // Add position and value to list
     PyList_Append(PList2, PListT);
-    PyList_Append(PList2, Py_BuildValue("f", P.GetV()));
+    Py_DECREF(PListT);
+
+    Value = Py_BuildValue("f", P.GetV());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
     PyList_Append(PList, PList2);
+    Py_DECREF(PList2);
 
   }
 
@@ -5844,6 +5896,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityLine (OSCARSSRObject* self, PyObj
   // Create a python list
   PyObject *PList = PyList_New(0);
 
+  PyObject* Value;
 
   for (size_t i = 0; i != NPoints; ++i) {
     T3DScalar P = PowerDensityContainer.GetPoint(i);
@@ -5853,9 +5906,16 @@ static PyObject* OSCARSSR_CalculatePowerDensityLine (OSCARSSRObject* self, PyObj
 
 
     // Add position and value to list
-    PyList_Append(PList2, OSCARSPY::TVector3DAsList(P.GetX()));
-    PyList_Append(PList2, Py_BuildValue("f", P.GetV()));
+    Value = OSCARSPY::TVector3DAsList(P.GetX());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
+    Value = Py_BuildValue("f", P.GetV());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
     PyList_Append(PList, PList2);
+    Py_DECREF(PList2);
 
   }
 
@@ -6161,6 +6221,8 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
 
   size_t const NPoints = FluxContainer.GetNPoints();
 
+  PyObject* Value;
+
   for (size_t i = 0; i != NPoints; ++i) {
     T3DScalar P = FluxContainer.GetPoint(i);
 
@@ -6169,9 +6231,16 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
 
 
     // Add position and value to list
-    PyList_Append(PList2, OSCARSPY::TVector3DAsList(P.GetX()));
-    PyList_Append(PList2, Py_BuildValue("f", P.GetV()));
+    Value = OSCARSPY::TVector3DAsList(P.GetX());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
+    Value = Py_BuildValue("f", P.GetV());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
     PyList_Append(PList, PList2);
+    Py_DECREF(PList2);
 
   }
 
@@ -6606,6 +6675,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
 
   size_t const NPoints = FluxContainer.GetNPoints();
 
+  PyObject* Value;
   for (size_t i = 0; i != NPoints; ++i) {
     T3DScalar P = FluxContainer.GetPoint(i);
 
@@ -6614,9 +6684,16 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
 
 
     // Add position and value to list
-    PyList_Append(PList2, OSCARSPY::TVector3DAsList(P.GetX()));
-    PyList_Append(PList2, Py_BuildValue("f", P.GetV()));
+    Value = OSCARSPY::TVector3DAsList(P.GetX());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
+    Value = Py_BuildValue("f", P.GetV());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
     PyList_Append(PList, PList2);
+    Py_DECREF(PList2);
 
   }
 
@@ -6970,6 +7047,8 @@ static PyObject* OSCARSSR_AverageT3DScalars (OSCARSSRObject* self, PyObject* arg
   // Number of points in container
   size_t const NPoints = Container.GetNPoints();
 
+  PyObject* Value;
+
   for (size_t i = 0; i != NPoints; ++i) {
 
     // This point in container
@@ -6980,9 +7059,16 @@ static PyObject* OSCARSSR_AverageT3DScalars (OSCARSSRObject* self, PyObject* arg
 
 
     // Add position and value to list
-    PyList_Append(PList2, OSCARSPY::TVector3DAsList(P.GetX()));
-    PyList_Append(PList2, Py_BuildValue("f", P.GetV()));
+    Value = OSCARSPY::TVector3DAsList(P.GetX());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
+    Value = Py_BuildValue("f", P.GetV());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
     PyList_Append(PList, PList2);
+    Py_DECREF(PList2);
 
   }
 
@@ -7242,6 +7328,8 @@ static PyObject* OSCARSSR_CalculateElectricFieldTimeDomain (OSCARSSRObject* self
 
   size_t const NPoints = XYZT.GetNPoints();
 
+  PyObject* Value;
+
   for (size_t i = 0; i != NPoints; ++i) {
     T3DScalar P = XYZT.GetPoint(i);
 
@@ -7250,9 +7338,16 @@ static PyObject* OSCARSSR_CalculateElectricFieldTimeDomain (OSCARSSRObject* self
 
 
     // Add position and value to list
-    PyList_Append(PList2, Py_BuildValue("f", P.GetV()));
-    PyList_Append(PList2, OSCARSPY::TVector3DAsList(P.GetX()));
+    Value = Py_BuildValue("f", P.GetV());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
+    Value = OSCARSPY::TVector3DAsList(P.GetX());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
     PyList_Append(PList, PList2);
+    Py_DECREF(PList2);
 
   }
 
@@ -7800,18 +7895,26 @@ static PyObject* OSCARSSR_GetT3DScalarAsList (T3DScalarContainer const& C)
   // Number of points in trajectory calculation
   size_t NPoints = C.GetNPoints();
 
+  PyObject* Value;
+
   // Loop over all points
   for (size_t i = 0; i != NPoints; ++i) {
     // Create a python list
     PyObject *PList2 = PyList_New(0);
 
-    PyObject *X = OSCARSPY::TVector3DAsList(C.GetPoint(i).GetX());
     double const V = C.GetPoint(i).GetV();
 
     // Add position and Beta to list
-    PyList_Append(PList2, X);
-    PyList_Append(PList2, Py_BuildValue("f", V));
+    Value = OSCARSPY::TVector3DAsList(C.GetPoint(i).GetX());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
+    Value = Py_BuildValue("f", V);
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
     PyList_Append(PList, PList2);
+    Py_DECREF(PList2);
   }
 
   // Return the python list
