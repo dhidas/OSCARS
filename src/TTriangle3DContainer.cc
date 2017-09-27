@@ -1,5 +1,6 @@
 #include "TTriangle3DContainer.h"
 
+#include <cstdint>
 
 TTriangle3DContainer::TTriangle3DContainer ()
 {
@@ -79,8 +80,8 @@ void TTriangle3DContainer::ReadSTLFile (std::string const& FileName)
   char H[80];
   fi.read(H, 80 * sizeof(char));
 
-  unsigned int NTriangles;
-  fi.read((char*) &NTriangles, sizeof(int));
+  uint32_t NTriangles;
+  fi.read((char*) &NTriangles, sizeof(uint32_t));
 
   float N[3];
   float A[3];

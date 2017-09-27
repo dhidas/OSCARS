@@ -5378,7 +5378,7 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
   const char* InFileName = "";
   PyObject*   List_Translation = PyList_New(0);
   PyObject*   List_Rotations   = PyList_New(0);
-  int         NormalDirection = 0;
+  int         NormalDirection = -1;    // Default to -1 for STL
   int         NParticles = 0;
   int         GPU = -1;
   PyObject*   NGPU = 0x0;
@@ -5530,7 +5530,11 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
 
   for (size_t istl = 0; istl != STLContainer.GetNPoints(); ++istl) {
     TVector3D Center = STLContainer.GetPoint(istl).GetCenter();
-    Surface.AddPoint(Center, STLContainer.GetPoint(istl).GetNormal());
+    if (NormalDirection < 0) {
+      Surface.AddPoint(Center, -STLContainer.GetPoint(istl).GetNormal());
+    } else {
+      Surface.AddPoint(Center, STLContainer.GetPoint(istl).GetNormal());
+    }
   }
 
   // Container for Point plus scalar

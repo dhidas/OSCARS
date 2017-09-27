@@ -84,7 +84,7 @@ def power_density_3d(srs, surface,
         ax.set_ylim(zlim[0], zlim[1])
 
 
-    ax.plot_surface(X2, Z2, Y2, facecolors=cm.viridis(colors), rstride=1, cstride=1, alpha=alpha)
+    ax.plot_surface(X2, Z2, Y2, facecolors=cm.viridis(colors), rstride=1, cstride=1, alpha=alpha, linewidth=0)
     ax.invert_xaxis()
 
     if axis is not None:
@@ -413,9 +413,11 @@ def plot_power_density_scatter (V, s=10):
 
 
 
-def plot_power_density_stl (P):
+def plot_power_density_stl (P, title='Power Density [$W/mm^2$]', elev=30, azim=30, alpha=0.8, ofile=None):
 
     pmax = max([p[1] for p in P])
+
+    m = cm.ScalarMappable(cm.viridis)
 
     xmax = ymax = zmax = -99999
     xmin = ymin = zmin = +99999
@@ -431,8 +433,9 @@ def plot_power_density_stl (P):
     fig = plt.figure()
     ax = Axes3D(fig)
     for p in P:
-        triangle = Poly3DCollection([p[0]], alpha=0.5, edgecolors='b', linewidths=0.05)
-        triangle.set_facecolor([1, 1-p[1]/pmax, 1-p[1]/pmax])
+        triangle = Poly3DCollection([p[0]], alpha=alpha, edgecolors='b', linewidths=0.05)
+        triangle.set_facecolor(m.to_rgba(p[1]/pmax))
+        #triangle.set_facecolor([1, 1-p[1]/pmax, 1-p[1]/pmax])
         ax.add_collection3d(triangle)
  
     ax.set_xlim([xmin, xmax])
@@ -441,7 +444,13 @@ def plot_power_density_stl (P):
     ax.set_xlabel('X [m]')
     ax.set_ylabel('Y [m]')
     ax.set_zlabel('Z [m]')
-    #ax.view_init(elev=270, azim=90)
+    ax.view_init(elev=elev, azim=azim)
+    plt.title(title)
+
+    if ofile is not None:
+        plt.savefig(ofile, bbox_inches=bbox_inches, transparent=transparent)
+
+
     plt.show()
 
     return
