@@ -267,7 +267,6 @@ void TSpectrumContainer::WriteToFileText (std::string const FileName, std::strin
   std::ofstream f(FileName.c_str());
 
   // Check if file is open
-  // UPDATE: try a more robust check
   if (!f.is_open()) {
     throw std::ifstream::failure("cannot open file for writing");
   }
