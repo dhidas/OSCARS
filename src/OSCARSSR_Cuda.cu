@@ -605,6 +605,10 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   h_pol[1] = make_cuDoubleComplex(PhotonPolarizationVector.GetY().real(), PhotonPolarizationVector.GetY().imag());
   h_pol[2] = make_cuDoubleComplex(PhotonPolarizationVector.GetZ().real(), PhotonPolarizationVector.GetZ().imag());
 
+  std::cout << cuCabs(h_pol[0]) << std::endl;
+  std::cout << cuCabs(h_pol[1]) << std::endl;
+  std::cout << cuCabs(h_pol[2]) << std::endl;
+
   int const NThreads = *h_ns;
   int const NThreadsPerBlock = NTHREADS_PER_BLOCK;
   int const NThreadsRemainder = NThreads % NThreadsPerBlock;
