@@ -2315,6 +2315,8 @@ __global__ void OSCARSSR_Cuda_PowerDensityGPU (double  *t,
   double result_precision = -1;
   int    result_level = -1;
 
+  // Set the not converged bit to 0
+  nc[ith] = 0;
   // Observation point
   double const ox = is >= *ns ? 0 : sx[is];
   double const oy = is >= *ns ? 0 : sy[is];
@@ -2537,9 +2539,7 @@ __global__ void OSCARSSR_Cuda_PowerDensityGPU (double  *t,
 
   // Check and set not converged bit if needed
   if (result_level == -1) {
-    *nc = 1;
-  } else {
-    *nc = 0;
+    nc[ith] = 1;
   }
 
   // Set result and return
@@ -2702,8 +2702,6 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
 
   // Results
   double **h_result;
-
-  int const NumberNotConvergedBytes = NTT / (8 * sizeof(int)) + (NTT % (8 * sizeof(int)) > 0 ? 1 : 0);
 
   // Allocate host memory
   cudaHostAlloc((void**) &h_t,       *h_nt * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
