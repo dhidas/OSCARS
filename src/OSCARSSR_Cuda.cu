@@ -248,6 +248,7 @@ __global__ void OSCARSSR_Cuda_FluxGPU (double *t,
                                        int *ml,
                                        double *prec,
                                        int    *rt,
+                                       char   *nc,
                                        double *result)
 {
   // Thread number and surface number
@@ -257,6 +258,9 @@ __global__ void OSCARSSR_Cuda_FluxGPU (double *t,
   // Alternative returns
   double result_precision = -1;
   int    result_level = -1;
+
+  // Set the not converged bit to 0
+  nc[ith] = 0;
 
   // Observation point
   double const ox = is >= *ns ? 0 : sx[is];
@@ -472,6 +476,11 @@ __global__ void OSCARSSR_Cuda_FluxGPU (double *t,
     return;
   }
 
+  // Check and set not converged bit if needed
+  if (result_level == -1) {
+    nc[ith] = 1;
+  }
+
   // Set result and return
   switch (*rt) {
     case 1:
@@ -636,6 +645,9 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   // Return quantity flag
   int    *h_rt;
 
+  // Not converged flag
+  char **h_nc;
+
   // Results
   double **h_result;
 
@@ -675,8 +687,11 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   cudaHostAlloc((void**) &h_prec,                sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void**) &h_rt,                  sizeof(int),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
 
+  cudaHostAlloc((void**) &h_nc,     NGPUsToUse * sizeof(char*),    cudaHostAllocWriteCombined | cudaHostAllocMapped);
+
   cudaHostAlloc((void**) &h_result,   NGPUsToUse * sizeof(double*), cudaHostAllocWriteCombined | cudaHostAllocMapped);
   for (size_t i = 0; i < GPUsToUse.size(); ++i) {
+    cudaHostAlloc((void**) &(h_nc[i]),      NTT * sizeof(char), cudaHostAllocWriteCombined | cudaHostAllocMapped);
     cudaHostAlloc((void**) &(h_result[i]), NTT * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
   }
 
@@ -739,6 +754,8 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   int    **d_ml;
   double **d_prec;
   int    **d_rt;
+  char   **d_nc;
+
   double **d_result;
 
   cudaHostAlloc((void **) &d_nt,     NGPUsToUse * sizeof(int*),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
@@ -784,6 +801,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   cudaHostAlloc((void **) &d_ml,     NGPUsToUse * sizeof(int*),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void **) &d_prec,   NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void **) &d_rt,     NGPUsToUse * sizeof(int*),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_nc,     NGPUsToUse * sizeof(char*),    cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void **) &d_result,   NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
 
   for (size_t i = 0; i < GPUsToUse.size(); ++i) {
@@ -834,6 +852,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
     cudaMalloc((void **) &d_ml[i],                 sizeof(int));
     cudaMalloc((void **) &d_prec[i],               sizeof(double));
     cudaMalloc((void **) &d_rt[i],                 sizeof(int));
+    cudaMalloc((void **) &d_nc[i],           NTT * sizeof(char));
     cudaMalloc((void **) &d_result[i],       NTT * sizeof(double));
 
     // Copy device number to device
@@ -1023,6 +1042,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
                                                                       d_ml[ig],
                                                                       d_prec[ig],
                                                                       d_rt[ig],
+                                                                      d_nc[ig],
                                                                       d_result[ig]);
     }
 
@@ -1046,6 +1066,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
     for (size_t ig = 0; ig < GPUsToUse.size(); ++ig) {
       int const d  = GPUsToUse[ig];
       cudaSetDevice(d);
+      cudaMemcpyAsync(h_nc[ig],     d_nc[ig],      NTT * sizeof(char),   cudaMemcpyDeviceToHost);
       cudaMemcpyAsync(h_result[ig],  d_result[ig],  NTT * sizeof(double), cudaMemcpyDeviceToHost);
       cudaEventRecord(event_resultcopy[ig]);
     }
@@ -1102,6 +1123,11 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
       }
       int iss = ith + NThreadsPerBlock * NBlocksUsed;
       FluxContainer.AddToPoint(iss, h_result[ig][ith]);
+
+      // Check for non-convergence
+      if ( h_nc[ig][ith] != 0 ) {
+        FluxContainer.SetNotConverged(iss);
+      }
     }
     NBlocksUsed += NBlocksThisGPU[ig];
   }
@@ -1147,6 +1173,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   // Free host and GPU memory
   for (size_t i = 0; i < GPUsToUse.size(); ++i) {
 
+    cudaFreeHost(h_nc[i]);
     cudaFreeHost(h_result[i]);
 
     // Device number
@@ -1186,8 +1213,10 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
     cudaFree(d_ml[i]);
     cudaFree(d_prec[i]);
     cudaFree(d_rt[i]);
+    cudaFree(d_nc[i]);
     cudaFree(d_result[i]);
   }
+  cudaFree(h_nc);
   cudaFree(h_result);
 
   cudaFree(d_nt);
@@ -1223,6 +1252,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   cudaFree(d_ml);
   cudaFree(d_prec);
   cudaFree(d_rt);
+  cudaFree(d_nc);
   cudaFree(d_result);
 
   // Delete host gpu pointer arrays
@@ -1303,6 +1333,7 @@ __global__ void OSCARSSR_Cuda_SpectrumGPU (double          *t,                  
                                            int             *ml,                              // max_level
                                            double          *prec,                            // precision requested
                                            int             *rt,                              // return quantity requested
+                                           char            *nc,                              // not converged flag
                                            double          *result)                          // result array
 {
   // Thread number and spectrum omega number
@@ -1312,6 +1343,9 @@ __global__ void OSCARSSR_Cuda_SpectrumGPU (double          *t,                  
   // Alternative returns
   double result_precision = -1;
   int    result_level = -1;
+
+  // Set the not converged bit to 0
+  nc[ith] = 0;
 
   // Energy (previously converted to omega)
   double const omega = io >= *no ? 0 : om[io];
@@ -1530,6 +1564,11 @@ __global__ void OSCARSSR_Cuda_SpectrumGPU (double          *t,                  
     return;
   }
 
+  // Check and set not converged bit if needed
+  if (result_level == -1) {
+    nc[ith] = 1;
+  }
+
   // Set result and return
   switch (*rt) {
     case 1:
@@ -1695,6 +1734,9 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
   // Return quantity flag
   int    *h_rt;
 
+  // Not converged flag
+  char **h_nc;
+
   // Results
   double **h_result;
 
@@ -1731,8 +1773,11 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
   cudaHostAlloc((void**) &h_prec,                sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void**) &h_rt,                  sizeof(int),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
 
+  cudaHostAlloc((void**) &h_nc,     NGPUsToUse * sizeof(char*),    cudaHostAllocWriteCombined | cudaHostAllocMapped);
+
   cudaHostAlloc((void**) &h_result,   NGPUsToUse * sizeof(double*), cudaHostAllocWriteCombined | cudaHostAllocMapped);
   for (size_t i = 0; i < GPUsToUse.size(); ++i) {
+    cudaHostAlloc((void**) &(h_nc[i]),      NTT * sizeof(char), cudaHostAllocWriteCombined | cudaHostAllocMapped);
     cudaHostAlloc((void**) &(h_result[i]), NTT * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
   }
 
@@ -1793,6 +1838,8 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
   int    **d_ml;
   double **d_prec;
   int    **d_rt;
+  char   **d_nc;
+
   double **d_result;
 
   cudaHostAlloc((void **) &d_nt,     NGPUsToUse * sizeof(int*),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
@@ -1836,6 +1883,7 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
   cudaHostAlloc((void **) &d_ml,     NGPUsToUse * sizeof(int*),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void **) &d_prec,   NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void **) &d_rt,     NGPUsToUse * sizeof(int*),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_nc,     NGPUsToUse * sizeof(char*),    cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void **) &d_result,   NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
 
   for (size_t i = 0; i < GPUsToUse.size(); ++i) {
@@ -1884,6 +1932,7 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
     cudaMalloc((void **) &d_ml[i],                 sizeof(int));
     cudaMalloc((void **) &d_prec[i],               sizeof(double));
     cudaMalloc((void **) &d_rt[i],                 sizeof(int));
+    cudaMalloc((void **) &d_nc[i],           NTT * sizeof(char));
     cudaMalloc((void **) &d_result[i],       NTT * sizeof(double));
 
     // Copy device number to device
@@ -2066,6 +2115,7 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
                                                                            d_ml[ig],
                                                                            d_prec[ig],
                                                                            d_rt[ig],
+                                                                           d_nc[ig],
                                                                            d_result[ig]);
     }
 
@@ -2089,6 +2139,7 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
     for (size_t ig = 0; ig < GPUsToUse.size(); ++ig) {
       int const d  = GPUsToUse[ig];
       cudaSetDevice(d);
+      cudaMemcpyAsync(h_nc[ig],     d_nc[ig],      NTT * sizeof(char),   cudaMemcpyDeviceToHost);
       cudaMemcpyAsync(h_result[ig],  d_result[ig],  NTT * sizeof(double), cudaMemcpyDeviceToHost);
       cudaEventRecord(event_resultcopy[ig]);
     }
@@ -2145,6 +2196,11 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
       }
       int iss = ith + NThreadsPerBlock * NBlocksUsed;
       Spectrum.AddToFlux(iss, h_result[ig][ith]);
+
+      // Check for non-convergence
+      if ( h_nc[ig][ith] != 0 ) {
+        Spectrum.SetNotConverged(iss);
+      }
     }
     NBlocksUsed += NBlocksThisGPU[ig];
   }
@@ -2188,6 +2244,7 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
   // Free host and GPU memory
   for (size_t i = 0; i < GPUsToUse.size(); ++i) {
 
+    cudaFreeHost(h_nc[i]);
     cudaFreeHost(h_result[i]);
 
     // Device number
@@ -2225,8 +2282,10 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
     cudaFree(d_ml[i]);
     cudaFree(d_prec[i]);
     cudaFree(d_rt[i]);
+    cudaFree(d_nc[i]);
     cudaFree(d_result[i]);
   }
+  cudaFree(h_nc);
   cudaFree(h_result);
 
   cudaFree(d_nt);
@@ -2260,6 +2319,7 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
   cudaFree(d_ml);
   cudaFree(d_prec);
   cudaFree(d_rt);
+  cudaFree(d_nc);
   cudaFree(d_result);
 
   // Delete host gpu pointer arrays
@@ -2317,6 +2377,7 @@ __global__ void OSCARSSR_Cuda_PowerDensityGPU (double  *t,
 
   // Set the not converged bit to 0
   nc[ith] = 0;
+
   // Observation point
   double const ox = is >= *ns ? 0 : sx[is];
   double const oy = is >= *ns ? 0 : sy[is];
