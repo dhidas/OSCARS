@@ -84,6 +84,9 @@ void TSpectrumContainer::Init (size_t const N, double const EFirst, double const
     fSpectrumPoints[i].first = EFirst + (ELast - EFirst) / (N - 1) * (double) (i);
   }
 
+  fNotConverged.clear();
+  fNotConverged.resize(fSpectrumPoints.size() / (8 * sizeof(int)), 0);
+
   return;
 }
 
@@ -105,6 +108,10 @@ void TSpectrumContainer::Init (std::vector<double> const& V)
     fSpectrumPoints.push_back( std::make_pair(V[i], 0.0) );
   }
 
+  fNotConverged.clear();
+  fNotConverged.resize(fSpectrumPoints.size() / (8 * sizeof(int)), 0);
+
+  return;
 }
 
 
@@ -150,32 +157,12 @@ size_t TSpectrumContainer::AddPoint (double const Energy, double const Flux)
   fSpectrumPoints.push_back( std::make_pair(Energy, Flux) );
   fCompensation.push_back(0);
 
-  return fSpectrumPoints.size();
-}
-
-
-
-
-size_t TSpectrumContainer::RemovePoint (size_t const i)
-{
-  // Remove a point from the spectrum container.  Be careful if you do this
-  // as it potentially changes memory locations and definitely changes
-  // indexing
-  //
-  // Return: Number of spectrum points remaining after Removal, or -1
-  // in the case you have input an invalid index
-
-  // Check that this is inside of the existing range
-  if (i >= fSpectrumPoints.size()) {
-    return -1;
+  if (fSpectrumPoints.size() > fNotConverged.size() * 8 * sizeof(int)) {
+    fNotConverged.push_back(0);
   }
 
-  fSpectrumPoints.erase(fSpectrumPoints.begin() + i);
-  fCompensation.erase(fCompensation.begin() + i);
-
   return fSpectrumPoints.size();
 }
-
 
 
 
@@ -201,6 +188,26 @@ void TSpectrumContainer::AddToFlux (size_t const i, double const Flux)
 
 
 
+void TSpectrumContainer::SetNotConverged (size_t const i)
+{
+  // Set the converged bit for this point
+
+  size_t const VectorIndex = i / (8 * sizeof(int));
+  if (VectorIndex >= fNotConverged.size()) {
+    throw;
+  }
+
+  int const Bit = (0x1 << (i % (8 * sizeof(int))));
+
+  fNotConverged[VectorIndex] |= Bit;
+
+  return;
+}
+
+
+
+
+
 void TSpectrumContainer::Scale (double const ScaleFactor)
 {
   // Scale all flux by the input factor
@@ -211,6 +218,21 @@ void TSpectrumContainer::Scale (double const ScaleFactor)
 
   return;
 }
+
+
+
+
+bool TSpectrumContainer::AllConverged () const
+{
+  for (std::vector<int>::const_iterator it = fNotConverged.begin(); it != fNotConverged.end(); ++it) {
+    if (*it != 0x0) {
+      return false;
+    }
+  }
+  return true;
+}
+
+
 
 
 
@@ -338,6 +360,7 @@ void TSpectrumContainer::Clear ()
   // Clear contents
   fSpectrumPoints.clear();
   fCompensation.clear();
+  fNotConverged.clear();
 
   return;
 }

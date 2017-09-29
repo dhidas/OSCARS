@@ -22,6 +22,10 @@ void T3DScalarContainer::AddPoint (TVector3D const& X, double const V)
 {
   fValues.push_back( T3DScalar(X, V) );
   fCompensation.push_back(0);
+
+  if (fValues.size() > fNotConverged.size() * 8 * sizeof(int)) {
+    fNotConverged.push_back(0);
+  }
   return;
 }
 
@@ -49,12 +53,43 @@ void T3DScalarContainer::AddToPoint (size_t const i, double const V)
 
 
 
+void T3DScalarContainer::SetNotConverged (size_t const i)
+{
+  // Set the converged bit for this point
+
+  size_t const VectorIndex = i / (8 * sizeof(int));
+  if (VectorIndex >= fNotConverged.size()) {
+    throw;
+  }
+
+  int const Bit = (0x1 << (i % (8 * sizeof(int))));
+
+  fNotConverged[VectorIndex] |= Bit;
+
+  return;
+}
+
+
+
+bool T3DScalarContainer::AllConverged () const
+{
+  for (std::vector<int>::const_iterator it = fNotConverged.begin(); it != fNotConverged.end(); ++it) {
+    if (*it != 0x0) {
+      return false;
+    }
+  }
+  return true;
+}
+
+
+
 void T3DScalarContainer::Clear ()
 {
   // Clear all contents from the container
 
   fValues.clear();
   fCompensation.clear();
+  fNotConverged.clear();
 
   return;
 }
@@ -177,6 +212,9 @@ void T3DScalarContainer::AverageFromFilesText (std::vector<std::string> const& F
   for (size_t i = 0; i != Files.size(); ++i) {
     f[i].close();
   }
+
+  fNotConverged.clear();
+  fNotConverged.resize(fValues.size() / (8 * sizeof(int)), 0);
 
   return;
 }
@@ -327,6 +365,9 @@ void T3DScalarContainer::AverageFromFilesBinary (std::vector<std::string> const&
   for (size_t i = 0; i != Files.size(); ++i) {
     f[i].close();
   }
+
+  fNotConverged.clear();
+  fNotConverged.resize(fValues.size() / (8 * sizeof(int)), 0);
 
   return;
 }

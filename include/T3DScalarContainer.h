@@ -62,6 +62,9 @@ class T3DScalarContainer
     void AddPoint (TVector3D const&, double const);
     void AddToPoint (size_t const, double const);
 
+    void SetNotConverged (size_t const);
+    bool AllConverged () const;
+
     void Clear ();
     void AverageFromFilesText (std::vector<std::string> const&, int const Dimension);
     void AverageFromFilesBinary (std::vector<std::string> const&, int const Dimension);
@@ -81,6 +84,7 @@ class T3DScalarContainer
   private:
     std::vector<T3DScalar> fValues;
     std::vector<double> fCompensation;
+    std::vector<int> fNotConverged;
 };
 
 

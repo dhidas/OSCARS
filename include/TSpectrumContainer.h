@@ -25,8 +25,11 @@ class TSpectrumContainer
     void   SetFlux     (size_t const, double const);
     void   SetPoint    (size_t const, double const, double const);
     size_t AddPoint    (double const, double const Flux = 0);
-    size_t RemovePoint (size_t const);
     void   AddToFlux   (size_t const, double const);
+
+    void SetNotConverged (size_t const);
+    bool AllConverged () const;
+
     void   Scale       (double const);
     double GetFlux     (size_t const) const;
     double GetEnergy   (size_t const) const;
@@ -44,6 +47,7 @@ class TSpectrumContainer
 
     std::vector< std::pair<double, double> > fSpectrumPoints;
     std::vector<double> fCompensation;
+    std::vector<int> fNotConverged;
 
 
 };

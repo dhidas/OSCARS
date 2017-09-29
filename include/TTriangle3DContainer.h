@@ -30,6 +30,7 @@ class TTriangle3DContainer
     void TranslateSelf (TVector3D const&);
 
     void ReadSTLFile (std::string const& FileName);
+    void WriteSTLFile (std::string const& FileName);
 
 
 

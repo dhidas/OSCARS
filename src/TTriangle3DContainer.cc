@@ -104,5 +104,57 @@ void TTriangle3DContainer::ReadSTLFile (std::string const& FileName)
 
   }
 
+  fi.close();
+
+  return;
+}
+
+
+
+
+
+void TTriangle3DContainer::WriteSTLFile (std::string const& FileName)
+{
+  // Write an STL file and add all points to self
+
+  // Open the output file
+  std::ofstream fi(FileName.c_str(), std::ios::binary);
+  if (!fi.is_open()) {
+    std::cout << "file not open" << std::endl;
+    throw;
+  }
+
+  char H[80];
+  sprintf(H, "%s", "OSCARS OSCARS OSCARS OSCARS OSCARS   ");
+  fi.write(H, 80 * sizeof(char));
+  std::cout << "brinted" << std::endl;
+
+  uint32_t NTriangles = (uint32_t) fT.size();;
+  fi.write((char*) &NTriangles, sizeof(uint32_t));
+
+  float N[3];
+  float A[3];
+  float B[3];
+  float C[3];
+  short S = 0;
+
+  for (int i = 0; i < NTriangles; ++i) {
+
+    for (int j = 0; j != 3; ++j) {
+      A[j] = fT[i][0][j] * 1000;
+      B[j] = fT[i][1][j] * 1000;
+      C[j] = fT[i][2][j] * 1000;
+      N[j] = fT[i][3][j];
+    }
+
+    fi.write((char*)  N, 3 * sizeof(float));
+    fi.write((char*)  A, 3 * sizeof(float));
+    fi.write((char*)  B, 3 * sizeof(float));
+    fi.write((char*)  C, 3 * sizeof(float));
+    fi.write((char*) &S ,    sizeof(short));
+  }
+
+  fi.close();
+
   return;
 }

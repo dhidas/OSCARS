@@ -2304,6 +2304,7 @@ __global__ void OSCARSSR_Cuda_PowerDensityGPU (double  *t,
                                                int *ml,
                                                double *prec,
                                                int    *rt,
+                                               char   *nc,        // Not converged bits for each thread
                                                double *result)
 {
   // Thread number and surface number
@@ -2534,6 +2535,13 @@ __global__ void OSCARSSR_Cuda_PowerDensityGPU (double  *t,
     return;
   }
 
+  // Check and set not converged bit if needed
+  if (result_level == -1) {
+    *nc = 1;
+  } else {
+    *nc = 0;
+  }
+
   // Set result and return
   switch (*rt) {
     case 1:
@@ -2647,7 +2655,8 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
   int const NBlocksTotal = (NThreads - 1) / NThreadsPerBlock + 1;
   int const NBlocksPerGPU = NBlocksTotal / NGPUsToUse;
   int const NRemainderBlocks = NBlocksTotal % NGPUsToUse;
-  // UPDATE: To be modified
+
+  // Number of threads per GPU
   int const NTT = NThreadsPerBlock * (NBlocksPerGPU + (NRemainderBlocks > 0 ? 1 : 0));
 
   std::vector<int> NBlocksThisGPU(NGPUsToUse, NBlocksPerGPU);
@@ -2688,8 +2697,13 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
   // Return quantity flag
   int    *h_rt;
 
+  // Not converged flag
+  char **h_nc;
+
   // Results
   double **h_result;
+
+  int const NumberNotConvergedBytes = NTT / (8 * sizeof(int)) + (NTT % (8 * sizeof(int)) > 0 ? 1 : 0);
 
   // Allocate host memory
   cudaHostAlloc((void**) &h_t,       *h_nt * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
@@ -2729,9 +2743,12 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
   cudaHostAlloc((void**) &h_prec,                sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void**) &h_rt,                  sizeof(int),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
 
+  cudaHostAlloc((void**) &h_nc,     NGPUsToUse * sizeof(char*),    cudaHostAllocWriteCombined | cudaHostAllocMapped);
+
   cudaHostAlloc((void**) &h_result,   NGPUsToUse * sizeof(double*), cudaHostAllocWriteCombined | cudaHostAllocMapped);
   for (size_t i = 0; i < GPUsToUse.size(); ++i) {
-    cudaHostAlloc((void**) &(h_result[i]), NTT * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+    cudaHostAlloc((void**) &(h_nc[i]),      NTT * sizeof(char), cudaHostAllocWriteCombined | cudaHostAllocMapped);
+    cudaHostAlloc((void**) &(h_result[i]),  NTT * sizeof(double),   cudaHostAllocWriteCombined | cudaHostAllocMapped);
   }
 
   // First surface point for each gpu
@@ -2794,6 +2811,8 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
   int    **d_ml;
   double **d_prec;
   int    **d_rt;
+  char   **d_nc;
+
   double **d_result;
 
   cudaHostAlloc((void **) &d_nt,     NGPUsToUse * sizeof(int*),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
@@ -2839,6 +2858,7 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
   cudaHostAlloc((void **) &d_ml,     NGPUsToUse * sizeof(int*),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void **) &d_prec,   NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void **) &d_rt,     NGPUsToUse * sizeof(int*),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_nc,     NGPUsToUse * sizeof(char*),    cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void **) &d_result,   NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
 
   for (size_t i = 0; i < GPUsToUse.size(); ++i) {
@@ -2888,6 +2908,7 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
     cudaMalloc((void **) &d_ml[i],                 sizeof(int));
     cudaMalloc((void **) &d_prec[i],               sizeof(double));
     cudaMalloc((void **) &d_rt[i],                 sizeof(int));
+    cudaMalloc((void **) &d_nc[i],           NTT * sizeof(char));
     cudaMalloc((void **) &d_result[i],       NTT * sizeof(double));
 
     // Copy device number to device
@@ -3081,6 +3102,7 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
                                                                               d_ml[ig],
                                                                               d_prec[ig],
                                                                               d_rt[ig],
+                                                                              d_nc[ig],
                                                                               d_result[ig]);
     }
 
@@ -3104,7 +3126,8 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
     for (size_t ig = 0; ig < GPUsToUse.size(); ++ig) {
       int const d  = GPUsToUse[ig];
       cudaSetDevice(d);
-      cudaMemcpyAsync(h_result[ig],  d_result[ig],  NTT * sizeof(double), cudaMemcpyDeviceToHost);
+      cudaMemcpyAsync(h_nc[ig],     d_nc[ig],      NTT * sizeof(char),   cudaMemcpyDeviceToHost);
+      cudaMemcpyAsync(h_result[ig], d_result[ig],  NTT * sizeof(double), cudaMemcpyDeviceToHost);
       cudaEventRecord(event_resultcopy[ig]);
     }
 
@@ -3159,6 +3182,11 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
       }
       int iss = ith + NThreadsPerBlock * NBlocksUsed;
       PowerDensityContainer.AddToPoint(iss, h_result[ig][ith]);
+
+      // Check for non-convergence
+      if ( h_nc[ig][ith] != 0 ) {
+        PowerDensityContainer.SetNotConverged(iss);
+      }
     }
     NBlocksUsed += NBlocksThisGPU[ig];
   }
@@ -3205,6 +3233,7 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
   // Free host and GPU memory
   for (size_t i = 0; i < GPUsToUse.size(); ++i) {
 
+    cudaFreeHost(h_nc[i]);
     cudaFreeHost(h_result[i]);
 
     // Device number
@@ -3245,8 +3274,10 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
     cudaFree(d_ml[i]);
     cudaFree(d_prec[i]);
     cudaFree(d_rt[i]);
+    cudaFree(d_nc[i]);
     cudaFree(d_result[i]);
   }
+  cudaFree(h_nc);
   cudaFree(h_result);
 
   cudaFree(d_nt);
@@ -3282,6 +3313,7 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
   cudaFree(d_const);
   cudaFree(d_prec);
   cudaFree(d_rt);
+  cudaFree(d_nc);
   cudaFree(d_result);
 
   // Delete host gpu pointer arrays

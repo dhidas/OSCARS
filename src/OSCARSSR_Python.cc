@@ -97,10 +97,7 @@ static PyObject* OSCARSSR_new (PyTypeObject* type, PyObject* args, PyObject* key
 
   // If it was not successful print an error message
   if (!self->obj->SetUseGPUGlobal(GPU)) {
-    PyObject* sys = PyImport_ImportModule( "sys");
-    PyObject* s_out = PyObject_GetAttrString(sys, "stderr");
-    std::string Message = "GPU is not available: Setting gpu global setting to 0.\n";
-    PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+    OSCARSPY::PyPrint_stderr("GPU is not available: Setting gpu global setting to 0.\n");
   }
 
 
@@ -294,10 +291,7 @@ static PyObject* OSCARSSR_SetGPUGlobal (OSCARSSRObject* self, PyObject* arg)
 
   // If it was not successful print an error message
   if (!self->obj->SetUseGPUGlobal(GPU)) {
-    PyObject* sys = PyImport_ImportModule( "sys");
-    PyObject* s_out = PyObject_GetAttrString(sys, "stderr");
-    std::string Message = "GPU is not available: Setting gpu global setting to 0.\n";
-    PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+    OSCARSPY::PyPrint_stderr("GPU is not available: Setting gpu global setting to 0.\n");
   }
 
   // Must return python object None in a special way
@@ -323,11 +317,7 @@ static PyObject* OSCARSSR_CheckGPU (OSCARSSRObject* self, PyObject* arg)
   int const NGPUStatus = self->obj->CheckGPU();
 
   if (NGPUStatus == -1) {
-    // Print copyright notice
-    PyObject* sys = PyImport_ImportModule( "sys");
-    PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
-    std::string Message = "It appears this binary version of OSCARSSR was not compiled with GPU capability enabled.";
-    PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+    OSCARSPY::PyPrint_stderr("It appears this binary version of OSCARSSR was not compiled with GPU capability enabled.\n");
   }
 
   return PyLong_FromLong((long) NGPUStatus);
@@ -1609,11 +1599,7 @@ static PyObject* OSCARSSR_PrintMagneticFields (OSCARSSRObject* self)
   ostream << "*Magnetic Fields*\n";
   ostream << self->obj->GetBFieldContainer() << std::endl;
 
-  // Python printing
-  PyObject* sys = PyImport_ImportModule( "sys");
-  PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
-  std::string Message = ostream.str();
-  PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+  OSCARSPY::PyPrint_stdout(ostream.str());
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -2568,11 +2554,7 @@ static PyObject* OSCARSSR_PrintElectricFields (OSCARSSRObject* self)
   ostream << "*Electric Fields*\n";
   ostream << self->obj->GetEFieldContainer() << std::endl;
 
-  // Python printing
-  PyObject* sys = PyImport_ImportModule( "sys");
-  PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
-  std::string Message = ostream.str();
-  PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+  OSCARSPY::PyPrint_stdout(ostream.str());
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -3556,11 +3538,7 @@ static PyObject* OSCARSSR_PrintParticleBeams (OSCARSSRObject* self)
   std::ostringstream ostream;
   ostream << self->obj->GetParticleBeamContainer() << std::endl;
 
-  // Python printing
-  PyObject* sys = PyImport_ImportModule("sys");
-  PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
-  std::string Message = ostream.str();
-  PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+  OSCARSPY::PyPrint_stdout(ostream.str());
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -4068,11 +4046,7 @@ static PyObject* OSCARSSR_PrintDriftVolumes (OSCARSSRObject* self)
   ostream << "*Drift Volumes*\n";
   ostream << self->obj->GetDriftVolumeContainer() << std::endl;
 
-  // Python printing
-  PyObject* sys = PyImport_ImportModule( "sys");
-  PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
-  std::string Message = ostream.str();
-  PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+  OSCARSPY::PyPrint_stdout(ostream.str());
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -4562,6 +4536,10 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
   } catch (std::invalid_argument e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
+  }
+
+  if (!SpectrumContainer.AllConverged()) {
+    OSCARSPY::PyPrint_stderr("Not all points converged to desired precision.  Can try increasing 'max_level_extended'\n");
   }
 
 
@@ -5271,6 +5249,10 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
     return NULL;
   }
 
+  if (!PowerDensityContainer.AllConverged()) {
+    OSCARSPY::PyPrint_stderr("Not all points converged to desired precision.  Can try increasing 'max_level_extended'\n");
+  }
+
   // Write the output file if requested
   // Text output
   if (std::string(OutFileNameText) != "") {
@@ -5336,7 +5318,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
 
 
 const char* DOC_OSCARSSR_CalculatePowerDensitySTL = R"docstring(
-calculate_power_density_stl(ifiles [, rotations, translation, ofile, normal, nparticles, gpu, ngpu, nthreads, precision, max_level, max_level_extended, quantity])
+calculate_power_density_stl(ifiles [, rotations, translation, ofile, bofile, stlofile, normal, nparticles, gpu, ngpu, nthreads, precision, max_level, max_level_extended, quantity])
 
 Calculate the power density on surfaces described in STL format input files
 
@@ -5360,6 +5342,9 @@ ofile : str
 
 bofile : str
     Binary output file name
+
+stlofile : str
+    STL output file name.  Will include RGB color information in the attribute byte count, maybe
 
 normal : int
     -1 if you wish to reverse the normal vector, 0 if you wish to ignore the +/- direction in computations, 1 if you with to use the direction of the normal vector as given. 
@@ -5424,6 +5409,7 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
   char const* ReturnQuantityChars = "power density";
   const char* OutFileNameText = "";
   const char* OutFileNameBinary = "";
+  const char* OutFileNameSTL = "";
 
   int const Dim = 3;
 
@@ -5434,6 +5420,7 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
                                  "translation",
                                  "ofile",
                                  "bofile",
+                                 "stlofile",
                                  "normal",
                                  "nparticles",
                                  "gpu",
@@ -5445,7 +5432,7 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
                                  "quantity",
                                   NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|OsOOssiiiOidiii",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|OsOOsssiiiOidiii",
                                    const_cast<char **>(kwlist),
                                    &List_Files,
                                    &InFileName,
@@ -5453,6 +5440,7 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
                                    &List_Translation,
                                    &OutFileNameText,
                                    &OutFileNameBinary,
+                                   &OutFileNameSTL,
                                    &NormalDirection,
                                    &NParticles,
                                    &GPU,
@@ -5613,6 +5601,11 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
   if (std::string(OutFileNameBinary) != "") {
     PowerDensityContainer.WriteToFileBinary(OutFileNameBinary, Dim);
   }
+
+  if (std::string(OutFileNameSTL) != "") {
+    STLContainer.WriteSTLFile(OutFileNameSTL);
+  }
+      
 
 
   // Build the output list of: [[[x, y, z], PowerDensity], [...]]
@@ -6204,6 +6197,10 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
     return NULL;
   }
 
+  if (!FluxContainer.AllConverged()) {
+    OSCARSPY::PyPrint_stderr("Not all points converged to desired precision.  Can try increasing 'max_level_extended'\n");
+  }
+
   // Write the output file if requested
   // Text output
   if (std::string(OutFileNameText) != "") {
@@ -6655,6 +6652,10 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   } catch (std::invalid_argument e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
+  }
+
+  if (!FluxContainer.AllConverged()) {
+    OSCARSPY::PyPrint_stderr("Not all points converged to desired precision.  Can try increasing 'max_level_extended'\n");
   }
 
   // Write the output file if requested
@@ -7392,11 +7393,7 @@ static PyObject* OSCARSSR_PrintGPU (OSCARSSRObject* self)
   }
   ostream << std::endl;
 
-  // Python printing
-  PyObject* sys = PyImport_ImportModule( "sys");
-  PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
-  std::string Message = ostream.str();
-  PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+  OSCARSPY::PyPrint_stdout(ostream.str());
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -7432,11 +7429,7 @@ static PyObject* OSCARSSR_PrintNThreads (OSCARSSRObject* self)
   ostream << "*NThreads Globals*\n";
   ostream << "Number of Threads to use: " << NThreads << "\n" << std::endl;
 
-  // Python printing
-  PyObject* sys = PyImport_ImportModule( "sys");
-  PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
-  std::string Message = ostream.str();
-  PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+  OSCARSPY::PyPrint_stdout(ostream.str());
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -7843,11 +7836,8 @@ PyMODINIT_FUNC PyInit_sr(void)
   PyModule_AddObject(m, "sr", (PyObject *)&OSCARSSRType);
 
 
-  // Print copyright notice
-  PyObject* sys = PyImport_ImportModule( "sys");
-  PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
   std::string Message = "OSCARS v" + OSCARSPY::GetVersionString() + " - Open Source Code for Advanced Radiation Simulation\nBrookhaven National Laboratory, Upton NY, USA\nhttp://oscars.bnl.gov\noscars@bnl.gov\n";
-  PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+  OSCARSPY::PyPrint_stdout(Message);
 
   return m;
 }
@@ -7864,11 +7854,8 @@ PyMODINIT_FUNC initsr(OSCARSSRObject* self, PyObject* args, PyObject* kwds)
   Py_INCREF(&OSCARSSRType);
   PyModule_AddObject(m, "sr", (PyObject *)&OSCARSSRType);
 
-  // Print copyright notice
-  PyObject* sys = PyImport_ImportModule( "sys");
-  PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
   std::string Message = "OSCARS v" + OSCARSPY::GetVersionString() + " - Open Source Code for Advanced Radiation Simulation\nBrookhaven National Laboratory, Upton NY, USA\nhttp://oscars.bnl.gov\noscars@bnl.gov\n";
-  PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+  OSCARSPY::PyPrint_stdout(Message);
 
   return;
 }

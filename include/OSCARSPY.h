@@ -25,6 +25,9 @@ namespace OSCARSPY {
 
   std::string GetVersionString ();
 
+  void PyPrint_stderr (std::string const&);
+  void PyPrint_stdout (std::string const&);
+
   char* GetAsString (PyObject* S);
   char* GetVersionOfModule (std::string const&);
 

@@ -31,6 +31,31 @@ std::string GetVersionString ()
 
 
 
+
+void PyPrint_stderr (std::string const& s)
+{
+  PyObject* sys = PyImport_ImportModule( "sys");
+  PyObject* s_out = PyObject_GetAttrString(sys, "stderr");
+  PyObject_CallMethod(s_out, "write", "s", s.c_str());
+
+  return;
+}
+
+
+
+
+void PyPrint_stdout (std::string const& s)
+{
+  PyObject* sys = PyImport_ImportModule( "sys");
+  PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
+  PyObject_CallMethod(s_out, "write", "s", s.c_str());
+
+  return;
+}
+
+
+
+
 char* GetAsString (PyObject* S)
 {
   // Return the correct string version depending on the python version

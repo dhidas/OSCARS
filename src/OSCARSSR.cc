@@ -1533,7 +1533,9 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
       LastMag = ThisMag;
     }
 
-    // UPDATE: max level reached warn
+    if (Result_Level == -1) {
+      Spectrum.SetNotConverged(i);
+    }
 
     // Multiply by constant factor
     SumE *= C0 * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(LastLevel);
@@ -2145,7 +2147,6 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
   // Loop over all points in the spectrum container
   for (size_t i = iFirst; i <= iLast; ++i) {
 
-
     // Obs point
     TVector3D const Obs    = Surface.GetPoint(i).GetPoint();
     TVector3D const Normal = Surface.GetPoint(i).GetNormal();
@@ -2223,10 +2224,9 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
       LastSum = ThisSum;
     }
 
-    // UPDATE: max level reached warn
-    //if (LastLevel == LevelStopWithExtended) {
-    //  std::cout << "LastLevelReached" << std::endl;
-    //}
+    if (Result_Level == -1) {
+      PowerDensityContainer.SetNotConverged(i);
+    }
 
     Sum *= fabs(Particle.GetQ() * Particle.GetCurrent()) / (16 * TOSCARSSR::Pi2() * TOSCARSSR::Epsilon0() * TOSCARSSR::C()) * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(LastLevel);
 
@@ -2894,7 +2894,10 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
       LastMag = ThisMag;
     }
 
-    // UPDATE: max level reached warn
+    if (Result_Level == -1) {
+      FluxContainer.SetNotConverged(i);
+    }
+
 
     // Multiply by constant factor
     SumE *= C0 * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(LastLevel);
