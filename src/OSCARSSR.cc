@@ -649,7 +649,7 @@ bool OSCARSSR::SetUseGPUGlobal (int const in)
   }
 
   #ifdef CUDA
-  if (OSCARSSR_Cuda_GetDeviceCount() > 0) {
+  if (this->CheckGPU() > 0) {
     fUseGPUGlobal = 1;
     return true;
   } else {
@@ -1388,7 +1388,6 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
   // ObservationPoint - Observation Point
   // Spectrum - Spectrum container
 
-  std::cout << "in CalculateSpectrumPoints" << std::endl;
   // Check that particle has been set yet.  If fType is "" it has not been set yet
   if (Particle.GetType() == "") {
     throw std::out_of_range("no particle defined");
