@@ -677,7 +677,8 @@ int OSCARSSR::GetUseGPUGlobal () const
 int OSCARSSR::CheckGPU () const
 {
   #ifdef CUDA
-    return OSCARSSR_Cuda_GetDeviceCount();
+    static int const N = OSCARSSR_Cuda_GetDeviceCount();
+    return N;
   #endif
   return -1;
 }

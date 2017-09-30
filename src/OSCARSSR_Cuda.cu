@@ -532,8 +532,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   // be calculated
 
   // Number of available GPUs
-  int ngpu = 0;
-  cudaGetDeviceCount(&ngpu);
+  int ngpu = OSR.CheckGPU();
   if (ngpu == 0) {
     throw std::invalid_argument("No GPU found");
   }
@@ -1614,8 +1613,7 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
   // be calculated
 
   // Number of available GPUs
-  int ngpu = 0;
-  cudaGetDeviceCount(&ngpu);
+  int ngpu = OSR.CheckGPU();
   if (ngpu == 0) {
     throw std::invalid_argument("No GPU found");
   }
@@ -2670,8 +2668,7 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
   // be calculated
 
   // Number of available GPUs
-  int ngpu = 0;
-  cudaGetDeviceCount(&ngpu);
+  int ngpu = OSR.CheckGPU();
   if (ngpu == 0) {
     throw std::invalid_argument("No GPU found");
   }
