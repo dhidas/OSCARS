@@ -2963,7 +2963,7 @@ static PyObject* OSCARSSR_WriteElectricField (OSCARSSRObject* self, PyObject* ar
 
 
 const char* DOC_OSCARSSR_SetParticleBeam = R"docstring(
-set_particle_beam([, type, name, energy_GeV, d0, x0, beam, sigma_energy_GeV, t0, current, weight, rotations, translation, horizontal_direction, beta, emittance, lattice_reference, mass, charge])
+set_particle_beam([, type, name, energy_GeV, d0, x0, beam, sigma_energy_GeV, t0, current, weight, rotations, translation, horizontal_direction, beta, alpha, gamma, emittance, eta, lattice_reference, mass, charge])
 
 This function is the same as add_particle_beam(), but it clears all particle beams before the 'add'.
 )docstring";
@@ -2987,7 +2987,7 @@ static PyObject* OSCARSSR_SetParticleBeam (OSCARSSRObject* self, PyObject* args,
 
 
 const char* DOC_OSCARSSR_AddParticleBeam = R"docstring(
-add_particle_beam([, type, name, energy_GeV, d0, x0, beam, sigma_energy_GeV, t0, current, weight, rotations, translation, horizontal_direction, beta, emittance, lattice_reference, mass, charge])
+add_particle_beam([, type, name, energy_GeV, d0, x0, beam, sigma_energy_GeV, t0, current, weight, rotations, translation, horizontal_direction, beta, alpha, gamma, emittance, eta, lattice_reference, mass, charge])
 
 Add a particle beam to the OSCARS object with a name given by *name*.  There is no limit to the number of different particle beams one can add.  They are added with a *weight* which is by default 1.  The weight is used in random sampling when asking for a new particle, for example in oscars.sr.set_new_particle().  If the *beam* parameter is given you only need to specify *name* and *x0*.
 
@@ -3046,8 +3046,17 @@ horizontal_direction : list
 beta : list
     Values of the horizontal and vertical beta funtion at the point *lattice_center* [beta_x, beta_y]
 
+alpha : list
+    Values of the horizontal and vertical alpha funtion at the point *lattice_center* [alpha_x, alpha_y]
+
+gamma : list
+    Values of the horizontal and vertical gamma funtion at the point *lattice_center* [gamma_x, gamma_y]
+
 emittance : list
     values of the horizontal and vertical emittance [emittance_x, emittance_y]
+
+eta : list
+    Values of the horizontal and vertical dispersion at the point *lattice_center* [eta_x, eta_y].  Currently eta_y is ignored and dispersion is only used in oscars.th calculations
 
 lattice_reference : list
     Coordinates of the lattice center [x, y, z] (must be on-axis with respect to the beam)
@@ -3107,6 +3116,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   PyObject*   List_Alpha                 = PyList_New(0);
   PyObject*   List_Gamma                 = PyList_New(0);
   PyObject*   List_Emittance             = PyList_New(0);
+  PyObject*   List_Eta                   = PyList_New(0);
   PyObject*   List_Lattice_Reference     = PyList_New(0);
 
   TVector3D Position(0, 0, 0);
@@ -3119,6 +3129,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   TVector2D Gamma(0, 0);
   TVector2D Emittance(0, 0);
   TVector3D Lattice_Reference(0, 0, 0);
+  TVector2D Eta(0, 0);
 
 
   // Input variables and parsing
@@ -3139,12 +3150,13 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
                                  "alpha",
                                  "gamma",
                                  "emittance",
+                                 "eta",
                                  "lattice_reference",
                                  "mass",
                                  "charge",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ssdOOsddddOOOOOOOOdd",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ssdOOsddddOOOOOOOOOdd",
                                    const_cast<char **>(kwlist),
                                    &Type,
                                    &Name,
@@ -3163,6 +3175,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
                                    &List_Alpha,
                                    &List_Gamma,
                                    &List_Emittance,
+                                   &List_Eta,
                                    &List_Lattice_Reference,
                                    &Mass,
                                    &Charge)) {
@@ -3366,6 +3379,16 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
       break;
     default:
       break;
+  }
+
+  if (PyList_Size(List_Eta) != 0) {
+    try {
+      Eta = OSCARSPY::ListAsTVector2D(List_Eta);
+      ThisBeam->SetEta(Eta);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'gamma'");
+      return NULL;
+    }
   }
 
 
@@ -5318,7 +5341,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
 
 
 const char* DOC_OSCARSSR_CalculatePowerDensitySTL = R"docstring(
-calculate_power_density_stl(ifiles [, rotations, translation, ofile, bofile, stlofile, normal, nparticles, gpu, ngpu, nthreads, precision, max_level, max_level_extended, quantity])
+calculate_power_density_stl(ifiles [, rotations, translation, ofile, bofile, stlofile, normal, scale, nparticles, gpu, ngpu, nthreads, precision, max_level, max_level_extended, quantity])
 
 Calculate the power density on surfaces described in STL format input files
 
@@ -5348,6 +5371,9 @@ stlofile : str
 
 normal : int
     -1 if you wish to reverse the normal vector, 0 if you wish to ignore the +/- direction in computations, 1 if you with to use the direction of the normal vector as given. 
+
+scale : float
+    What to scale the dimensions by.  Default input is in meters.
 
 nparticles : int
     Number of particles to use for multi-particle calculations
@@ -5399,6 +5425,7 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
   PyObject*   List_Translation = PyList_New(0);
   PyObject*   List_Rotations   = PyList_New(0);
   int         NormalDirection = -1;    // Default to -1 for STL
+  double      Scale = 1;
   int         NParticles = 0;
   int         GPU = -1;
   PyObject*   NGPU = 0x0;
@@ -5422,6 +5449,7 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
                                  "bofile",
                                  "stlofile",
                                  "normal",
+                                 "scale",
                                  "nparticles",
                                  "gpu",
                                  "ngpu",
@@ -5432,7 +5460,7 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
                                  "quantity",
                                   NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|OsOOsssiiiOidiii",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|OsOOsssidiiOidiii",
                                    const_cast<char **>(kwlist),
                                    &List_Files,
                                    &InFileName,
@@ -5442,6 +5470,7 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
                                    &OutFileNameBinary,
                                    &OutFileNameSTL,
                                    &NormalDirection,
+                                   &Scale,
                                    &NParticles,
                                    &GPU,
                                    &NGPU,
@@ -5540,7 +5569,7 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
 
   TTriangle3DContainer STLContainer;
   try {
-    STLContainer.ReadSTLFile(InFileName);
+    STLContainer.ReadSTLFile(InFileName, Scale);
   } catch (...) {
     PyErr_SetString(PyExc_ValueError, "Cannot read STL file");
     return NULL;

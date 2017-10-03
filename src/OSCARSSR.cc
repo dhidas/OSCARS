@@ -807,7 +807,6 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
   // Function to calculate the particle trajectory given initial conditions.
   // This function uses the internal Trajectory member to store results
 
-
   // Check that CTStart is not after T0 of particle
   if (this->GetCTStart() > P.GetT0()) {
     std::cerr << "GetCTStart() P.GetT0(): " << this->GetCTStart() << " " << P.GetT0() << std::endl;
@@ -2830,6 +2829,7 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
     double MaxDPhase = 0;
     int    LastLevel = 0;
 
+    bool PhaseSatisfied = true;
     for (int iLevel = 0; iLevel <= LevelStopWithExtended; ++iLevel) {
       LastLevel = iLevel;
 
@@ -2886,7 +2886,7 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
       ThisMag = ThisSumE.Dot( ThisSumE.CC() ).real();
 
       Result_Precision = fabs(ThisMag - LastMag) / LastMag;
-      if (iLevel > 8 && Result_Precision < Precision && MaxDPhase < TOSCARSSR::Pi()) {
+      if (iLevel > 1 && Result_Precision < Precision && MaxDPhase < TOSCARSSR::Pi()) {
         Result_Level = iLevel;
         break;
       }

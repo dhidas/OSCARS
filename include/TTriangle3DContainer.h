@@ -29,7 +29,9 @@ class TTriangle3DContainer
     void RotateSelfXYZ (TVector3D const&);
     void TranslateSelf (TVector3D const&);
 
-    void ReadSTLFile (std::string const& FileName);
+    void ReadSTLFile (std::string const& FileName,
+                      double const Scale);
+
     void WriteSTLFile (std::string const& FileName);
 
 
@@ -38,6 +40,7 @@ class TTriangle3DContainer
     std::vector<TTriangle3D> fT;
 
     TVector3D fBBox[2];
+    double fScale;
 };
 
 

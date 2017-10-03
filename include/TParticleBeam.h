@@ -127,6 +127,9 @@ class TParticleBeam : public TParticleA
 
     TVector2D GetEmittance () const;
 
+    void SetEta (TVector2D const&);
+    TVector2D GetEta () const;
+
     void SetVerticalDirection (TVector3D const& VerticalDirection);
 
     TVector3D GetVerticalDirection () const;
@@ -173,6 +176,7 @@ class TParticleBeam : public TParticleA
     TVector2D fTwissAlpha;
     TVector2D fTwissGamma;
     TVector2D fEmittance;
+    TVector2D fEta;
     TVector3D fTwissLatticeReference;
 
     // Twiss parameters at beam x0
@@ -220,7 +224,8 @@ inline std::ostream& operator << (std::ostream& os, TParticleBeam const& o)
      << "Twiss Lattice Ref " << o.GetTwissLatticeReference() << "\n"
      << "TwissBetaX0       " << o.GetTwissBetaX0() << "\n"
      << "TwissAlphaX0      " << o.GetTwissAlphaX0() << "\n"
-     << "TwissGammaX0      " << o.GetTwissGammaX0() << "\n";
+     << "TwissGammaX0      " << o.GetTwissGammaX0() << "\n"
+     << "Eta               " << o.GetEta() << "\n";
 
   return os;
 }

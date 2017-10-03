@@ -4,6 +4,7 @@
 
 TTriangle3DContainer::TTriangle3DContainer ()
 {
+  fScale = 1;
 }
 
 
@@ -41,6 +42,7 @@ TTriangle3D TTriangle3DContainer::GetPoint (size_t const i) const
 void TTriangle3DContainer::Clear ()
 {
   fT.clear();
+  fScale = 1;
   return;
 }
 
@@ -67,7 +69,8 @@ void TTriangle3DContainer::TranslateSelf (TVector3D const& T)
 
 
 
-void TTriangle3DContainer::ReadSTLFile (std::string const& FileName)
+void TTriangle3DContainer::ReadSTLFile (std::string const& FileName,
+                                        double const Scale)
 {
   // Read an STL file and add all points to self
 
@@ -96,9 +99,9 @@ void TTriangle3DContainer::ReadSTLFile (std::string const& FileName)
     fi.read((char*)  C, 3 * sizeof(float));
     fi.read((char*) &S ,    sizeof(short));
 
-    fT.push_back(TTriangle3D(A[0]/1000., A[1]/1000., A[2]/1000.,
-                             B[0]/1000., B[1]/1000., B[2]/1000.,
-                             C[0]/1000., C[1]/1000., C[2]/1000.,
+    fT.push_back(TTriangle3D(A[0] * Scale, A[1] * Scale, A[2] * Scale,
+                             B[0] * Scale, B[1] * Scale, B[2] * Scale,
+                             C[0] * Scale, C[1] * Scale, C[2] * Scale,
                              N[0], N[1], N[2]));
 
 
@@ -141,9 +144,9 @@ void TTriangle3DContainer::WriteSTLFile (std::string const& FileName)
   for (int i = 0; i < NTriangles; ++i) {
 
     for (int j = 0; j != 3; ++j) {
-      A[j] = fT[i][0][j] * 1000;
-      B[j] = fT[i][1][j] * 1000;
-      C[j] = fT[i][2][j] * 1000;
+      A[j] = fT[i][0][j] * fScale;
+      B[j] = fT[i][1][j] * fScale;
+      C[j] = fT[i][2][j] * fScale;
       N[j] = fT[i][3][j];
     }
 

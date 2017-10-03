@@ -285,6 +285,14 @@ double TParticleA::GetCurrent () const
 
 
 
+double TParticleA::GetCharge () const
+{
+  return fQ;
+}
+
+
+
+
 TVector3D const& TParticleA::GetX0 () const
 {
   // Get initial position

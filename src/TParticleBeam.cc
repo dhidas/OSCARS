@@ -565,6 +565,25 @@ TVector2D TParticleBeam::GetEmittance () const
 
 
 
+void TParticleBeam::SetEta (TVector2D const& Eta)
+{
+  // Set eta value
+  fEta = Eta;
+  return;
+}
+
+
+
+
+TVector2D TParticleBeam::GetEta () const
+{
+  // Return the eta values
+  return fEta;
+}
+
+
+
+
 TVector3D TParticleBeam::GetHorizontalDirection () const
 {
   // Return the horizontal direction

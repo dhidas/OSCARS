@@ -48,6 +48,8 @@ class TParticleA
     void   SetCurrent (double const);
     double GetCurrent () const;
 
+    double GetCharge () const;
+
     TVector3D const& GetX0 () const;
     TVector3D const& GetB0 () const;
     double           GetE0 () const;
