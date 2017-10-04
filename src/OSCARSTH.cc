@@ -336,7 +336,7 @@ void OSCARSTH::DipoleBrightness (double const BField,
 
 
   double lam = fabs(TOSCARSSR::H() * TOSCARSSR::C() / (1000. * fParticleBeam.GetCharge()));
-  double const eta_x = 0.137137;
+  double const eta_x = fParticleBeam.GetEta().GetX();
   double const beta_x = Beta.GetX();
   double const epsilon_x = Emittance.GetX();
 
