@@ -217,6 +217,16 @@ void TParticleTrajectoryPoints::AddPoint (double const X1, double const X2, doub
 
 
 
+void TParticleTrajectoryPoints::Reserve (size_t const n)
+{
+  fP.reserve(n);
+  fT.reserve(n);
+  return;
+}
+
+
+
+
 void TParticleTrajectoryPoints::ReverseArrays ()
 {
   std::reverse(fP.begin(), fP.end());
