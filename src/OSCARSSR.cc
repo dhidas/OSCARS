@@ -649,7 +649,7 @@ bool OSCARSSR::SetUseGPUGlobal (int const in)
   }
 
   #ifdef CUDA
-  if (OSCARSSR_Cuda_GetDeviceCount() > 0) {
+  if (this->CheckGPU() > 0) {
     fUseGPUGlobal = 1;
     return true;
   } else {
@@ -677,7 +677,8 @@ int OSCARSSR::GetUseGPUGlobal () const
 int OSCARSSR::CheckGPU () const
 {
   #ifdef CUDA
-    return OSCARSSR_Cuda_GetDeviceCount();
+    static int const N = OSCARSSR_Cuda_GetDeviceCount();
+    return N;
   #endif
   return -1;
 }

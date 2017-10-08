@@ -532,8 +532,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   // be calculated
 
   // Number of available GPUs
-  int ngpu = 0;
-  cudaGetDeviceCount(&ngpu);
+  int ngpu = OSR.CheckGPU();
   if (ngpu == 0) {
     throw std::invalid_argument("No GPU found");
   }
@@ -557,27 +556,29 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   int  const NParticlesReally = ThisParticleOnly ? 1 : NParticles;
 
   // Calculate polarization vector to use (0, 0, 0) for 'all'
-  TVector3D  const VerticalDirection = PropogationDirection.Cross(HorizontalDirection).UnitVector();
-  TVector3DC const Positive = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) + VerticalDirection * std::complex<double>(0, 1) );
-  TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * std::complex<double>(0, 1) );
   TVector3DC PhotonPolarizationVector(0, 0, 0);
   if (Polarization == "all") {
     // Do nothing, it is already ALL
-  } else if (Polarization == "linear-horizontal") {
-    PhotonPolarizationVector = HorizontalDirection;
-  } else if (Polarization == "linear-vertical") {
-    PhotonPolarizationVector = VerticalDirection;
-  } else if (Polarization == "linear") {
-    TVector3D PolarizationAngle = HorizontalDirection;
-    PolarizationAngle.RotateSelf(Angle, PropogationDirection);
-    PhotonPolarizationVector = PolarizationAngle;
-  } else if (Polarization == "circular-left") {
-    PhotonPolarizationVector = Positive;
-  } else if (Polarization == "circular-right") {
-    PhotonPolarizationVector = Negative;
   } else {
-    // Throw invalid argument if polarization is not recognized
-    throw std::invalid_argument("Polarization requested not recognized");
+    TVector3D  const VerticalDirection = PropogationDirection.Cross(HorizontalDirection).UnitVector();
+    TVector3DC const Positive = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) + VerticalDirection * std::complex<double>(0, 1) );
+    TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * std::complex<double>(0, 1) );
+    if (Polarization == "linear-horizontal") {
+      PhotonPolarizationVector = HorizontalDirection;
+    } else if (Polarization == "linear-vertical") {
+      PhotonPolarizationVector = VerticalDirection;
+    } else if (Polarization == "linear") {
+      TVector3D PolarizationAngle = HorizontalDirection;
+      PolarizationAngle.RotateSelf(Angle, PropogationDirection);
+      PhotonPolarizationVector = PolarizationAngle;
+    } else if (Polarization == "circular-left") {
+      PhotonPolarizationVector = Positive;
+    } else if (Polarization == "circular-right") {
+      PhotonPolarizationVector = Negative;
+    } else {
+      // Throw invalid argument if polarization is not recognized
+      throw std::invalid_argument("Polarization requested not recognized");
+    }
   }
 
 
@@ -604,10 +605,6 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   h_pol[0] = make_cuDoubleComplex(PhotonPolarizationVector.GetX().real(), PhotonPolarizationVector.GetX().imag());
   h_pol[1] = make_cuDoubleComplex(PhotonPolarizationVector.GetY().real(), PhotonPolarizationVector.GetY().imag());
   h_pol[2] = make_cuDoubleComplex(PhotonPolarizationVector.GetZ().real(), PhotonPolarizationVector.GetZ().imag());
-
-  std::cout << cuCabs(h_pol[0]) << std::endl;
-  std::cout << cuCabs(h_pol[1]) << std::endl;
-  std::cout << cuCabs(h_pol[2]) << std::endl;
 
   int const NThreads = *h_ns;
   int const NThreadsPerBlock = NTHREADS_PER_BLOCK;
@@ -1616,8 +1613,7 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
   // be calculated
 
   // Number of available GPUs
-  int ngpu = 0;
-  cudaGetDeviceCount(&ngpu);
+  int ngpu = OSR.CheckGPU();
   if (ngpu == 0) {
     throw std::invalid_argument("No GPU found");
   }
@@ -1642,27 +1638,29 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
 
 
   // Calculate polarization vector to use (0, 0, 0) for 'all'
-  TVector3D  const VerticalDirection = PropogationDirection.Cross(HorizontalDirection).UnitVector();
-  TVector3DC const Positive = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) + VerticalDirection * std::complex<double>(0, 1) );
-  TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * std::complex<double>(0, 1) );
   TVector3DC PhotonPolarizationVector(0, 0, 0);
   if (Polarization == "all") {
     // Do nothing, it is already ALL
-  } else if (Polarization == "linear-horizontal") {
-    PhotonPolarizationVector = HorizontalDirection;
-  } else if (Polarization == "linear-vertical") {
-    PhotonPolarizationVector = VerticalDirection;
-  } else if (Polarization == "linear") {
-    TVector3D PolarizationAngle = HorizontalDirection;
-    PolarizationAngle.RotateSelf(Angle, PropogationDirection);
-    PhotonPolarizationVector = PolarizationAngle;
-  } else if (Polarization == "circular-left") {
-    PhotonPolarizationVector = Positive;
-  } else if (Polarization == "circular-right") {
-    PhotonPolarizationVector = Negative;
   } else {
-    // Throw invalid argument if polarization is not recognized
-    throw std::invalid_argument("Polarization requested not recognized");
+    TVector3D  const VerticalDirection = PropogationDirection.Cross(HorizontalDirection).UnitVector();
+    TVector3DC const Positive = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) + VerticalDirection * std::complex<double>(0, 1) );
+    TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * std::complex<double>(0, 1) );
+    if (Polarization == "linear-horizontal") {
+      PhotonPolarizationVector = HorizontalDirection;
+    } else if (Polarization == "linear-vertical") {
+      PhotonPolarizationVector = VerticalDirection;
+    } else if (Polarization == "linear") {
+      TVector3D PolarizationAngle = HorizontalDirection;
+      PolarizationAngle.RotateSelf(Angle, PropogationDirection);
+      PhotonPolarizationVector = PolarizationAngle;
+    } else if (Polarization == "circular-left") {
+      PhotonPolarizationVector = Positive;
+    } else if (Polarization == "circular-right") {
+      PhotonPolarizationVector = Negative;
+    } else {
+      // Throw invalid argument if polarization is not recognized
+      throw std::invalid_argument("Polarization requested not recognized");
+    }
   }
 
 
@@ -2670,8 +2668,7 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
   // be calculated
 
   // Number of available GPUs
-  int ngpu = 0;
-  cudaGetDeviceCount(&ngpu);
+  int ngpu = OSR.CheckGPU();
   if (ngpu == 0) {
     throw std::invalid_argument("No GPU found");
   }
