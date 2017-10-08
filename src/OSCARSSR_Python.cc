@@ -3252,7 +3252,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
       return NULL;
     }
   } else {
-    Horizontal_Direction = -Direction.Orthogonal().UnitVector();
+    Horizontal_Direction = -Direction.Orthogonal();
   }
   Horizontal_Direction = Horizontal_Direction.UnitVector();
 
@@ -3289,6 +3289,9 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
     ThisBeam->SetX0(Position);
   }
 
+  // Set horizontal direction
+  ThisBeam->SetHorizontalDirection(Horizontal_Direction);
+
   // UPDATE
   // Check for Emittance in the input
   if (PyList_Size(List_Emittance) != 0) {
@@ -3298,7 +3301,13 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'emittance'");
       return NULL;
     }
+
+    // Set emittance and beam distribution
     ThisBeam->SetEmittance(Emittance);
+    ThisBeam->SetBeamDistribution(TParticleBeam::kBeamDistribution_Gaussian);
+  } else {
+    // Beam distribution to filament
+    ThisBeam->SetBeamDistribution(TParticleBeam::kBeamDistribution_Filament);
   }
 
   // Check for no beam
@@ -3357,8 +3366,8 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'lattice_reference'");
       return NULL;
     }
-    ThisBeam->SetTwissLatticeReference(Lattice_Reference);
   }
+  ThisBeam->SetTwissLatticeReference(Lattice_Reference);
 
   // Set correct twiss parameters
   switch (HasBAG) {
@@ -3384,12 +3393,12 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   if (PyList_Size(List_Eta) != 0) {
     try {
       Eta = OSCARSPY::ListAsTVector2D(List_Eta);
-      ThisBeam->SetEta(Eta);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'gamma'");
       return NULL;
     }
   }
+  ThisBeam->SetEta(Eta);
 
 
   if (T0 != 0) {

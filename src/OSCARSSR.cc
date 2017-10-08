@@ -854,6 +854,7 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
 
   // Grap the particle trajectory object
   TParticleTrajectoryPoints& ParticleTrajectory = P.GetTrajectory();
+  ParticleTrajectory.Reserve(NPointsForward + NPointsBackward);
 
   // Set delta T for the trajectory
   ParticleTrajectory.SetDeltaT(DeltaT);
@@ -1387,7 +1388,6 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
   // ObservationPoint - Observation Point
   // Spectrum - Spectrum container
 
-  std::cout << "in CalculateSpectrumPoints" << std::endl;
   // Check that particle has been set yet.  If fType is "" it has not been set yet
   if (Particle.GetType() == "") {
     throw std::out_of_range("no particle defined");
@@ -2886,7 +2886,7 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
       ThisMag = ThisSumE.Dot( ThisSumE.CC() ).real();
 
       Result_Precision = fabs(ThisMag - LastMag) / LastMag;
-      if (iLevel > 1 && Result_Precision < Precision && MaxDPhase < TOSCARSSR::Pi()) {
+      if (iLevel > 8 && Result_Precision < Precision && MaxDPhase < TOSCARSSR::Pi()) {
         Result_Level = iLevel;
         break;
       }

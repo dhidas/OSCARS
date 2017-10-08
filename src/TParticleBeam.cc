@@ -398,6 +398,18 @@ void TParticleBeam::SetBetaEmittance (TVector3D const& HorizontalDirection, TVec
 
 
 
+
+void TParticleBeam::SetHorizontalDirection (TVector3D const& HorizontalDirection)
+{
+  // Set the horizontal direction.  When you do this it resets the vertical direction
+  fHorizontalDirection = HorizontalDirection.UnitVector();
+  fVerticalDirection = - HorizontalDirection.Cross(fU0).UnitVector();
+  return;
+}
+
+
+
+
 void TParticleBeam::SetTwissLatticeReference (TVector3D const& L)
 {
   fTwissLatticeReference = L;

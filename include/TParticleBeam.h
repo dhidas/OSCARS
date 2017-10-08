@@ -99,6 +99,8 @@ class TParticleBeam : public TParticleA
                            TVector3D const& SigmaAt,
                            double const SigmaEnergyGeV);
 
+    void SetHorizontalDirection (TVector3D const& HorizontalDirection);
+
     void SetTwissLatticeReference (TVector3D const& L);
 
     TVector3D GetTwissLatticeReference () const;

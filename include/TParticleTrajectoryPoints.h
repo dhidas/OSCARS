@@ -45,6 +45,7 @@ class TParticleTrajectoryPoints
     void AddPoint (TVector3D const&, TVector3D const&, TVector3D const&, double const T = 0);
     void AddPoint (double const, double const, double const, double const, double const, double const, double const, double const, double const, double const T = 0);
 
+    void Reserve (size_t const);
     void ReverseArrays ();
 
     void WriteToFile       (std::string const&) const;
