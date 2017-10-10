@@ -3097,7 +3097,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   // Add a particle beam to the experiment
 
   // Lists and variables some with initial values
-  char const* Type                       = "";
+  char const* Type                       = "electron";
   char const* Name                       = "";
   double      Energy_GeV                 = 0;
   double      Sigma_Energy_GeV           = 0;
@@ -3107,17 +3107,17 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   double      Mass                       = 0;
   double      Charge                     = 0;
   char const* Beam                       = "";
-  PyObject*   List_Position              = PyList_New(0);
-  PyObject*   List_Direction             = PyList_New(0);
-  PyObject*   List_Rotations             = PyList_New(0);
-  PyObject*   List_Translation           = PyList_New(0);
-  PyObject*   List_Horizontal_Direction  = PyList_New(0);
-  PyObject*   List_Beta                  = PyList_New(0);
-  PyObject*   List_Alpha                 = PyList_New(0);
-  PyObject*   List_Gamma                 = PyList_New(0);
-  PyObject*   List_Emittance             = PyList_New(0);
-  PyObject*   List_Eta                   = PyList_New(0);
-  PyObject*   List_Lattice_Reference     = PyList_New(0);
+  PyObject*   List_Position              = 0x0;
+  PyObject*   List_Direction             = 0x0;
+  PyObject*   List_Rotations             = 0x0;
+  PyObject*   List_Translation           = 0x0;
+  PyObject*   List_Horizontal_Direction  = 0x0;
+  PyObject*   List_Beta                  = 0x0;
+  PyObject*   List_Alpha                 = 0x0;
+  PyObject*   List_Gamma                 = 0x0;
+  PyObject*   List_Emittance             = 0x0;
+  PyObject*   List_Eta                   = 0x0;
+  PyObject*   List_Lattice_Reference     = 0x0;
 
   TVector3D Position(0, 0, 0);
   TVector3D Direction(0, 0, 1);
@@ -3201,7 +3201,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
 
 
   // Initial position
-  if (PyList_Size(List_Position) != 0) {
+  if (List_Position != 0x0) {
     try {
       Position = OSCARSPY::ListAsTVector3D(List_Position);
     } catch (std::length_error e) {
@@ -3211,8 +3211,14 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
 
   }
 
+  // Energy check
+  if (Energy_GeV < 0) {
+    PyErr_SetString(PyExc_ValueError, "We do not currently support negative energy beams.  Please change 'energy_GeV' to >= 0");
+    return NULL;
+  }
+
   // Initial direction
-  if (PyList_Size(List_Direction) != 0) {
+  if (List_Direction != 0x0) {
     try {
       Direction = OSCARSPY::ListAsTVector3D(List_Direction);
     } catch (std::length_error e) {
@@ -3222,7 +3228,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   }
 
   // Check for Rotations in the input
-  if (PyList_Size(List_Rotations) != 0) {
+  if (List_Rotations != 0x0) {
     try {
       Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
     } catch (std::length_error e) {
@@ -3233,7 +3239,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
 
 
   // Check for Translation in the input
-  if (PyList_Size(List_Translation) != 0) {
+  if (List_Translation != 0x0) {
     try {
       Translation = OSCARSPY::ListAsTVector3D(List_Translation);
     } catch (std::length_error e) {
@@ -3244,7 +3250,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
 
 
   // Check for Horizontal_Direction in the input
-  if (PyList_Size(List_Horizontal_Direction) != 0) {
+  if (List_Horizontal_Direction != 0x0) {
     try {
       Horizontal_Direction = OSCARSPY::ListAsTVector3D(List_Horizontal_Direction);
     } catch (std::length_error e) {
@@ -3283,7 +3289,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
 
   // Change predefined beam accordingly
   if (HasPredefinedBeam) {
-    if (PyList_Size(List_Direction) != 0) {
+    if (List_Direction != 0x0) {
       ThisBeam->SetU0(Direction);
     }
     ThisBeam->SetX0(Position);
@@ -3294,7 +3300,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
 
   // UPDATE
   // Check for Emittance in the input
-  if (PyList_Size(List_Emittance) != 0) {
+  if (List_Emittance != 0x0) {
     try {
       Emittance = OSCARSPY::ListAsTVector2D(List_Emittance);
     } catch (std::length_error e) {
@@ -3328,7 +3334,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
 
   // Check for beta, alpha, gammain the input
   int HasBAG = 0x0;
-  if (PyList_Size(List_Beta) != 0) {
+  if (List_Beta != 0x0) {
     try {
       Beta = OSCARSPY::ListAsTVector2D(List_Beta);
       HasBAG |= 0x4;
@@ -3337,7 +3343,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
       return NULL;
     }
   }
-  if (PyList_Size(List_Alpha) != 0) {
+  if (List_Alpha != 0x0) {
     try {
       Alpha = OSCARSPY::ListAsTVector2D(List_Alpha);
       HasBAG |= 0x2;
@@ -3346,7 +3352,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
       return NULL;
     }
   }
-  if (PyList_Size(List_Gamma) != 0) {
+  if (List_Gamma != 0x0) {
     try {
       Gamma = OSCARSPY::ListAsTVector2D(List_Gamma);
       HasBAG |= 0x1;
@@ -3358,7 +3364,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
 
   // Check for Lattice reference in the input
   bool HasReferencePoint = false;
-  if (PyList_Size(List_Lattice_Reference) != 0) {
+  if (List_Lattice_Reference != 0x0) {
     try {
       Lattice_Reference = OSCARSPY::ListAsTVector3D(List_Lattice_Reference);
       HasReferencePoint = true;
@@ -3390,7 +3396,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
       break;
   }
 
-  if (PyList_Size(List_Eta) != 0) {
+  if (List_Eta != 0x0) {
     try {
       Eta = OSCARSPY::ListAsTVector2D(List_Eta);
     } catch (std::length_error e) {
@@ -4505,10 +4511,9 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
   TSpectrumContainer SpectrumContainer;
 
   if (VPoints_eV.size() == 0) {
-    // Check NPoints parameter
+    // Check NPoints parameter and set minimum if still zero
     if (NPoints < 1) {
-      PyErr_SetString(PyExc_ValueError, "'npoints' must be > 0");
-      return NULL;
+      NPoints = fabs(EStop - EStart) + 1 > 100 ? abs((int) (EStop - EStart) + 1) : 100;
     }
     SpectrumContainer.Init(NPoints, EStart, EStop);
   } else {
