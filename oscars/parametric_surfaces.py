@@ -234,10 +234,14 @@ class PSSphere:
     nu = 10
     nv = 10
  
-    def __init__ (self, R=1, ustart=None, ustop=None, nu=10, vstart=None, vstop=None, nv=10):
+    def __init__ (self, R=1, ustart=0, ustop=2.*pi, nu=10, vstart=-pi/2., vstop=pi/2., nv=10):
         self.R = R
         self.nu = nu
         self.nv = nv
+        self.ustart = ustart
+        self.ustop = ustop
+        self.vstart = vstart
+        self.vstop = vstop
        
     
     def position (self, u, v):

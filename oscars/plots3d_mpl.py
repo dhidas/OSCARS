@@ -7,10 +7,10 @@ from math import sqrt
 import copy
 
 def power_density_3d(srs, surface,
-                    normal=1, rotations=[0, 0, 0], translation=[0, 0, 0], nparticles=0, gpu=0, nthreads=0, ret=False,
+                    normal=1, rotations=[0, 0, 0], translation=[0, 0, 0], nparticles=0, gpu=0, nthreads=0,
                     title='Power Density [$W / mm^2$]', xlim=None, ylim=None, zlim=None, colorbar=True, figsize=None,
                     alpha=0.4, ofile=None, show=True, view_init=None, axis=None, transparent=True,
-                    xticks=None, yticks=None, zticks=None, bbox_inches='tight', max_level=24):
+                    xticks=None, yticks=None, zticks=None, bbox_inches='tight', max_level=24, quantity='power density'):
     """calculate power density for and plot a parametric surface in 3d"""
 
     points = []
@@ -21,7 +21,7 @@ def power_density_3d(srs, surface,
             points.append([surface.position(u, v), surface.normal(u, v)])
 
 
-    power_density = srs.calculate_power_density(points=points, normal=normal, rotations=rotations, translation=translation, nparticles=nparticles, gpu=gpu, nthreads=nthreads, max_level=max_level)
+    power_density = srs.calculate_power_density(points=points, normal=normal, rotations=rotations, translation=translation, nparticles=nparticles, gpu=gpu, nthreads=nthreads, max_level=max_level, quantity=quantity)
     P = [item[1] for item in power_density]
 
     X2 = []
@@ -41,7 +41,6 @@ def power_density_3d(srs, surface,
 
     colors =[]
     MAXP = max(P)
-    print('MAXP', MAXP)
     if MAXP == 0:
         MAXP=1
     PP = []
@@ -110,9 +109,7 @@ def power_density_3d(srs, surface,
     if show is True:
         plt.show()
 
-    if ret:
-        return plt
-    return
+    return power_density
 
 
 
@@ -429,8 +426,6 @@ def plot_power_density_stl (P, title='Power Density [$W/mm^2$]', elev=30, azim=3
         zmin = min([zmin, p[0][0][1], p[0][1][1], p[0][2][1]])
         ymax = max([ymax, p[0][0][2], p[0][1][2], p[0][2][2]])
         ymin = min([ymin, p[0][0][2], p[0][1][2], p[0][2][2]])
-
-    print(xmin, xmax, ymin, ymax, zmin, zmax)
 
     fig = plt.figure()
     ax = Axes3D(fig)
