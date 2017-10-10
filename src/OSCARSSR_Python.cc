@@ -4720,6 +4720,7 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
   int const   Dim = 3;
   int         NParticles = 0;
   int         GPU = -1;
+  PyObject*   NGPU = 0x0;
   int         NThreads = 0;
   double      Precision = 0.01;
   int         MaxLevel = -2;
@@ -4734,6 +4735,7 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
                                  "translation",
                                  "nparticles",
                                  "gpu",
+                                 "ngpu",
                                  "nthreads",
                                  "precision",
                                  "max_level",
@@ -4742,7 +4744,7 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
                                  "ofile",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|iOOiiidiiss",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|iOOiiOidiiss",
                                    const_cast<char **>(kwlist),
                                    &List_Points,
                                    &NormalDirection,
@@ -4750,6 +4752,7 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
                                    &List_Translation,
                                    &NParticles,
                                    &GPU,
+                                   &NGPU,
                                    &NThreads,
                                    &Precision,
                                    &MaxLevel,
@@ -4860,6 +4863,18 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
     return NULL;
   }
 
+  // Check ngpu input
+  int NumberOfGPUs = -1;
+  std::vector<int> GPUVector;
+  if (NGPU != 0x0) {
+    if (PyLong_Check(NGPU)) {
+      NumberOfGPUs = (int) PyLong_AsLong(NGPU);
+    } else if (PyList_Check(NGPU)) {
+      OSCARSPY::ListToVectorInt(NGPU, GPUVector);
+    }
+  }
+
+
   int ReturnQuantity = 0;
   std::string ReturnQuantityStr = ReturnQuantityChars;
   std::transform(ReturnQuantityStr.begin(), ReturnQuantityStr.end(), ReturnQuantityStr.begin(), ::toupper);
@@ -4882,7 +4897,19 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
   bool const Directional = NormalDirection == 0 ? false : true;
 
   try {
-    self->obj->CalculatePowerDensity(Surface, PowerDensityContainer, Dim, Directional, Precision, MaxLevel, MaxLevelExtended, NParticles, NThreads, GPU, ReturnQuantity);
+    self->obj->CalculatePowerDensity(Surface,
+                                     PowerDensityContainer,
+                                     Dim,
+                                     Directional,
+                                     Precision,
+                                     MaxLevel,
+                                     MaxLevelExtended,
+                                     NParticles,
+                                     NThreads,
+                                     GPU,
+                                     NumberOfGPUs,
+                                     GPUVector,
+                                     ReturnQuantity);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -4893,6 +4920,22 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
   }
+
+  // If not converged print warning
+  if (!PowerDensityContainer.AllConverged()) {
+    OSCARSPY::PyPrint_stderr("Not all points converged to desired precision.  Can try increasing 'max_level_extended'\n");
+  }
+
+  // Write the output file if requested
+  // Text output
+  //if (std::string(OutFileNameText) != "") {
+  //  PowerDensityContainer.WriteToFileText(OutFileNameText, Dim);
+  //}
+
+  // Binary output
+  //if (std::string(OutFileNameBinary) != "") {
+  //  PowerDensityContainer.WriteToFileBinary(OutFileNameBinary, Dim);
+  //}
 
 
   // Build the output list of: [[[x, y, z], PowerDensity], [...]]
@@ -5286,6 +5329,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
     return NULL;
   }
 
+  // If not converged print warning
   if (!PowerDensityContainer.AllConverged()) {
     OSCARSPY::PyPrint_stderr("Not all points converged to desired precision.  Can try increasing 'max_level_extended'\n");
   }

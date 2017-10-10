@@ -1954,6 +1954,7 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface,
   // THIS is the ENTRY POINT typically
   //
 
+  std::cout << "quant: " << ReturnQuantity << std::endl;
   // Check that particle has been set yet.  If fType is "" it has not been set yet
   if (fParticle.GetType() == "") {
     try {
@@ -2219,11 +2220,17 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
       if (iLevel > 8 && Result_Precision < Precision && BetaDiffMax < 2. / (Particle.GetGamma())) {
         Result_Level = iLevel;
         break;
+      } else if (iLevel > 8 && ThisSum == LastSum) {
+        // The assumption here is that zero is last and now
+        Result_Level = iLevel;
+        Result_Precision = 0;
+        break;
       }
 
       LastSum = ThisSum;
     }
 
+    // If a point does not converge mark it
     if (Result_Level == -1) {
       PowerDensityContainer.SetNotConverged(i);
     }
