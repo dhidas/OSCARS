@@ -1,1 +1,1 @@
-jupyter nbconvert --to html *ipynb
+jupyter nbconvert --to html --execute *ipynb

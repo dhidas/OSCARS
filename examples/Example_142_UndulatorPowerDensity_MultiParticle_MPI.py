@@ -23,25 +23,18 @@ comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
 
-# Get an OSCARS SR object
-osr = oscars.sr.sr()
-
-# Let's just make sure that each process only uses 1 threads since
-# we assume mpi is handeling this
-osr.set_nthreads_global(1)
+# Get an OSCARS SR object with nthreads=1 (meaning 1 thread per mpi execution)
+osr = oscars.sr.sr(nthreads=1)
 
 # Set a particle beam with non-zero emittance
-osr.set_particle_beam(type='electron',
-                      name='beam_0',
-                      energy_GeV=3,
-                      x0=[0, 0, -1],
-                      d0=[0, 0, 1],
-                      current=0.500,
-                      sigma_energy_GeV=0.001*3,
-                      beta=[1.5, 0.8],
-                      emittance=[0.9e-9, 0.008e-9],
-                      horizontal_direction=[1, 0, 0],
-                      lattice_reference=[0, 0, 0])
+osr.set_particle_beam(
+    energy_GeV=3,
+    x0=[0, 0, -1],
+    current=0.500,
+    sigma_energy_GeV=0.001*3,
+    beta=[1.5, 0.8],
+    emittance=[0.9e-9, 0.008e-9]
+)
 
 # Must set the start and stop time for calculations
 osr.set_ctstartstop(0, 2)
@@ -69,11 +62,12 @@ npoints = [51, 51]
 if rank == 0:
     # For rank 0 we calculate the ideal single-particle power density
     osr.set_new_particle(particle='ideal')
-    pd_multi = osr.calculate_power_density_rectangle(plane='XY',
-                                                     width=width,
-                                                     npoints=npoints,
-                                                     translation=rectangle_center
-                                                    )
+    pd_multi = osr.calculate_power_density_rectangle(
+        plane='XY',
+        width=width,
+        npoints=npoints,
+        translation=rectangle_center
+    )
     plot_power_density(pd_multi, ofile='UndulatorPowerDensity_Ideal.png', show=False)
 
     # Weight for each power density in summation
@@ -97,12 +91,13 @@ if rank == 0:
 
 else:
     # If not rank 0, calculate the desired power density
-    data = osr.calculate_power_density_rectangle(plane='XY',
-                                                 width=width,
-                                                 npoints=npoints,
-                                                 translation=rectangle_center,
-                                                 nparticles=particles_per_node
-                                                )
+    data = osr.calculate_power_density_rectangle(
+        plane='XY',
+        width=width,
+        npoints=npoints,
+        translation=rectangle_center,
+        nparticles=particles_per_node
+    )
 
     # Send results back to rank 0
     comm.send(data, dest=0)
