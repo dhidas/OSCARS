@@ -5,8 +5,8 @@ import oscars.sr
 from oscars.plots_mpl import *
 
 
-# Create a new OSCARS SR object
-osr = oscars.sr.sr()
+# Create a new OSCARS object.  Default to 8 threads and always use the GPU if available
+osr = oscars.sr.sr(nthreads=8, gpu=1)
 
 
 # Phase difference between fields in [rad]
