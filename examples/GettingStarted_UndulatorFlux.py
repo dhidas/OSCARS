@@ -2,7 +2,7 @@
 # coding: utf-8
 
 # Plots inline for notebook
-get_ipython().magic('matplotlib inline')
+get_ipython().run_line_magic('matplotlib', 'inline')
 
 # Import the OSCARS SR module
 import oscars.sr
@@ -39,7 +39,4 @@ flux = osr.calculate_flux_rectangle(
 
 # Plot flux
 plot_flux(flux)
-
-
-
 

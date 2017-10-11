@@ -50,6 +50,3 @@ pd_multi = osr.calculate_power_density_rectangle(
 
 plot_power_density(pd_multi, ofile='UndulatorPowerDensity_MultiParticle.png')
 
-
-
-

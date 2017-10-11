@@ -64,6 +64,3 @@ plot_spectra(
     ofile='UndulatorSpectrum.png'
 )
 
-
-
-

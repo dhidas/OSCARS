@@ -1,9 +1,3 @@
-# How to run this code:
-#   mpiexec -n 5 python Example_132_UndulatorFlux_MultiParticle_MPI.py
-
-
-# In this example MPI is used to calculate the flux in a multi-particle
-# simulation.  The rank 0 process calculates the ideal single-particle
 # flux and then waits for the other processes to return their data.
 # When a process returns the results are added to the others.  The results
 # are then plotted together and saved as a png.  If you want the plot to

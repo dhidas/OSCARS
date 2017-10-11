@@ -2,7 +2,7 @@
 # coding: utf-8
 
 # matplotlib plots inline
-get_ipython().magic('matplotlib inline')
+get_ipython().run_line_magic('matplotlib', 'inline')
 
 # Import the OSCARS SR module
 import oscars.sr
@@ -63,7 +63,4 @@ osr.clear_bfields()
 osr.add_bfield_file(ifile='GettingStarted_OSCARS.dat', iformat='OSCARS')
 
 plot_bfield(osr)
-
-
-
 

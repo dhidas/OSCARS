@@ -58,6 +58,3 @@ flux_multi = osr.calculate_flux_rectangle(
 
 plot_flux(flux_multi, ofile='UndulatorFlux_MultiParticle.png')
 
-
-
-

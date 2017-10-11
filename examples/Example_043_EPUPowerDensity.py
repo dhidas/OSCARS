@@ -47,6 +47,3 @@ power_densty = osr.calculate_power_density_rectangle(
 
 plot_power_density(power_densty)
 
-
-
-
