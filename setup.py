@@ -1,9 +1,9 @@
 import os
 import sys
 try:
-  from setuptools import setup
+    from setuptools import setup, Extension
 except ImportError:
-  from distutils.core import setup
+    from distutils.core import setup, Extension
 
 # Get Version numbering from Version.h
 v_major = ''
