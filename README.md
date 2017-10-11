@@ -15,7 +15,7 @@ That is all you need to do.  It is recommended that you also install jupyter, bu
 
 ## Installation - Intermediate : Python virtualenv
 
-One way to install OSCARS is using a python virtual nvironment:
+One way to install OSCARS is using a python virtual environment:
 
 ```
 # Create virtual env
