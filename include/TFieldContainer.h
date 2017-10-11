@@ -26,10 +26,8 @@ class TFieldContainer
     ~TFieldContainer ();
 
     void AddField (TField*);
+    void RemoveField (std::string const& Name);
 
-    double    GetFx (double const, double const, double const) const;
-    double    GetFy (double const, double const, double const) const;
-    double    GetFz (double const, double const, double const) const;
     TVector3D GetF  (double const, double const, double const) const;
     TVector3D GetF  (TVector3D const&) const;
 
@@ -39,7 +37,36 @@ class TFieldContainer
 
     void      Clear ();
 
-    void WriteToFile (std::string const& OutFileName, std::string const& OutFormat, TVector2D const& XLim, int const NX, TVector2D const& YLim, int const NY, TVector2D const& ZLim, int const NZ, std::string const Comment = "");
+    void WriteToFile (std::string const& OutFileName,
+                      std::string const& OutFormat,
+                      TVector2D const& XLim,
+                      int const NX,
+                      TVector2D const& YLim,
+                      int const NY,
+                      TVector2D const& ZLim,
+                      int const NZ,
+                      std::string const Comment = "");
+
+    void WriteToFileBinary (std::string const& OutFileName,
+                            std::string const& OutFormat,
+                            TVector2D const& XLim,
+                            int const NX,
+                            TVector2D const& YLim,
+                            int const NY,
+                            TVector2D const& ZLim,
+                            int const NZ,
+                            std::string const Comment = "",
+                            int const Version = 1);
+
+    void WriteToFileBinary_v1 (std::string const& OutFileName,
+                               std::string const& OutFormat,
+                               TVector2D const& XLim,
+                               int const NX,
+                               TVector2D const& YLim,
+                               int const NY,
+                               TVector2D const& ZLim,
+                               int const NZ,
+                               std::string const Comment = "");
 
   private:
     std::vector<TField*> fFields;

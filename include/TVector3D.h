@@ -14,6 +14,7 @@
 
 
 #include <iostream>
+#include <cmath>
 
 
 class TVector3D
@@ -29,6 +30,9 @@ class TVector3D
     inline double GetZ () const;
     inline TVector3D Orthogonal () const;
 
+    inline double GetTheta () const;
+    inline double GetPhi () const;
+
     void SetX (double const);
     void SetY (double const);
     void SetZ (double const);
@@ -37,10 +41,12 @@ class TVector3D
 
     double Mag () const;
     double Mag2 () const;
+    double Perp () const;
+    double Perp2 () const;
     double Dot (TVector3D const&) const;
-    double Perp2 (TVector3D const&) const;
     TVector3D Cross (TVector3D const&) const;
     TVector3D UnitVector () const;
+    double Angle (TVector3D const&) const;
 
     void RotateSelfX (double const);
     void RotateSelfY (double const);
@@ -54,7 +60,7 @@ class TVector3D
     TVector3D  operator  + (TVector3D const&) const;
     TVector3D  operator  - (TVector3D const&) const;
     TVector3D  operator  / (double const) const;
-    TVector3D  operator  - ();
+    TVector3D  operator  - () const;
     TVector3D& operator  = (TVector3D const&);
     TVector3D& operator += (TVector3D const&);
     TVector3D& operator -= (TVector3D const&);
@@ -134,6 +140,23 @@ inline TVector3D TVector3D::Orthogonal() const
   } else {
     return yy < zz ? TVector3D(-fZ, 0, fX) : TVector3D(fY, -fX, 0);
   }
+}
+
+
+
+
+inline double TVector3D::GetTheta () const
+{
+  // Return the polar angle theta
+  return fX == 0.0 && fY == 0.0 && fZ == 0.0 ? 0.0 : atan2(this->Perp(),fZ);
+}
+
+
+
+
+inline double TVector3D::GetPhi () const
+{
+  return fX == 0.0 && fY == 0.0 ? 0.0 : atan2(fY,fX);;
 }
 
 

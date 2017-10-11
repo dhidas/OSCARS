@@ -70,7 +70,7 @@ void TSpectrumContainer::Init (size_t const N, double const EFirst, double const
 
   // If you have zero elements I don't see the point of this
   if (N < 1) {
-    throw;
+    throw std::length_error("no points specified");
   }
 
   // If only one point just set it to the 'First' energy
@@ -81,8 +81,11 @@ void TSpectrumContainer::Init (size_t const N, double const EFirst, double const
 
   // Set the energy in each element
   for (size_t i = 0; i != fSpectrumPoints.size(); ++i) {
-    fSpectrumPoints[i].first = EFirst + (ELast - EFirst) / (N - 1) * (double) (i + 1);
+    fSpectrumPoints[i].first = EFirst + (ELast - EFirst) / (N - 1) * (double) (i);
   }
+
+  fNotConverged.clear();
+  fNotConverged.resize(fSpectrumPoints.size() / (8 * sizeof(int)), 0);
 
   return;
 }
@@ -105,6 +108,10 @@ void TSpectrumContainer::Init (std::vector<double> const& V)
     fSpectrumPoints.push_back( std::make_pair(V[i], 0.0) );
   }
 
+  fNotConverged.clear();
+  fNotConverged.resize(fSpectrumPoints.size() / (8 * sizeof(int)), 0);
+
+  return;
 }
 
 
@@ -115,7 +122,7 @@ void TSpectrumContainer::SetFlux (size_t const i, double const Flux)
 
   // Simple check
   if (i >= fSpectrumPoints.size()) {
-    throw;
+    throw std::out_of_range("index beyond fSpectrum points range");
   }
 
   fSpectrumPoints[i].second = Flux;
@@ -132,7 +139,7 @@ void TSpectrumContainer::SetPoint (size_t const i, double const Energy, double c
 
   // I can't decide if I want to be nice and resize or just throw...
   if (i >= fSpectrumPoints.size()) {
-    throw;
+    throw std::out_of_range("index beyond fSpectrum points range");
   }
 
   fSpectrumPoints[i].first  = Energy;
@@ -144,16 +151,18 @@ void TSpectrumContainer::SetPoint (size_t const i, double const Energy, double c
 
 
 
-void TSpectrumContainer::AddPoint (double const Energy, double const Flux)
+size_t TSpectrumContainer::AddPoint (double const Energy, double const Flux)
 {
   // Add an energy point to the end of the vector.
   fSpectrumPoints.push_back( std::make_pair(Energy, Flux) );
   fCompensation.push_back(0);
 
-  return;
+  if (fSpectrumPoints.size() > fNotConverged.size() * 8 * sizeof(int)) {
+    fNotConverged.push_back(0);
+  }
+
+  return fSpectrumPoints.size();
 }
-
-
 
 
 
@@ -164,7 +173,7 @@ void TSpectrumContainer::AddToFlux (size_t const i, double const Flux)
 
   // Simple check
   if (i >= fSpectrumPoints.size()) {
-    throw;
+    throw std::out_of_range("index beyond fSpectrum points range");
   }
 
   double Sum = fSpectrumPoints[i].second;
@@ -174,6 +183,53 @@ void TSpectrumContainer::AddToFlux (size_t const i, double const Flux)
   fSpectrumPoints[i].second = t;
 
   return;
+}
+
+
+
+
+void TSpectrumContainer::SetNotConverged (size_t const i)
+{
+  // Set the converged bit for this point
+
+  size_t const VectorIndex = i / (8 * sizeof(int));
+  if (VectorIndex >= fNotConverged.size()) {
+    throw;
+  }
+
+  int const Bit = (0x1 << (i % (8 * sizeof(int))));
+
+  fNotConverged[VectorIndex] |= Bit;
+
+  return;
+}
+
+
+
+
+
+void TSpectrumContainer::Scale (double const ScaleFactor)
+{
+  // Scale all flux by the input factor
+  //
+  for (size_t i = 0; i != fSpectrumPoints.size(); ++i) {
+    fSpectrumPoints[i].second *= ScaleFactor;
+  }
+
+  return;
+}
+
+
+
+
+bool TSpectrumContainer::AllConverged () const
+{
+  for (std::vector<int>::const_iterator it = fNotConverged.begin(); it != fNotConverged.end(); ++it) {
+    if (*it != 0x0) {
+      return false;
+    }
+  }
+  return true;
 }
 
 
@@ -233,9 +289,8 @@ void TSpectrumContainer::WriteToFileText (std::string const FileName, std::strin
   std::ofstream f(FileName.c_str());
 
   // Check if file is open
-  // UPDATE: try a more robust check
   if (!f.is_open()) {
-    throw;
+    throw std::ifstream::failure("cannot open file for writing");
   }
 
   // If the header is specified, write one!
@@ -276,15 +331,19 @@ void TSpectrumContainer::WriteToFileBinary (std::string const FileName, std::str
   // Check if file is open
   // UPDATE: try a more robust check
   if (!f.is_open()) {
-    std::cout << "ERROR opening file" << std::endl;
-    throw;
+    throw std::ifstream::failure("cannot open file for binary write");
   }
 
+  // I suspect there is only a need for float precision for saved data
+  float a = 0;
+  float b = 0;
 
   // Loop over spectrum and print to file
   for (std::vector<std::pair<double, double> >::const_iterator it = fSpectrumPoints.begin(); it != fSpectrumPoints.end(); ++it) {
-    f.write((char*) &(it->first), sizeof(double));
-    f.write((char*) &(it->second), sizeof(double));
+    a = (float) it->first;
+    b = (float) it->second;
+    f.write((char*) &a, sizeof(float));
+    f.write((char*) &b, sizeof(float));
   }
 
   // Close file
@@ -301,6 +360,7 @@ void TSpectrumContainer::Clear ()
   // Clear contents
   fSpectrumPoints.clear();
   fCompensation.clear();
+  fNotConverged.clear();
 
   return;
 }
@@ -320,7 +380,7 @@ void TSpectrumContainer::AverageFromFilesText (std::vector<std::string> const& F
 
   // Check that we have at least one file!
   if (Files.size() < 1) {
-    throw;
+    throw std::length_error("no files specified");
   }
 
   // Double number of files for averaging
@@ -367,7 +427,7 @@ void TSpectrumContainer::AverageFromFilesText (std::vector<std::string> const& F
 
         // This must be file index 0
         if (i != 0) {
-          throw;
+          throw std::length_error("files are not the same length");
         }
 
         break;
@@ -408,7 +468,7 @@ void TSpectrumContainer::AverageFromFilesBinary (std::vector<std::string> const&
 
   // Check that we have at least one file!
   if (Files.size() < 1) {
-    throw;
+    throw std::length_error("no files specified");
   }
 
   // Double number of files for averaging
@@ -428,7 +488,8 @@ void TSpectrumContainer::AverageFromFilesBinary (std::vector<std::string> const&
   }
 
   // Variables used for writing to file
-  double X, V;
+  double X = 0;
+  double V = 0;
 
   // Are we done reading yet
   bool NotDone = true;
@@ -436,15 +497,22 @@ void TSpectrumContainer::AverageFromFilesBinary (std::vector<std::string> const&
   // Keep track of which point we are on
   size_t ip = 0;
 
-    // Loop over all points until done
+  // For reading data
+  float a = 0;
+  float b = 0;
+
+  // Loop over all points until done
   while (NotDone) {
 
     // For each point loop over files and average
     for (size_t i = 0; i != f.size(); ++i) {
 
       // Read data from current file
-      f[i].read( (char*)  &X, sizeof(double));
-      f[i].read( (char*)  &V, sizeof(double));
+      f[i].read( (char*)  &a, sizeof(float));
+      f[i].read( (char*)  &b, sizeof(float));
+
+      X = (double) a;
+      V = (double) b;
 
       // If we hit an eof we are done.
       if (f[i].fail()) {
@@ -454,7 +522,7 @@ void TSpectrumContainer::AverageFromFilesBinary (std::vector<std::string> const&
 
         // This must be file index 0
         if (i != 0) {
-          throw;
+          throw std::length_error("files are not the same length");
         }
 
         break;

@@ -158,34 +158,91 @@ void TSurfacePoints_Rectangle::Init (std::string const& Plane, int const NX1, in
   fNormal = Normal;
 
   // Stepsize in each dimension
-  fX1StepSize = WidthX1 / (fNX1 - 1);
-  fX2StepSize = WidthX2 / (fNX2 - 1);
+  fX1StepSize = fNX1 > 1 ? WidthX1 / (fNX1 - 1) : 0;
+  fX2StepSize = fNX2 > 1 ? WidthX2 / (fNX2 - 1) : 0;
+
+  // Normal vector based on Plane
+  TVector3D NormalVector;
 
   // Which plane did you pick to start!?
   if (P == "XY") {
-    fStartVector.SetXYZ(-WidthX1 / 2., -WidthX2 / 2., 0);
+    if (fNX1 > 1 && fNX2 > 1) {
+      fStartVector.SetXYZ(-WidthX1 / 2., -WidthX2 / 2., 0);
+    } else if (fNX1 <= 1 && fNX2 <= 1) {
+      fStartVector.SetXYZ(0, 0, 0);
+    } else if (fNX1 <= 1) {
+      fStartVector.SetXYZ(0., -WidthX2 / 2., 0);
+    } else if (fNX2 <= 1) {
+      fStartVector.SetXYZ(-WidthX1 / 2., 0, 0);
+    }
     fX1Vector.SetXYZ(fX1StepSize, 0, 0);
     fX2Vector.SetXYZ(0, fX2StepSize, 0);
+    NormalVector.SetXYZ(0, 0, 1);
   } else if (P == "YX") {
-    fStartVector.SetXYZ(-WidthX2 / 2., -WidthX1 / 2., 0);
+    if (fNX1 > 1 && fNX2 > 1) {
+      fStartVector.SetXYZ(-WidthX2 / 2., -WidthX1 / 2., 0);
+    } else if (fNX1 <= 1 && fNX2 <= 1) {
+      fStartVector.SetXYZ(0, 0, 0);
+    } else if (fNX1 <= 1) {
+      fStartVector.SetXYZ(-WidthX2 / 2., 0, 0);
+    } else if (fNX2 <= 1) {
+      fStartVector.SetXYZ(0, -WidthX1 / 2., 0);
+    }
     fX2Vector.SetXYZ(fX2StepSize, 0, 0);
     fX1Vector.SetXYZ(0, fX1StepSize, 0);
+    NormalVector.SetXYZ(0, 0, -1);
   } else if (P == "XZ") {
-    fStartVector.SetXYZ(-WidthX1 / 2., 0, -WidthX2 / 2.);
+    if (fNX1 > 1 && fNX2 > 1) {
+      fStartVector.SetXYZ(-WidthX1 / 2., 0, -WidthX2 / 2.);
+    } else if (fNX1 <= 1 && fNX2 <= 1) {
+      fStartVector.SetXYZ(0, 0, 0);
+    } else if (fNX1 <= 1) {
+      fStartVector.SetXYZ(0, 0, -WidthX2 / 2.);
+    } else if (fNX2 <= 1) {
+      fStartVector.SetXYZ(-WidthX1 / 2., 0, 0);
+    }
     fX1Vector.SetXYZ(fX1StepSize, 0, 0);
     fX2Vector.SetXYZ(0, 0, fX2StepSize);
+    NormalVector.SetXYZ(0, -1, 0);
   } else if (P == "ZX") {
-    fStartVector.SetXYZ(-WidthX2 / 2., 0, -WidthX1 / 2.);
+    if (fNX1 > 1 && fNX2 > 1) {
+      fStartVector.SetXYZ(-WidthX2 / 2., 0, -WidthX1 / 2.);
+    } else if (fNX1 <= 1 && fNX2 <= 1) {
+      fStartVector.SetXYZ(0, 0, 0);
+    } else if (fNX1 <= 1) {
+      fStartVector.SetXYZ(-WidthX2 / 2., 0, 0);
+    } else if (fNX2 <= 1) {
+      fStartVector.SetXYZ(0., 0, -WidthX1 / 2.);
+    }
     fX2Vector.SetXYZ(fX2StepSize, 0, 0);
     fX1Vector.SetXYZ(0, 0, fX1StepSize);
+    NormalVector.SetXYZ(0, 1, 0);
   } else if (P == "YZ") {
-    fStartVector.SetXYZ(0, -WidthX1 / 2., -WidthX2 / 2.);
+    if (fNX1 > 1 && fNX2 > 1) {
+      fStartVector.SetXYZ(0, -WidthX1 / 2., -WidthX2 / 2.);
+    } else if (fNX1 <= 1 && fNX2 <= 1) {
+      fStartVector.SetXYZ(0, 0, 0);
+    } else if (fNX1 <= 1) {
+      fStartVector.SetXYZ(0, 0, -WidthX2 / 2.);
+    } else if (fNX2 <= 1) {
+      fStartVector.SetXYZ(0, -WidthX1 / 2., 0);
+    }
     fX1Vector.SetXYZ(0, fX1StepSize, 0);
     fX2Vector.SetXYZ(0, 0, fX2StepSize);
+    NormalVector.SetXYZ(1, 0, 0);
   } else if (P == "ZY") {
-    fStartVector.SetXYZ(0, -WidthX2 / 2., -WidthX1 / 2.);
+    if (fNX1 > 1 && fNX2 > 1) {
+      fStartVector.SetXYZ(0, -WidthX2 / 2., -WidthX1 / 2.);
+    } else if (fNX1 <= 1 && fNX2 <= 1) {
+      fStartVector.SetXYZ(0, 0, 0);
+    } else if (fNX1 <= 1) {
+      fStartVector.SetXYZ(0, -WidthX2 / 2., 0);
+    } else if (fNX2 <= 1) {
+      fStartVector.SetXYZ(0, 0, -WidthX1 / 2.);
+    }
     fX2Vector.SetXYZ(0, fX2StepSize, 0);
     fX1Vector.SetXYZ(0, 0, fX1StepSize);
+    NormalVector.SetXYZ(-1, 0, 0);
   } else {
     throw std::invalid_argument("not a valid surface string: XY YX XZ ZX YZ ZY");
   }
@@ -195,9 +252,11 @@ void TSurfacePoints_Rectangle::Init (std::string const& Plane, int const NX1, in
   fX1Vector.RotateSelfXYZ(Rotations);
   fX2Vector.RotateSelfXYZ(Rotations);
   fStartVector += Translation;
+  NormalVector.RotateSelfXYZ(Rotations);
+  fNormalVector = NormalVector;
 
   // Calculate a normal unit vector
-  fNormalVector = fX1Vector.Cross(fX2Vector).UnitVector();
+  //fNormalVector = fX1Vector.Cross(fX2Vector).UnitVector();
 
   // Reverse the direction of the normal if requested
   if (fNormal == -1) {
@@ -223,7 +282,7 @@ TVector3D TSurfacePoints_Rectangle::GetXYZ (size_t const i) const
 {
   // Get the XYZ coordinate for the ith point
 
-  int const ix1 = i / fNX2;
+  int const ix1 = (int) (i / fNX2);
   int const ix2 = i % fNX2;
 
   return (fStartVector + ix1 * fX1Vector + ix2 * fX2Vector);
@@ -244,7 +303,7 @@ size_t TSurfacePoints_Rectangle::GetNPoints () const
 double TSurfacePoints_Rectangle::GetX1 (size_t const i) const
 {
   // Get the X1 coordinate in this frame
-  int const ix1 = i / fNX2;
+  int const ix1 = (int) (i / fNX2);
   return fX1StepSize * ix1 - fX1Vector.Mag() * (fNX1 - 1)/ 2.;
 }
 

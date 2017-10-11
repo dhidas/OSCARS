@@ -11,9 +11,13 @@
 
 #include <cmath>
 
-TField3D_Gaussian::TField3D_Gaussian ()
+TField3D_Gaussian::TField3D_Gaussian (std::string const Name)
 {
   // Constructor
+
+  // Set the name and default scale factors
+  this->SetName(Name);
+  this->SetScaleFactorMinimumMaximum();
 }
 
 
@@ -21,9 +25,14 @@ TField3D_Gaussian::TField3D_Gaussian ()
 TField3D_Gaussian::TField3D_Gaussian (TVector3D const& PeakField,
                                       TVector3D const& Center,
                                       TVector3D const& Sigma,
-                                      TVector3D const& Rotations)
+                                      TVector3D const& Rotations,
+                                      std::string const& Name)
 {
   // Constructor you should use.. just a suggestion...
+
+  // Set the name and default scale factors
+  this->SetName(Name);
+  this->SetScaleFactorMinimumMaximum();
 
   fPeakField = PeakField;
   fPeakField.RotateSelfXYZ(Rotations);
@@ -53,30 +62,6 @@ TField3D_Gaussian::~TField3D_Gaussian ()
 {
   // Anti-Constructor
 }
-
-
-
-double TField3D_Gaussian::GetFx (double const X, double const Y, double const Z) const
-{
-  return this->GetF(TVector3D(X, Y, Z)).GetX();
-}
-
-
-
-
-double TField3D_Gaussian::GetFy (double const X, double const Y, double const Z) const
-{
-  return this->GetF(TVector3D(X, Y, Z)).GetY();
-}
-
-
-
-
-double TField3D_Gaussian::GetFz (double const X, double const Y, double const Z) const
-{
-  return this->GetF(TVector3D(X, Y, Z)).GetZ();
-}
-
 
 
 

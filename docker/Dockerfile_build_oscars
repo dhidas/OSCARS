@@ -1,0 +1,24 @@
+# This file is intended to create a docker image for running oscars for distribution
+#
+#
+# docker build -t oscars -f docker/Dockerfile_build_oscars .
+# docker tag oscars dhidas/oscars
+# docker login
+# docker push dhidas/oscars
+# docker run -v `pwd`/data:/oscars/data dhidas/oscars
+# docker run -it -v `pwd`/data:/oscars/data dhidas/oscars /bin/bash
+
+FROM python:3
+
+RUN pip install oscars==1.37.1.dev3
+RUN pip install numpy
+RUN pip install matplotlib
+RUN pip install ipython
+RUN pip install jupyter
+RUN pip install scipy
+
+RUN mkdir /oscars
+WORKDIR /oscars
+ADD examples examples
+
+CMD ["python", "examples/Test.py"]

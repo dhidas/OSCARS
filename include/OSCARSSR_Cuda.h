@@ -22,9 +22,14 @@
 #include "TSurfacePoints.h"
 #include "T3DScalarContainer.h"
 
+class OSCARSSR;
+
+
 extern "C" int  OSCARSSR_Cuda_GetDeviceCount ();
 
-extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (TParticleA& Particle,
+std::string OSCARSSR_Cuda_GetDeviceProperties (int const);
+
+extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
                                                 TSurfacePoints const& Surface,
                                                 double const Energy_eV,
                                                 T3DScalarContainer& FluxContainer,
@@ -32,35 +37,33 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (TParticleA& Particle,
                                                 double const Angle = 0,
                                                 TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
                                                 TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
-                                                int const Dimension = 3,
-                                                double const Weight = 1,
-                                                std::string const& OutFileName = "");
+                                                int const NParticles = 0,
+                                                std::vector<int> const& GPUVector = std::vector<int>(),
+                                                double const Precision = 0.01,
+                                                int const MaxLevel = 25,
+                                                int    const ReturnQuantity = 0);
 
-extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (TParticleA& Particle,
+extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
                                                     TVector3D const& ObservationPoint,
                                                     TSpectrumContainer& Spectrum,
-                                                    std::string const& Polarization = "all",
-                                                    double const Angle = 0,
-                                                    TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
-                                                    TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
-                                                    double const Weight = 1);
+                                                    std::string const& Polarization,
+                                                    double const Angle,
+                                                    TVector3D const& HorizontalDirection,
+                                                    TVector3D const& PropogationDirection,
+                                                    int const NParticles,
+                                                    std::vector<int> const& GPUVector,
+                                                    double const Precision,
+                                                    int const MaxLevel,
+                                                    int const ReturnQuantity);
 
-extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (TParticleA& Particle, TSurfacePoints const& Surface, T3DScalarContainer& PowerDensityContainer, int const Dimension, bool const Directional, double const Weight, std::string const& OutFileName = "");
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
+                                                        TSurfacePoints const& Surface,
+                                                        T3DScalarContainer& PowerDensityContainer,
+                                                        int const NParticles,
+                                                        std::vector<int> const& GPUVector,
+                                                        double const Precision,
+                                                        int const MaxLevel,
+                                                        int const ReturnQuantity = 0);
 
 
 

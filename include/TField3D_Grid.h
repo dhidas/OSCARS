@@ -21,12 +21,14 @@ class TField3D_Grid : public TField
 {
 
   public:
-    TField3D_Grid ();
+    TField3D_Grid (std::string const& Name = "");
+
     TField3D_Grid (std::string         const& InFileName,
                    std::string         const& FileFormat = "OSCARS",
                    TVector3D           const& Rotations = TVector3D(0, 0, 0),
                    TVector3D           const& Translation = TVector3D(0, 0, 0),
                    std::vector<double> const& Scaling = std::vector<double>(),
+                   std::string         const& Name = "",
                    char                const  CommentChar = '#');
 
     TField3D_Grid (std::vector<std::pair<double, std::string> > Mapping,
@@ -35,13 +37,11 @@ class TField3D_Grid : public TField
                    TVector3D                             const& Rotations = TVector3D(0, 0, 0),
                    TVector3D                             const& Translation = TVector3D(0, 0, 0),
                    std::vector<double>                   const& Scaling = std::vector<double>(),
+                   std::string                           const& Name = "",
                    char                                  const  CommentChar = '#');
 
     ~TField3D_Grid ();
 
-    double    GetFx (double const X, double const Y, double const Z) const;
-    double    GetFy (double const X, double const Y, double const Z) const;
-    double    GetFz (double const X, double const Y, double const Z) const;
     TVector3D GetF  (double const X, double const Y, double const Z) const;
     TVector3D GetF  (TVector3D const& X) const;
 
@@ -62,6 +62,17 @@ class TField3D_Grid : public TField
                              TVector3D           const& Translation = TVector3D(0, 0, 0),
                              std::vector<double> const& Scaling = std::vector<double>(),
                              char                const  CommentChar = '#');
+
+    void ReadFile_Binary (std::string const& InFileName,
+                          TVector3D   const& Rotations = TVector3D(0, 0, 0),
+                          TVector3D   const& Translation = TVector3D(0, 0, 0),
+                          std::vector<double> const& Scaling = std::vector<double>());
+
+    void ReadFile_Binary_v1 (std::ifstream& fi,
+                             std::string const& InFormat,
+                             TVector3D const& Rotations = TVector3D(0, 0, 0),
+                             TVector3D const& Translation = TVector3D(0, 0, 0),
+                             std::vector<double> const& Scaling = std::vector<double>());
 
     void ReadFile_SRW       (std::string const& InFileName,
                              TVector3D   const& Rotations = TVector3D(0, 0, 0),
@@ -134,9 +145,9 @@ class TField3D_Grid : public TField
 
   private:
     // Dimension and position data
-    int    fNX;
-    int    fNY;
-    int    fNZ;
+    size_t fNX;
+    size_t fNY;
+    size_t fNZ;
     double fXStart;
     double fYStart;
     double fZStart;
@@ -172,12 +183,13 @@ inline std::ostream& operator << (std::ostream& os, TField3D_Grid const& o)
 {
   // For easy printing
   os << "TField3D_Grid " << "\n"
+     << "Name          " << o.GetName()   << "\n"
      << "XRange        " << o.GetXRange() << "\n"
      << "YRange        " << o.GetYRange() << "\n"
      << "ZRange        " << o.GetZRange() << "\n"
-     << "XStep         " << o.GetXStep() << "\n"
-     << "YStep         " << o.GetYStep() << "\n"
-     << "ZStep         " << o.GetZStep() << "\n";
+     << "XStep         " << o.GetXStep()  << "\n"
+     << "YStep         " << o.GetYStep()  << "\n"
+     << "ZStep         " << o.GetZStep()  << "\n";
 
   return os;
 }

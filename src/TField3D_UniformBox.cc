@@ -12,8 +12,15 @@
 
 #include <cmath>
 
-TField3D_UniformBox::TField3D_UniformBox (double const Fx, double const Fy, double const Fz)
+TField3D_UniformBox::TField3D_UniformBox (double      const  Fx,
+                                          double      const  Fy,
+                                          double      const  Fz,
+                                          std::string const& Name)
 {
+  // Set the name and default scale factors
+  this->SetName(Name);
+  this->SetScaleFactorMinimumMaximum();
+
   fField = TVector3D(Fx, Fy, Fz);
   fWidth  = TVector3D(0, 0, 0);
   fCenter = TVector3D(0, 0, 0);
@@ -27,11 +34,16 @@ TField3D_UniformBox::TField3D_UniformBox (double const Fx, double const Fy, doub
 
 
 
-TField3D_UniformBox::TField3D_UniformBox (TVector3D const& Field,
-                                          TVector3D const& Width,
-                                          TVector3D const& Center,
-                                          TVector3D const& Rotations)
+TField3D_UniformBox::TField3D_UniformBox (TVector3D   const& Field,
+                                          TVector3D   const& Width,
+                                          TVector3D   const& Center,
+                                          TVector3D   const& Rotations,
+                                          std::string const& Name)
 {
+  // Set the name and default scale factors
+  this->SetName(Name);
+  this->SetScaleFactorMinimumMaximum();
+
   fField = Field;
   fField.RotateSelfXYZ(Rotations);
 

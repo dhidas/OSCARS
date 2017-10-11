@@ -122,8 +122,8 @@ template <class T> class TSpline1D3
     void Derivatives ()
     {
       // Number in vectors
-      size_t const N = fX.size();
-      if (N != fY.size()) {
+      int const N = (int) fX.size();
+      if (N != (int) fY.size()) {
         throw;
       }
 
@@ -136,7 +136,7 @@ template <class T> class TSpline1D3
       fYPP.resize(N);
 
       T p;
-      double sig;
+      T sig;
 
       std::vector<T> u(N);
 
@@ -152,7 +152,7 @@ template <class T> class TSpline1D3
       //}
 
 
-      for (size_t i = 1; i < N-1; ++i) {
+      for (int i = 1; i < N-1; ++i) {
         sig = (fX[i] - fX[i-1]) / (fX[i+1] - fX[i-1]);
         p = sig * fYPP[i-1] + T(2);
         fYPP[i] = (sig - 1.) / p;
@@ -183,6 +183,43 @@ template <class T> class TSpline1D3
       return;
     }
 
+    void Clear ()
+    {
+      // Clear all vectors
+      fX.clear();
+      fY.clear();
+      fYPP.clear();
+    }
+
+    size_t GetNPoints () const
+    {
+      return fX.size();
+    }
+
+    double GetXStart () const
+    {
+      return fX.front();
+    }
+
+    double GetXStop () const
+    {
+      return fX.back();
+    }
+
+    double GetX (int const i) const
+    {
+      return fX[i];
+    }
+
+    T const& GetY (int const i) const
+    {
+      return fY[i];
+    }
+
+    T const& GetYPP (int const i) const
+    {
+      return fYPP[i];
+    }
 
   private:
     std::vector<double> fX;   // x-values
@@ -205,6 +242,8 @@ class TSpline1D3_1d : public TSpline1D3<double>
 
     void ReadFile (std::string const& InFileName)
     {
+      // Unfinished
+
       std::vector<double> X;
       std::vector<double> Y;
 

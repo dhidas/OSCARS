@@ -22,6 +22,10 @@ void T3DScalarContainer::AddPoint (TVector3D const& X, double const V)
 {
   fValues.push_back( T3DScalar(X, V) );
   fCompensation.push_back(0);
+
+  if (fValues.size() > fNotConverged.size() * 8 * sizeof(int)) {
+    fNotConverged.push_back(0);
+  }
   return;
 }
 
@@ -49,12 +53,43 @@ void T3DScalarContainer::AddToPoint (size_t const i, double const V)
 
 
 
+void T3DScalarContainer::SetNotConverged (size_t const i)
+{
+  // Set the converged bit for this point
+
+  size_t const VectorIndex = i / (8 * sizeof(int));
+  if (VectorIndex >= fNotConverged.size()) {
+    throw;
+  }
+
+  int const Bit = (0x1 << (i % (8 * sizeof(int))));
+
+  fNotConverged[VectorIndex] |= Bit;
+
+  return;
+}
+
+
+
+bool T3DScalarContainer::AllConverged () const
+{
+  for (std::vector<int>::const_iterator it = fNotConverged.begin(); it != fNotConverged.end(); ++it) {
+    if (*it != 0x0) {
+      return false;
+    }
+  }
+  return true;
+}
+
+
+
 void T3DScalarContainer::Clear ()
 {
   // Clear all contents from the container
 
   fValues.clear();
   fCompensation.clear();
+  fNotConverged.clear();
 
   return;
 }
@@ -178,6 +213,9 @@ void T3DScalarContainer::AverageFromFilesText (std::vector<std::string> const& F
     f[i].close();
   }
 
+  fNotConverged.clear();
+  fNotConverged.resize(fValues.size() / (8 * sizeof(int)), 0);
+
   return;
 }
 
@@ -213,14 +251,23 @@ void T3DScalarContainer::AverageFromFilesBinary (std::vector<std::string> const&
     }
   }
 
-  // Variables used for writing to file
-  double X, Y, Z, V;
+  // Variables used for reading from file
+  double X;
+  double Y;
+  double Z;
+  double V;
 
   // Are we done reading yet
   bool NotDone = true;
 
   // Keep track of which point we are on
   size_t ip = 0;
+
+  // For reading data
+  float a = 0;
+  float b = 0;
+  float c = 0;
+  float d = 0;
 
   // Must be 2 or 3 D at the moment
   if (Dimension == 2) {
@@ -232,9 +279,13 @@ void T3DScalarContainer::AverageFromFilesBinary (std::vector<std::string> const&
       for (size_t i = 0; i != f.size(); ++i) {
 
         // Read data from current file
-        f[i].read( (char*)  &X, sizeof(double));
-        f[i].read( (char*)  &Y, sizeof(double));
-        f[i].read( (char*)  &V, sizeof(double));
+        f[i].read( (char*)  &a, sizeof(float));
+        f[i].read( (char*)  &b, sizeof(float));
+        f[i].read( (char*)  &d, sizeof(float));
+
+        X = (double) a;
+        Y = (double) b;
+        V = (double) d;
 
         // If we hit an eof we are done.
         if (f[i].fail()) {
@@ -270,10 +321,15 @@ void T3DScalarContainer::AverageFromFilesBinary (std::vector<std::string> const&
       for (size_t i = 0; i != f.size(); ++i) {
 
         // Read data from current file
-        f[i].read( (char*)  &X, sizeof(double));
-        f[i].read( (char*)  &Y, sizeof(double));
-        f[i].read( (char*)  &Z, sizeof(double));
-        f[i].read( (char*)  &V, sizeof(double));
+        f[i].read( (char*)  &a, sizeof(float));
+        f[i].read( (char*)  &b, sizeof(float));
+        f[i].read( (char*)  &c, sizeof(float));
+        f[i].read( (char*)  &d, sizeof(float));
+
+        X = (double) a;
+        Y = (double) b;
+        Z = (double) c;
+        V = (double) d;
 
         // If we hit an eof we are done.
         if (f[i].fail()) {
@@ -310,7 +366,22 @@ void T3DScalarContainer::AverageFromFilesBinary (std::vector<std::string> const&
     f[i].close();
   }
 
+  fNotConverged.clear();
+  fNotConverged.resize(fValues.size() / (8 * sizeof(int)), 0);
+
   return;
+}
+
+
+
+
+
+void T3DScalarContainer::WeightAll (double const Weight)
+{
+  for (size_t i = 0; i != fValues.size(); ++i) {
+    fValues[i].SetV( fValues[i].GetV() * Weight );
+    fCompensation[i] = 0;
+  }
 }
 
 
@@ -319,7 +390,8 @@ void T3DScalarContainer::AverageFromFilesBinary (std::vector<std::string> const&
 
 
 
-void T3DScalarContainer::WriteToFileText (std::string const& OutFileName, int const Dimension)
+void T3DScalarContainer::WriteToFileText (std::string const& OutFileName,
+                                          int const Dimension)
 {
   // Write to file in text format
   // If writing to a file, open it and set to scientific output
@@ -348,7 +420,8 @@ void T3DScalarContainer::WriteToFileText (std::string const& OutFileName, int co
 }
 
 
-void T3DScalarContainer::WriteToFileBinary (std::string const& OutFileName, int const Dimension)
+void T3DScalarContainer::WriteToFileBinary (std::string const& OutFileName,
+                                            int const Dimension)
 {
   // Write the data in simple binary format.  I would like to use machine independent types for this eventually
 
@@ -359,34 +432,34 @@ void T3DScalarContainer::WriteToFileBinary (std::string const& OutFileName, int 
   }
 
   // Variables for writing
-  double X;
-  double Y;
-  double Z;
-  double V;
+  float X = 0;
+  float Y = 0;
+  float Z = 0;
+  float V = 0;
 
   if (Dimension == 2) {
     for (size_t i = 0; i != this->GetNPoints(); ++i) {
       TVector3D const& Obs = this->GetPoint(i).GetX();
-      X = Obs.GetX();
-      Y = Obs.GetY();
-      V = this->GetPoint(i).GetV();
+      X = (float) Obs.GetX();
+      Y = (float) Obs.GetY();
+      V = (float) this->GetPoint(i).GetV();
 
-      of.write((char*) &X, sizeof(double));
-      of.write((char*) &Y, sizeof(double));
-      of.write((char*) &V, sizeof(double));
+      of.write((char*) &X, sizeof(float));
+      of.write((char*) &Y, sizeof(float));
+      of.write((char*) &V, sizeof(float));
     }
   } else if (Dimension == 3) {
     for (size_t i = 0; i != this->GetNPoints(); ++i) {
       TVector3D const& Obs = this->GetPoint(i).GetX();
-      X = Obs.GetX();
-      Y = Obs.GetY();
-      Z = Obs.GetZ();
-      V = this->GetPoint(i).GetV();
+      X = (float) Obs.GetX();
+      Y = (float) Obs.GetY();
+      Z = (float) Obs.GetZ();
+      V = (float) this->GetPoint(i).GetV();
 
-      of.write((char*) &X, sizeof(double));
-      of.write((char*) &Y, sizeof(double));
-      of.write((char*) &Z, sizeof(double));
-      of.write((char*) &V, sizeof(double));
+      of.write((char*) &X, sizeof(float));
+      of.write((char*) &Y, sizeof(float));
+      of.write((char*) &Z, sizeof(float));
+      of.write((char*) &V, sizeof(float));
     }
   } else {
     throw std::out_of_range("incorrect dimensions");

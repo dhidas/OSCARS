@@ -22,6 +22,20 @@ TParticleTrajectoryPoints::TParticleTrajectoryPoints ()
 
   // Default DeltaT for this mode to zero
   fDeltaT = 0;
+
+  // Create mutex locking structure
+  fLock_mutex = new std::mutex();
+}
+
+
+
+
+TParticleTrajectoryPoints::TParticleTrajectoryPoints (const TParticleTrajectoryPoints& TPTP)
+{
+  // Copy constructor
+
+  // Create mutex locking structure
+  fLock_mutex = new std::mutex();
 }
 
 
@@ -31,6 +45,9 @@ TParticleTrajectoryPoints::TParticleTrajectoryPoints (double const dt)
   // Default constructor
 
   fDeltaT = dt;
+
+  // Create mutex locking structure
+  fLock_mutex = new std::mutex();
 }
 
 
@@ -41,14 +58,29 @@ TParticleTrajectoryPoints::~TParticleTrajectoryPoints ()
 
   this->Clear();
 
+  // Delete locking if it exists
+  if (fLock_mutex != 0x0) {
+    delete fLock_mutex;
+    //fLock_mutex=NULL;
+  }
+
 }
+
+
+
+
+TParticleTrajectoryPoint const& TParticleTrajectoryPoints::GetPoint (size_t const i) const
+{
+  return fP[i];
+}
+
 
 
 
 
 TVector3D const& TParticleTrajectoryPoints::GetX (size_t const i) const
 {
-  return fX[i];
+  return fP[i].GetX();
 }
 
 
@@ -57,7 +89,7 @@ TVector3D const& TParticleTrajectoryPoints::GetX (size_t const i) const
 
 TVector3D const& TParticleTrajectoryPoints::GetB (size_t const i) const
 {
-  return fB[i];
+  return fP[i].GetB();
 }
 
 
@@ -73,7 +105,7 @@ TVector3D TParticleTrajectoryPoints::GetV (size_t const i) const
 
 TVector3D const& TParticleTrajectoryPoints::GetAoverC (size_t const i) const
 {
-  return fAoverC[i];
+  return fP[i].GetAoverC();
 }
 
 
@@ -83,6 +115,30 @@ TVector3D const& TParticleTrajectoryPoints::GetAoverC (size_t const i) const
 TVector3D TParticleTrajectoryPoints::GetA (size_t const i) const
 {
   return this->GetAoverC(i) * TOSCARSSR::C();
+}
+
+
+
+
+double TParticleTrajectoryPoints::GetT (size_t const i) const
+{
+  return fT[i];
+}
+
+
+
+
+double TParticleTrajectoryPoints::GetTStart () const
+{
+  return fT.front();
+}
+
+
+
+
+double TParticleTrajectoryPoints::GetTStop () const
+{
+  return fT.back();
 }
 
 
@@ -107,30 +163,64 @@ void TParticleTrajectoryPoints::SetDeltaT (double const DT)
 
 size_t TParticleTrajectoryPoints::GetNPoints () const
 {
-  return fX.size();
+  return fP.size();
 }
 
 
 
-void TParticleTrajectoryPoints::AddPoint (TVector3D const& X, TVector3D const& B, TVector3D const& AoverC, double const T)
-{
-  fX.push_back( TVector3D(X) );
-  fB.push_back( TVector3D(B) );
-  fAoverC.push_back( TVector3D(AoverC) );
 
-  if (fDeltaT != 0) {
-    fT.push_back(T);
-  }
+std::vector<TParticleTrajectoryPoint> const& TParticleTrajectoryPoints::GetTrajectory() const
+{
+  return fP;
+}
+
+
+
+
+std::vector<double> const& TParticleTrajectoryPoints::GetTimePoints () const
+{
+  return fT;
+}
+
+
+
+
+void TParticleTrajectoryPoints::AddPoint (TParticleTrajectoryPoint const& P, double const T)
+{
+  fP.push_back(P);
+  fT.push_back(T);
 
   return;
 }
 
 
 
+
+void TParticleTrajectoryPoints::AddPoint (TVector3D const& X, TVector3D const& B, TVector3D const& AoverC, double const T)
+{
+  fP.push_back( TParticleTrajectoryPoint(X, B, AoverC) );
+  fT.push_back(T);
+
+  return;
+}
+
+
+
+
 void TParticleTrajectoryPoints::AddPoint (double const X1, double const X2, double const X3, double const B1, double const B2, double const B3, double const AoverC1, double const AoverC2, double const AoverC3, double const T)
 {
-  this->AddPoint(TVector3D(X1, X2, X3), TVector3D(B1, B2, B3), TVector3D(AoverC1, AoverC2, AoverC3), T);
+  this->AddPoint( TVector3D(X1, X2, X3), TVector3D(B1, B2, B3), TVector3D(AoverC1, AoverC2, AoverC3), T );
 
+  return;
+}
+
+
+
+
+void TParticleTrajectoryPoints::Reserve (size_t const n)
+{
+  fP.reserve(n);
+  fT.reserve(n);
   return;
 }
 
@@ -139,9 +229,8 @@ void TParticleTrajectoryPoints::AddPoint (double const X1, double const X2, doub
 
 void TParticleTrajectoryPoints::ReverseArrays ()
 {
-  std::reverse(fX.begin(), fX.end());
-  std::reverse(fB.begin(), fB.end());
-  std::reverse(fAoverC.begin(), fAoverC.end());
+  std::reverse(fP.begin(), fP.end());
+  std::reverse(fT.begin(), fT.end());
 
   return;
 }
@@ -167,20 +256,26 @@ void TParticleTrajectoryPoints::WriteToFile (std::string const& FileName) const
   f.precision(35);
 
   // Loop over all points and print to file
-  for (size_t i = 0; i != fB.size(); ++i) {
-    f << fDeltaT * (double) i
+  for (size_t i = 0; i != fP.size(); ++i) {
+    f << fT[i]
       << " "
-      << fX[i].GetX()
+      << fP[i].GetX().GetX()
       << " "
-      << fX[i].GetY()
+      << fP[i].GetX().GetY()
       << " "
-      << fX[i].GetZ()
+      << fP[i].GetX().GetZ()
       << " "
-      << fB[i].GetX()
+      << fP[i].GetB().GetX()
       << " "
-      << fB[i].GetY()
+      << fP[i].GetB().GetY()
       << " "
-      << fB[i].GetZ()
+      << fP[i].GetB().GetZ()
+      << " "
+      << fP[i].GetAoverC().GetX()
+      << " "
+      << fP[i].GetAoverC().GetY()
+      << " "
+      << fP[i].GetAoverC().GetZ()
       << std::endl;
   }
 
@@ -203,24 +298,32 @@ void TParticleTrajectoryPoints::WriteToFileBinary (std::string const& FileName) 
     throw;
   }
 
-  // Loop over all points and print to file
-  for (size_t i = 0; i != fB.size(); ++i) {
-    double value;
+  // For writing data
+  float v = 0;
 
-    value = fDeltaT;
-    f.write((char*) &value, sizeof(double));
-    value = fX[i].GetX();
-    f.write((char*) &value, sizeof(double));
-    value = fX[i].GetY();
-    f.write((char*) &value, sizeof(double));
-    value = fX[i].GetZ();
-    f.write((char*) &value, sizeof(double));
-    value = fB[i].GetX();
-    f.write((char*) &value, sizeof(double));
-    value = fB[i].GetY();
-    f.write((char*) &value, sizeof(double));
-    value = fB[i].GetZ();
-    f.write((char*) &value, sizeof(double));
+  // Loop over all points and print to file
+  for (size_t i = 0; i != fP.size(); ++i) {
+
+    v = (float) fT[i];
+    f.write((char*) &v, sizeof(float));
+    v = (float) fP[i].GetX().GetX();
+    f.write((char*) &v, sizeof(float));
+    v = (float) fP[i].GetX().GetY();
+    f.write((char*) &v, sizeof(float));
+    v = (float) fP[i].GetX().GetZ();
+    f.write((char*) &v, sizeof(float));
+    v = (float) fP[i].GetB().GetX();
+    f.write((char*) &v, sizeof(float));
+    v = (float) fP[i].GetB().GetY();
+    f.write((char*) &v, sizeof(float));
+    v = (float) fP[i].GetB().GetZ();
+    f.write((char*) &v, sizeof(float));
+    v = (float) fP[i].GetAoverC().GetX();
+    f.write((char*) &v, sizeof(float));
+    v = (float) fP[i].GetAoverC().GetY();
+    f.write((char*) &v, sizeof(float));
+    v = (float) fP[i].GetAoverC().GetZ();
+    f.write((char*) &v, sizeof(float));
   }
 
   // Close file
@@ -246,6 +349,7 @@ void TParticleTrajectoryPoints::ReadFromFile (std::string const& FileName)
   double t;
   double x, y, z;
   double bx, by, bz;
+  double aocx, aocy, aocz;
 
   size_t n = 0;
 
@@ -267,12 +371,10 @@ void TParticleTrajectoryPoints::ReadFromFile (std::string const& FileName)
       continue;
     }
 
-    LineStream >> x >> y >> z >> bx >> by >> bz;
+    LineStream >> x >> y >> z >> bx >> by >> bz >> aocx >> aocy >> aocz;
 
     if (!LineStream.fail()) { // check for error
-      fX.push_back( TVector3D(x, y, z) );
-      fB.push_back( TVector3D(bx, by, bz) );
-      fAoverC.push_back( TVector3D(0, 0, 0) );
+      this->AddPoint( TVector3D(x, y, z), TVector3D(bx, by, bz), TVector3D(aocx, aocy, aocz), t );
     } else {
       throw;
     }
@@ -296,30 +398,59 @@ void TParticleTrajectoryPoints::ReadFromFileBinary (std::string const& FileName)
   }
 
   // Variables to read from file
-  double t;
-  double x, y, z;
-  double bx, by, bz;
+  float   t  = 0;
+  float   x  = 0;
+  float   y  = 0;
+  float   z  = 0;
+  float   bx = 0;
+  float   by = 0;
+  float   bz = 0;
+  float aocx = 0;
+  float aocy = 0;
+  float aocz = 0;
 
   while (!f.eof()) {
 
-    f.read( (char*)  &t, sizeof(double));
-    f.read( (char*)  &x, sizeof(double));
-    f.read( (char*)  &y, sizeof(double));
-    f.read( (char*)  &z, sizeof(double));
-    f.read( (char*) &bx, sizeof(double));
-    f.read( (char*) &by, sizeof(double));
-    f.read( (char*) &bz, sizeof(double));
+    // Read data
+    f.read( (char*)    &t, sizeof(float));
+    f.read( (char*)    &x, sizeof(float));
+    f.read( (char*)    &y, sizeof(float));
+    f.read( (char*)    &z, sizeof(float));
+    f.read( (char*)   &bx, sizeof(float));
+    f.read( (char*)   &by, sizeof(float));
+    f.read( (char*)   &bz, sizeof(float));
+    f.read( (char*) &aocx, sizeof(float));
+    f.read( (char*) &aocy, sizeof(float));
+    f.read( (char*) &aocz, sizeof(float));
 
-
+    // If end of file, stop, otherwise add to trajectory
     if (f.eof()) {
       break;
     } else {
-      fX.push_back( TVector3D(x, y, z) );
-      fB.push_back( TVector3D(bx, by, bz) );
-      fAoverC.push_back( TVector3D(0, 0, 0) );
+      this->AddPoint( TVector3D(x, y, z), TVector3D(bx, by, bz), TVector3D(aocx, aocy, aocz), t );
     }
   }
 
+  return;
+}
+
+
+
+
+void TParticleTrajectoryPoints::Lock ()
+{
+  // Lock mutex for trajectory writing, test, etc
+  fLock_mutex->lock();
+  return;
+}
+
+
+
+
+void TParticleTrajectoryPoints::UnLock ()
+{
+  // unlock mutex
+  fLock_mutex->unlock();
   return;
 }
 
@@ -330,9 +461,8 @@ void TParticleTrajectoryPoints::Clear ()
 {
   // Clear all vectors and free all memory that this object owns
 
-  fX.clear();
-  fB.clear();
-  fAoverC.clear();
+  fP.clear();
+  fT.clear();
 
   return;
 }

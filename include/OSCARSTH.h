@@ -11,6 +11,9 @@
 #include "TVector2D.h"
 #include "TOMATH.h"
 #include "TParticleBeamContainer.h"
+#include "TSpectrumContainer.h"
+#include "TSurfacePoints.h"
+#include "T3DScalarContainer.h"
 
 
 class OSCARSTH
@@ -28,13 +31,27 @@ class OSCARSTH
     double UndulatorPeriod (double const BField,
                             double const K) const;
 
-    double DipoleCriticalEnergy (double const BField,
-                                 double const BeamEnergy_GeV) const;
+    double DipoleCriticalEnergy (double const BField) const;
+
+    void DipoleSpectrumEnergy (double const BField, 
+                               TSpectrumContainer& Spectrum,
+                               double const Angle) const;
+
+    void DipoleSpectrumAngle (double const BField, 
+                              TSpectrumContainer& Spectrum,
+                              double const Energy_eV) const;
+
+    void DipoleSpectrumEnergyAngleIntegrated (double const BField, 
+                                              TSpectrumContainer& Spectrum) const;
 
     double DipoleSpectrum (double const BField,
                            double const BeamEnergy_GeV,
                            double const Angle,
                            double const Energy_eV) const;
+
+    double DipoleSpectrumAngleIntegrated (double const BField,
+                                          double const BeamEnergy_GeV,
+                                          double const Energy_eV) const;
 
     double UndulatorFlux (double const BField,
                           double const Period,
@@ -61,7 +78,8 @@ class OSCARSTH
                               double const BeamEnergy,
                               int const Harmonic) const;
 
-    double DipoleBrightness () const;
+    void DipoleBrightness (double const BField,
+                           TSpectrumContainer& SpectrumContainer) const;
 
     double UndulatorEnergyAtHarmonicK (double const K,
                                        double const Period,
@@ -82,18 +100,75 @@ class OSCARSTH
                                     int    const N) const;
 
 
+    void WigglerFluxK (double         const  K,
+                       double         const  Period,
+                       int            const  NPeriods,
+                       TSurfacePoints const& Surface,
+                       double         const  Energy_eV,
+                       T3DScalarContainer&   FluxContainer) const;
+
+    void WigglerFluxK (double         const  K,
+                       double         const  Period,
+                       int            const  NPeriods,
+                       TSurfacePoints const& Surface,
+                       double         const  Energy_eV,
+                       T3DScalarContainer&   FluxContainer,
+                       int            const  NThreads,
+                       int            const  GPU) const;
+
+    void WigglerFluxB (double         const  K,
+                       double         const  Period,
+                       int            const  NPeriods,
+                       TSurfacePoints const& Surface,
+                       double         const  Energy_eV,
+                       T3DScalarContainer&   FluxContainer,
+                       int            const  NThreads,
+                       int            const  GPU) const;
+
+    void WigglerFluxKPoints (double         const  K,
+                             double         const  Period,
+                             int            const  NPeriods,
+                             TSurfacePoints const& Surface,
+                             double         const  Energy_eV,
+                             T3DScalarContainer&   FluxContainer,
+                             size_t const iFirst,
+                             size_t const iLast,
+                             bool& Done
+                            ) const;
+
+
+
+
 
     // Functions related to the particle beam
-    void SetParticleBeam (std::string const& Beam);
-    void SetParticleBeam (double const Energy_GeV,
-                          double const Current,
-                          TVector2D const& Beta = TVector2D(0, 0),
-                          TVector2D const& Emittance = TVector2D(0, 0),
-                          double const SigmaEnergyGeV = 0);
+    TParticleBeam& SetParticleBeam (std::string const& Beam,
+                                    std::string const& Name = "default_name");
+
+    TParticleBeam& SetParticleBeam (double const Energy_GeV,
+                                    double const Current,
+                                    TVector2D const& Beta = TVector2D(0, 0),
+                                    TVector2D const& Emittance = TVector2D(0, 0),
+                                    double const SigmaEnergyGeV = 0,
+                                    TVector2D const& Eta = TVector2D(0, 0),
+                                    std::string const& Name = "default_name");
+
     TParticleBeam& GetParticleBeam ();
+
+    bool CheckBeam () const;
+
+
+    // Global threads and GPU settings
+    bool SetUseGPUGlobal (int const);
+    int  GetUseGPUGlobal () const;
+    int  CheckGPU () const;
+    void SetNThreadsGlobal (int const);
 
   private:
     TParticleBeam fParticleBeam;
+
+    // Global thread and GPU settings
+    int fNThreadsGlobal;
+    bool fUseGPUGlobal;
 
 };
 

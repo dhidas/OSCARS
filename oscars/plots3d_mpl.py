@@ -1,12 +1,16 @@
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from math import sqrt
+import copy
 
 def power_density_3d(srs, surface,
-                    normal=1, rotations=[0, 0, 0], translation=[0, 0, 0], nparticles=0, gpu=0, nthreads=0, ret=False,
-                    title='Power Density [$W / mm^2$]', xlim=None, ylim=None, zlim=None, colorbar=True, figsize=None, alpha=0.4, ofile=None, show=True, view_init=None, axis=None, transparent=True, xticks=None, yticks=None, zticks=None, bbox_inches='tight'):
+                    normal=1, rotations=[0, 0, 0], translation=[0, 0, 0], nparticles=0, gpu=0, nthreads=0,
+                    title='Power Density [$W / mm^2$]', xlim=None, ylim=None, zlim=None, colorbar=True, figsize=None,
+                    alpha=0.4, ofile=None, show=True, view_init=None, axis=None, transparent=True,
+                    xticks=None, yticks=None, zticks=None, bbox_inches='tight', max_level=24, quantity='power density'):
     """calculate power density for and plot a parametric surface in 3d"""
 
     points = []
@@ -17,7 +21,7 @@ def power_density_3d(srs, surface,
             points.append([surface.position(u, v), surface.normal(u, v)])
 
 
-    power_density = srs.calculate_power_density(points=points, normal=normal, rotations=rotations, translation=translation, nparticles=nparticles, gpu=gpu, nthreads=nthreads)
+    power_density = srs.calculate_power_density(points=points, normal=normal, rotations=rotations, translation=translation, nparticles=nparticles, gpu=gpu, nthreads=nthreads, max_level=max_level, quantity=quantity)
     P = [item[1] for item in power_density]
 
     X2 = []
@@ -37,6 +41,8 @@ def power_density_3d(srs, surface,
 
     colors =[]
     MAXP = max(P)
+    if MAXP == 0:
+        MAXP=1
     PP = []
     for i in range(surface.nu):
         tmpP = []
@@ -78,7 +84,7 @@ def power_density_3d(srs, surface,
         ax.set_ylim(zlim[0], zlim[1])
 
 
-    ax.plot_surface(X2, Z2, Y2, facecolors=cm.viridis(colors), rstride=1, cstride=1, alpha=alpha)
+    ax.plot_surface(X2, Z2, Y2, facecolors=cm.viridis(colors), rstride=1, cstride=1, alpha=alpha, linewidth=0)
     ax.invert_xaxis()
 
     if axis is not None:
@@ -103,9 +109,7 @@ def power_density_3d(srs, surface,
     if show is True:
         plt.show()
 
-    if ret:
-        return plt
-    return
+    return power_density
 
 
 
@@ -121,7 +125,7 @@ def power_density_3d(srs, surface,
 
 def power_density_3ds(srs, surface, ax,
                     normal=1, rotations=[0, 0, 0], translation=[0, 0, 0], nparticles=0, gpu=0, nthreads=0,
-                    alpha=0.4, transparent=True):
+                    alpha=0.4, transparent=True, max_level=-2):
     """calculate power density for and plot a parametric surface in 3d"""
 
     points = []
@@ -132,7 +136,7 @@ def power_density_3ds(srs, surface, ax,
             points.append([surface.position(u, v), surface.normal(u, v)])
 
 
-    power_density = srs.calculate_power_density(points=points, normal=normal, rotations=rotations, translation=translation, nparticles=nparticles, gpu=gpu, nthreads=nthreads)
+    power_density = srs.calculate_power_density(points=points, normal=normal, rotations=rotations, translation=translation, nparticles=nparticles, gpu=gpu, nthreads=nthreads, max_level=max_level)
     P = [item[1] for item in power_density]
 
     X2 = []
@@ -368,6 +372,35 @@ def plot_trajectory3d(trajectory, figsize=None):
 
 
 
+def plot_power_density_scatter (V, s=10):
+
+    if len(V) == 0:
+        return
+
+    X = [item[0][0] for item in V]
+    Y = [item[0][1] for item in V]
+    Z = [item[0][2] for item in V]
+    P = [item[1]    for item in V]
+
+    pmax = max(P)
+    pmin = min(P)
+
+    C = []
+    if pmax == pmin:
+        C=[0] * len(P)
+    else:
+        C = [p / pmax for p in P]
+
+    Cen3D = plt.figure()
+    ax = Cen3D.add_subplot(111, projection='3d')
+
+    ax.scatter(X, Z, Y, c=C, s=s, alpha=1)
+    ax.invert_xaxis()
+
+    ax.set_xlabel('X [m]')
+    ax.set_ylabel('Z [m]')
+    ax.set_zlabel('Y [m]')
+    plt.show()
 
 
 
@@ -378,9 +411,54 @@ def plot_trajectory3d(trajectory, figsize=None):
 
 
 
+def plot_power_density_stl (P, title='Power Density [$W/mm^2$]', elev=30, azim=30, alpha=0.8, bbox_inches='tight', transparent=True, ofile=None):
+
+    pmax = max([p[1] for p in P])
+
+    m = cm.ScalarMappable(cm.viridis)
+
+    xmax = ymax = zmax = -99999
+    xmin = ymin = zmin = +99999
+    for p in P:
+        xmax = max([xmax, p[0][0][0], p[0][1][0], p[0][2][0]])
+        xmin = min([xmin, p[0][0][0], p[0][1][0], p[0][2][0]])
+        zmax = max([zmax, p[0][0][1], p[0][1][1], p[0][2][1]])
+        zmin = min([zmin, p[0][0][1], p[0][1][1], p[0][2][1]])
+        ymax = max([ymax, p[0][0][2], p[0][1][2], p[0][2][2]])
+        ymin = min([ymin, p[0][0][2], p[0][1][2], p[0][2][2]])
+
+    fig = plt.figure()
+    ax = Axes3D(fig)
+    for p in P:
+        pp = copy.deepcopy(p)
+        pp[0][0][1] = p[0][0][2]
+        pp[0][0][2] = p[0][0][1]
+        pp[0][1][1] = p[0][1][2]
+        pp[0][1][2] = p[0][1][1]
+        pp[0][2][1] = p[0][2][2]
+        pp[0][2][2] = p[0][2][1]
+        triangle = Poly3DCollection([pp[0]], alpha=alpha, edgecolors='b', linewidths=0.05)
+        triangle.set_facecolor(m.to_rgba(pp[1]/pmax))
+        #triangle.set_facecolor([1, 1-p[1]/pmax, 1-p[1]/pmax])
+        ax.add_collection3d(triangle)
+ 
+    #ax.view_init(elev=elev, azim=azim)
+    plt.title(title)
+    ax.invert_xaxis()
+    ax.set_xlim([xmin, xmax])
+    ax.set_ylim([ymin, ymax])
+    ax.set_zlim([zmin, zmax])
+    ax.set_xlabel('X [m]')
+    ax.set_ylabel('Z [m]')
+    ax.set_zlabel('Y [m]')
+
+    if ofile is not None:
+        plt.savefig(ofile, bbox_inches=bbox_inches, transparent=transparent)
 
 
+    plt.show()
 
+    return
 
 
 

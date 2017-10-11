@@ -12,15 +12,25 @@
 #include <cmath>
 
 
-TField3D_IdealUndulator::TField3D_IdealUndulator ()
+TField3D_IdealUndulator::TField3D_IdealUndulator (std::string const& Name)
 {
   // Constructor
+
+  // Set the name and default scale factors
+  this->SetName(Name);
+  this->SetScaleFactorMinimumMaximum();
 }
 
 
 
 
-TField3D_IdealUndulator::TField3D_IdealUndulator (TVector3D const& Field, TVector3D const& Period, int const NPeriods, TVector3D const& Center, double const Phase, double const Taper)
+TField3D_IdealUndulator::TField3D_IdealUndulator (TVector3D const& Field,
+                                                  TVector3D const& Period,
+                                                  int const NPeriods,
+                                                  TVector3D const& Center,
+                                                  double const Phase,
+                                                  double const Taper,
+                                                  std::string const& Name)
 {
   // Typical constructor.  This will generate a magnetic field in the direction specified by Field
   // varying as the sine depending on the period, number of periods and phase, centered at a given location.
@@ -33,7 +43,7 @@ TField3D_IdealUndulator::TField3D_IdealUndulator (TVector3D const& Field, TVecto
   // Center - Where in space the center of this field will be
   // Phase - A phase offset for the sine function given in [rad]
 
-  this->Init(Field, Period, NPeriods, Center, Phase, Taper);
+  this->Init(Field, Period, NPeriods, Center, Phase, Taper, Name);
 }
 
 
@@ -47,7 +57,13 @@ TField3D_IdealUndulator::~TField3D_IdealUndulator ()
 
 
 
-void TField3D_IdealUndulator::Init (TVector3D const& Field, TVector3D const& Period, int const NPeriods, TVector3D const& Center, double const Phase, double const Taper)
+void TField3D_IdealUndulator::Init (TVector3D const& Field,
+                                    TVector3D const& Period,
+                                    int const NPeriods,
+                                    TVector3D const& Center,
+                                    double const Phase,
+                                    double const Taper,
+                                    std::string const& Name)
 {
   // Initialization function.  This will generate a magnetic field in the direction specified by Field
   // varying as the sine depending on the period, number of periods and phase, centered at a given location.
@@ -59,6 +75,11 @@ void TField3D_IdealUndulator::Init (TVector3D const& Field, TVector3D const& Per
   // NPeriods - Number of periods
   // Center - Where in space the center of this field will be
   // Phase - A phase offset for the sine function given in [rad]
+  // Name - Name of this field
+
+  // Set the name and default scale factors
+  this->SetName(Name);
+  this->SetScaleFactorMinimumMaximum();
 
   fField   = Field;
   fPeriod   = Period;

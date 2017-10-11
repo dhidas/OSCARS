@@ -34,6 +34,11 @@ class TSurfacePoints_Rectangle : public TSurfacePoints
 
     double GetElementArea () const;
 
+    bool HasNormal () const
+    {
+      return true;
+    }
+
   private:
     int fNX1;
     int fNX2;

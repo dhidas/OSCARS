@@ -19,6 +19,7 @@ namespace TOSCARSSR {
 
    inline double Pi()       { return 3.14159265358979323846; }
    inline double Pi2()      { return Pi() * Pi(); }
+   inline double Pi3()      { return Pi() * Pi() * Pi(); }
    inline double TwoPi()    { return 2.0 * Pi(); }
    inline double FourPi()   { return 4.0 * Pi(); }
    inline double PiOver2()  { return Pi() / 2.0; }
@@ -69,6 +70,7 @@ namespace TOSCARSSR {
    inline double AngularFrequencyToEv  (double const w) { return w * Hbar() / Qe(); } // eV
    inline double EvToAngularFrequency  (double const e) { return e * Qe() / Hbar(); } // rad s^-1
    inline double EvToFrequency         (double const e) { return e * Qe() / H();    } // s^-1
+   inline double EvToWavelength        (double const e) { return H() * C() / (e * Qe());    } // s^-1
    inline double kgToGeV               (double const m) { return 1e-9 * m * C() * C() / Qe(); } // GeV 
    inline double GeVTokg               (double const m) { return Qe() * m / (1e-9 * C() * C()); } // GeV
 

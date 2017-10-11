@@ -19,9 +19,11 @@
 #include "OSCARSSR_Cuda.h"
 #include "TFieldContainer.h"
 #include "TParticleBeamContainer.h"
+#include "TDriftVolumeContainer.h"
 #include "TSurfacePoints.h"
 #include "TSpectrumContainer.h"
 #include "T3DScalarContainer.h"
+#include "TParticleTrajectoryInterpolated.h"
 #include "TRandomA.h"
 
 
@@ -39,44 +41,96 @@ class OSCARSSR
                            std::string const Format,
                            TVector3D const& R = TVector3D(0, 0, 0),
                            TVector3D const& D = TVector3D(0, 0, 0),
-                           std::vector<double> const& S = std::vector<double>());
+                           std::vector<double> const& S = std::vector<double>(),
+                           std::string const& Name = "");
 
     void AddMagneticFieldInterpolated (std::vector<std::pair<double, std::string> > const& Mapping,
                                        std::string const Format,
                                        double const Parameter,
                                        TVector3D const& Rotations = TVector3D(0, 0, 0),
                                        TVector3D const& Translation = TVector3D(0, 0, 0),
-                                       std::vector<double> const& Scaling = std::vector<double>());
+                                       std::vector<double> const& Scaling = std::vector<double>(),
+                                       std::string const& Name = "");
+
     void AddMagneticField (TField*);
+
+    void RemoveMagneticField (std::string const& Name);
+
     void ClearMagneticFields ();
 
-    void AddElectricField (std::string const, std::string const, TVector3D const& R = TVector3D(0, 0, 0), TVector3D const& D = TVector3D(0, 0, 0), std::vector<double> const& S = std::vector<double>());
+    void AddElectricField (std::string const FileName,
+                           std::string const Format,
+                           TVector3D const& Rotations = TVector3D(0, 0, 0),
+                           TVector3D const& Translation = TVector3D(0, 0, 0),
+                           std::vector<double> const& Scaling = std::vector<double>(),
+                           std::string const& Name = "");
+
+    void AddElectricFieldInterpolated (std::vector<std::pair<double, std::string> > const& Mapping,
+                                       std::string const Format,
+                                       double const Parameter,
+                                       TVector3D const& Rotations = TVector3D(0, 0, 0),
+                                       TVector3D const& Translation = TVector3D(0, 0, 0),
+                                       std::vector<double> const& Scaling = std::vector<double>(),
+                                       std::string const& Name = "");
+
     void AddElectricField (TField*);
+
+    void RemoveElectricField (std::string const& Name);
+
     void ClearElectricFields ();
 
-    void WriteField (std::string const&, std::string const&, std::string const&, TVector2D const&, int const, TVector2D const&, int const, TVector2D const&, int const, std::string const& Comment = "");
+    void WriteField (std::string const& BorE,
+                     std::string const& OutFileName,
+                     std::string const& OutFormat,
+                     TVector2D const& XLim,
+                     int const NX,
+                     TVector2D const& YLim,
+                     int const NY,
+                     TVector2D const& ZLim,
+                     int const NZ,
+                     std::string const& Comment);
+
+    void WriteFieldBinary (std::string const& BorE,
+                           std::string const& OutFileName,
+                           std::string const& OutFormat,
+                           TVector2D const& XLim,
+                           int const NX,
+                           TVector2D const& YLim,
+                           int const NY,
+                           TVector2D const& ZLim,
+                           int const NZ,
+                           std::string const& Comment,
+                           int const Version);
 
 
-    double    GetBx (double const, double const, double const) const;
-    double    GetBy (double const, double const, double const) const;
-    double    GetBz (double const, double const, double const) const;
     TVector3D GetB  (double const, double const, double const) const;
     TVector3D GetB  (TVector3D const&) const;
 
-    double    GetEx (double const, double const, double const) const;
-    double    GetEy (double const, double const, double const) const;
-    double    GetEz (double const, double const, double const) const;
     TVector3D GetE  (double const, double const, double const) const;
     TVector3D GetE  (TVector3D const&) const;
 
 
     // Functions related to the particle beam(s)
-    void AddParticleBeam (std::string const&, std::string const&, TVector3D const&, TVector3D const&, double const, double const, double const, double const, double const Charge = 0, double const Mass = 0);
-    void AddParticleBeam (std::string const& Beam, std::string const& Name, double const Weight = 1);
+    TParticleBeam& AddParticleBeam (std::string const& Type,
+                                    std::string const& Name,
+                                    TVector3D const& X0,
+                                    TVector3D const& V0,
+                                    double const Energy_GeV,
+                                    double const T0,
+                                    double const Current,
+                                    double const Weight,
+                                    double const Charge = 0,
+                                    double const Mass = 0);
+
+    TParticleBeam& AddParticleBeam (std::string const& Beam,
+                                    std::string const& Name,
+                                    double const Weight = 1);
+
     TParticleBeamContainer& GetParticleBeamContainer () 
     {
       return fParticleBeamContainer;
     }
+
     TParticleBeam& GetParticleBeam (std::string const&);
     size_t GetNParticleBeams () const;
     TParticleA GetNewParticle ();
@@ -85,11 +139,28 @@ class OSCARSSR
     void SetNewParticle (std::string const&, std::string const&);
     void ClearParticleBeams ();
 
+    void SetEmittance (std::string const& Beam,
+                       TVector2D const& Emittance);
+
+    void SetTwissParameters (std::string const& Beam,
+                             TVector2D const& Beta,
+                             TVector2D const& Alpha,
+                             TVector2D const& Gamma,
+                             TVector3D const& Lattice_Reference,
+                             bool const HasReferencePoint);
+
+
+    // Functions related to drift spaces
+    void AddDriftVolume (TDriftVolume*);
+    void RemoveDriftVolume (std::string const& Name);
+    void ClearDriftVolumes ();
 
     // Functions related to Trajectory
+    void CorrectTrajectory ();
     void CalculateTrajectory ();
     void CalculateTrajectory (TParticleA&);
     TParticleTrajectoryPoints const& GetTrajectory ();
+    void ClearTrajectory ();
 
     void SetNPointsTrajectory (size_t const);
     void SetNPointsPerMeterTrajectory (size_t const);
@@ -103,22 +174,27 @@ class OSCARSSR
     bool SetUseGPUGlobal (int const);
     int  GetUseGPUGlobal () const;
     int  CheckGPU () const;
+    std::string GetGPUInfo (int const) const;
     void SetNThreadsGlobal (int const);
+    int  GetNThreadsGlobal () const;
 
     // Random seed setting and random numbers
     void SetSeed (int const) const;
     double GetRandomNormal () const;
     double GetRandomUniform () const;
 
-    void CalculateSpectrumGPU (TParticleA&,
-                               TVector3D const& ObservationPoint,
-                               TSpectrumContainer& Spectrum,
-                               std::string const& Polarization = "all",
-                               double const Angle = 0,
-                               TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
-                               TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
-                               double const Weight = 1,
-                               std::string const OutFileName = "");
+    void CalculateSpectrum (TParticleA& Particle,
+                            TVector3D const& ObservationPoint,
+                            TSpectrumContainer& Spectrum,
+                            std::string const& Polarization,
+                            double const Angle,
+                            TVector3D const& HorizontalDirection,
+                            TVector3D const& PropogationDirection,
+                            double const Precision,
+                            int    const MaxLevel,
+                            int    const MaxLevelExtended,
+                            double const Weight,
+                            int    const ReturnQuantity);
 
     void CalculateSpectrum (TVector3D const& ObservationPoint,
                             TSpectrumContainer& Spectrum,
@@ -128,7 +204,29 @@ class OSCARSSR
                             TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
                             int const NParticles = 0,
                             int const NThreads = 0,
-                            int const GPU = 0);
+                            int const GPU = 0,
+                            int const NGPU = -1,
+                            std::vector<int> VGPU = std::vector<int>(),
+                            double const Precision = 0.01,
+                            int    const MaxLevel = -2,
+                            int    const MaxLevelExtended = 0,
+                            int    const ReturnQuantity = 0);
+
+    void CalculateSpectrumPoints (TParticleA& Particle,
+                                  TVector3D const& ObservationPoint,
+                                  TSpectrumContainer& Spectrum,
+                                  size_t const iThread,
+                                  size_t const NThreads,
+                                  bool& Done,
+                                  std::string const& Polarization,
+                                  double const Angle,
+                                  TVector3D const& HorizontalDirection,
+                                  TVector3D const& PropogationDirection,
+                                  double const Precision,
+                                  int    const MaxLevel,
+                                  int    const MaxLevelExtended,
+                                  double const Weight,
+                                  int    const ReturnQuantity);
 
     void CalculateSpectrumThreads (TParticleA& Particle,
                                    TVector3D const& Obs,
@@ -138,28 +236,25 @@ class OSCARSSR
                                    double const Angle = 0,
                                    TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
                                    TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
+                                   double const Precision = 0.01,
+                                   int    const MaxLevel = -2,
+                                   int    const MaxLevelExtended = 0,
                                    double const Weight = 1,
-                                   std::string const& OutFileName = "");
+                                   int    const ReturnQuantity = 0);
 
-    void CalculateSpectrumPoint (TParticleA& ,
-                                 TVector3D const&,
-                                 TSpectrumContainer&,
-                                 int const i,
-                                 std::string const& Polarization = "all",
-                                 double const Angle = 0,
-                                 TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
-                                 TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
-                                 double const Weight = 1);
-
-    void CalculateSpectrum (TParticleA&,
-                            TVector3D const&,
-                            TSpectrumContainer&,
-                            std::string const& Polarization = "all",
-                            double const Angle = 0,
-                            TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
-                            TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
-                            double const Weight = 1);
-
+    void CalculateSpectrumGPU (TParticleA& Particle,
+                               TVector3D const& ObservationPoint,
+                               TSpectrumContainer& Spectrum,
+                               std::string const& Polarization = "all",
+                               double const Angle = 0,
+                               TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
+                               TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
+                               int const NParticles = 0,
+                               std::vector<int> GPUVector = std::vector<int>(),
+                               double const Precision = 0.01,
+                               int    const MaxLevel = -2,
+                               int    const MaxLevelExtended = 0,
+                               int    const ReturnQuantity = 0);
 
     void AddToSpectrum (TSpectrumContainer const&, double const Weight = 1);
     void AddToFlux (T3DScalarContainer const&, double const Weight = 1);
@@ -173,66 +268,117 @@ class OSCARSSR
     void ClearPowerDensity ();
 
     // Power Density calculation
-    void CalculatePowerDensity (TParticleA&, TSurfacePoints const&, int const Dimension = 3, bool const Directional = true, double const Weight = 1, std::string const& OutFileName = "");
-    void CalculatePowerDensity (TParticleA&, TSurfacePoints const&, T3DScalarContainer&, int const Dimension = 3, bool const Directional = true, double const Weight = 1, std::string const& OutFileName = "");
-    void CalculatePowerDensity (TSurfacePoints const&, T3DScalarContainer&, int const Dimension = 3, bool const Directional = true, int const NParticles = 0, std::string const& OutFileName = "", int const NThreads = 0, int const GPU = 0);
-    void CalculatePowerDensityGPU (TParticleA&, TSurfacePoints const&, T3DScalarContainer&, int const Dimension = 3, bool const Directional = true, double const Weight = 1, std::string const& OutFileName = "");
-    void CalculatePowerDensityGPU (TSurfacePoints const&, T3DScalarContainer&, int const Dimension = 3, bool const Directional = true, double const Weight = 1, std::string const& OutFileName = "");
-    void CalculatePowerDensityThreads (TParticleA&, TSurfacePoints const&, T3DScalarContainer&, int const, int const Dimension = 3, bool const Directional = true, double const Weight = 1, std::string const& OutFileName = "");
-    void CalculatePowerDensityPoint (TParticleA&, TSurfacePoints const&, T3DScalarContainer&, size_t const, int const Dimension = 3, bool const Directional = true, double const Weight = 1);
+    void CalculatePowerDensity (TParticleA& Particle,
+                                TSurfacePoints const& Surface,
+                                T3DScalarContainer& PowerDensityContainer,
+                                bool const Directional,
+                                double const Precision,
+                                int    const MaxLevel,
+                                int    const MaxLevelExtended,
+                                double const Weight,
+                                int    const ReturnQuantity);
+
+    void CalculatePowerDensity (TSurfacePoints const& Surface,
+                                T3DScalarContainer& PowerDensityContainer,
+                                int const Dimension,
+                                bool const Directional,
+                                double const Precision,
+                                int    const MaxLevel,
+                                int    const MaxLevelExtended,
+                                int const NParticles,
+                                int const NThreads,
+                                int const GPU,
+                                int const NGPU = -1,
+                                std::vector<int> VGPU = std::vector<int>(),
+                                int const ReturnQuantity = 0);
+
+    void CalculatePowerDensityPoints (TParticleA& Particle,
+                                      TSurfacePoints const& Surface,
+                                      T3DScalarContainer& PowerDensityContainer,
+                                      size_t const iFirst,
+                                      size_t const iLast,
+                                      bool& Done,
+                                      bool const Directional,
+                                      double const Precision,
+                                      int    const MaxLevel,
+                                      int    const MaxLevelExtended,
+                                      double const Weight,
+                                      int    const ReturnQuantity);
+
+    void CalculatePowerDensityThreads (TParticleA& Particle,
+                                       TSurfacePoints const& Surface,
+                                       T3DScalarContainer& PowerDensityContainer,
+                                       int const NThreads,
+                                       bool const Directional,
+                                       double const Precision,
+                                       int    const MaxLevel,
+                                       int    const MaxLevelExtended,
+                                       double const Weight,
+                                       int    const ReturnQuantity);
+
+    void CalculatePowerDensityGPU (TSurfacePoints const& Surface,
+                                   T3DScalarContainer& PowerDensityContainer,
+                                   int const NParticles,
+                                   std::vector<int> GPUVector,
+                                   bool const Directional,
+                                   double const Precision,
+                                   int    const MaxLevel,
+                                   int    const MaxLevelExtended,
+                                   int    const ReturnQuantity);
+
     double CalculateTotalPower ();
     double CalculateTotalPower (TParticleA&);
 
 
     // Flux Calculations
-    void CalculateFlux2   (TParticleA& Particle,
-                           TSurfacePoints const& Surface,
-                           double const Energy_eV,
-                           T3DScalarContainer& FluxContainer,
-                           std::string const& Polarization = "all",
-                           double const Angle = 0,
-                           TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
-                           TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
-                           int const Dimension = 3,
-                           double const Weight = 1);
+    void CalculateFlux (TParticleA& Particle,
+                        TSurfacePoints const& Surface,
+                        double const Energy_eV,
+                        T3DScalarContainer& FluxContainer,
+                        std::string const& Polarization,
+                        double const Angle,
+                        TVector3D const& HorizontalDirection,
+                        TVector3D const& PropogationDirection,
+                        double const Precision,
+                        int    const MaxLevel,
+                        int    const MaxLevelExtended,
+                        double const Weight,
+                        int    const ReturnQuantity);
 
-    void CalculateFluxPoint (TParticleA& Particle,
-                             TSurfacePoints const& Surface,
-                             double const Energy_eV,
-                             T3DScalarContainer& FluxContainer,
-                             size_t const i,
-                             std::string const& Polarization = "all",
-                             double const Angle = 0,
-                             TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
-                             TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
-                             int const Dimension = 3,
-                             double const Weight = 1);
+    void CalculateFlux (TSurfacePoints const& Surface,
+                        double const Energy_eV,
+                        T3DScalarContainer& FluxContainer,
+                        std::string const& Polarization = "all",
+                        double const Angle = 0,
+                        TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
+                        TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
+                        int const NParticles = 0,
+                        int const NThreads = 0,
+                        int const GPU = 0,
+                        int const NGPU = -1,
+                        std::vector<int> VGPU = std::vector<int>(),
+                        double const Precision = 0.01,
+                        int    const MaxLevel = -2,
+                        int    const MaxLevelExtended = 0,
+                        int    const Dimension = 3,
+                        int    const ReturnQuantity = 0);
 
-    void CalculateFlux    (TParticleA&,
-                           TSurfacePoints const&,
-                           double const,
-                           T3DScalarContainer&,
-                           std::string const& Polarization = "all",
-                           double const Angle = 0,
-                           TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
-                           TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
-                           int const Dimension = 3,
-                           double const Weight = 1,
-                           std::string const& OutFileName = "");
-
-    void CalculateFlux1   (TParticleA&, TSurfacePoints const&, double const, T3DScalarContainer&, std::string const& OutFileName = "");
-    void CalculateFlux    (TSurfacePoints const& Surface,
-                           double const Energy_eV,
-                           T3DScalarContainer& FluxContainer,
-                           std::string const& Polarization = "all",
-                           double const Angle = 0,
-                           TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
-                           TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
-                           int const NParticles = 0,
-                           int const NThreads = 0,
-                           int const GPU = 0,
-                           int const Dimension = 3,
-                           std::string const& OutFileName = "");
+    void CalculateFluxPoints (TParticleA& Particle,
+                              TSurfacePoints const& Surface,
+                              double const Energy_eV,
+                              T3DScalarContainer& FluxContainer,
+                              size_t const iFirst,
+                              size_t const iLast,
+                              bool& Done,
+                              std::string const& Polarization = "all",
+                              double const Angle = 0,
+                              TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
+                              TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
+                              double const Precision = 0.01,
+                              int    const MaxLevel = -2,
+                              int    const MaxLevelExtended = 0,
+                              double const Weight = 1,
+                              int    const ReturnQuantity = 0);
 
     void CalculateFluxThreads (TParticleA& Particle,
                                TSurfacePoints const& Surface,
@@ -243,32 +389,40 @@ class OSCARSSR
                                TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
                                TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
                                int const NThreads = 0,
-                               int const Dimension = 3,
+                               double const Precision = 0.01,
+                               int    const MaxLevel = -2,
+                               int    const MaxLevelExtended = 0,
                                double const Weight = 1,
-                               std::string const& OutFileName = "");
+                               int    const ReturnQuantity = 0);
 
-    void CalculateFluxGPU (TParticleA& Particle,
-                           TSurfacePoints const& Surface,
+    void CalculateFluxGPU (TSurfacePoints const& Surface,
                            double const Energy_eV,
                            T3DScalarContainer& FluxContainer,
                            std::string const& Polarization = "all",
                            double const Angle = 0,
                            TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
                            TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
-                           int const Dimension = 3,
-                           double const Weight = 1,
-                           std::string const& OutFileName = "");
+                           int const NParticles = 0,
+                           std::vector<int> GPUVector = std::vector<int>(),
+                           double const Precision = 0.01,
+                           int    const MaxLevel = -2,
+                           int    const MaxLevelExtended = 0,
+                           int    const ReturnQuantity = 0);
 
-    void CalculateFluxGPU (TSurfacePoints const&,
-                           double const,
-                           T3DScalarContainer&,
+
+    void CalculateFluxGPUNew (TSurfacePoints const& Surface,
+                           double const Energy_eV,
+                           T3DScalarContainer& FluxContainer,
                            std::string const& Polarization = "all",
                            double const Angle = 0,
                            TVector3D const& HorizontalDirection = TVector3D(0, 0, 0),
                            TVector3D const& PropogationDirection = TVector3D(0, 0, 0),
-                           int const Dimension = 3,
-                           double const Weight = 1,
-                           std::string const& OutFileName = "");
+                           int const NParticles = 0,
+                           std::vector<int> GPUVector = std::vector<int>(),
+                           double const Precision = 0.01,
+                           int    const MaxLevel = -2,
+                           int    const MaxLevelExtended = 0,
+                           int    const ReturnQuantity = 0);
 
     // Electric Field Calculations
     void CalculateElectricFieldTimeDomain (TVector3D const& Observer, T3DScalarContainer&);
@@ -276,12 +430,15 @@ class OSCARSSR
 
     TFieldContainer const& GetBFieldContainer () const;
     TFieldContainer const& GetEFieldContainer () const;
+    TDriftVolumeContainer const& GetDriftVolumeContainer () const;
 
   private:
     TFieldContainer  fBFieldContainer;
     TFieldContainer  fEFieldContainer;
 
     TParticleBeamContainer fParticleBeamContainer;
+
+    TDriftVolumeContainer fDriftVolumeContainer;
 
     void SetDerivativesFunction ();
 
@@ -300,7 +457,6 @@ class OSCARSSR
 
     // Current particle for calculations and rel parameters
     TParticleA fParticle;
-    double fCurrent;
 
     // Spectrum container
     TSpectrumContainer fSpectrum;

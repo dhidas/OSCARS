@@ -34,11 +34,12 @@ This software package provides
 Contents:
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    Introduction
    Examples
-   MemberFunctions
+   Tutorial
+   Modules
    CodingConventions
    MathematicalNotes
    Units
