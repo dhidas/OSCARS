@@ -44,8 +44,5 @@ plot_trajectory_velocity(trajectory)
 sphere = PSSphere(R=0.01, nu=51, nv=51)
 
 # Next run the calclation and plot
-power_density_3d(osr, sphere, translation=[0, 0, 30])
-
-
-
+pd = power_density_3d(osr, sphere, translation=[0, 0, 30], figsize=[15, 15])
 

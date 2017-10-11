@@ -2,7 +2,7 @@
 # coding: utf-8
 
 # Plots inline for notebook
-get_ipython().magic('matplotlib inline')
+get_ipython().run_line_magic('matplotlib', 'inline')
 
 # Import the OSCARS SR module
 import oscars.sr
@@ -32,8 +32,5 @@ osr.set_ctstartstop(0, 2)
 cylinder = PSCylinder(R=0.020, L=0.010, nu=101, nv=101)
 
 # Run calculation and plotting
-power_density_3d(osr, cylinder, rotations=[osr.pi()/2, 0, 0], translation=[0, 0, 30])
-
-
-
+pd = power_density_3d(osr, cylinder, rotations=[osr.pi()/2, 0, 0], translation=[0, 0, 30])
 

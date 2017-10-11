@@ -2,7 +2,7 @@
 # coding: utf-8
 
 # Plots inline for notebook
-get_ipython().magic('matplotlib inline')
+get_ipython().run_line_magic('matplotlib', 'inline')
 
 # Import the OSCARS SR module
 import oscars.sr
@@ -33,7 +33,4 @@ from oscars.plots_mpl import *
 
 # Plot spectrum
 plot_spectrum(spectrum)
-
-
-
 
