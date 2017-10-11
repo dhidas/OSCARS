@@ -68,6 +68,3 @@ flux = osr.calculate_flux_rectangle(
 
 plot_flux(flux)
 
-
-
-

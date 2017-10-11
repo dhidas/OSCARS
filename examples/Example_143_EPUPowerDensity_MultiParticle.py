@@ -58,6 +58,3 @@ pd = osr.calculate_power_density_rectangle(
 
 plot_power_density(pd)
 
-
-
-

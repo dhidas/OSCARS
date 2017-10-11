@@ -69,6 +69,3 @@ plot_spectrum(spectrum_multi)
 # Combine the ideal and multi-particle spectra in one plot
 plot_spectra([spectrum_ideal, spectrum_multi], ['ideal', 'multi'])
 
-
-
-

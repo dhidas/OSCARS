@@ -46,6 +46,3 @@ plot_spectrum(spectrum)
 spectrum = osr.calculate_spectrum(obs=[0, 0, 30], energy_range_eV=[100, 200], npoints=200)
 plot_spectrum(spectrum)
 
-
-
-

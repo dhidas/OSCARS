@@ -55,6 +55,3 @@ trajectory = osr.calculate_trajectory()
 plot_trajectory_position(trajectory)
 plot_trajectory_velocity(trajectory)
 
-
-
-
