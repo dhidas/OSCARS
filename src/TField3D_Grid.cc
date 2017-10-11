@@ -859,9 +859,10 @@ void TField3D_Grid::ReadFile_Binary (std::string const& InFileName,
   // Header 0: Number of characters in comment, then comment
   int NCommentChars;
   fi.read((char*) &NCommentChars, sizeof(int));
-  char Comment[NCommentChars + 1];
+  char* Comment = new char[NCommentChars + 1];
   fi.read(Comment, NCommentChars * sizeof(char));
   Comment[NCommentChars] = '\0';
+  delete [] Comment;
 
 
   // Header 1: Version number
