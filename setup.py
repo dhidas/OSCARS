@@ -1,7 +1,9 @@
 import os
 import sys
-#from setuptools import setup, Extension
-from distutils.core import setup, Extension
+try:
+  from setuptools import setup
+except ImportError:
+  from distutils.core import setup
 
 # Get Version numbering from Version.h
 v_major = ''
@@ -181,11 +183,7 @@ moduleOSCARSTH = Extension('oscars.th',
 
 setup(
   name="oscars",
-<<<<<<< HEAD
-  version="1.36.14",
-=======
   version=VERSION,
->>>>>>> multi-gpu
   description = 'Open Source Code for Advanced Radiation Simulation',
   author = 'Dean Andrew Hidas',
   author_email = 'dhidas@bnl.gov',
