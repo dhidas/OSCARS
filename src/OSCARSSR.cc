@@ -1954,7 +1954,6 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface,
   // THIS is the ENTRY POINT typically
   //
 
-  std::cout << "quant: " << ReturnQuantity << std::endl;
   // Check that particle has been set yet.  If fType is "" it has not been set yet
   if (fParticle.GetType() == "") {
     try {

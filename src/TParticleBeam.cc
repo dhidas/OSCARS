@@ -56,8 +56,6 @@ TParticleBeam::TParticleBeam (std::string const& ParticleType, std::string const
 
   this->SetCurrent(Current);
   this->SetWeight(Weight);
-
-  SetBetaEmittance(TVector3D(0, 0, 0), TVector2D(0, 0), TVector2D(0, 0), TVector3D(0, 0, 0), 0);
 }
 
 
@@ -80,8 +78,6 @@ TParticleBeam::TParticleBeam (std::string const& ParticleType, std::string const
 
   this->SetCurrent(Current);
   this->SetWeight(Weight);
-
-  SetBetaEmittance(TVector3D(0, 0, 0), TVector2D(0, 0), TVector2D(0, 0), TVector3D(0, 0, 0), 0);
 }
 
 
@@ -107,8 +103,6 @@ TParticleBeam::TParticleBeam (std::string const& ParticleType, std::string const
 
   this->SetCurrent(Current);
   this->SetWeight(Weight);
-
-  SetBetaEmittance(TVector3D(0, 0, 0), TVector2D(0, 0), TVector2D(0, 0), TVector3D(0, 0, 0), 0);
 }
 
 
@@ -353,44 +347,6 @@ void TParticleBeam::SetInitialConditions (TVector3D const& X, TVector3D const& D
   this->fU0 = D.UnitVector();
   this->fE0 = E0 < TOSCARSSR::kgToGeV(this->GetM()) ? this->GetM() : E0;
   this->fT0 = T0;
-
-  return;
-}
-
-
-
-
-
-void TParticleBeam::SetBetaEmittance (TVector3D const& HorizontalDirection, TVector2D const& Beta, TVector2D const& Emittance, TVector3D const& SigmaAt, double const SigmaEnergyGeV)
-{
-  // Set beam parameters.  This function likely to be updated with better twiss functions
-  // UPDATE: Twiss?
-
-  std::cerr << "TParticleBeam::SetBetaEmittance called doing nothing" << std::endl;
-  return;
-  throw;
-
-  //fBeta = Beta;
-  fEmittance = Emittance;
-
-
-  fSigmaU[0]  = sqrt(Emittance[0] * Beta[0]);
-  fSigmaU[1]  = sqrt(Emittance[1] * Beta[1]);
-  fSigmaUP[0] = sqrt(Emittance[0] / Beta[0]);
-  fSigmaUP[1] = sqrt(Emittance[1] / Beta[1]);
-
-  fHorizontalDirection = HorizontalDirection.UnitVector();
-  fSigmaAt             = SigmaAt;
-  fSigmaEnergyGeV      = SigmaEnergyGeV;
-
-  // The vertical direction has to be orthogonal to the two other directions
-  fVerticalDirection = fU0.Cross(fHorizontalDirection).UnitVector();
-
-  if (fabs(fHorizontalDirection.Dot(this->GetU0())) > 0.00000001) {
-    // We're supposed to be doing precision science here!
-    throw;
-  }
-
 
   return;
 }
