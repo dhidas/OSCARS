@@ -33,7 +33,7 @@ An attempt has been made to use common keyword arguments wherever possible to si
 Example Calculations
 ^^^^^^^^^^^^^^^^^^^^
 
-The example calculations include non-zero emittance beams, multi-particle simulation, multi-threaded operation, and use of the GPU.  They are in order of increasing complexity, although any of the calculations can be run in this way.
+The example calculations include non-zero emittance beams, multi-particle simulation, multi-threaded operation, and use of the GPU.
 
 Spectrum Calculation
 --------------------
@@ -45,20 +45,20 @@ Assume we have an NSLS2-like beam (3 GeV electron beam) and an undulator with a 
    # Import the OSARS SR module
    import oscars.sr
 
-   # Create an OSCARS SR object
-   osr = oscars.sr.sr()
+   # Create an OSCARS SR object (set gpu and multi-threads)
+   osr = oscars.sr.sr(gpu=1, nthreads=8)
 
    # Add an undulator with peak field of 1 [T], period of 49 [mm], nperiods of 31
    osr.add_bfield_undulator(bfield=[0, 1, 0], period=[0, 0, 0.049], nperiods=31)
 
    # Add an electron beam with initial position X=Y=Z=0, and initially in the Z direction.
-   osr.set_particle_beam(type='electron', name='beam_0', x0=[0, 0, -1], d0=[0, 0, 1], energy_GeV=3, current=0.500)
+   osr.set_particle_beam(x0=[0, 0, -1], energy_GeV=3, current=0.500)
 
    # Set the initial and final times for trajectory calculation
    osr.set_ctstartstop(0, 2)
 
    # Calculate the spectrum
-   spectrum = osr.calculate_spectrum(obs=[0, 0, 30], energy_range_eV=[100, 2000], npoints=500)
+   spectrum = osr.calculate_spectrum(obs=[0, 0, 30], energy_range_eV=[100, 2000])
 
 
 
@@ -68,23 +68,21 @@ Assume we have an NSLS2-like beam (3 GeV electron beam) and an undulator with a 
 Power Density Calculation
 -------------------------
 
-* Multi-threaded
-
-Assume we have an NSLS2-like beam (3 GeV electron beam) and an undulator with a peak field of 1 [T], period of 49 [mm], with 31 periods.  We wish to calculate the power density on two different surfaces, one flat surface downstream from the device which is almost perpendicular to the photon beam, and another which models the top inner surface of the beampipe passing through the undulator.  Here nthreads=8 is added to speed up the calculation.
+Assume we have an NSLS2-like beam (3 GeV electron beam) and an undulator with a peak field of 1 [T], period of 49 [mm], with 31 periods.  We wish to calculate the power density on two different surfaces, one flat surface downstream from the device which is almost perpendicular to the photon beam, and another which models the top inner surface of the beampipe passing through the undulator.
 
 .. code-block:: py
 
    # Import the OSARS SR module
    import oscars.sr
 
-   # Create an OSCARS SR object
-   osr = oscars.sr.sr()
+   # Create an OSCARS SR object (set gpu and multi-threads)
+   osr = oscars.sr.sr(gpu=1, nthreads=8)
 
    # Add an undulator with peak field of 1 [T], period of 49 [mm], nperiods of 31
    osr.add_bfield_undulator(bfield=[0, 1, 0], period=[0, 0, 0.049], nperiods=31)
 
    # Add an electron beam with initial position X=Y=Z=0, and initially in the Z direction.
-   osr.set_particle_beam(type='electron', name='beam_0', x0=[0, 0, -1], d0=[0, 0, 1], energy_GeV=3, current=0.500)
+   osr.set_particle_beam(x0=[0, 0, -1], energy_GeV=3, current=0.500)
 
    # Set the initial and final times for trajectory calculation
    osr.set_ctstartstop(0, 2)
@@ -94,15 +92,13 @@ Assume we have an NSLS2-like beam (3 GeV electron beam) and an undulator with a 
                                                            width=[0.06, 0.06],
                                                            npoints=[101, 101],
                                                            rotations=[0, 15. * osr.pi() / 180., 0],
-                                                           translation=[0, 0, 30],
-                                                           nthreads=8)
+                                                           translation=[0, 0, 30])
 
    # Calculate the power density on the top surface of beampipe inside of undulator
    power_density_1 = osr.calculate_power_density_rectangle(plane='XZ',
                                                            width=[0.02, 2.00],
                                                            npoints=[31, 201],
-                                                           translation=[0, 0.005, 0],
-                                                           nthreads=8)
+                                                           translation=[0, 0.005, 0])
 
 
 
@@ -112,40 +108,27 @@ Flux Density Calculation
 
 * Multi-particle
 * Non-zero emittance
-* Use of GPU
 
-Assume we have an NSLS2-like beam (3 GeV electron beam) and an undulator with a peak field of 1 [T], period of 49 [mm], with 31 periods.  We wish to calculate the flux density on a plane 30 [m] downstream from the undulator.  Here we check for a GPU and if you have one, we use it.  The GPU takes priority, but if it doesn't exist the global nthreads will be used.
+Assume we have an NSLS2-like beam (3 GeV electron beam) and an undulator with a peak field of 1 [T], period of 49 [mm], with 31 periods.  We wish to calculate the flux density on a plane 30 [m] downstream from the undulator.
 
 .. code-block:: py
 
    # Import the OSARS SR module
    import oscars.sr
 
-   # Create an OSCARS SR object
-   osr = oscars.sr.sr()
-
-   # Set the global number of threads to use
-   osr.set_nthreads_global(8)
-
-   # If we have a GPU, use it!
-   if osr.check_gpu() >= 1:
-       osr.set_gpu_global(1)
+   # Create an OSCARS SR object (set gpu and multi-threads)
+   osr = oscars.sr.sr(gpu=1, nthreads=8)
 
    # Add an undulator with peak field of 1 [T], period of 49 [mm], nperiods of 31
    osr.add_bfield_undulator(bfield=[0, 1, 0], period=[0, 0, 0.049], nperiods=31)
 
    # Add an electron beam with non-zero emittance
-   osr.add_particle_beam(type='electron',
-                         name='beam_0',
-                         energy_GeV=3,
+   osr.add_particle_beam(energy_GeV=3,
                          x0=[0, 0, -1],
-                         d0=[0, 0, 1],
                          current=0.500,
                          sigma_energy_GeV=0.001*3,
                          beta=[1.5, 0.8],
-                         emittance=[0.9e-9, 0.008e-9],
-                         horizontal_direction=[1, 0, 0],
-                         lattice_reference=[0, 0, 0])
+                         emittance=[0.9e-9, 0.008e-9])
 
    # Set the initial and final times for trajectory calculation
    osr.set_ctstartstop(0, 2)
