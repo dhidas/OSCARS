@@ -38,7 +38,6 @@ Contents:
 
    Introduction
    Examples
-   Tutorial
    Modules
    CodingConventions
    MathematicalNotes
