@@ -844,7 +844,6 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
   double x[N];
   double dxdt[N];
 
-  std::cout << "getting P.GetB0(): " << P.GetB0() << std::endl;
   // Initial conditions for the forward propogation
   x[0] = P.GetX0().GetX();
   x[1] = P.GetB0().GetX() * TOSCARSSR::C();
