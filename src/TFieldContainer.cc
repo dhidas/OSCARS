@@ -72,14 +72,14 @@ void TFieldContainer::RemoveField (std::string const& Name)
 
 
 
-TVector3D TFieldContainer::GetF (double const X, double const Y, double const Z) const
+TVector3D TFieldContainer::GetF (double const X, double const Y, double const Z, double const T) const
 {
   TVector3D Sum(0, 0, 0);
 
   TVector3D const P(X, Y, Z);
   // Loop over Fields for summing fields
   for (std::vector<TField*>::const_iterator it = fFields.begin(); it != fFields.end(); ++it) {
-    Sum += (*it)->GetF(P);
+    Sum += (*it)->GetF(P, T);
   }
 
   return Sum;
@@ -88,13 +88,13 @@ TVector3D TFieldContainer::GetF (double const X, double const Y, double const Z)
 
 
 
-TVector3D TFieldContainer::GetF (TVector3D const& X) const
+TVector3D TFieldContainer::GetF (TVector3D const& X, double const T) const
 {
   TVector3D Sum(0, 0, 0);
 
   // Loop over Fields for summing fields
   for (std::vector<TField*>::const_iterator it = fFields.begin(); it != fFields.end(); ++it) {
-    Sum += (*it)->GetF(X);
+    Sum += (*it)->GetF(X, T);
   }
 
   return Sum;

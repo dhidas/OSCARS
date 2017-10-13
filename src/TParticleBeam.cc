@@ -344,7 +344,7 @@ void TParticleBeam::SetInitialConditions (TVector3D const& X, TVector3D const& D
   // Rescale the direction to a unit vector
 
   this->fX0 = X;
-  this->fU0 = D.UnitVector();
+  this->fU0 = D.Mag2() > 0.001 ? D.UnitVector() : TVector3D(0, 0, 1);
   this->fE0 = E0 < TOSCARSSR::kgToGeV(this->GetM()) ? this->GetM() : E0;
   this->fT0 = T0;
 
@@ -690,8 +690,12 @@ TParticleA TParticleBeam::GetNewParticle (std::string const& IdealOrRandom)
   if (idor == "ideal") {
     // Calculate Beta from original beam E0
     double const Gamma = fE0 / TOSCARSSR::kgToGeV(this->GetM()) < 1 ? 1 : fE0 / TOSCARSSR::kgToGeV(this->GetM());
+    std::cout << "fE0: " << fE0 << std::endl;
+    std::cout << "Gamma: " << Gamma << std::endl;
     double const Beta = Gamma != 1 ? sqrt(1.0 - 1.0 / (Gamma * Gamma)) : 0;
+    std::cout << "Beta: " << Beta << std::endl;
 
+    std::cout << "Setting initial conditions: " << Beta * fU0 << std::endl;
     // Copy this particle and set ideal conditions
     TParticleA NewParticle((TParticleA) *this);
     NewParticle.SetInitialParticleConditions(fX0, Beta * fU0, fT0);

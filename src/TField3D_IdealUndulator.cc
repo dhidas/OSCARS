@@ -100,31 +100,7 @@ void TField3D_IdealUndulator::Init (TVector3D const& Field,
 
 
 
-double TField3D_IdealUndulator::GetFx (double const X, double const Y, double const Z) const
-{
-  return this->GetF(X, Y, Z).GetX();
-}
-
-
-
-
-double TField3D_IdealUndulator::GetFy (double const X, double const Y, double const Z) const
-{
-  return this->GetF(X, Y, Z).GetY();
-}
-
-
-
-
-double TField3D_IdealUndulator::GetFz (double const X, double const Y, double const Z) const
-{
-  return this->GetF(X, Y, Z).GetZ();
-}
-
-
-
-
-TVector3D TField3D_IdealUndulator::GetF (TVector3D const& X) const
+TVector3D TField3D_IdealUndulator::GetF (TVector3D const& X, double const T) const
 {
 
   // UPDATE: Check min.max limits here?  maybe not
@@ -162,7 +138,7 @@ TVector3D TField3D_IdealUndulator::GetF (TVector3D const& X) const
 
 
 
-TVector3D TField3D_IdealUndulator::GetF (double const X, double const Y, double const Z) const
+TVector3D TField3D_IdealUndulator::GetF (double const X, double const Y, double const Z, double const T) const
 {
   return this->GetF(TVector3D(X, Y, Z));
 }

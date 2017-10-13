@@ -42,31 +42,7 @@ TField3D_Quadrupole::~TField3D_Quadrupole ()
 
 
 
-double TField3D_Quadrupole::GetFx (double const X, double const Y, double const Z) const
-{
-  return this->GetF(TVector3D(X, Y, Z)).GetX();
-}
-
-
-
-
-double TField3D_Quadrupole::GetFy (double const X, double const Y, double const Z) const
-{
-  return this->GetF(TVector3D(X, Y, Z)).GetY();
-}
-
-
-
-
-double TField3D_Quadrupole::GetFz (double const X, double const Y, double const Z) const
-{
-  return this->GetF(TVector3D(X, Y, Z)).GetZ();
-}
-
-
-
-
-TVector3D TField3D_Quadrupole::GetF (double const X, double const Y, double const Z) const
+TVector3D TField3D_Quadrupole::GetF (double const X, double const Y, double const Z, double const T) const
 {
   return this->GetF(TVector3D(X, Y, Z));
 }
@@ -74,7 +50,7 @@ TVector3D TField3D_Quadrupole::GetF (double const X, double const Y, double cons
 
 
 
-TVector3D TField3D_Quadrupole::GetF (TVector3D const& X) const
+TVector3D TField3D_Quadrupole::GetF (TVector3D const& X, double const T) const
 {
   // Get the magnetic field at a point in space.
 
