@@ -690,12 +690,8 @@ TParticleA TParticleBeam::GetNewParticle (std::string const& IdealOrRandom)
   if (idor == "ideal") {
     // Calculate Beta from original beam E0
     double const Gamma = fE0 / TOSCARSSR::kgToGeV(this->GetM()) < 1 ? 1 : fE0 / TOSCARSSR::kgToGeV(this->GetM());
-    std::cout << "fE0: " << fE0 << std::endl;
-    std::cout << "Gamma: " << Gamma << std::endl;
     double const Beta = Gamma != 1 ? sqrt(1.0 - 1.0 / (Gamma * Gamma)) : 0;
-    std::cout << "Beta: " << Beta << std::endl;
 
-    std::cout << "Setting initial conditions: " << Beta * fU0 << std::endl;
     // Copy this particle and set ideal conditions
     TParticleA NewParticle((TParticleA) *this);
     NewParticle.SetInitialParticleConditions(fX0, Beta * fU0, fT0);
