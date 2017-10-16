@@ -1,4 +1,3 @@
-from pmund import Undulator
 import math
 import copy
 import numpy as np
@@ -86,7 +85,7 @@ def b_y_pre_op_traj(osr=None):
     return field
     
 
-def b_y_pre_op_plot(z_list, pmu=None, osr=None):
+def b_y_pre_op_plot(z_list, osr=None):
     """Return unoptimized B field function for plotting.
     
     Keyword arguments:
@@ -219,15 +218,12 @@ def b_y(osr=None, sr_info=None):
         else:
             return [0, 0, 0]
 
-    check_pmu = pmu != None
-    lowest_bound = (-pmu.d - pmu.p if check_pmu 
-                    else -sr_info[1] - sr_info[2]) # -1.35
-    lower_bound = (-pmu.d if check_pmu else -sr_info[1]) # -1.33
-    upper_bound = (pmu.d if check_pmu else sr_info[1]) # 1.34
-    uppest_bound = (pmu.d + pmu.p if check_pmu 
-                    else sr_info[1] + sr_info[2]) # 1.36
+    lowest_bound = -sr_info[1] - sr_info[2] # -1.35
+    lower_bound = -sr_info[1] # -1.33
+    upper_bound = sr_info[1] # 1.34
+    uppest_bound = sr_info[1] + sr_info[2] # 1.36
+    field_bound = sr_info[3]
     
-    field_bound = (pmu.tbr if check_pmu else sr_info[3])
     cons = ({'type' : 'ineq', 'fun' : lambda u: field_bound - math.fabs(u[0])},
             {'type' : 'ineq', 'fun' : lambda u: field_bound - math.fabs(u[1])},
             {'type' : 'ineq', 'fun' : lambda u: field_bound - math.fabs(u[2])},
@@ -240,43 +236,8 @@ def b_y(osr=None, sr_info=None):
     beta  = [op_f.x[0], op_f.x[1]]
     gamma = [op_f.x[2], op_f.x[3]]
     print('\nSolution array: ' + str(op_f.x))
-    
-    if pmu != None and osr == None:
-        print('\nFirst B_y integral: '
-              + str(b_y_integral_1(beta, gamma))
-              + ', \nSecond B_y integral: '
-              + str(b_y_integral_2(beta, gamma))
-              + ', \nFirst B_x integral: '
-              + str(b_x_integral_1(beta, gamma))
-              + ', and \nSecond B_x integral: '
-              + str(b_x_integral_2(beta, gamma))
-              + '.')
-    
-    elif pmu == None and osr != None:
-        plot_trajectory_position(trajectory)
-        plot_trajectory_velocity(trajectory)
-        plot_bfield(osr, -sr_info[1]-2*sr_info[2], sr_info[1]+2*sr_info[2])
+    plot_trajectory_position(trajectory)
+    plot_trajectory_velocity(trajectory)
+    plot_bfield(osr, -sr_info[1]-2*sr_info[2], sr_info[1]+2*sr_info[2])
     
     return field
-
-
-    # Correct the trajectory after intial optimization
-    def linear_correct(osr):
-        big_trajectory = osr.calculate_trajectory()
-        trajectory = [big_trajectory[i][1] for i in range(len(big_trajectory))]
-        z = [trajectory[i][2] for i in range(len(trajectory))]
-        y = [trajectory[i][1] for i in range(len(trajectory))]
-        x = [trajectory[i][0] for i in range(len(trajectory))]
-        
-        
-        # select out the middle part
-        # find the linear regression of the middle part
-        # apply correction
-
-
-
-
-
-
-
-
