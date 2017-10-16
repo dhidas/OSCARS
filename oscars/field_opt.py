@@ -104,7 +104,6 @@ def b_y(osr=None, sr_info=None):
     """Return optimized B field function.
     
     Keyword arguments:
-    pmu -- object of class Undulator describing physical parameters
     osr -- oscars sr object with a b field added to it
     sr_info -- if using sr,  array containing the following info:
         [length, t_distance, t_width, t_field]
@@ -117,7 +116,7 @@ def b_y(osr=None, sr_info=None):
     def b_y_integral_1(beta, gamma):
         return (integrate.quad(lambda z: beta[1], 
                                lowest_bound, lower_bound)[0]
-                + integrate.quad(lambda z: middle(z, pmu, osr),  
+                + integrate.quad(lambda z: osr.get_bfield([0, 0, z])[1],  
                                  lower_bound, upper_bound)[0]
                 + integrate.quad(lambda z: gamma[1], 
                                  upper_bound, uppest_bound)[0])
@@ -127,7 +126,7 @@ def b_y(osr=None, sr_info=None):
         return  (integrate.dblquad(lambda y, x: beta[1], 
                                    lowest_bound, lower_bound, 
                                    lambda x: lowest_bound, lambda x: x)[0]
-                 + integrate.dblquad(lambda y, x: middle(y, pmu, osr), 
+                 + integrate.dblquad(lambda y, x: osr.get_bfield([0, 0, y])[1], 
                                      lower_bound, upper_bound, 
                                      lambda x: lower_bound, lambda x: x)[0]
                  + integrate.dblquad(lambda y, x: gamma[1], 
@@ -138,7 +137,7 @@ def b_y(osr=None, sr_info=None):
     def b_x_integral_1(beta, gamma):
         return (integrate.quad(lambda z: beta[0],
                                lowest_bound, lower_bound)[0]
-                + integrate.quad(lambda z: middle(z, pmu, osr), 
+                + integrate.quad(lambda z: osr.get_bfield([0, 0, z])[0], 
                                  lower_bound, upper_bound)[0]
                 + integrate.quad(lambda z: gamma[0],
                                  upper_bound, uppest_bound)[0])
@@ -148,7 +147,7 @@ def b_y(osr=None, sr_info=None):
         return (integrate.dblquad(lambda y, x: beta[0],
                                   lowest_bound, lower_bound,
                                   lambda x: lowest_bound, lambda x: x)[0]
-                + integrate.dblquad(lambda y, x: middle(y, pmu, osr),
+                + integrate.dblquad(lambda y, x: osr.get_bfield([0, 0, y])[1],
                                     lower_bound, upper_bound,
                                     lambda x: lower_bound, lambda x: x)[0]
                 + integrate.dblquad(lambda y, x: gamma[0],
@@ -201,16 +200,13 @@ def b_y(osr=None, sr_info=None):
     
     # Return callable for weighted sum function depending on pmu or osr
     def min_fun(u):
-        if osr != None:
-            return traj_norm(point=[0,0,5], osr=osr, beta=[u[0], u[1]], 
+        return traj_norm(point=[0,0,5], osr=osr, beta=[u[0], u[1]], 
                              gamma=[u[2], u[3]])
-        else: 
-            return field_ints_norm(beta=[u[0], u[1]], gamma=[u[2], u[3]])
     
     # Return field function in compatible format for oscars
     def field(x, y, z, t):    
         if z >= lower_bound and z <= upper_bound:
-            return [0, middle(z, pmu, osr), 0]
+            return [osr.get_bfield([0, 0, z])[0], osr.get_bfield([0, 0, z])[1], 0]
         elif z >= lowest_bound and z < lower_bound:
             return [beta[0], beta[1], 0]
         elif z > upper_bound and z <= uppest_bound:
