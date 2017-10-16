@@ -34,9 +34,9 @@ def ideal_undulator(osr, field, length, period, pieces, height, gap,
     
     def f_und(z):
         if -l/2 <= z <= l/2:
-            return constants * math.cos(2 * math.pi * z / p)
+            return [0, constants * math.cos(2 * math.pi * z / p), 0]
         else:
-            return 0
+            return [0, 0, 0]
     
     osr.add_bfield_function(f_und) 
     return osr
