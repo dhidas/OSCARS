@@ -1,3 +1,10 @@
+import oscars.th
+import numpy as np
+from scipy.interpolate import interp1d
+import matplotlib.pyplot as plt
+
+
+
 class Undulator:
     name = ''
     period = 0
@@ -60,7 +67,6 @@ class Wiggler:
         self.npoints = npoints
 
         
-from scipy.interpolate import interp1d
 
 class Synchrotron:
     name = ''
@@ -71,8 +77,11 @@ class Synchrotron:
     energy_range_eV = [0, 0]
     devices = []
     curves = []
+    color = None
+    linestyle = None
+    oth = None
     
-    def __init__ (self, name, beam_energy_GeV, sigma_energy_GeV, current, emittance, energy_range_eV, devices):
+    def __init__ (self, name, beam_energy_GeV, sigma_energy_GeV, current, emittance, energy_range_eV, devices, color=None, linestyle=None):
         self.name = name
         self.beam_energy_GeV = beam_energy_GeV
         self.sigma_energy_GeV = sigma_energy_GeV
@@ -81,6 +90,9 @@ class Synchrotron:
         self.energy_range_eV = energy_range_eV
         self.devices = devices
         self.curves = []
+        self.oth = oscars.th.th()
+        self.color = color
+        self.linestyle = linestyle
 
         return
             
@@ -94,7 +106,7 @@ class Synchrotron:
     def get_brightness_curve(self, energy_range_eV=None):
         self.curves = []
         for d in self.devices:
-            oth.set_particle_beam(
+            self.oth.set_particle_beam(
                 energy_GeV=self.beam_energy_GeV,
                 sigma_energy_GeV=self.sigma_energy_GeV,
                 current=self.current,
@@ -105,7 +117,7 @@ class Synchrotron:
             )
 
             if isinstance(d, BendingMagnet):
-                bm = oth.dipole_brightness(
+                bm = self.oth.dipole_brightness(
                     bfield=d.bfield,
                     energy_range_eV=self.energy_range_eV,
                     npoints=d.npoints
@@ -119,7 +131,7 @@ class Synchrotron:
 
 
             elif isinstance(d, Wiggler):
-                br = oth.dipole_brightness(
+                br = self.oth.dipole_brightness(
                     bfield=d.bfield,
                     energy_range_eV=self.energy_range_eV,
                     npoints=d.npoints
@@ -138,7 +150,7 @@ class Synchrotron:
                     if i % 2 == 0:
                         continue
 
-                    br = oth.undulator_brightness(
+                    br = self.oth.undulator_brightness(
                         K_range=d.k_range,
                         period=d.period,
                         nperiods=nperiods,
@@ -179,7 +191,7 @@ def plot_brightness (experiments, energy_range_eV, figsize=[16, 12], ylim=None):
                 X.append(x)
                 Y.append(y)
                 
-        plt.plot(X, Y, label=exp.name)
+        plt.plot(X, Y, label=exp.name, color=exp.color, linestyle=exp.linestyle)
 
     yl = plt.ylim()
     if ylim is not None:
