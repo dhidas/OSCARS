@@ -165,6 +165,7 @@ class OSCARSTH
 
   private:
     TParticleBeam fParticleBeam;
+    TParticleBeamContainer fParticleBeamContainer;
 
     // Global thread and GPU settings
     int fNThreadsGlobal;

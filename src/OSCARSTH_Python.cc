@@ -2190,6 +2190,36 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
   }
   Horizontal_Direction = Horizontal_Direction.UnitVector();
 
+  // Check for beta, alpha, gammain the input
+  int HasBAG = 0x0;
+  if (PyList_Size(List_Beta) != 0) {
+    try {
+      Beta = OSCARSPY::ListAsTVector2D(List_Beta);
+      HasBAG |= 0x4;
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'beta'");
+      return NULL;
+    }
+  }
+  if (PyList_Size(List_Alpha) != 0) {
+    try {
+      Alpha = OSCARSPY::ListAsTVector2D(List_Alpha);
+      HasBAG |= 0x2;
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'alpha'");
+      return NULL;
+    }
+  }
+  if (PyList_Size(List_Gamma) != 0) {
+    try {
+      Gamma = OSCARSPY::ListAsTVector2D(List_Gamma);
+      HasBAG |= 0x1;
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'gamma'");
+      return NULL;
+    }
+  }
+
 
   // Rotate beam parameters
   Position.RotateSelfXYZ(Rotations);
@@ -2233,36 +2263,6 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
     return NULL;
   } else {
     ThisBeam->SetSigmaEnergyGeV(Sigma_Energy_GeV);
-  }
-
-  // Check for beta, alpha, gammain the input
-  int HasBAG = 0x0;
-  if (PyList_Size(List_Beta) != 0) {
-    try {
-      Beta = OSCARSPY::ListAsTVector2D(List_Beta);
-      HasBAG |= 0x4;
-    } catch (std::length_error e) {
-      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'beta'");
-      return NULL;
-    }
-  }
-  if (PyList_Size(List_Alpha) != 0) {
-    try {
-      Alpha = OSCARSPY::ListAsTVector2D(List_Alpha);
-      HasBAG |= 0x2;
-    } catch (std::length_error e) {
-      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'alpha'");
-      return NULL;
-    }
-  }
-  if (PyList_Size(List_Gamma) != 0) {
-    try {
-      Gamma = OSCARSPY::ListAsTVector2D(List_Gamma);
-      HasBAG |= 0x1;
-    } catch (std::length_error e) {
-      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'gamma'");
-      return NULL;
-    }
   }
 
   // Check for Lattice reference in the input
