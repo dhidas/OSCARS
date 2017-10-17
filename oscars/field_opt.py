@@ -99,8 +99,28 @@ def b_y_pre_op_plot(z_list, osr=None):
     return [osr.get_bfield([0, 0, ]z)[1]  if 
             (z >= lower_bound and z <= upper_bound) else 0) for z in z_list]
     
-
-def b_y(osr=None, sr_info=None):
+    
+def terminate_field(osr, sr_info):
+    """Return an sr object with added terminating magnet B-field.
+    Should be non-destructive with the input sr object.
+    
+    Keyword arguments:
+    osr -- oscars sr object with a b field.
+    sr_info -- if using sr,  array containing the following info:
+        [length, t_distance, t_width, t_field]
+        length -- length of undulator centered at 0 without t mags
+        t_distance -- distance from origin to each terminating magnet
+        t_width -- width of each terminating magnet
+        t_field -- max field strength of each terminating magnet
+    """
+    osr_copy = copy.deepcopy(osr)
+    terminated_field = b_y(osr_copy, sr_info) # All the heavy lifting
+    osr_copy.clear_bfields()
+    osr_copy.add_bfield_function(terminated_bfield)
+    return osr_copy
+    
+    
+def b_y(osr, sr_info):
     """Return optimized B field function.
     
     Keyword arguments:
