@@ -9,13 +9,13 @@ from oscars.plots_mpl import *
 from oscars.fit import *
 from oscars.util import *
 
-
 def ideal_undulator(osr, field, length, period, pieces, height, gap, 
                     packing, t_distance, t_width, t_field):
-    """Assign the field of an ideal undulator to an sr object.
+    """Return an sr object with the field of an ideal undulator.
+    Modifies input sr object.
 
     Keyword arguments:
-    osr -- oscars sr object to which the undulator field will be added.
+    osr -- oscars sr object containing field and beam info.
     field -- absolute value of maximum field strength of each magnet
     length -- length of undulator centered at 0 without term. magnets
     period -- length of one period in undulator's  B-field
@@ -40,18 +40,34 @@ def ideal_undulator(osr, field, length, period, pieces, height, gap,
             return [0, 0, 0]
     
     osr.add_bfield_function(f_und) 
-    return osr
+    return osr # Need to check on Python reference symantics
 
 
-def b_y_pre_op_ints(osr=None):
+def dumb_copy(osr, beam_info):
+    """Return an unsophisitcated copy of sr object.
+    Will create then delete temporary files in current directory.
+    
+    Keyword arguments:
+    osr -- oscars sr object to be 'copied'
+    beam_info -- information about particle beam for copy
+    """
+    copy_osr = oscars.sr.sr()
+    copy_osr.set_particle_beam(**beam_info)
+    osr.write_bfield('OSCARS', 'foobarbaz', 'foobarbin')
+    #copy_osr.add_bfield_file('foobarbaz', 'foobarbin', 'OSCARS', 'copy_field')
+    #os.remove('foobarbaz')
+    #os.remove('foobarbin')
+    return copy_osr
+    
+
+def b_y_pre_op_ints(osr, upper_bound=1.34, lower_bound=-1.33):
     """Integrate B field of unoptimized undulator.
 
     Keyword arguments:
-    pmu -- object of class Undulator describing physical parameters
     osr -- oscars sr object with a b field added to it
+    upper_bound -- the largest z value
+    lower_bound -- the smallest z value 
     """
-    lower_bound = -1.33
-    upper_bound = 1.34
     a = integrate.quad(lambda z: osr.get_bfield([0, 0, z])[1],
                        lower_bound, upper_bound)
     b = integrate.dblquad(lambda y, x: osr.get_bfield([0, 0, z][1]),
@@ -60,63 +76,60 @@ def b_y_pre_op_ints(osr=None):
     return [a[0], b[0]]
     
 
-def b_y_pre_op_traj(osr=None):
+def b_y_pre_op_traj(osr, upper_bound=1.34, lower_bound=-1.33):
     """Return unoptimized B field function for trajectory.
     
     Keyword arguments:
-    pmu -- object of class Undulator describing physical parameters
     osr -- oscars sr object with a b field added to it
+    upper_bound -- the largest z value
+    lower_bound -- the smallest z value 
     """
-    lowest_bound = -1.35
-    lower_bound = -1.33
-    upper_bound = 1.34
-    uppest_bound = 1.36   
-    
-    # Return unoptimized B field function
     def field(x, y, z, t):
         if z >= lower_bound and z <= upper_bound:
             return [0, osr.get_bfield([0, 0, z])[1], 0]
-        elif z >= lowest_bound and z < lower_bound:
-            return [0, 0, 0]
-        elif z > upper_bound and z <= uppest_bound:
-            return [0, 0, 0]
         else:
             return [0, 0, 0]
     
     return field
     
 
-def b_y_pre_op_plot(z_list, osr=None):
+def b_y_pre_op_plot(z_list, osr, upper_bound=1.34, lower_bound=-1.33):
     """Return unoptimized B field function for plotting.
     
     Keyword arguments:
     z_list -- sequence of all z values of interest
-    pmu -- object of class Undulator describing physical parameters
     osr -- oscars sr object with a b field added to it
+    upper_bound -- the largest z value
+    lower_bound -- the smallest z value    
     """
-    lower_bound = -1.33
-    upper_bound = 1.34
-    
-    return [osr.get_bfield([0, 0, ]z)[1]  if 
+    return [(osr.get_bfield([0, 0, z])[1]  if 
             (z >= lower_bound and z <= upper_bound) else 0) for z in z_list]
     
     
-def terminate_field(osr, sr_info):
+def termination(osr, sr_info, beam_info):
     """Return an sr object with added terminating magnet B-field.
-    Should be non-destructive with the input sr object.
+    Modifies the input sr object.
     
     Keyword arguments:
     osr -- oscars sr object with a b field.
-    sr_info -- if using sr,  array containing the following info:
+    sr_info -- array containing the following info:
         [length, t_distance, t_width, t_field]
         length -- length of undulator centered at 0 without t mags
         t_distance -- distance from origin to each terminating magnet
         t_width -- width of each terminating magnet
         t_field -- max field strength of each terminating magnet
+    beam_info -- dictionary containing info about the beamline:
+        'name' -- identifying name for beam
+        'type' -- type of particles in beam
+        't0' -- start time
+        'x0' -- start position
+        'd0' -- start direction
+        'energy_GeV' -- energy of beam in GeV
+        'current' -- current of beam in A
     """
-    osr_copy = copy.deepcopy(osr)
+    osr_copy = dumb_copy(osr)
     terminated_field = b_y(osr_copy, sr_info) # All the heavy lifting
-    osr_copy.clear_bfields()
+    osr.clear_bfields()
     osr_copy.add_bfield_function(terminated_bfield)
     return osr_copy
     
@@ -133,7 +146,7 @@ def b_y(osr, sr_info):
         t_width -- width of each terminating magnet
         t_field -- max field strength of each terminating magnet
     """
-    # Perform single integral on B_y
+   # !!! Obsolete
     def b_y_integral_1(beta, gamma):
         return (integrate.quad(lambda z: beta[1], 
                                lowest_bound, lower_bound)[0]
@@ -142,7 +155,7 @@ def b_y(osr, sr_info):
                 + integrate.quad(lambda z: gamma[1], 
                                  upper_bound, uppest_bound)[0])
     
-    # Perform double integral on B_y
+    # !!! Obsolete
     def b_y_integral_2(beta, gamma):
         return  (integrate.dblquad(lambda y, x: beta[1], 
                                    lowest_bound, lower_bound, 
@@ -154,7 +167,7 @@ def b_y(osr, sr_info):
                                      upper_bound, uppest_bound,
                                      lambda x: upper_bound, lambda x: x)[0])
     
-    # Perform single integral on B_x
+    # !!! Obsolete
     def b_x_integral_1(beta, gamma):
         return (integrate.quad(lambda z: beta[0],
                                lowest_bound, lower_bound)[0]
@@ -163,7 +176,7 @@ def b_y(osr, sr_info):
                 + integrate.quad(lambda z: gamma[0],
                                  upper_bound, uppest_bound)[0])
     
-    # Perform double integral on B_x
+    # !!! Obsolete
     def b_x_integral_2(beta, gamma):
         return (integrate.dblquad(lambda y, x: beta[0],
                                   lowest_bound, lower_bound,
@@ -175,7 +188,7 @@ def b_y(osr, sr_info):
                                     upper_bound, uppest_bound,
                                     lambda x: upper_bound, lambda x: x)[0])
     
-    # Return weighted sum of the first and second integral of B_y
+    # !!! Obsolete
     def field_ints_norm(beta, gamma):
         w1, w2, w3, w4  = (0.25, 0.25, 0.25, 0.25) 
         a = b_y_integral_1(beta, gamma)
@@ -258,3 +271,4 @@ def b_y(osr, sr_info):
     plot_bfield(osr, -sr_info[1]-2*sr_info[2], sr_info[1]+2*sr_info[2])
     
     return field
+
