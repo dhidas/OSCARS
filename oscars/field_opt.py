@@ -9,6 +9,7 @@ from oscars.plots_mpl import *
 from oscars.fit import *
 from oscars.util import *
 
+
 def ideal_undulator(osr, field, length, period, pieces, height, gap, 
                     packing, t_distance, t_width, t_field):
     """Assign the field of an ideal undulator to an sr object.
