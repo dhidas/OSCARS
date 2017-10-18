@@ -103,7 +103,7 @@ class Synchrotron:
     def add_devices(self, devices):
         self.devices += devices
         
-    def get_brightness_curve(self, energy_range_eV=None):
+    def get_brightness_curves (self, energy_range_eV=None):
         self.curves = []
         for d in self.devices:
             self.oth.set_particle_beam(
@@ -127,7 +127,7 @@ class Synchrotron:
                 y = [b[1] for b in bm]
                 f = interp1d(x, y, kind='cubic')
                 
-                self.curves.append([self.energy_range_eV, f])
+                self.curves.append([d.name, self.energy_range_eV, f])
 
 
             elif isinstance(d, Wiggler):
@@ -141,7 +141,7 @@ class Synchrotron:
                 y = [b[1] * 2. * int(d.length / d.period) for b in br]
                 f = interp1d(x, y, kind='cubic')
                 
-                self.curves.append([self.energy_range_eV, f])
+                self.curves.append([d.name, self.energy_range_eV, f])
 
 
             elif isinstance(d, Undulator):
@@ -162,21 +162,91 @@ class Synchrotron:
                     x = [b[0] for b in br]
                     y = [b[1] for b in br]
                     f = interp1d(x, y, kind='cubic')
-                    self.curves.append([[x[0], x[-1]], f])
+                    self.curves.append([d.name, [x[0], x[-1]], f])
 
             else:
                 raise ValueError(d.__class__.__name__ + ' is an invalid type.  please check')
 
         return
-    
-    
+
+
+
+    def get_flux_curves (self, energy_range_eV=None):
+        self.curves = []
+        for d in self.devices:
+            self.oth.set_particle_beam(
+                energy_GeV=self.beam_energy_GeV,
+                sigma_energy_GeV=self.sigma_energy_GeV,
+                current=self.current,
+                emittance=self.emittance,
+                beta=d.beta,
+                alpha=d.alpha,
+                eta=d.eta
+            )
+
+            if isinstance(d, BendingMagnet):
+                bm = self.oth.dipole_spectrum(
+                    bfield=d.bfield,
+                    energy_range_eV=self.energy_range_eV,
+                    npoints=d.npoints
+                )
+                
+                x = [b[0] for b in bm]
+                y = [b[1] for b in bm]
+                f = interp1d(x, y, kind='cubic')
+                
+                self.curves.append([d.name, self.energy_range_eV, f])
+
+
+            elif isinstance(d, Wiggler):
+                br = self.oth.dipole_spectrum(
+                    bfield=d.bfield,
+                    energy_range_eV=self.energy_range_eV,
+                    npoints=d.npoints
+                )
+                
+                x = [b[0] for b in br]
+                y = [b[1] * 2. * int(d.length / d.period) for b in br]
+                f = interp1d(x, y, kind='cubic')
+                
+                self.curves.append([d.name, self.energy_range_eV, f])
+
+
+            elif isinstance(d, Undulator):
+                nperiods = int(d.length / d.period)
+                for i in range(d.harmonic_range[0], d.harmonic_range[1]+1):
+                    if i % 2 == 0:
+                        continue
+
+                    br = self.oth.undulator_flux_onaxis(
+                        K_range=d.k_range,
+                        period=d.period,
+                        nperiods=nperiods,
+                        harmonic=i,
+                        npoints=d.npoints,
+                        minimum=d.minimum
+                    )
+
+                    x = [b[0] for b in br]
+                    y = [b[1] for b in br]
+                    f = interp1d(x, y, kind='cubic')
+                    self.curves.append([d.name, [x[0], x[-1]], f])
+
+            else:
+                raise ValueError(d.__class__.__name__ + ' is an invalid type.  please check')
+
+        return
+
+
+
+
 def plot_brightness (experiments, energy_range_eV, figsize=[16, 12], ylim=None):
 
     plt.figure(1, figsize=figsize)
     
     for exp in experiments:
         print(exp.name)
-        exp.get_brightness_curve(energy_range_eV)
+        exp.get_brightness_curves(energy_range_eV)
         X = []
         Y = []
         
@@ -184,14 +254,140 @@ def plot_brightness (experiments, energy_range_eV, figsize=[16, 12], ylim=None):
             y = 0
 
             for curve in exp.curves:
-                if x >= curve[0][0] and x <= curve[0][1] and curve[1](x) > y:
-                    y = curve[1](x)
+                if x >= curve[1][0] and x <= curve[1][1] and curve[2](x) > y:
+                    y = curve[2](x)
                     
             if y is not 0:
                 X.append(x)
                 Y.append(y)
                 
         plt.plot(X, Y, label=exp.name, color=exp.color, linestyle=exp.linestyle)
+
+    yl = plt.ylim()
+    if ylim is not None:
+        plt.ylim(ylim)
+    plt.grid()
+    plt.loglog()
+    plt.legend()
+    plt.show()
+    return plt
+
+
+def plot_flux (experiments, energy_range_eV, figsize=[16, 12], ylim=None):
+
+    plt.figure(1, figsize=figsize)
+    
+    for exp in experiments:
+        print(exp.name)
+        exp.get_flux_curves(energy_range_eV)
+        X = []
+        Y = []
+        
+        for x in np.linspace(energy_range_eV[0], energy_range_eV[1], 5000):
+            y = 0
+
+            for curve in exp.curves:
+                if x >= curve[1][0] and x <= curve[1][1] and curve[2](x) > y:
+                    y = curve[2](x)
+                    
+            if y is not 0:
+                X.append(x)
+                Y.append(y)
+                
+        plt.plot(X, Y, label=exp.name, color=exp.color, linestyle=exp.linestyle)
+
+    yl = plt.ylim()
+    if ylim is not None:
+        plt.ylim(ylim)
+    plt.grid()
+    plt.loglog()
+    plt.legend()
+    plt.show()
+    return plt
+
+
+def plot_flux_all (experiments, energy_range_eV, figsize=[16, 12], ylim=None):
+
+    plt.figure(1, figsize=figsize)
+    
+    for exp in experiments:
+        print(exp.name)
+        for d in exp.devices:
+            exp.oth.set_particle_beam(
+                energy_GeV=exp.beam_energy_GeV,
+                sigma_energy_GeV=exp.sigma_energy_GeV,
+                current=exp.current,
+                emittance=exp.emittance,
+                beta=d.beta,
+                alpha=d.alpha,
+                eta=d.eta
+            )
+
+            fl = []
+            if isinstance(d, BendingMagnet):
+                fl = exp.oth.dipole_spectrum(
+                    bfield=d.bfield,
+                    energy_range_eV=exp.energy_range_eV,
+                    npoints=d.npoints
+                )
+                
+                x = [b[0] for b in fl]
+                y = [b[1] for b in fl]
+
+                plt.plot(x, y)
+
+            elif isinstance(d, Wiggler):
+                fl = exp.oth.dipole_spectrum(
+                    bfield=d.bfield,
+                    energy_range_eV=exp.energy_range_eV,
+                    npoints=d.npoints
+                )
+                
+                x = [b[0] for b in fl]
+                y = [b[1] * 2. * int(d.length / d.period) for b in fl]
+                f = interp1d(x, y, kind='cubic')
+                
+                plt.plot(x, y)
+
+
+            elif isinstance(d, Undulator):
+                nperiods = int(d.length / d.period)
+                curves = []
+                for i in range(d.harmonic_range[0], d.harmonic_range[1]+1):
+                    if i % 2 == 0:
+                        continue
+
+                    fl = exp.oth.undulator_flux_onaxis(
+                        K_range=d.k_range,
+                        period=d.period,
+                        nperiods=nperiods,
+                        harmonic=i,
+                        npoints=d.npoints,
+                        minimum=d.minimum
+                    )
+
+                    x = [b[0] for b in fl]
+                    y = [b[1] for b in fl]
+                    f = interp1d(x, y, kind='cubic')
+                    curves.append([d.name, [x[0], x[-1]], f])
+
+                X = []
+                Y = []
+                for xx in np.linspace(energy_range_eV[0], energy_range_eV[1], 5000):
+                    yy = 0
+                
+                    for curve in curves:
+                        if xx >= curve[1][0] and xx <= curve[1][1] and curve[2](xx) > yy:
+                            yy = curve[2](xx)
+                            
+                    if yy is not 0:
+                        X.append(xx)
+                        Y.append(yy)
+                if len(X) > 0:
+                    plt.plot(X, Y)
+
+            else:
+                raise ValueError(d.__class__.__name__ + ' is an invalid type.  please check')
 
     yl = plt.ylim()
     if ylim is not None:
