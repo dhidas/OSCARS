@@ -54,6 +54,12 @@ TParticleBeam::TParticleBeam (std::string const& ParticleType, std::string const
   this->SetName(Name);
   fE0 = Energy < TOSCARSSR::kgToGeV(this->GetM()) ? this->GetM() : Energy;
 
+  double const Gamma = this->GetE0() / TOSCARSSR::kgToGeV(this->GetM());
+  double const Beta = sqrt(1.0 - 1.0 / (Gamma * Gamma));
+
+  this->SetU0(TVector3D(0, 0, 1));
+  this->SetB0(this->GetU0() * Beta);
+
   this->SetCurrent(Current);
   this->SetWeight(Weight);
 }
@@ -75,6 +81,12 @@ TParticleBeam::TParticleBeam (std::string const& ParticleType, std::string const
   fU0 = D0.Mag2() > 0 ? D0.UnitVector() : TVector3D(0, 0, 0);
   fE0 = Energy < TOSCARSSR::kgToGeV(this->GetM()) ? this->GetM() : Energy;
   fT0 = 0;
+
+  double const Gamma = this->GetE0() / TOSCARSSR::kgToGeV(this->GetM());
+  double const Beta = sqrt(1.0 - 1.0 / (Gamma * Gamma));
+
+  this->SetU0(TVector3D(0, 0, 1));
+  this->SetB0(this->GetU0() * Beta);
 
   this->SetCurrent(Current);
   this->SetWeight(Weight);
@@ -100,6 +112,12 @@ TParticleBeam::TParticleBeam (std::string const& ParticleType, std::string const
   fU0 = D0.Mag2() > 0 ? D0.UnitVector() : TVector3D(0, 0, 0);
   fE0 = Energy < TOSCARSSR::kgToGeV(this->GetM()) ? this->GetM() : Energy;
   fT0 = T0;
+
+  double const Gamma = this->GetE0() / TOSCARSSR::kgToGeV(this->GetM());
+  double const Beta = sqrt(1.0 - 1.0 / (Gamma * Gamma));
+
+  this->SetU0(TVector3D(0, 0, 1));
+  this->SetB0(this->GetU0() * Beta);
 
   this->SetCurrent(Current);
   this->SetWeight(Weight);

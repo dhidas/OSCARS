@@ -381,6 +381,7 @@ double OSCARSTH::UndulatorEnergyAtHarmonicK (double const K,
   }
 
   double const Gamma = fParticleBeam.GetGamma();
+  std::cout << "G: " << Gamma << std::endl;
 
   double const K2 = K * K;
 
@@ -425,6 +426,7 @@ TVector2D OSCARSTH::UndulatorBrightnessK (double const K,
     return TVector2D(0, 0);
   }
 
+  std::cout << "UndulatorBrightnessK: " << K << std::endl;
   // Properties from beam
   double    const Gamma          = fParticleBeam.GetGamma();
   TVector2D const Beta           = fParticleBeam.GetTwissBeta();
@@ -462,6 +464,7 @@ TVector2D OSCARSTH::UndulatorBrightnessK (double const K,
   double const SigmaY = sqrt(sigy * sigy + sigr * sigr);
   double const SigmaXP = sqrt(sigxp * sigxp + sigrp * sigrp);
   double const SigmaYP = sqrt(sigyp * sigyp + sigrp * sigrp);
+
 
   return TVector2D(Energy_eV, Fu / (4 * TOSCARSSR::Pi2() * SigmaX * SigmaY * SigmaXP * SigmaYP) * 1.e-12);
 }
@@ -662,7 +665,7 @@ void OSCARSTH::WigglerFluxKPoints (double         const  K,
 
 
 
-
+/*
 TParticleBeam& OSCARSTH::SetParticleBeam (std::string const& Beam, std::string const& Name)
 {
   // Add a particle beam
@@ -697,6 +700,63 @@ TParticleBeam& OSCARSTH::SetParticleBeam (double const Energy_GeV,
   fParticleBeam.SetEta(Eta);
 
   return fParticleBeam;
+}
+*/
+
+
+
+TParticleBeam& OSCARSTH::AddParticleBeam (std::string const& Type,
+                                          std::string const& Name,
+                                          TVector3D const& X0,
+                                          TVector3D const& V0,
+                                          double const Energy_GeV,
+                                          double const T0,
+                                          double const Current,
+                                          double const Weight,
+                                          double const Charge,
+                                          double const Mass)
+{
+  // Add a particle beam
+  // Type        - The name of the particle type that you want to use
+  // Name        - A user specified 'name' for this beam
+  // X0          - Initial position in X,Y,Z
+  // V0          - A vector pointing in the direction of the velocity of arbitrary magnitude
+  // Energy_GeV  - Energy of particle beam in GeV
+  // T0          - Time of initial conditions, specified in units of [m] (for v = c)
+  // Current     - Beam current in Amperes
+  // Weight      - Relative weight to give this beam when randomly sampling
+  // Charge      - Charge of custom particle
+  // Mass        - Mass of custom particle
+
+  this->ClearParticleBeams();
+  fParticleBeam = fParticleBeamContainer.AddNewParticleBeam(Type, Name, X0, V0, Energy_GeV, T0, Current, Weight, Charge, Mass);
+  return fParticleBeam;
+}
+
+
+
+
+TParticleBeam& OSCARSTH::AddParticleBeam (std::string const& Beam,
+                                          std::string const& Name,
+                                          double const Weight)
+{
+  // Add a particle beam
+  // Beam - The name of the predefined particle beam to add
+
+  this->ClearParticleBeams();
+  fParticleBeam = fParticleBeamContainer.AddNewParticleBeam(Beam, Name, Weight);
+  return fParticleBeam;
+}
+
+
+
+
+void OSCARSTH::ClearParticleBeams ()
+{
+  // Clear the contents of the particle beam container
+  fParticleBeamContainer.Clear();
+
+  return;
 }
 
 

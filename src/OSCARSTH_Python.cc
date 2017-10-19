@@ -1923,17 +1923,34 @@ static PyObject* OSCARSTH_BesselK (OSCARSTHObject* self, PyObject* args, PyObjec
 const char* DOC_OSCARSTH_SetParticleBeam = R"docstring(
 set_particle_beam([, type, name, energy_GeV, d0, x0, beam, sigma_energy_GeV, t0, current, weight, rotations, translation, horizontal_direction, beta, alpha, gamma, emittance, eta, lattice_reference, mass, charge])
 
-Add a particle beam to the OSCARS object with a name given by *name*.  There is no limit to the number of different particle beams one can add.  They are added with a *weight* which is by default 1.  The weight is used in random sampling when asking for a new particle, for example in oscars.sr.set_new_particle().  If the *beam* parameter is given you only need to specify *name* and *x0*.
+This function is the same as add_particle_beam(), but it clears all particle beams before the 'add'.
+)docstring";
+static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
+{
+  // Clear all particle beams, add this beam, and set a new particle
+
+  self->obj->ClearParticleBeams();
+
+  PyObject* ret = OSCARSTH_AddParticleBeam(self, args, keywds);
+  if (ret == NULL) {
+    return ret;
+  }
+
+  //self->obj->SetNewParticle("", "ideal");
+
+  return ret;
+}
+
+
+
+
+const char* DOC_OSCARSTH_AddParticleBeam = R"docstring(
+add_particle_beam([, type, name, energy_GeV, d0, x0, beam, sigma_energy_GeV, t0, current, weight, rotations, translation, horizontal_direction, beta, alpha, gamma, emittance, eta, lattice_reference, mass, charge])
+
+Add a particle beam to the OSCARS object with a name given by *name*.  There is no limit to the number of different particle beams one can add.  They are added with a *weight* which is by default 1.  The weight is used in random sampling when asking for a new particle, for example in set_new_particle().  If the *beam* parameter is given you only need to specify *name* and *x0*.
 
 Supported particle types for *type* are:
     * electron
-    * positron
-    * muon
-    * anti-muon
-    * proton
-    * anti-proton
-    * pi+
-    * pi-
 
 Parameters
 ----------
@@ -2014,26 +2031,20 @@ Examples
 --------
 Add an electron beam with 0.500 [A] current at an initial position of [0, 0, 0] in the Y direction with energy of 3 [GeV]
 
-    >>> osr.add_particle_beam(type='electron', name='beam_0', x0=[0, 0, 0], d0=[0, 1, 0], energy_GeV=3, current=0.500)
-
-Add a positron beam with 0.500 [A] current at an initial position of [-2, 0, 0] in the direction given by theta in the X-Y plane with energy of 3 [GeV]
-
-    >>> from math import sin, cos
-    >>> theta = 0.25 * osr.pi()
-    >>> osr.add_particle_beam(type='positron', name='beam_0', x0=[-2, 0, 0], d0=[sin(theta), cos(theta), 0], energy_GeV=3, current=0.500)
+    >>> oth.add_particle_beam(type='electron', energy_GeV=3, current=0.500)
 
 Add a predefined beam for the NSLSII short straight section
 
-    >>> osr.add_particle_beam(beam='NSLSII-ShortStraight', name='beam_0', x0=[-2, 0, 0])
+    >>> oth.add_particle_beam(beam='NSLSII-ShortStraight')
 )docstring";
-static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
+static PyObject* OSCARSTH_AddParticleBeam (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {
   // Add a particle beam to the experiment
 
   // Lists and variables some with initial values
-  char const* Type                       = "";
+  char const* Type                       = "electron";
   char const* Name                       = "";
-  double      Energy_GeV                 = 0;
+  double      Energy_GeV                 = -1;
   double      Sigma_Energy_GeV           = 0;
   double      T0                         = 0;
   double      Current                    = 0;
@@ -2041,17 +2052,17 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
   double      Mass                       = 0;
   double      Charge                     = 0;
   char const* Beam                       = "";
-  PyObject*   List_Position              = PyList_New(0);
-  PyObject*   List_Direction             = PyList_New(0);
-  PyObject*   List_Rotations             = PyList_New(0);
-  PyObject*   List_Translation           = PyList_New(0);
-  PyObject*   List_Horizontal_Direction  = PyList_New(0);
-  PyObject*   List_Beta                  = PyList_New(0);
-  PyObject*   List_Alpha                 = PyList_New(0);
-  PyObject*   List_Gamma                 = PyList_New(0);
-  PyObject*   List_Emittance             = PyList_New(0);
-  PyObject*   List_Eta                   = PyList_New(0);
-  PyObject*   List_Lattice_Reference     = PyList_New(0);
+  PyObject*   List_Position              = 0x0;
+  PyObject*   List_Direction             = 0x0;
+  PyObject*   List_Rotations             = 0x0;
+  PyObject*   List_Translation           = 0x0;
+  PyObject*   List_Horizontal_Direction  = 0x0;
+  PyObject*   List_Beta                  = 0x0;
+  PyObject*   List_Alpha                 = 0x0;
+  PyObject*   List_Gamma                 = 0x0;
+  PyObject*   List_Emittance             = 0x0;
+  PyObject*   List_Eta                   = 0x0;
+  PyObject*   List_Lattice_Reference     = 0x0;
 
   TVector3D Position(0, 0, 0);
   TVector3D Direction(0, 0, 1);
@@ -2116,6 +2127,8 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
     return NULL;
   }
 
+  // Clear particle beam (only one beam in TH)
+  self->obj->ClearParticleBeams();
 
   // Are you asking for one of the predefined beams?
   bool const HasPredefinedBeam = std::strlen(Beam) != 0 ? true : false;
@@ -2125,17 +2138,26 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
   // Check if beam is defined (for predefined beams)
   if (HasPredefinedBeam) {
     try {
-      ThisBeam = &(self->obj->SetParticleBeam(Beam, Name));
+      ThisBeam = &(self->obj->AddParticleBeam(Beam, Name, Weight));
     } catch (...) {
       PyErr_SetString(PyExc_ValueError, "Error in predefined beam name / definition");
       return NULL;
     }
+
+    if (Energy_GeV >= 0) {
+      ThisBeam->SetE0(Energy_GeV);
+    }
+
   }
 
 
+  // default is 0
+  if (Energy_GeV == -1) {
+    Energy_GeV = 0;
+  }
 
   // Initial position
-  if (PyList_Size(List_Position) != 0) {
+  if (List_Position != 0x0) {
     try {
       Position = OSCARSPY::ListAsTVector3D(List_Position);
     } catch (std::length_error e) {
@@ -2145,8 +2167,14 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
 
   }
 
+  // Energy check
+  if (Energy_GeV < 0) {
+    PyErr_SetString(PyExc_ValueError, "We do not currently support negative energy beams.  Please change 'energy_GeV' to >= 0");
+    return NULL;
+  }
+
   // Initial direction
-  if (PyList_Size(List_Direction) != 0) {
+  if (List_Direction != 0x0) {
     try {
       Direction = OSCARSPY::ListAsTVector3D(List_Direction);
     } catch (std::length_error e) {
@@ -2156,7 +2184,7 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
   }
 
   // Check for Rotations in the input
-  if (PyList_Size(List_Rotations) != 0) {
+  if (List_Rotations != 0x0) {
     try {
       Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
     } catch (std::length_error e) {
@@ -2167,7 +2195,7 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
 
 
   // Check for Translation in the input
-  if (PyList_Size(List_Translation) != 0) {
+  if (List_Translation != 0x0) {
     try {
       Translation = OSCARSPY::ListAsTVector3D(List_Translation);
     } catch (std::length_error e) {
@@ -2178,7 +2206,7 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
 
 
   // Check for Horizontal_Direction in the input
-  if (PyList_Size(List_Horizontal_Direction) != 0) {
+  if (List_Horizontal_Direction != 0x0) {
     try {
       Horizontal_Direction = OSCARSPY::ListAsTVector3D(List_Horizontal_Direction);
     } catch (std::length_error e) {
@@ -2186,39 +2214,9 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
       return NULL;
     }
   } else {
-    Horizontal_Direction = -Direction.Orthogonal().UnitVector();
+    Horizontal_Direction = -Direction.Orthogonal();
   }
   Horizontal_Direction = Horizontal_Direction.UnitVector();
-
-  // Check for beta, alpha, gammain the input
-  int HasBAG = 0x0;
-  if (PyList_Size(List_Beta) != 0) {
-    try {
-      Beta = OSCARSPY::ListAsTVector2D(List_Beta);
-      HasBAG |= 0x4;
-    } catch (std::length_error e) {
-      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'beta'");
-      return NULL;
-    }
-  }
-  if (PyList_Size(List_Alpha) != 0) {
-    try {
-      Alpha = OSCARSPY::ListAsTVector2D(List_Alpha);
-      HasBAG |= 0x2;
-    } catch (std::length_error e) {
-      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'alpha'");
-      return NULL;
-    }
-  }
-  if (PyList_Size(List_Gamma) != 0) {
-    try {
-      Gamma = OSCARSPY::ListAsTVector2D(List_Gamma);
-      HasBAG |= 0x1;
-    } catch (std::length_error e) {
-      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'gamma'");
-      return NULL;
-    }
-  }
 
 
   // Rotate beam parameters
@@ -2229,24 +2227,51 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
   // Add the particle beam
   if (std::strlen(Beam) == 0) {
     try {
-      ThisBeam = &(self->obj->SetParticleBeam(Energy_GeV, Current, Beta, Emittance, Sigma_Energy_GeV, Eta));
+      if (std::string(Type) == "custom") {
+        if (Mass == 0 || Charge == 0) {
+          PyErr_SetString(PyExc_ValueError, "'mass' or 'charge' is zero");
+          return NULL;
+        }
+        // UPDATE: for custom beams
+        ThisBeam = &(self->obj->AddParticleBeam(Type, Name, Position, Direction, Energy_GeV, T0, Current, Weight, Charge, Mass));
+      } else {
+        ThisBeam = &(self->obj->AddParticleBeam(Type, Name, Position, Direction, Energy_GeV, T0, Current, Weight));
+      }
     } catch (std::invalid_argument e) {
       PyErr_SetString(PyExc_ValueError, "invalid argument in adding particle beam.  possibly 'name' already exists");
       return NULL;
     }
   }
 
+  // Change predefined beam accordingly
+  if (HasPredefinedBeam) {
+    if (List_Direction != 0x0) {
+      ThisBeam->SetU0(Direction);
+    }
+    ThisBeam->SetX0(Position);
+  }
+
+  // Set horizontal direction
+  ThisBeam->SetHorizontalDirection(Horizontal_Direction);
 
   // UPDATE
   // Check for Emittance in the input
-  if (PyList_Size(List_Emittance) != 0) {
+  if (List_Emittance != 0x0) {
     try {
       Emittance = OSCARSPY::ListAsTVector2D(List_Emittance);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'emittance'");
       return NULL;
     }
+
+    // Set emittance and beam distribution
     ThisBeam->SetEmittance(Emittance);
+    ThisBeam->SetBeamDistribution(TParticleBeam::kBeamDistribution_Gaussian);
+  } else {
+    // Beam distribution to filament
+    if (std::strlen(Beam) == 0) {
+      ThisBeam->SetBeamDistribution(TParticleBeam::kBeamDistribution_Filament);
+    }
   }
 
   // Check for no beam
@@ -2265,9 +2290,39 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
     ThisBeam->SetSigmaEnergyGeV(Sigma_Energy_GeV);
   }
 
+  // Check for beta, alpha, gammain the input
+  int HasBAG = 0x0;
+  if (List_Beta != 0x0) {
+    try {
+      Beta = OSCARSPY::ListAsTVector2D(List_Beta);
+      HasBAG |= 0x4;
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'beta'");
+      return NULL;
+    }
+  }
+  if (List_Alpha != 0x0) {
+    try {
+      Alpha = OSCARSPY::ListAsTVector2D(List_Alpha);
+      HasBAG |= 0x2;
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'alpha'");
+      return NULL;
+    }
+  }
+  if (List_Gamma != 0x0) {
+    try {
+      Gamma = OSCARSPY::ListAsTVector2D(List_Gamma);
+      HasBAG |= 0x1;
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'gamma'");
+      return NULL;
+    }
+  }
+
   // Check for Lattice reference in the input
   bool HasReferencePoint = false;
-  if (PyList_Size(List_Lattice_Reference) != 0) {
+  if (List_Lattice_Reference != 0x0) {
     try {
       Lattice_Reference = OSCARSPY::ListAsTVector3D(List_Lattice_Reference);
       HasReferencePoint = true;
@@ -2275,8 +2330,8 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'lattice_reference'");
       return NULL;
     }
-    ThisBeam->SetTwissLatticeReference(Lattice_Reference);
   }
+  ThisBeam->SetTwissLatticeReference(Lattice_Reference);
 
   // Set correct twiss parameters
   switch (HasBAG) {
@@ -2299,15 +2354,15 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
       break;
   }
 
-  if (PyList_Size(List_Eta) != 0) {
+  if (List_Eta != 0x0) {
     try {
       Eta = OSCARSPY::ListAsTVector2D(List_Eta);
-      ThisBeam->SetEta(Eta);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'gamma'");
       return NULL;
     }
   }
+  ThisBeam->SetEta(Eta);
 
 
   if (T0 != 0) {
@@ -2321,6 +2376,10 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
   Py_INCREF(Py_None);
   return Py_None;
 }
+
+
+
+
 
 
 
@@ -2356,7 +2415,7 @@ None
 )docstring";
 static PyObject* OSCARSTH_PrintAll (OSCARSTHObject* self)
 {
-  // Print all particle beams stored in OSCARSSR
+  // Print all particle beams stored
 
   // Out string stream for printing beam information
   std::ostringstream ostream;
