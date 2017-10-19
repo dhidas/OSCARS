@@ -2,6 +2,7 @@ import oscars.th
 import numpy as np
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
+from itertools import cycle
 
 
 
@@ -16,8 +17,10 @@ class Undulator:
     npoints = 1000
     harmonic_range = [1, 51]
     eta = [0, 0]
+    color = None
+    linestyle = None
     
-    def __init__ (self, name, period, length, k_range, beta, minimum, npoints = 1000, harmonic_range = [1, 51], alpha=[0, 0], eta = [0, 0]):
+    def __init__ (self, name, period, length, k_range, beta, minimum, npoints = 1000, harmonic_range = [1, 51], alpha=[0, 0], eta = [0, 0], color=None, linestyle=None):
         self.name = name
         self.period = period
         self.length = length
@@ -28,6 +31,8 @@ class Undulator:
         self.npoints = npoints
         self.harmonic_range = harmonic_range
         self.eta = eta
+        self.color = color
+        self.linestyle = linestyle
         
 class BendingMagnet:
     name = ''
@@ -36,14 +41,18 @@ class BendingMagnet:
     alpha = [0, 0]
     eta = [0, 0]
     npoints = 1000
+    color = None
+    linestyle = None
 
-    def __init__ (self, name, bfield, beta, eta, alpha=[0, 0], npoints = 1000):
+    def __init__ (self, name, bfield, beta, eta, alpha=[0, 0], npoints = 1000, color=None, linestyle=None):
         self.name = name
         self.bfield = bfield
         self.beta = beta
         self.alpha = alpha
         self.eta = eta
         self.npoints = npoints
+        self.color = color
+        self.linestyle = color
 
 
 class Wiggler:
@@ -55,8 +64,10 @@ class Wiggler:
     alpha = [0, 0]
     eta = [0, 0]
     npoints = 1000
+    color = None
+    linestyle = None
 
-    def __init__ (self, name, period, length, bfield, beta, eta, alpha=[0, 0], npoints = 1000):
+    def __init__ (self, name, period, length, bfield, beta, eta, alpha=[0, 0], npoints = 1000, color=None, linestyle=None):
         self.name = name
         self.period = period
         self.length = length
@@ -65,6 +76,8 @@ class Wiggler:
         self.alpha = alpha
         self.eta = eta
         self.npoints = npoints
+        self.color = color
+        self.linestyle = linestyle
 
         
 
@@ -240,11 +253,14 @@ class Synchrotron:
 
 
 
-def plot_brightness (experiments, energy_range_eV, figsize=[16, 12], ylim=None):
+def plot_brightness (experiments, energy_range_eV, figsize=None, ylim=None, ofile=''):
 
     plt.figure(1, figsize=figsize)
     
+    cc = cycle(['C0','C1','C2','C3','C4','C5','C6','C7','C8','C9'])
+
     for exp in experiments:
+        color = next(cc) if exp.color is None else exp.color
         print(exp.name)
         exp.get_brightness_curves(energy_range_eV)
         X = []
@@ -261,7 +277,7 @@ def plot_brightness (experiments, energy_range_eV, figsize=[16, 12], ylim=None):
                 X.append(x)
                 Y.append(y)
                 
-        plt.plot(X, Y, label=exp.name, color=exp.color, linestyle=exp.linestyle)
+        plt.plot(X, Y, label=exp.name, color=color, linestyle=exp.linestyle)
 
     yl = plt.ylim()
     if ylim is not None:
@@ -269,16 +285,25 @@ def plot_brightness (experiments, energy_range_eV, figsize=[16, 12], ylim=None):
     plt.grid()
     plt.loglog()
     plt.legend()
+    plt.xlabel('Photon Energy [eV]')
+    plt.ylabel('Brightness [$photons/s/0.1\%bw/mm^2/mrad^2$]')
+
+    if ofile != '':
+        plt.savefig(ofile, bbox_inches='tight')
+
     plt.show()
     return plt
 
 
-def plot_flux (experiments, energy_range_eV, figsize=[16, 12], ylim=None):
+def plot_flux (experiments, energy_range_eV, figsize=None, ylim=None, ofile=''):
 
     plt.figure(1, figsize=figsize)
     
+    cc = cycle(['C0','C1','C2','C3','C4','C5','C6','C7','C8','C9'])
+
     for exp in experiments:
         print(exp.name)
+        color = next(cc) if exp.color is None else exp.color
         exp.get_flux_curves(energy_range_eV)
         X = []
         Y = []
@@ -294,7 +319,7 @@ def plot_flux (experiments, energy_range_eV, figsize=[16, 12], ylim=None):
                 X.append(x)
                 Y.append(y)
                 
-        plt.plot(X, Y, label=exp.name, color=exp.color, linestyle=exp.linestyle)
+        plt.plot(X, Y, label=exp.name, color=color, linestyle=exp.linestyle)
 
     yl = plt.ylim()
     if ylim is not None:
@@ -302,17 +327,26 @@ def plot_flux (experiments, energy_range_eV, figsize=[16, 12], ylim=None):
     plt.grid()
     plt.loglog()
     plt.legend()
+    plt.xlabel('Photon Energy [eV]')
+    plt.ylabel('Flux [$photons/s/0.1\%bw/mrad^2$]')
+
+    if ofile != '':
+        plt.savefig(ofile, bbox_inches='tight')
+
     plt.show()
     return plt
 
 
-def plot_flux_all (experiments, energy_range_eV, figsize=[16, 12], ylim=None):
+def plot_flux_all (experiments, energy_range_eV, figsize=None, ylim=None, ofile=''):
 
     plt.figure(1, figsize=figsize)
     
+    cc = cycle(['C0','C1','C2','C3','C4','C5','C6','C7','C8','C9'])
+
     for exp in experiments:
         print(exp.name)
         for d in exp.devices:
+            color = next(cc) if d.color is None else d.color
             exp.oth.set_particle_beam(
                 energy_GeV=exp.beam_energy_GeV,
                 sigma_energy_GeV=exp.sigma_energy_GeV,
@@ -334,7 +368,7 @@ def plot_flux_all (experiments, energy_range_eV, figsize=[16, 12], ylim=None):
                 x = [b[0] for b in fl]
                 y = [b[1] for b in fl]
 
-                plt.plot(x, y)
+                plt.plot(x, y, color=color, linestyle=d.linestyle, label=d.name)
 
             elif isinstance(d, Wiggler):
                 fl = exp.oth.dipole_spectrum(
@@ -347,10 +381,11 @@ def plot_flux_all (experiments, energy_range_eV, figsize=[16, 12], ylim=None):
                 y = [b[1] * 2. * int(d.length / d.period) for b in fl]
                 f = interp1d(x, y, kind='cubic')
                 
-                plt.plot(x, y)
+                plt.plot(x, y, color=color, linestyle=d.linestyle, label=d.name)
 
 
             elif isinstance(d, Undulator):
+                labeldone = False
                 nperiods = int(d.length / d.period)
                 curves = []
                 for i in range(d.harmonic_range[0], d.harmonic_range[1]+1):
@@ -383,8 +418,21 @@ def plot_flux_all (experiments, energy_range_eV, figsize=[16, 12], ylim=None):
                     if yy is not 0:
                         X.append(xx)
                         Y.append(yy)
+                    elif yy is 0 and len(X) is not 0:
+                        if labeldone:
+                            plt.plot(X, Y, color=color, linestyle=d.linestyle)
+                        else:
+                            plt.plot(X, Y, color=color, linestyle=d.linestyle, label=d.name)
+                            labeldone = True
+                        X=[]
+                        Y=[]
+
                 if len(X) > 0:
-                    plt.plot(X, Y)
+                    if labeldone:
+                        plt.plot(X, Y, color=color, linestyle=d.linestyle)
+                    else:
+                        plt.plot(X, Y, color=color, linestyle=d.linestyle, label=d.name)
+                        labeldone = True
 
             else:
                 raise ValueError(d.__class__.__name__ + ' is an invalid type.  please check')
@@ -395,6 +443,12 @@ def plot_flux_all (experiments, energy_range_eV, figsize=[16, 12], ylim=None):
     plt.grid()
     plt.loglog()
     plt.legend()
+    plt.xlabel('Photon Energy [eV]')
+    plt.ylabel('Flux [$photons/s/0.1\%bw/mrad^2$]')
+
+    if ofile != '':
+        plt.savefig(ofile, bbox_inches='tight')
+
     plt.show()
     return plt
 
