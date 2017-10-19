@@ -43,23 +43,6 @@ def ideal_undulator(osr, field, length, period, pieces, height, gap,
     return osr # Need to check on Python reference symantics
 
 
-def dumb_copy(osr, beam_info):
-    """Return an unsophisitcated copy of sr object.
-    Will create then delete temporary files in current directory.
-    
-    Keyword arguments:
-    osr -- oscars sr object to be 'copied'
-    beam_info -- information about particle beam for copy
-    """
-    copy_osr = oscars.sr.sr()
-    copy_osr.set_particle_beam(**beam_info)
-    osr.write_bfield('OSCARS', 'foobarbaz', 'foobarbin')
-    #copy_osr.add_bfield_file('foobarbaz', 'foobarbin', 'OSCARS', 'copy_field')
-    #os.remove('foobarbaz')
-    #os.remove('foobarbin')
-    return copy_osr
-    
-
 def b_y_pre_op_ints(osr, upper_bound=1.34, lower_bound=-1.33):
     """Integrate B field of unoptimized undulator.
 
@@ -106,41 +89,13 @@ def b_y_pre_op_plot(z_list, osr, upper_bound=1.34, lower_bound=-1.33):
             (z >= lower_bound and z <= upper_bound) else 0) for z in z_list]
     
     
-def termination(osr, sr_info, beam_info):
-    """Return an sr object with added terminating magnet B-field.
-    Modifies the input sr object.
-    
-    Keyword arguments:
-    osr -- oscars sr object with a b field.
-    sr_info -- array containing the following info:
-        [length, t_distance, t_width, t_field]
-        length -- length of undulator centered at 0 without t mags
-        t_distance -- distance from origin to each terminating magnet
-        t_width -- width of each terminating magnet
-        t_field -- max field strength of each terminating magnet
-    beam_info -- dictionary containing info about the beamline:
-        'name' -- identifying name for beam
-        'type' -- type of particles in beam
-        't0' -- start time
-        'x0' -- start position
-        'd0' -- start direction
-        'energy_GeV' -- energy of beam in GeV
-        'current' -- current of beam in A
-    """
-    osr_copy = dumb_copy(osr)
-    terminated_field = b_y(osr_copy, sr_info) # All the heavy lifting
-    osr.clear_bfields()
-    osr_copy.add_bfield_function(terminated_bfield)
-    return osr_copy
-    
-    
 def b_y(osr, sr_info):
-    """Return optimized B field function.
+    """Return osr with optimized b field.
     
     Keyword arguments:
     osr -- oscars sr object with a b field added to it
-    sr_info -- if using sr,  array containing the following info:
-        [length, t_distance, t_width, t_field]
+    sr_info -- List containing the following info:
+        (length, t_distance, t_width, t_field)
         length -- length of undulator centered at 0 without t mags
         t_distance -- distance from origin to each terminating magnet
         t_width -- width of each terminating magnet
@@ -197,6 +152,17 @@ def b_y(osr, sr_info):
         d = b_x_integral_2(beta, gamma)
         return (w1*math.fabs(a) + w2*math.fabs(b) + w3*math.fabs(c) 
                 + w4*math.fabs(d))
+
+    # !!! Obsolete
+    def field(x, y, z, t):
+        if z >= lower_bound and z <= upper_bound:
+            return [osr.get_bfield([0, 0, z])[0], osr.get_bfield([0, 0, z])[1], 0]
+        elif z >= lowest_bound and z < lower_bound:
+            return [beta[0], beta[1], 0]
+        elif z > upper_bound and z <= uppest_bound:
+            return [gamma[0], gamma[1], 0]
+        else:
+            return [0, 0, 0]
     
     # Return the minimum distance between a point and the trajectory
     def min_dist(beta, gamma, osr=None, point=[0, 0, 0]):
@@ -236,17 +202,6 @@ def b_y(osr, sr_info):
     def min_fun(u):
         return traj_norm(point=[0,0,5], osr=osr, beta=[u[0], u[1]], 
                              gamma=[u[2], u[3]])
-    
-    # Return field function in compatible format for oscars
-    def field(x, y, z, t):    
-        if z >= lower_bound and z <= upper_bound:
-            return [osr.get_bfield([0, 0, z])[0], osr.get_bfield([0, 0, z])[1], 0]
-        elif z >= lowest_bound and z < lower_bound:
-            return [beta[0], beta[1], 0]
-        elif z > upper_bound and z <= uppest_bound:
-            return [gamma[0], gamma[1], 0]
-        else:
-            return [0, 0, 0]
 
     lowest_bound = -sr_info[1] - sr_info[2] # -1.35
     lower_bound = -sr_info[1] # -1.33
@@ -265,10 +220,11 @@ def b_y(osr, sr_info):
                        options={'disp' : True})
     beta  = [op_f.x[0], op_f.x[1]]
     gamma = [op_f.x[2], op_f.x[3]]
+    
+    # Optional Visualization
     print('\nSolution array: ' + str(op_f.x))
     plot_trajectory_position(trajectory)
     plot_trajectory_velocity(trajectory)
     plot_bfield(osr, -sr_info[1]-2*sr_info[2], sr_info[1]+2*sr_info[2])
     
-    return field
-
+    return (beta, gamma)
