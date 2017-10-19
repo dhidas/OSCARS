@@ -72,55 +72,14 @@ void TFieldContainer::RemoveField (std::string const& Name)
 
 
 
-double TFieldContainer::GetFx (double const X, double const Y, double const Z) const
-{
-  double Sum = 0;
-
-  // Loop over Fields for summing fields
-  for (std::vector<TField*>::const_iterator it = fFields.begin(); it != fFields.end(); ++it) {
-    Sum += (*it)->GetFx(X, Y, Z);
-  }
-
-  return Sum;
-}
-
-
-
-double TFieldContainer::GetFy (double const X, double const Y, double const Z) const
-{
-  double Sum = 0;
-
-  // Loop over Fields for summing fields
-  for (std::vector<TField*>::const_iterator it = fFields.begin(); it != fFields.end(); ++it) {
-    Sum += (*it)->GetFy(X, Y, Z);
-  }
-
-  return Sum;
-}
-
-
-
-double TFieldContainer::GetFz (double const X, double const Y, double const Z) const
-{
-  double Sum = 0;
-
-  // Loop over Fields for summing fields
-  for (std::vector<TField*>::const_iterator it = fFields.begin(); it != fFields.end(); ++it) {
-    Sum += (*it)->GetFz(X, Y, Z);
-  }
-
-  return Sum;
-}
-
-
-
 TVector3D TFieldContainer::GetF (double const X, double const Y, double const Z) const
 {
   TVector3D Sum(0, 0, 0);
 
+  TVector3D const P(X, Y, Z);
   // Loop over Fields for summing fields
   for (std::vector<TField*>::const_iterator it = fFields.begin(); it != fFields.end(); ++it) {
-    Sum += (*it)->GetF(X, Y, Z);
+    Sum += (*it)->GetF(P);
   }
 
   return Sum;

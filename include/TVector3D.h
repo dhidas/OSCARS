@@ -60,7 +60,7 @@ class TVector3D
     TVector3D  operator  + (TVector3D const&) const;
     TVector3D  operator  - (TVector3D const&) const;
     TVector3D  operator  / (double const) const;
-    TVector3D  operator  - ();
+    TVector3D  operator  - () const;
     TVector3D& operator  = (TVector3D const&);
     TVector3D& operator += (TVector3D const&);
     TVector3D& operator -= (TVector3D const&);

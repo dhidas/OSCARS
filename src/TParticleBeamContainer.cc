@@ -32,7 +32,7 @@ TParticleBeamContainer::~TParticleBeamContainer ()
 
 
 
-void TParticleBeamContainer::AddNewParticleBeam (std::string const& Type, std::string const& Name, TVector3D const& X0, TVector3D const& D0, double const E0, double const T0, double const Current, double const Weight, double const Charge, double const Mass)
+TParticleBeam& TParticleBeamContainer::AddNewParticleBeam (std::string const& Type, std::string const& Name, TVector3D const& X0, TVector3D const& D0, double const E0, double const T0, double const Current, double const Weight, double const Charge, double const Mass)
 {
   std::string const MyName = Name != "" ? Name : "_beam" + std::to_string(fParticleBeams.size());
 
@@ -54,13 +54,13 @@ void TParticleBeamContainer::AddNewParticleBeam (std::string const& Type, std::s
   }
   fParticleBeamMap[MyName] = fParticleBeams.size() - 1;
 
-  return;
+  return fParticleBeams[fParticleBeams.size() - 1];
 }
 
 
 
 
-void TParticleBeamContainer::AddNewParticleBeam (std::string const& Beam, std::string const& Name, double const Weight)
+TParticleBeam& TParticleBeamContainer::AddNewParticleBeam (std::string const& Beam, std::string const& Name, double const Weight)
 {
   std::string const MyName = Name != "" ? Name : "_beam" + std::to_string(fParticleBeams.size());
 
@@ -75,11 +75,11 @@ void TParticleBeamContainer::AddNewParticleBeam (std::string const& Beam, std::s
     fParticleBeamWeightSums.push_back(fParticleBeamWeightSums.back() + Weight);
   }
 
-  fParticleBeams.push_back( TParticleBeam(Beam, MyName) );
+  fParticleBeams.push_back( TParticleBeam(Beam, MyName, Weight) );
 
   fParticleBeamMap[MyName] = fParticleBeams.size() - 1;
 
-  return;
+  return fParticleBeams[fParticleBeams.size() - 1];
 }
 
 
@@ -188,6 +188,52 @@ void TParticleBeamContainer::Clear ()
   fParticleBeamWeightSums.clear();
   fParticleBeams.clear();
   fParticleBeamMap.clear();
+
+  return;
+}
+
+
+
+
+
+
+void TParticleBeamContainer::SetEmittance (std::string const& Beam,
+                                           TVector2D const& Emittance)
+{
+  // Set the emittance for any beam matching exactly the name given
+  // or to all beams if "" is given
+
+
+  for (std::vector<TParticleBeam>::iterator it = fParticleBeams.begin(); it != fParticleBeams.end(); ++it) {
+    if (Beam == "") {
+      it->SetEmittance(Emittance);
+    } else if (Beam == it->GetName()) {
+      it->SetEmittance(Emittance);
+    }
+  }
+
+  return;
+}
+
+
+
+void TParticleBeamContainer::SetTwissParameters (std::string const& Beam,
+                                                 TVector2D const& Beta,
+                                                 TVector2D const& Alpha,
+                                                 TVector2D const& Gamma,
+                                                 TVector3D const& Lattice_Reference,
+                                                 bool const HasReferencePoint)
+{
+  // Set the twiss parameters for any beam matching exactly the name given
+  // or to all beams if "" is given
+
+  for (std::vector<TParticleBeam>::iterator it = fParticleBeams.begin(); it != fParticleBeams.end(); ++it) {
+    if (Beam == "") {
+      it->SetTwissParameters(Beta, Alpha, Gamma, Lattice_Reference, HasReferencePoint);
+    } else if (Beam == it->GetName()) {
+      it->SetTwissParameters(Beta, Alpha, Gamma, Lattice_Reference, HasReferencePoint);
+    }
+  }
 
   return;
 }

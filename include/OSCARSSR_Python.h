@@ -65,8 +65,10 @@ static PyObject* OSCARSSR_WriteMagneticField (OSCARSSRObject* self, PyObject* ar
 static PyObject* OSCARSSR_WriteElectricField (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSSR_SetParticleBeam (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
+static PyObject* OSCARSSR_SetParticleBeamSize (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSSR_ClearParticleBeams (OSCARSSRObject* self);
 static PyObject* OSCARSSR_PrintParticleBeams (OSCARSSRObject* self);
+static PyObject* OSCARSSR_SetTwissParameters (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSSR_SetNewParticle (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSSR_GetParticleX0 (OSCARSSRObject* self);
 static PyObject* OSCARSSR_GetParticleBeta0 (OSCARSSRObject* self);

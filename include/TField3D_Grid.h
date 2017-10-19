@@ -42,9 +42,6 @@ class TField3D_Grid : public TField
 
     ~TField3D_Grid ();
 
-    double    GetFx (double const X, double const Y, double const Z) const;
-    double    GetFy (double const X, double const Y, double const Z) const;
-    double    GetFz (double const X, double const Y, double const Z) const;
     TVector3D GetF  (double const X, double const Y, double const Z) const;
     TVector3D GetF  (TVector3D const& X) const;
 

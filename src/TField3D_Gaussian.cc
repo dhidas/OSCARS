@@ -65,30 +65,6 @@ TField3D_Gaussian::~TField3D_Gaussian ()
 
 
 
-double TField3D_Gaussian::GetFx (double const X, double const Y, double const Z) const
-{
-  return this->GetF(TVector3D(X, Y, Z)).GetX();
-}
-
-
-
-
-double TField3D_Gaussian::GetFy (double const X, double const Y, double const Z) const
-{
-  return this->GetF(TVector3D(X, Y, Z)).GetY();
-}
-
-
-
-
-double TField3D_Gaussian::GetFz (double const X, double const Y, double const Z) const
-{
-  return this->GetF(TVector3D(X, Y, Z)).GetZ();
-}
-
-
-
-
 TVector3D TField3D_Gaussian::GetF (double const X, double const Y, double const Z) const
 {
   return this->GetF(TVector3D(X, Y, Z));

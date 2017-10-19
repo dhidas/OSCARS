@@ -52,6 +52,60 @@ class PSRectangle:
 
 
 
+class PSCurvedRectangle:
+    """A Parametric surface - curved rectangle"""
+
+    # This shape specific parameters
+    L = 1
+    W = 1
+    R = 0
+    
+
+    # Required for all PS shapes
+    # Start, stop, and number of points for the u and v parameters
+    # All PSShapes must have these defined
+    ustart = -L/2.
+    ustop  = +L/2.
+    vstart = -W/2.
+    vstop  = +W/2.
+    nu = 10
+    nv = 10
+ 
+    def __init__ (self, L=1, W=1, R=0, ustart=-L/2., ustop=L/2., nu=10, vstart=-W/2., vstop=W/2., nv=10):
+        self.L = L
+        self.W = W
+        self.R = R
+        self.ustart = -L/2.
+        self.ustop = L/2.
+        self.nu = nu
+        self.vstart = -W/2.
+        self.vstop = W/2.
+        self.nv = nv
+       
+    
+    def position (self, u, v):
+        """Return the position in 3D at this u and v"""
+
+        x = u
+        y = v
+        z = 0
+        
+        return [x, y, z]
+    
+    
+    
+    def normal (self, u, v):
+        """Return a unit normal in 3D at this u and v position"""
+
+        xn = 0
+        yn = 0
+        zn = 1
+        
+        return [xn, yn, zn]
+
+
+
+
 class PSTorus:
     """A Parametric surface - torus"""
 
@@ -180,10 +234,14 @@ class PSSphere:
     nu = 10
     nv = 10
  
-    def __init__ (self, R=1, ustart=None, ustop=None, nu=10, vstart=None, vstop=None, nv=10):
+    def __init__ (self, R=1, ustart=0, ustop=2.*pi, nu=10, vstart=-pi/2., vstop=pi/2., nv=10):
         self.R = R
         self.nu = nu
         self.nv = nv
+        self.ustart = ustart
+        self.ustop = ustop
+        self.vstart = vstart
+        self.vstop = vstop
        
     
     def position (self, u, v):

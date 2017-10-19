@@ -78,7 +78,8 @@ class OSCARSTH
                               double const BeamEnergy,
                               int const Harmonic) const;
 
-    double DipoleBrightness () const;
+    void DipoleBrightness (double const BField,
+                           TSpectrumContainer& SpectrumContainer) const;
 
     double UndulatorEnergyAtHarmonicK (double const K,
                                        double const Period,
@@ -140,15 +141,16 @@ class OSCARSTH
 
 
     // Functions related to the particle beam
-    void SetParticleBeam (std::string const& Beam,
-                          std::string const& Name = "default_name");
+    TParticleBeam& SetParticleBeam (std::string const& Beam,
+                                    std::string const& Name = "default_name");
 
-    void SetParticleBeam (double const Energy_GeV,
-                          double const Current,
-                          TVector2D const& Beta = TVector2D(0, 0),
-                          TVector2D const& Emittance = TVector2D(0, 0),
-                          double const SigmaEnergyGeV = 0,
-                          std::string const& Name = "default_name");
+    TParticleBeam& SetParticleBeam (double const Energy_GeV,
+                                    double const Current,
+                                    TVector2D const& Beta = TVector2D(0, 0),
+                                    TVector2D const& Emittance = TVector2D(0, 0),
+                                    double const SigmaEnergyGeV = 0,
+                                    TVector2D const& Eta = TVector2D(0, 0),
+                                    std::string const& Name = "default_name");
 
     TParticleBeam& GetParticleBeam ();
 

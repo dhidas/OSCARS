@@ -173,7 +173,7 @@ double TVector3D::Angle (TVector3D const& V) const
 
 
 
-void TVector3D::RotateSelfX(double const Angle) {
+void TVector3D::RotateSelfX (double const Angle) {
   // Rotate vector around X
   double const s = sin(Angle);
   double const c = cos(Angle);
@@ -306,7 +306,7 @@ TVector3D& TVector3D::operator = (TVector3D const& V)
 
 
 
-TVector3D TVector3D::operator - ()
+TVector3D TVector3D::operator - () const
 {
   // Negative vector
   return TVector3D(-fX, -fY, -fZ);

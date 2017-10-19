@@ -1,9 +1,3 @@
-# How to run this code:
-#   mpiexec -n 5 python Example_132_UndulatorFlux_MultiParticle_MPI.py
-
-
-# In this example MPI is used to calculate the flux in a multi-particle
-# simulation.  The rank 0 process calculates the ideal single-particle
 # flux and then waits for the other processes to return their data.
 # When a process returns the results are added to the others.  The results
 # are then plotted together and saved as a png.  If you want the plot to
@@ -23,25 +17,18 @@ comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
 
-# Get an OSCARS SR object
-osr = oscars.sr.sr()
-
-# Let's just make sure that each process only uses 1 threads since
-# we assume mpi is handeling this
-osr.set_nthreads_global(1)
+# Get an OSCARS SR object with nthreads=1 (meaning 1 thread per mpi execution)
+osr = oscars.sr.sr(nthreads=1)
 
 # Set a particle beam with non-zero emittance
-osr.set_particle_beam(type='electron',
-                      name='beam_0',
-                      energy_GeV=3,
-                      x0=[0, 0, -1],
-                      d0=[0, 0, 1],
-                      current=0.500,
-                      sigma_energy_GeV=0.001*3,
-                      beta=[1.5, 0.8],
-                      emittance=[0.9e-9, 0.008e-9],
-                      horizontal_direction=[1, 0, 0],
-                      lattice_reference=[0, 0, 0])
+osr.set_particle_beam(
+    energy_GeV=3,
+    x0=[0, 0, -1],
+    current=0.500,
+    sigma_energy_GeV=0.001*3,
+    beta=[1.5, 0.8],
+    emittance=[0.9e-9, 0.008e-9]
+)
 
 # Must set the start and stop time for calculations
 osr.set_ctstartstop(0, 2)
@@ -71,12 +58,13 @@ energy_eV = 152
 if rank == 0:
     # For rank 0 we calculate the ideal single-particle flux
     osr.set_new_particle(particle='ideal')
-    flux = osr.calculate_flux_rectangle(plane='XY',
-                                        energy_eV=energy_eV,
-                                        width=width,
-                                        npoints=npoints,
-                                        translation=rectangle_center
-                                       )
+    flux = osr.calculate_flux_rectangle(
+        plane='XY',
+        energy_eV=energy_eV,
+        width=width,
+        npoints=npoints,
+        translation=rectangle_center
+    )
 
     plot_flux(flux, ofile='UndulatorFlux_Ideal.png', show=False)
 
@@ -101,13 +89,14 @@ if rank == 0:
 
 else:
     # If not rank 0, calculate the desired flux
-    data = osr.calculate_flux_rectangle(plane='XY',
-                                        energy_eV=energy_eV,
-                                        width=width,
-                                        npoints=npoints,
-                                        translation=rectangle_center,
-                                        nparticles=particles_per_node,
-                                       )
+    data = osr.calculate_flux_rectangle(
+        plane='XY',
+        energy_eV=energy_eV,
+        width=width,
+        npoints=npoints,
+        translation=rectangle_center,
+        nparticles=particles_per_node,
+    )
 
     # Send results back to rank 0
     comm.send(data, dest=0)

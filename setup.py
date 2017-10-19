@@ -1,7 +1,9 @@
 import os
 import sys
-#from setuptools import setup, Extension
-from distutils.core import setup, Extension
+try:
+    from setuptools import setup, Extension
+except ImportError:
+    from distutils.core import setup, Extension
 
 # Get Version numbering from Version.h
 v_major = ''
@@ -107,7 +109,10 @@ moduleOSCARSSR = Extension('oscars.sr',
                                  'src/TParticleA.cc',
                                  'src/TParticleBeam.cc',
                                  'src/TParticleBeamContainer.cc',
+                                 'src/TParticleTrajectoryPoint.cc',
                                  'src/TParticleTrajectoryPoints.cc',
+                                 'src/TParticleTrajectoryInterpolated.cc',
+                                 'src/TParticleTrajectoryInterpolatedPoints.cc',
                                  'src/TRandomA.cc',
                                  'src/TSpectrumContainer.cc',
                                  'src/TSurfaceOfPoints.cc',
@@ -121,6 +126,8 @@ moduleOSCARSSR = Extension('oscars.sr',
                                  'src/TField3D_Quadrupole.cc',
                                  'src/TOMATH.cc',
                                  'src/TDriftBox.cc',
+                                 'src/TTriangle3D.cc',
+                                 'src/TTriangle3DContainer.cc',
                                  'src/TDriftVolumeContainer.cc',
                                  'src/OSCARSPY.cc'],
                       extra_compile_args=extra_compile_args,
@@ -144,7 +151,10 @@ moduleOSCARSTH = Extension('oscars.th',
                                  'src/TParticleA.cc',
                                  'src/TParticleBeam.cc',
                                  'src/TParticleBeamContainer.cc',
+                                 'src/TParticleTrajectoryPoint.cc',
                                  'src/TParticleTrajectoryPoints.cc',
+                                 'src/TParticleTrajectoryInterpolated.cc',
+                                 'src/TParticleTrajectoryInterpolatedPoints.cc',
                                  'src/TRandomA.cc',
                                  'src/TSpectrumContainer.cc',
                                  'src/TSurfaceOfPoints.cc',
@@ -158,6 +168,8 @@ moduleOSCARSTH = Extension('oscars.th',
                                  'src/TField3D_Quadrupole.cc',
                                  'src/TOMATH.cc',
                                  'src/TDriftBox.cc',
+                                 'src/TTriangle3D.cc',
+                                 'src/TTriangle3DContainer.cc',
                                  'src/TDriftVolumeContainer.cc',
                                  'src/OSCARSPY.cc'],
                       extra_compile_args=extra_compile_args,

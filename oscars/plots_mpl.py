@@ -1,4 +1,5 @@
 from matplotlib.colors import LogNorm
+import matplotlib.ticker
 import numpy as np
 import matplotlib.pyplot as plt
 from math import sqrt
@@ -22,9 +23,9 @@ def plot_trajectory_position(trajectory, show=True, ofile='', axis='Z', figsize=
        """
 
     # Get coordinate lists
-    X  = [item[0][0] for item in trajectory]
-    Y  = [item[0][1] for item in trajectory]
-    Z  = [item[0][2] for item in trajectory]
+    X  = [item[1][0] for item in trajectory]
+    Y  = [item[1][1] for item in trajectory]
+    Z  = [item[1][2] for item in trajectory]
 
     if axis is 'X':
         X1Label = 'X [m]'
@@ -103,28 +104,28 @@ def plot_trajectory_velocity(trajectory, show=True, ofile='', figsize=[18, 4.5],
 
 
     # Get coordinate lists
-    VX = [item[1][0] for item in trajectory]
-    VY = [item[1][1] for item in trajectory]
-    VZ = [item[1][2] for item in trajectory]
-    T = range(len(VX))
+    T  = [item[0]    for item in trajectory]
+    VX = [item[2][0] for item in trajectory]
+    VY = [item[2][1] for item in trajectory]
+    VZ = [item[2][2] for item in trajectory]
 
     # Plot VX, VY, VZ vs. T
     plt.figure(1, figsize=figsize)
     plt.subplot(131)
     plt.plot(T, VX)
-    plt.xlabel('T [step]')
+    plt.xlabel('T [s]')
     plt.ylabel('$\\beta_x$')
     plt.title('Particle $\\beta_x$')
 
     plt.subplot(132)
     plt.plot(T, VY)
-    plt.xlabel('T [step]')
+    plt.xlabel('T [s]')
     plt.ylabel('$\\beta_y$')
     plt.title('Particle $\\beta_y$')
 
     plt.subplot(133)
     plt.plot(T, VZ)
-    plt.xlabel('T [step]')
+    plt.xlabel('T [s]')
     plt.ylabel('$\\beta_z$')
     plt.title('Particle $\\beta_z$')
 
@@ -181,7 +182,7 @@ def plot_power_density(V, title=None, xlabel='X1 Axis [$m$]', ylabel='X2 Axis [$
     return
 
 
-def plot_power_density_2d1d(V, x1=None, x2=None, title=None, xlabel='[$m$]', ylabel='[$W / mm^2$]', show=True, ofile='', figsize=None, ret=False):
+def plot_power_density_2d1d(V, x1=None, x2=None, title=None, xlabel='[$m$]', ylabel='[$W / mm^2$]', xlim=None, ylim=None, show=True, ofile='', figsize=None, ret=False):
     """Plot a 2D histogram with equal spacing"""
 
     if x1 is not None and x2 is not None:
@@ -253,6 +254,8 @@ def plot_power_density_2d1d(V, x1=None, x2=None, title=None, xlabel='[$m$]', yla
 
 
     plt.figure(1, figsize=figsize)
+    if ylim is not None: plt.ylim(ylim[0], ylim[1])
+    if xlim is not None: plt.xlim(xlim[0], xlim[1])
     plt.plot(YP, XC)
 
     plt.xlabel(xlabel)
@@ -275,7 +278,7 @@ def plot_power_density_2d1d(V, x1=None, x2=None, title=None, xlabel='[$m$]', yla
     return
 
 
-def plot_power_density_1d(V, title='Power Density [$W / mm^2$]', xlabel='[$m$]', ylabel='[$W / mm^2$]', show=True, ofile='', figsize=None, ret=False):
+def plot_power_density_1d(V, title='Power Density [$W / mm^2$]', xlabel='[$m$]', ylabel='[$W / mm^2$]', xlim=None, ylim=None, show=True, ofile='', figsize=None, ret=False):
     """Plot a 1D power density"""
 
     X = [item[0][0] for item in V]
@@ -283,6 +286,8 @@ def plot_power_density_1d(V, title='Power Density [$W / mm^2$]', xlabel='[$m$]',
 
     plt.figure(1, figsize=figsize)
     plt.plot(X, P)
+    if ylim is not None: plt.ylim(ylim[0], ylim[1])
+    if xlim is not None: plt.xlim(xlim[0], xlim[1])
 
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
@@ -300,7 +305,7 @@ def plot_power_density_1d(V, title='Power Density [$W / mm^2$]', xlabel='[$m$]',
     return
 
 
-def plot_flux(V, title='Flux [$\gamma / mm^2 / 0.1\%bw / s]$', xlabel='X1 Axis [$m$]', ylabel='X2 Axis [$m$]', show=True, ofile='', figsize=None, ylim=None, xlim=None, colorbar=True, ret=False):
+def plot_flux(V, title='Flux [$\gamma / mm^2 / 0.1\%bw / s$]', xlabel='X1 Axis [$m$]', ylabel='X2 Axis [$m$]', clim=None, show=True, ofile='', figsize=None, ylim=None, xlim=None, colorbar=True, ret=False, nticks_cb=None):
     """Plot a 2D histogram with equal spacing"""
         
     X = [item[0][0] for item in V]
@@ -323,11 +328,19 @@ def plot_flux(V, title='Flux [$\gamma / mm^2 / 0.1\%bw / s]$', xlabel='X1 Axis [
     plt.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
     plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
     if colorbar is True:
-        plt.colorbar(format='%.0e')
+        cb = plt.colorbar(format='%.2e')
+        if nticks_cb is not None:
+            tick_locator = matplotlib.ticker.MaxNLocator(nbins=nticks_cb)
+            cb.locator = tick_locator
+            cb.update_ticks()
 
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(title)
+
+
+    if clim is not None:
+      plt.clim(clim)
 
     if ofile != '':
         plt.savefig(ofile, bbox_inches='tight')
@@ -338,7 +351,7 @@ def plot_flux(V, title='Flux [$\gamma / mm^2 / 0.1\%bw / s]$', xlabel='X1 Axis [
     if ret:
         return plt
 
-    plt.clf()
+    plt.close()
     return
 
 

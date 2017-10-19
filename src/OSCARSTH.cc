@@ -322,49 +322,45 @@ double OSCARSTH::UndulatorFluxWeak (double const K, double const Period, double 
 
 
 
-double OSCARSTH::DipoleBrightness () const
+void OSCARSTH::DipoleBrightness (double const BField,
+                                 TSpectrumContainer& SpectrumContainer) const
 {
-  /*
-  double const BField = 0.4;
-  double const BeamEnergy_GeV = 3;
-  double const Energy_eV = 123;
-  double const Angle = 0;
-  double const Current = 0.500;
-  double const EmittanceX = 0.9e-9;
-  double const EmittanceY = 0.008e-9;
-  double const SigmaE = 0.005;
-  
-  double const BetaX = pow(44.2e-6, 2) / EmittanceX;
-  double const BetaY = pow(15.7e-6, 2) / EmittanceY;
-  double const EtaX = 0;
-  double const EtaY = 0;
 
-  double const Gamma = BeamEnergy_GeV / TOSCARSSR::kgToGeV( TOSCARSSR::Me());
-  double const Alpha = 1. / 137.;
+  // Beam energy from internal beam
+  double const BeamEnergy_GeV =  fParticleBeam.GetE0();
+  double const sigma_E = fParticleBeam.GetSigmaEnergyGeV() / fParticleBeam.GetE0();
 
-  double const Omega = TOSCARSSR::EvToAngularFrequency(Energy_eV);
-  double const OmegaC = 3. * Gamma * Gamma * Gamma * TOSCARSSR::C() / (2. * BeamEnergy_GeV * 1e9 * TOSCARSSR::Qe() / (TOSCARSSR::Qe() * TOSCARSSR::C() * BField));
-
-  double const Y = Omega / OmegaC;
-
-  double const D1F = sqrt(3) / TOSCARSSR::TwoPi() * Alpha * Gamma * 0.001 * Current / TOSCARSSR::Qe() * Y * TOMATH::BesselK_IntegralToInfty(5. / 3., Y);
-  double const D2F = 3. * Alpha / (4 * TOSCARSSR::Pi2()) * Gamma * Gamma * 0.001 * Current / TOSCARSSR::Qe() * Y * Y * pow(TOMATH::BesselK(2. / 3., Y / 2.), 2);
-
-  double const SigmaPsi = 1. / TOSCARSSR::Sqrt2Pi() * D1F / D2F;
-
-  // Diffraction limited source size
-  //double const SigmaR = (TOSCARSSR::C() * TOSCARSSR::TwoPi() / Omega) / (TOSCARSSR::FourPi() * SigmaPsi);
-  double const SigmaR = (TOSCARSSR::C() / Omega) / (2. * SigmaPsi);
+  TVector2D const Beta = fParticleBeam.GetTwissBeta();
+  TVector2D const Alpha = fParticleBeam.GetTwissAlpha();
+  TVector2D const Emittance = fParticleBeam.GetEmittance();
 
 
-  double const SigmaX = sqrt(EmittanceX * BetaX + EtaX * EtaX * SigmaE * SigmaE + SigmaR * SigmaR);
-  //double const SigmaY = sqrt(EmittanceY * BetaY + SigmaR * SigmaR + (EmittanceY * EmittanceY + EmittanceY * GammaY * SigmaR * SigmaR) / (SigmaPsi * SigmaPsi));
+  double lam = fabs(TOSCARSSR::H() * TOSCARSSR::C() / (1000. * fParticleBeam.GetCharge()));
+  double const eta_x = fParticleBeam.GetEta().GetX();
+  double const beta_x = Beta.GetX();
+  double const epsilon_x = Emittance.GetX();
+
+  double const epsilon_y = Emittance.GetY();
+  double const beta_y = Beta.GetY();
+  double const alpha_y = Alpha.GetY();
+  double const gamma_y = (1. + alpha_y*alpha_y) / beta_y;
+
+  for (size_t i = 0; i != SpectrumContainer.GetNPoints(); ++i) {
+    double const dfdt = this->DipoleSpectrumAngleIntegrated(BField, BeamEnergy_GeV, SpectrumContainer.GetEnergy(i));
+    double const df2dtdp = this->DipoleSpectrum(BField, BeamEnergy_GeV, 0, SpectrumContainer.GetEnergy(i));
+
+    double const sigma_psi = dfdt / (df2dtdp * sqrt(TOSCARSSR::TwoPi()));
 
 
-  return TOSCARSSR::AngularFrequencyToEv(OmegaC);
-  return TOMATH::BesselK_IntegralToInfty(2./3., 1);
-  */
-  return 0;
+    double const sigma_r = lam / (TOSCARSSR::FourPi() * sigma_psi);
+
+
+    double const Sigma_x = sqrt(epsilon_x * beta_x + pow(eta_x * sigma_E, 2) + sigma_r*sigma_r);
+    double const Sigma_y = sqrt(epsilon_y * beta_y + (epsilon_y*epsilon_y + epsilon_y * gamma_y * sigma_r*sigma_r) / (sigma_psi*sigma_psi));
+
+    SpectrumContainer.SetFlux(i, df2dtdp / (TOSCARSSR::TwoPi() * Sigma_x * Sigma_y) / 1e6);
+  }
+  return;
 }
 
 
@@ -431,7 +427,7 @@ TVector2D OSCARSTH::UndulatorBrightnessK (double const K,
 
   // Properties from beam
   double    const Gamma          = fParticleBeam.GetGamma();
-  TVector2D const Beta           = fParticleBeam.GetBeta();
+  TVector2D const Beta           = fParticleBeam.GetTwissBeta();
   TVector2D const Emittance      = fParticleBeam.GetEmittance();
   double    const Current        = fParticleBeam.GetCurrent();
 
@@ -667,7 +663,7 @@ void OSCARSTH::WigglerFluxKPoints (double         const  K,
 
 
 
-void OSCARSTH::SetParticleBeam (std::string const& Beam, std::string const& Name)
+TParticleBeam& OSCARSTH::SetParticleBeam (std::string const& Beam, std::string const& Name)
 {
   // Add a particle beam
   // Beam - The name of the predefined particle beam to add
@@ -675,17 +671,18 @@ void OSCARSTH::SetParticleBeam (std::string const& Beam, std::string const& Name
   fParticleBeam.SetPredefinedBeam(Beam);
   fParticleBeam.SetName(Name);
   fParticleBeam.SetWeight(1);
-  return;
+  return fParticleBeam;
 }
 
 
 
 
-void OSCARSTH::SetParticleBeam (double const Energy_GeV,
+TParticleBeam& OSCARSTH::SetParticleBeam (double const Energy_GeV,
                                 double const Current,
                                 TVector2D const& Beta,
                                 TVector2D const& Emittance,
                                 double const SigmaEnergyGeV,
+                                TVector2D const& Eta,
                                 std::string const& Name)
 {
   // Add a particle beam
@@ -694,9 +691,12 @@ void OSCARSTH::SetParticleBeam (double const Energy_GeV,
 
   fParticleBeam = TParticleBeam("electron", Name, Energy_GeV, Current);
   fParticleBeam.SetWeight(1);
-  fParticleBeam.SetBetaEmittance(TVector3D(1, 0, 0), Beta, Emittance, TVector3D(0, 0, 0), SigmaEnergyGeV);
+  fParticleBeam.SetEmittance(Emittance);
+  fParticleBeam.SetTwissBetaAlpha(Beta, TVector2D(0, 0));
+  fParticleBeam.SetSigmaEnergyGeV(SigmaEnergyGeV);
+  fParticleBeam.SetEta(Eta);
 
-  return;
+  return fParticleBeam;
 }
 
 

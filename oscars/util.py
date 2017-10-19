@@ -1,5 +1,6 @@
 import os.path
 import copy
+import numpy as np
 
 def read_file_list(ifile, idir=None):
     """
@@ -160,3 +161,40 @@ def add_power_density(p):
     """Add power densities from list of power densities and return new summed power density"""
     
     return add_flux(p)
+
+
+
+def rebin (H, ANX=2, ANY=2):
+    """rebin 2d histogram"""
+    
+    NX = len(np.unique([h[0][0] for h in H]))
+    NY = len(np.unique([h[0][1] for h in H]))
+    print(NX, NY)
+    HNEW = []
+
+    i=0
+    while i < NX:
+        j=0
+        while j < NY:
+            x = H[i*NY + j][0][0]
+            y = H[i*NY + j][0][1]
+            f = 0
+            count = 0
+            for m in range(ANX):
+                if i + m >= NX:
+                    continue
+                for n in range(ANY):
+                    if j + n >= NY:
+                        continue
+                    count += 1
+                    f += H[(i+m)*NY + j+n][1]
+                    
+            f /= (count)
+            HNEW.append([[x, y, 0], f])
+            j+=ANY
+            #print(x, y, f)
+            
+        i+=ANX
+     
+    
+    return HNEW

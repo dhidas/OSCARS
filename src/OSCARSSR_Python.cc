@@ -28,6 +28,7 @@
 #include "TField3D_Quadrupole.h"
 #include "TDriftBox.h"
 #include "TRandomA.h"
+#include "TTriangle3DContainer.h"
 
 #include <iostream>
 #include <vector>
@@ -56,16 +57,49 @@ static void OSCARSSR_dealloc(OSCARSSRObject* self)
 
 
 
-static PyObject* OSCARSSR_new (PyTypeObject* type, PyObject* args, PyObject* kwds)
+static PyObject* OSCARSSR_new (PyTypeObject* type, PyObject* args, PyObject* keywds)
 {
   // Python needs to know how to create things in this struct
 
+  // Grab the values
+  int NThreads = 0;
+  int GPU = 0;
+
+  // Input variables and parsing
+  static const char *kwlist[] = {"nthreads",
+                                 "gpu",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ii",
+                                   const_cast<char **>(kwlist),
+                                   &NThreads,
+                                   &GPU)) {
+    PyErr_SetString(PyExc_ValueError, "allowed inputs are currentl: 'nthreads', 'gpu'");
+    return NULL;
+  }
+
+  // Allocate objects
   OSCARSSRObject* self = (OSCARSSRObject*) type->tp_alloc(type, 0);
   if (self != NULL) {
 
     // Create the new object for self
     self->obj = new OSCARSSR();
   }
+
+
+  if (NThreads > 0) {
+    self->obj->SetNThreadsGlobal(NThreads);
+  }
+  if (GPU != 0 && GPU != 1) {
+    PyErr_SetString(PyExc_ValueError, "global gpu settign must be 0 or 1");
+    return NULL;
+  }
+
+  // If it was not successful print an error message
+  if (!self->obj->SetUseGPUGlobal(GPU)) {
+    OSCARSPY::PyPrint_stderr("GPU is not available: Setting gpu global setting to 0.\n");
+  }
+
 
   // Return myself
   return (PyObject*) self;
@@ -87,6 +121,25 @@ static PyObject* OSCARSSR_new (PyTypeObject* type, PyObject* args, PyObject* kwd
 
 
 
+
+
+
+
+
+
+const char* DOC_OSCARSSR_Version = R"docstring(
+version()
+
+Version ID
+
+Returns
+-------
+version : str
+)docstring";
+static PyObject* OSCARSSR_Version (OSCARSSRObject* self, PyObject* arg)
+{
+  return Py_BuildValue("s", OSCARSPY::GetVersionString().c_str());
+}
 
 
 
@@ -238,10 +291,7 @@ static PyObject* OSCARSSR_SetGPUGlobal (OSCARSSRObject* self, PyObject* arg)
 
   // If it was not successful print an error message
   if (!self->obj->SetUseGPUGlobal(GPU)) {
-    PyObject* sys = PyImport_ImportModule( "sys");
-    PyObject* s_out = PyObject_GetAttrString(sys, "stderr");
-    std::string Message = "GPU is not available: Setting gpu global setting to 0.\n";
-    PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+    OSCARSPY::PyPrint_stderr("GPU is not available: Setting gpu global setting to 0.\n");
   }
 
   // Must return python object None in a special way
@@ -267,11 +317,7 @@ static PyObject* OSCARSSR_CheckGPU (OSCARSSRObject* self, PyObject* arg)
   int const NGPUStatus = self->obj->CheckGPU();
 
   if (NGPUStatus == -1) {
-    // Print copyright notice
-    PyObject* sys = PyImport_ImportModule( "sys");
-    PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
-    std::string Message = "It appears this binary version of OSCARSSR was not compiled with GPU capability enabled.";
-    PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+    OSCARSPY::PyPrint_stderr("It appears this binary version of OSCARSSR was not compiled with GPU capability enabled.\n");
   }
 
   return PyLong_FromLong((long) NGPUStatus);
@@ -1472,7 +1518,7 @@ static PyObject* OSCARSSR_GetBField (OSCARSSRObject* self, PyObject* args, PyObj
   // Get the magnetic field at a point as a 3D list [Bx, By, Bz]
 
   // Python list object
-  PyObject * List = PyList_New(0);;
+  PyObject* List = 0x0;//PyList_New(0);;
 
   static const char *kwlist[] = {"x",
                                  NULL};
@@ -1553,11 +1599,7 @@ static PyObject* OSCARSSR_PrintMagneticFields (OSCARSSRObject* self)
   ostream << "*Magnetic Fields*\n";
   ostream << self->obj->GetBFieldContainer() << std::endl;
 
-  // Python printing
-  PyObject* sys = PyImport_ImportModule( "sys");
-  PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
-  std::string Message = ostream.str();
-  PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+  OSCARSPY::PyPrint_stdout(ostream.str());
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -2431,7 +2473,7 @@ static PyObject* OSCARSSR_GetEField (OSCARSSRObject* self, PyObject* args, PyObj
   // Get the magnetic field at a point as a 3D list [Ex, Ey, Ez]
 
   // Python list object
-  PyObject * List;
+  PyObject* List = PyList_New(0);
 
   static const char *kwlist[] = {"x",
                                  NULL};
@@ -2512,11 +2554,7 @@ static PyObject* OSCARSSR_PrintElectricFields (OSCARSSRObject* self)
   ostream << "*Electric Fields*\n";
   ostream << self->obj->GetEFieldContainer() << std::endl;
 
-  // Python printing
-  PyObject* sys = PyImport_ImportModule( "sys");
-  PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
-  std::string Message = ostream.str();
-  PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+  OSCARSPY::PyPrint_stdout(ostream.str());
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -2925,7 +2963,7 @@ static PyObject* OSCARSSR_WriteElectricField (OSCARSSRObject* self, PyObject* ar
 
 
 const char* DOC_OSCARSSR_SetParticleBeam = R"docstring(
-set_particle_beam([, type, name, energy_GeV, d0, x0, beam, sigma_energy_GeV, t0, current, weight, rotations, translation, horizontal_direction, beta, emittance, lattice_reference, mass, charge])
+set_particle_beam([, type, name, energy_GeV, d0, x0, beam, sigma_energy_GeV, t0, current, weight, rotations, translation, horizontal_direction, beta, alpha, gamma, emittance, eta, lattice_reference, mass, charge])
 
 This function is the same as add_particle_beam(), but it clears all particle beams before the 'add'.
 )docstring";
@@ -2949,7 +2987,7 @@ static PyObject* OSCARSSR_SetParticleBeam (OSCARSSRObject* self, PyObject* args,
 
 
 const char* DOC_OSCARSSR_AddParticleBeam = R"docstring(
-add_particle_beam([, type, name, energy_GeV, d0, x0, beam, sigma_energy_GeV, t0, current, weight, rotations, translation, horizontal_direction, beta, emittance, lattice_reference, mass, charge])
+add_particle_beam([, type, name, energy_GeV, d0, x0, beam, sigma_energy_GeV, t0, current, weight, rotations, translation, horizontal_direction, beta, alpha, gamma, emittance, eta, lattice_reference, mass, charge])
 
 Add a particle beam to the OSCARS object with a name given by *name*.  There is no limit to the number of different particle beams one can add.  They are added with a *weight* which is by default 1.  The weight is used in random sampling when asking for a new particle, for example in oscars.sr.set_new_particle().  If the *beam* parameter is given you only need to specify *name* and *x0*.
 
@@ -3008,8 +3046,17 @@ horizontal_direction : list
 beta : list
     Values of the horizontal and vertical beta funtion at the point *lattice_center* [beta_x, beta_y]
 
+alpha : list
+    Values of the horizontal and vertical alpha funtion at the point *lattice_center* [alpha_x, alpha_y]
+
+gamma : list
+    Values of the horizontal and vertical gamma funtion at the point *lattice_center* [gamma_x, gamma_y]
+
 emittance : list
     values of the horizontal and vertical emittance [emittance_x, emittance_y]
+
+eta : list
+    Values of the horizontal and vertical dispersion at the point *lattice_center* [eta_x, eta_y].  Currently eta_y is ignored and dispersion is only used in oscars.th calculations
 
 lattice_reference : list
     Coordinates of the lattice center [x, y, z] (must be on-axis with respect to the beam)
@@ -3050,7 +3097,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   // Add a particle beam to the experiment
 
   // Lists and variables some with initial values
-  char const* Type                       = "";
+  char const* Type                       = "electron";
   char const* Name                       = "";
   double      Energy_GeV                 = 0;
   double      Sigma_Energy_GeV           = 0;
@@ -3060,23 +3107,29 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   double      Mass                       = 0;
   double      Charge                     = 0;
   char const* Beam                       = "";
-  PyObject*   List_Position              = PyList_New(0);
-  PyObject*   List_Direction             = PyList_New(0);
-  PyObject*   List_Rotations             = PyList_New(0);
-  PyObject*   List_Translation           = PyList_New(0);
-  PyObject*   List_Horizontal_Direction  = PyList_New(0);
-  PyObject*   List_Beta                  = PyList_New(0);
-  PyObject*   List_Emittance             = PyList_New(0);
-  PyObject*   List_Lattice_Reference     = PyList_New(0);
+  PyObject*   List_Position              = 0x0;
+  PyObject*   List_Direction             = 0x0;
+  PyObject*   List_Rotations             = 0x0;
+  PyObject*   List_Translation           = 0x0;
+  PyObject*   List_Horizontal_Direction  = 0x0;
+  PyObject*   List_Beta                  = 0x0;
+  PyObject*   List_Alpha                 = 0x0;
+  PyObject*   List_Gamma                 = 0x0;
+  PyObject*   List_Emittance             = 0x0;
+  PyObject*   List_Eta                   = 0x0;
+  PyObject*   List_Lattice_Reference     = 0x0;
 
   TVector3D Position(0, 0, 0);
-  TVector3D Direction;
+  TVector3D Direction(0, 0, 1);
   TVector3D Rotations(0, 0, 0);
   TVector3D Translation(0, 0, 0);
   TVector3D Horizontal_Direction;
   TVector2D Beta(0, 0);
+  TVector2D Alpha(0, 0);
+  TVector2D Gamma(0, 0);
   TVector2D Emittance(0, 0);
   TVector3D Lattice_Reference(0, 0, 0);
+  TVector2D Eta(0, 0);
 
 
   // Input variables and parsing
@@ -3094,13 +3147,16 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
                                  "translation",
                                  "horizontal_direction",
                                  "beta",
+                                 "alpha",
+                                 "gamma",
                                  "emittance",
+                                 "eta",
                                  "lattice_reference",
                                  "mass",
                                  "charge",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ssdOOsddddOOOOOOdd",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ssdOOsddddOOOOOOOOOdd",
                                    const_cast<char **>(kwlist),
                                    &Type,
                                    &Name,
@@ -3116,7 +3172,10 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
                                    &List_Translation,
                                    &List_Horizontal_Direction,
                                    &List_Beta,
+                                   &List_Alpha,
+                                   &List_Gamma,
                                    &List_Emittance,
+                                   &List_Eta,
                                    &List_Lattice_Reference,
                                    &Mass,
                                    &Charge)) {
@@ -3127,10 +3186,12 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   // Are you asking for one of the predefined beams?
   bool const HasPredefinedBeam = std::strlen(Beam) != 0 ? true : false;
 
+  TParticleBeam* ThisBeam = 0x0;
+
   // Check if beam is defined (for predefined beams)
   if (HasPredefinedBeam) {
     try {
-      self->obj->AddParticleBeam(Beam, Name);
+      ThisBeam = &(self->obj->AddParticleBeam(Beam, Name, Weight));
     } catch (...) {
       PyErr_SetString(PyExc_ValueError, "Error in predefined beam name / definition");
       return NULL;
@@ -3140,7 +3201,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
 
 
   // Initial position
-  if (PyList_Size(List_Position) != 0) {
+  if (List_Position != 0x0) {
     try {
       Position = OSCARSPY::ListAsTVector3D(List_Position);
     } catch (std::length_error e) {
@@ -3148,41 +3209,26 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
       return NULL;
     }
 
-    // Change predefined beam accordingly
-    if (HasPredefinedBeam) {
-      self->obj->GetParticleBeam(Name).SetX0(Position);
-    }
+  }
+
+  // Energy check
+  if (Energy_GeV < 0) {
+    PyErr_SetString(PyExc_ValueError, "We do not currently support negative energy beams.  Please change 'energy_GeV' to >= 0");
+    return NULL;
   }
 
   // Initial direction
-  if (PyList_Size(List_Direction) != 0) {
+  if (List_Direction != 0x0) {
     try {
       Direction = OSCARSPY::ListAsTVector3D(List_Direction);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'd0'");
       return NULL;
     }
-
-    // Change predefined beam accordingly
-    if (HasPredefinedBeam) {
-      self->obj->GetParticleBeam(Name).SetU0(Direction);
-    }
-  }
-
-  if (Sigma_Energy_GeV == 0) {
-    // Do nothing.  zero energy diff is alright
-  } else if (Sigma_Energy_GeV < 0) {
-    PyErr_SetString(PyExc_ValueError, "'sigma_energy_GeV' cannot be less than zero");
-    return NULL;
-  } else {
-    // Change predefined beam accordingly
-    if (HasPredefinedBeam) {
-      self->obj->GetParticleBeam(Name).SetSigmaEnergyGeV(Sigma_Energy_GeV);
-    }
   }
 
   // Check for Rotations in the input
-  if (PyList_Size(List_Rotations) != 0) {
+  if (List_Rotations != 0x0) {
     try {
       Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
     } catch (std::length_error e) {
@@ -3193,7 +3239,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
 
 
   // Check for Translation in the input
-  if (PyList_Size(List_Translation) != 0) {
+  if (List_Translation != 0x0) {
     try {
       Translation = OSCARSPY::ListAsTVector3D(List_Translation);
     } catch (std::length_error e) {
@@ -3204,7 +3250,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
 
 
   // Check for Horizontal_Direction in the input
-  if (PyList_Size(List_Horizontal_Direction) != 0) {
+  if (List_Horizontal_Direction != 0x0) {
     try {
       Horizontal_Direction = OSCARSPY::ListAsTVector3D(List_Horizontal_Direction);
     } catch (std::length_error e) {
@@ -3212,32 +3258,255 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
       return NULL;
     }
   } else {
-    Horizontal_Direction = -Direction.Orthogonal().UnitVector();
+    Horizontal_Direction = -Direction.Orthogonal();
   }
   Horizontal_Direction = Horizontal_Direction.UnitVector();
 
 
-  // Check for Beta in the input
-  if (PyList_Size(List_Beta) != 0) {
+  // Rotate beam parameters
+  Position.RotateSelfXYZ(Rotations);
+  Direction.RotateSelfXYZ(Rotations);
+  Position += Translation;
+
+  // Add the particle beam
+  if (std::strlen(Beam) == 0) {
     try {
-      Beta = OSCARSPY::ListAsTVector2D(List_Beta);
-    } catch (std::length_error e) {
-      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'beta'");
+      if (std::string(Type) == "custom") {
+        if (Mass == 0 || Charge == 0) {
+          PyErr_SetString(PyExc_ValueError, "'mass' or 'charge' is zero");
+          return NULL;
+        }
+        // UPDATE: for custom beams
+        ThisBeam = &(self->obj->AddParticleBeam(Type, Name, Position, Direction, Energy_GeV, T0, Current, Weight, Charge, Mass));
+      } else {
+        ThisBeam = &(self->obj->AddParticleBeam(Type, Name, Position, Direction, Energy_GeV, T0, Current, Weight));
+      }
+    } catch (std::invalid_argument e) {
+      PyErr_SetString(PyExc_ValueError, "invalid argument in adding particle beam.  possibly 'name' already exists");
       return NULL;
     }
   }
 
+  // Change predefined beam accordingly
+  if (HasPredefinedBeam) {
+    if (List_Direction != 0x0) {
+      ThisBeam->SetU0(Direction);
+    }
+    ThisBeam->SetX0(Position);
+  }
 
+  // Set horizontal direction
+  ThisBeam->SetHorizontalDirection(Horizontal_Direction);
+
+  // UPDATE
   // Check for Emittance in the input
-  if (PyList_Size(List_Emittance) != 0) {
+  if (List_Emittance != 0x0) {
     try {
       Emittance = OSCARSPY::ListAsTVector2D(List_Emittance);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'emittance'");
       return NULL;
     }
+
+    // Set emittance and beam distribution
+    ThisBeam->SetEmittance(Emittance);
+    ThisBeam->SetBeamDistribution(TParticleBeam::kBeamDistribution_Gaussian);
+  } else {
+    // Beam distribution to filament
+    if (std::strlen(Beam) == 0) {
+      ThisBeam->SetBeamDistribution(TParticleBeam::kBeamDistribution_Filament);
+    }
   }
 
+  // Check for no beam
+  if (ThisBeam == 0x0) {
+    // UPDATE: add specific throw
+    std::cerr << "ERROR: No beam at checkpoint" << std::endl;
+    throw;
+  }
+
+  if (Sigma_Energy_GeV == 0) {
+    // Do nothing.  zero energy diff is alright
+  } else if (Sigma_Energy_GeV < 0) {
+    PyErr_SetString(PyExc_ValueError, "'sigma_energy_GeV' cannot be less than zero");
+    return NULL;
+  } else {
+    ThisBeam->SetSigmaEnergyGeV(Sigma_Energy_GeV);
+  }
+
+  // Check for beta, alpha, gammain the input
+  int HasBAG = 0x0;
+  if (List_Beta != 0x0) {
+    try {
+      Beta = OSCARSPY::ListAsTVector2D(List_Beta);
+      HasBAG |= 0x4;
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'beta'");
+      return NULL;
+    }
+  }
+  if (List_Alpha != 0x0) {
+    try {
+      Alpha = OSCARSPY::ListAsTVector2D(List_Alpha);
+      HasBAG |= 0x2;
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'alpha'");
+      return NULL;
+    }
+  }
+  if (List_Gamma != 0x0) {
+    try {
+      Gamma = OSCARSPY::ListAsTVector2D(List_Gamma);
+      HasBAG |= 0x1;
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'gamma'");
+      return NULL;
+    }
+  }
+
+  // Check for Lattice reference in the input
+  bool HasReferencePoint = false;
+  if (List_Lattice_Reference != 0x0) {
+    try {
+      Lattice_Reference = OSCARSPY::ListAsTVector3D(List_Lattice_Reference);
+      HasReferencePoint = true;
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'lattice_reference'");
+      return NULL;
+    }
+  }
+  ThisBeam->SetTwissLatticeReference(Lattice_Reference);
+
+  // Set correct twiss parameters
+  switch (HasBAG) {
+    case 0x7:
+      ThisBeam->SetTwissParameters(Beta, Alpha, Gamma, Lattice_Reference, HasReferencePoint);
+      break;
+    case 0x6:
+      ThisBeam->SetTwissBetaAlpha(Beta, Alpha, Lattice_Reference, HasReferencePoint);
+      break;
+    case 0x5:
+      ThisBeam->SetTwissBetaGamma(Beta, Gamma, Lattice_Reference, HasReferencePoint);
+      break;
+    case 0x3:
+      ThisBeam->SetTwissAlphaGamma(Alpha, Gamma, Lattice_Reference, HasReferencePoint);
+      break;
+    case 0x4:
+      ThisBeam->SetTwissBetaAlpha(Beta, TVector2D(0, 0), Lattice_Reference, HasReferencePoint);
+      break;
+    default:
+      break;
+  }
+
+  if (List_Eta != 0x0) {
+    try {
+      Eta = OSCARSPY::ListAsTVector2D(List_Eta);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'gamma'");
+      return NULL;
+    }
+  }
+  ThisBeam->SetEta(Eta);
+
+
+  if (T0 != 0) {
+    ThisBeam->SetT0(T0);
+  }
+
+  // Should set weight on input
+  //self->obj->GetParticleBeam(Name).SetWeight(Weight);
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+const char* DOC_OSCARSSR_SetParticleBeamSize = R"docstring(
+add_particle_beam_size(sigma, sigmap [, beam, lattice_reference, eta=0])
+
+Set the beamsize of a particular beam (if the name is given) or all beams (if no name is given) at a reference point called lattice_reference.  If lattice_reference is not given the reference point is assumed to be 'x0' from the beam in question.  This function translates the sizes into twiss parameters.  If eta (dispersion) is not given it is assumed to be zero.
+
+Parameters
+----------
+
+sigma : list[2]
+    One sigma for the spatial distribution in the horizontal and vertical directions [sigma_h, sigma_v].
+
+sigmap : list[2]
+    One sigma for the angular distribution in the horizontal and vertical directions [sigmap_h, sigmap_v].
+
+beam : str
+    Name of the beam for which these paramters apply.
+
+lattice_reference : list[3]
+    3D coordinate of there reference point for the known beam dimensions.
+
+eta : float
+    The dispersion term.  Assumed to be zero if not given.
+
+Returns
+-------
+None
+
+)docstring";
+static PyObject* OSCARSSR_SetParticleBeamSize (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
+{
+  // Add a particle beam to the experiment
+
+  // Lists and variables some with initial values
+  PyObject*   List_Sigma                 = PyList_New(0);
+  PyObject*   List_SigmaP                = PyList_New(0);
+  char const* Beam                       = "";
+  PyObject*   List_Lattice_Reference     = PyList_New(0);
+  double      Eta                        = 0;
+
+  TVector2D Sigma(0, 0);
+  TVector2D SigmaP(0, 0);
+  TVector3D Lattice_Reference(0, 0, 0);
+
+
+  // Input variables and parsing
+  static const char *kwlist[] = {"sigma",
+                                 "sigmap",
+                                 "beam",
+                                 "lattice_reference",
+                                 "eta",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OO|sOd",
+                                   const_cast<char **>(kwlist),
+                                   &List_Sigma,
+                                   &List_SigmaP,
+                                   &Beam,
+                                   &List_Lattice_Reference,
+                                   &Eta)) {
+    return NULL;
+  }
+
+
+  // Check for Lattice reference in the input
+  if (PyList_Size(List_Sigma) != 0) {
+    try {
+      Sigma = OSCARSPY::ListAsTVector2D(List_Sigma);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'sigma'");
+      return NULL;
+    }
+  }
+
+  // Check for Lattice reference in the input
+  if (PyList_Size(List_SigmaP) != 0) {
+    try {
+      SigmaP = OSCARSPY::ListAsTVector2D(List_SigmaP);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'sigmap'");
+      return NULL;
+    }
+  }
 
   // Check for Lattice reference in the input
   if (PyList_Size(List_Lattice_Reference) != 0) {
@@ -3249,68 +3518,14 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
     }
   }
 
-
-  // If emittance and beta are defined get RMS values
-  TVector2D SigmaU(0, 0);
-  TVector2D SigmaUPrime(0, 0);
-  if (PyList_Size(List_Emittance) != 0 && PyList_Size(List_Beta) != 0) {
-    SigmaU[0]      = sqrt(Emittance[0] * Beta[0]);
-    SigmaU[1]      = sqrt(Emittance[1] * Beta[1]);
-    SigmaUPrime[0] = sqrt(Emittance[0] / Beta[0]);
-    SigmaUPrime[1] = sqrt(Emittance[1] / Beta[1]);
-  }
-
-
-  // Rotate beam parameters
-  Position.RotateSelfXYZ(Rotations);
-  Direction.RotateSelfXYZ(Rotations);
-  Position += Translation;
-
-  // UPDATE: An idea for later, use new variable "velocity"
-  //if (Energy_GeV == 0) {
-  //  if (Direction.Mag() >= 1) {
-  //    throw;
-  //  }
-  //  Energy_GeV = sqrt(1.0 / (1.0 - Direction.Mag2())) * Mass;
-  //}
-
-
-  // Add the particle beam
-  if (std::strlen(Beam) == 0) {
-    try {
-      if (std::string(Type) == "custom") {
-        if (Mass == 0 || Charge == 0) {
-          PyErr_SetString(PyExc_ValueError, "'mass' or 'charge' is zero");
-          return NULL;
-        }
-        // UPDATE: for custom beams
-        self->obj->AddParticleBeam(Type, Name, Position, Direction, Energy_GeV, T0, Current, Weight, Charge, Mass);
-      } else {
-        self->obj->AddParticleBeam(Type, Name, Position, Direction, Energy_GeV, T0, Current, Weight);
-      }
-    } catch (std::invalid_argument e) {
-      PyErr_SetString(PyExc_ValueError, "invalid argument in adding particle beam.  possibly 'name' already exists");
-      return NULL;
-    }
-    // UPDATE: Change me to include sigma of beam
-    self->obj->GetParticleBeam(Name).SetSigma(Horizontal_Direction, SigmaU, SigmaUPrime, Lattice_Reference, Sigma_Energy_GeV);
-  }
-
-
-  //self->obj->GetParticleBeam(Name).SetCurrent(Current);
-  //self->obj->GetParticleBeam(Name).SetX0(Position);
-  //self->obj->GetParticleBeam(Name).SetU0(Direction);
-  if (T0 != 0) {
-    self->obj->GetParticleBeam(Name).SetT0(T0);
-  }
-
-  // Should set weight on input
-  //self->obj->GetParticleBeam(Name).SetWeight(Weight);
+  //self->obj->SetBeamSize(Beam, Sigma, SigmaP, Lattice_Reference, Eta);
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
   return Py_None;
 }
+
+
 
 
 
@@ -3363,16 +3578,152 @@ static PyObject* OSCARSSR_PrintParticleBeams (OSCARSSRObject* self)
   std::ostringstream ostream;
   ostream << self->obj->GetParticleBeamContainer() << std::endl;
 
-  // Python printing
-  PyObject* sys = PyImport_ImportModule("sys");
-  PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
-  std::string Message = ostream.str();
-  PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+  OSCARSPY::PyPrint_stdout(ostream.str());
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
   return Py_None;
 }
+
+
+
+
+
+
+
+const char* DOC_OSCARSSR_SetTwissParameters = R"docstring(
+set_twiss_parameters(, [beam, beta, alpha, gamma, lattice_reference])
+
+Set the twiss parameters for a given beam (if a beam name is given) or for all beams (if no name is given).  You should only set 2 of the three [beta, alpha, gamma] as they are not independent.
+
+Parameters
+----------
+beam : str
+    Name of the beam for which to set the twiss parameters
+
+beta : list[2]
+    [horizontal, vertical]
+
+alpha : list[2]
+    [horizontal, vertical]
+
+gamma : list[2]
+    [horizontal, vertical]
+
+lattice_reference : list[3]
+    Location of the values of the twiss parameters.  These must be places on the beam axis (though it is not checked).
+
+Returns
+-------
+None
+)docstring";
+static PyObject* OSCARSSR_SetTwissParameters (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
+{
+  // Set the twiss parameters for a given beam or for all beams
+
+  // Lists and variables some with initial values
+  char const* Beam                       = "";
+  PyObject*   List_Beta                  = PyList_New(0);
+  PyObject*   List_Alpha                 = PyList_New(0);
+  PyObject*   List_Gamma                 = PyList_New(0);
+  PyObject*   List_Lattice_Reference     = PyList_New(0);
+
+  TVector2D Beta(0, 0);
+  TVector2D Alpha(0, 0);
+  TVector2D Gamma(0, 0);
+  TVector3D Lattice_Reference(0, 0, 0);
+
+
+  // Input variables and parsing
+  static const char *kwlist[] = {"beam",
+                                 "beta",
+                                 "alpha",
+                                 "gamma",
+                                 "lattice_reference",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sOOOO",
+                                   const_cast<char **>(kwlist),
+                                   &Beam,
+                                   &List_Beta,
+                                   &List_Alpha,
+                                   &List_Gamma,
+                                   &List_Lattice_Reference
+                                  )) {
+    return NULL;
+  }
+
+
+  // Check for beta, alpha, gammain the input
+  int HasBAG = 0x0;
+  if (PyList_Size(List_Beta) != 0) {
+    try {
+      Beta = OSCARSPY::ListAsTVector2D(List_Beta);
+      HasBAG |= 0x4;
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'beta'");
+      return NULL;
+    }
+  }
+  if (PyList_Size(List_Alpha) != 0) {
+    try {
+      Alpha = OSCARSPY::ListAsTVector2D(List_Alpha);
+      HasBAG |= 0x2;
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'alpha'");
+      return NULL;
+    }
+  }
+  if (PyList_Size(List_Gamma) != 0) {
+    try {
+      Gamma = OSCARSPY::ListAsTVector2D(List_Gamma);
+      HasBAG |= 0x1;
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'gamma'");
+      return NULL;
+    }
+  }
+
+  // Check for Lattice reference in the input
+  bool HasReferencePoint = false;
+  if (PyList_Size(List_Lattice_Reference) != 0) {
+    try {
+      Lattice_Reference = OSCARSPY::ListAsTVector3D(List_Lattice_Reference);
+      HasReferencePoint = true;
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'lattice_reference'");
+      return NULL;
+    }
+  }
+
+  // Set correct twiss parameters
+  switch (HasBAG) {
+    case 0x7:
+      self->obj->SetTwissParameters(Beam, Beta, Alpha, Gamma, Lattice_Reference, HasReferencePoint);
+      break;
+    case 0x6:
+      self->obj->GetParticleBeam(Beam).SetTwissBetaAlpha(Beta, Alpha, Lattice_Reference, HasReferencePoint);
+      break;
+    case 0x5:
+      self->obj->GetParticleBeam(Beam).SetTwissBetaGamma(Beta, Gamma, Lattice_Reference, HasReferencePoint);
+      break;
+    case 0x3:
+      self->obj->GetParticleBeam(Beam).SetTwissAlphaGamma(Alpha, Gamma, Lattice_Reference, HasReferencePoint);
+      break;
+    case 0x4:
+      self->obj->GetParticleBeam(Beam).SetTwissBetaAlpha(Beta, TVector2D(0, 0), Lattice_Reference, HasReferencePoint);
+      break;
+    default:
+      break;
+  }
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
 
 
 
@@ -3735,11 +4086,7 @@ static PyObject* OSCARSSR_PrintDriftVolumes (OSCARSSRObject* self)
   ostream << "*Drift Volumes*\n";
   ostream << self->obj->GetDriftVolumeContainer() << std::endl;
 
-  // Python printing
-  PyObject* sys = PyImport_ImportModule( "sys");
-  PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
-  std::string Message = ostream.str();
-  PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+  OSCARSPY::PyPrint_stdout(ostream.str());
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -3855,15 +4202,32 @@ static PyObject* OSCARSSR_GetTrajectory (OSCARSSRObject* self)
   // Number of points in trajectory calculation
   size_t NTPoints = T.GetNPoints();
 
+  PyObject* Value;
+
   // Loop over all points in trajectory
   for (size_t iT = 0; iT != NTPoints; ++iT) {
     // Create a python list for X and Beta
     PyObject *PList2 = PyList_New(0);
 
     // Add position and Beta to list
-    PyList_Append(PList2, OSCARSPY::TVector3DAsList(T.GetX(iT)));
-    PyList_Append(PList2, OSCARSPY::TVector3DAsList(T.GetB(iT)));
+    Value = Py_BuildValue("f", T.GetT(iT));
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
+    Value = OSCARSPY::TVector3DAsList(T.GetX(iT));
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
+    Value = OSCARSPY::TVector3DAsList(T.GetB(iT));
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
+    Value = OSCARSPY::TVector3DAsList(T.GetA(iT));
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
     PyList_Append(PList, PList2);
+    Py_DECREF(PList2);
   }
 
   // Return the python list
@@ -3903,7 +4267,7 @@ static PyObject* OSCARSSR_GetTrajectory (OSCARSSRObject* self)
 
 
 const char* DOC_OSCARSSR_CalculateSpectrum = R"docstring(
-calculate_spectrum(obs [, npoints, energy_range_eV, energy_points_eV, points_eV, polarization, angle, horizontal_direction, propogation_direction, nparticles, nthreads, gpu, ofile, bofile])
+calculate_spectrum(obs [, npoints, energy_range_eV, energy_points_eV, points_eV, polarization, angle, horizontal_direction, propogation_direction, precision, max_level, nparticles, nthreads, gpu, ngpu, quantity, ofile, bofile])
 
 Calculate the spectrum given a point in space, the range in energy, and the number of points.  The calculation uses the current particle and its initial conditions.  If the trajectory has not been calculated it is calculated first.  The units of this calculation are [:math:`photons / mm^2 / 0.1% bw / s`]
 
@@ -3934,6 +4298,15 @@ horizontal_direction : list
 vertical_direction : list
     Same as horizontal_direction but the vertical direction
 
+precision : float
+    Calculation precision parameter (typically 0.01 which is 1%)
+
+max_level: int
+    Maximum "level" to use for trajectory in the calculation.  Level N corresponds to a total of 2**(N+2) trajectory points.  You cannot go beyond the internal maximum.  You are not guaranteed precision parameter is met if this is used.
+
+max_level_extended: int
+    Maximum "level" to use for trajectory in the calculation.  If set to higher than max_level the computation will proceed beyond max_level without creating trajectory arrays in memory (but it will be slower)
+
 angle : float
     Only used if polarization='linear' is specified.  The 'angle' is that from the horizontal_direction for the polarization directino you are interested in
 
@@ -3944,7 +4317,18 @@ nthreads : int
     Number of threads to use
 
 gpu : int
-    Use the gpu or not (0 or 1)
+    Use the gpu or not (0 or 1).  If 1 will attempt to use ALL gpus available.  This is overridden if you use the input 'ngpu'
+
+ngpu : int or list
+    If ngpu is an int, use that number of gpus (if available).
+    If ngpu is a list, the list should be a list of gpus you wish to use
+
+quantity: str
+    Quantity to return.
+    Available are:
+        'flux'        (default)
+        'precision' - Estimated precision for each point
+        'level'     - Trajectory level reached (npoints = 2**(n+1) - 1), if return is -1 the requested precision was not reached
 
 ofile : str
     Output file name
@@ -3976,9 +4360,14 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
   double      Angle                     = 0;
   PyObject*   List_HorizontalDirection  = PyList_New(0);
   PyObject*   List_PropogationDirection = PyList_New(0);
+  double      Precision                 = 0.01;
+  int         MaxLevel                  = -2;
+  int         MaxLevelExtended          = 0;
   int         NParticles                = 0;
   int         NThreads                  = 0;
   int         GPU                       = -1;
+  PyObject*   NGPU = 0x0;
+  char const* ReturnQuantityChars       = "flux";
   const char* OutFileNameText           = "";
   const char* OutFileNameBinary         = "";
 
@@ -3992,15 +4381,20 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
                                  "angle",
                                  "horizontal_direction",
                                  "propogation_direction",
+                                 "precision",
+                                 "max_level",
+                                 "max_level_extended",
                                  "nparticles",
                                  "nthreads",
                                  "gpu",
+                                 "ngpu",
+                                 "quantity",
                                  "ofile",
                                  "bofile",
                                  NULL};
 
   // Parse inputs
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|iOOOsdOOiiiss",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|iOOOsdOOdiiiiiOsss",
                                    const_cast<char **>(kwlist),
                                    &List_Obs,
                                    &NPoints,
@@ -4011,9 +4405,14 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
                                    &Angle,
                                    &List_HorizontalDirection,
                                    &List_PropogationDirection,
+                                   &Precision,
+                                   &MaxLevel,
+                                   &MaxLevelExtended,
                                    &NParticles,
                                    &NThreads,
                                    &GPU,
+                                   &NGPU,
+                                   &ReturnQuantityChars,
                                    &OutFileNameText,
                                    &OutFileNameBinary)) {
     return NULL;
@@ -4114,19 +4513,59 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
   TSpectrumContainer SpectrumContainer;
 
   if (VPoints_eV.size() == 0) {
-    // Check NPoints parameter
+    // Check NPoints parameter and set minimum if still zero
     if (NPoints < 1) {
-      PyErr_SetString(PyExc_ValueError, "'npoints' must be > 0");
-      return NULL;
+      NPoints = fabs(EStop - EStart) + 1 > 100 ? abs((int) (EStop - EStart) + 1) : 100;
     }
     SpectrumContainer.Init(NPoints, EStart, EStop);
   } else {
     SpectrumContainer.Init(VPoints_eV);
   }
 
+  // Check ngpu input
+  int NumberOfGPUs = -1;
+  std::vector<int> GPUVector;
+  if (NGPU != 0x0) {
+    if (PyLong_Check(NGPU)) {
+      NumberOfGPUs = (int) PyLong_AsLong(NGPU);
+    } else if (PyList_Check(NGPU)) {
+      OSCARSPY::ListToVectorInt(NGPU, GPUVector);
+    }
+  }
+
+
+  int ReturnQuantity = 0;
+  std::string ReturnQuantityStr = ReturnQuantityChars;
+  std::transform(ReturnQuantityStr.begin(), ReturnQuantityStr.end(), ReturnQuantityStr.begin(), ::toupper);
+  if (ReturnQuantityStr == "FLUX") {
+    ReturnQuantity = 0;
+  } else if (ReturnQuantityStr == "PRECISION") {
+    ReturnQuantity = 1;
+  } else if (ReturnQuantityStr == "LEVEL") {
+    ReturnQuantity = 2;
+  } else {
+    PyErr_SetString(PyExc_ValueError, "'quantity' must be: 'flux', 'precision', 'level', or blank");
+    return NULL;
+  }
+
   // Actually calculate the spectrum
   try {
-    self->obj->CalculateSpectrum(Obs, SpectrumContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NParticles, NThreads, GPU);
+    self->obj->CalculateSpectrum(Obs,
+                                 SpectrumContainer,
+                                 Polarization,
+                                 Angle,
+                                 HorizontalDirection,
+                                 PropogationDirection,
+                                 NParticles,
+                                 NThreads,
+                                 GPU,
+                                 NumberOfGPUs,
+                                 GPUVector,
+                                 Precision,
+                                 MaxLevel,
+                                 MaxLevelExtended,
+                                 ReturnQuantity);
+
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -4136,6 +4575,10 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
   } catch (std::invalid_argument e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
+  }
+
+  if (!SpectrumContainer.AllConverged()) {
+    OSCARSPY::PyPrint_stderr("Not all points converged to desired precision.  Can try increasing 'max_level_extended'\n");
   }
 
 
@@ -4213,7 +4656,7 @@ static PyObject* OSCARSSR_CalculateTotalPower (OSCARSSRObject* self)
 
 
 const char* DOC_OSCARSSR_CalculatePowerDensity = R"docstring(
-calculate_power_density(points [, normal, rotations, translation, nparticles, gpu, nthreads, ofile])
+calculate_power_density(points [, normal, rotations, translation, nparticles, gpu, nthreads, precision, max_level, max_level_extended, quantity, ofile])
 
 Calculate the power density for each point in the list *points*.
 
@@ -4243,6 +4686,23 @@ gpu : int
 nthreads : int
     Number of threads to use
 
+precision : float
+    Calculation precision parameter (typically 0.01 which is 1%)
+
+max_level: int
+    Maximum "level" to use for trajectory in the calculation.  Level N corresponds to a total of 2**(N+2) trajectory points.  You cannot go beyond the internal maximum.  You are not guaranteed precision parameter is met if this is used.
+
+
+max_level_extended: int
+    Maximum "level" to use for trajectory in the calculation.  If set to higher than max_level the computation will proceed beyond max_level without creating trajectory arrays in memory (but it will be slower)
+
+quantity: str
+    Quantity to return.
+    Available are:
+        'power density' (default)
+        'precision' - Estimated precision for each point
+        'level'     - Trajectory level reached (npoints = 2**(n+1) - 1), if return is -1 the requested precision was not reached
+
 ofile : str
     Output file name
 
@@ -4262,7 +4722,12 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
   int const   Dim = 3;
   int         NParticles = 0;
   int         GPU = -1;
+  PyObject*   NGPU = 0x0;
   int         NThreads = 0;
+  double      Precision = 0.01;
+  int         MaxLevel = -2;
+  int         MaxLevelExtended = 0;
+  char const* ReturnQuantityChars = "power density";
   char const* OutFileName = "";
 
 
@@ -4272,11 +4737,16 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
                                  "translation",
                                  "nparticles",
                                  "gpu",
+                                 "ngpu",
                                  "nthreads",
+                                 "precision",
+                                 "max_level",
+                                 "max_level_extended",
+                                 "quantity",
                                  "ofile",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|iOOiiis",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|iOOiiOidiiss",
                                    const_cast<char **>(kwlist),
                                    &List_Points,
                                    &NormalDirection,
@@ -4284,7 +4754,12 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
                                    &List_Translation,
                                    &NParticles,
                                    &GPU,
+                                   &NGPU,
                                    &NThreads,
+                                   &Precision,
+                                   &MaxLevel,
+                                   &MaxLevelExtended,
+                                   &ReturnQuantityChars,
                                    &OutFileName)) {
     return NULL;
   }
@@ -4389,8 +4864,32 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
     PyErr_SetString(PyExc_ValueError, "gpu is 1 and nthreads > 0.  Both are not currently allowed.");
     return NULL;
   }
-    
 
+  // Check ngpu input
+  int NumberOfGPUs = -1;
+  std::vector<int> GPUVector;
+  if (NGPU != 0x0) {
+    if (PyLong_Check(NGPU)) {
+      NumberOfGPUs = (int) PyLong_AsLong(NGPU);
+    } else if (PyList_Check(NGPU)) {
+      OSCARSPY::ListToVectorInt(NGPU, GPUVector);
+    }
+  }
+
+
+  int ReturnQuantity = 0;
+  std::string ReturnQuantityStr = ReturnQuantityChars;
+  std::transform(ReturnQuantityStr.begin(), ReturnQuantityStr.end(), ReturnQuantityStr.begin(), ::toupper);
+  if (ReturnQuantityStr == "POWER DENSITY" || ReturnQuantityStr == "POWERDENSITY") {
+    ReturnQuantity = 0;
+  } else if (ReturnQuantityStr == "PRECISION") {
+    ReturnQuantity = 1;
+  } else if (ReturnQuantityStr == "LEVEL") {
+    ReturnQuantity = 2;
+  } else {
+    PyErr_SetString(PyExc_ValueError, "'quantity' must be: 'power density', 'precision', 'level', or blank");
+    return NULL;
+  }
 
   // Container for Point plus scalar
   T3DScalarContainer PowerDensityContainer;
@@ -4400,7 +4899,19 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
   bool const Directional = NormalDirection == 0 ? false : true;
 
   try {
-    self->obj->CalculatePowerDensity(Surface, PowerDensityContainer, Dim, Directional, NParticles, NThreads, GPU);
+    self->obj->CalculatePowerDensity(Surface,
+                                     PowerDensityContainer,
+                                     Dim,
+                                     Directional,
+                                     Precision,
+                                     MaxLevel,
+                                     MaxLevelExtended,
+                                     NParticles,
+                                     NThreads,
+                                     GPU,
+                                     NumberOfGPUs,
+                                     GPUVector,
+                                     ReturnQuantity);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -4412,6 +4923,22 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
     return NULL;
   }
 
+  // If not converged print warning
+  if (!PowerDensityContainer.AllConverged()) {
+    OSCARSPY::PyPrint_stderr("Not all points converged to desired precision.  Can try increasing 'max_level_extended'\n");
+  }
+
+  // Write the output file if requested
+  // Text output
+  //if (std::string(OutFileNameText) != "") {
+  //  PowerDensityContainer.WriteToFileText(OutFileNameText, Dim);
+  //}
+
+  // Binary output
+  //if (std::string(OutFileNameBinary) != "") {
+  //  PowerDensityContainer.WriteToFileBinary(OutFileNameBinary, Dim);
+  //}
+
 
   // Build the output list of: [[[x, y, z], PowerDensity], [...]]
   // Create a python list
@@ -4419,6 +4946,8 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
 
   // UPDATE: URGENT: PD output ofile, bofile
   size_t const NPoints = PowerDensityContainer.GetNPoints();
+
+  PyObject* Value;
 
   for (size_t i = 0; i != NPoints; ++i) {
     T3DScalar P = PowerDensityContainer.GetPoint(i);
@@ -4428,9 +4957,16 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
 
 
     // Add position and value to list
-    PyList_Append(PList2, OSCARSPY::TVector3DAsList(P.GetX()));
-    PyList_Append(PList2, Py_BuildValue("f", P.GetV()));
+    Value = OSCARSPY::TVector3DAsList(P.GetX());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
+    Value = Py_BuildValue("f", P.GetV());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
     PyList_Append(PList, PList2);
+    Py_DECREF(PList2);
 
   }
 
@@ -4445,7 +4981,7 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
 
 
 const char* DOC_OSCARSSR_CalculatePowerDensityRectangle = R"docstring(
-calculate_power_density_rectangle(npoints [, plane, width, x0x1x2, rotations, translation, ofile, bofile, normal, nparticles, gpu, nthreads, dim])
+calculate_power_density_rectangle(npoints [, plane, width, x0x1x2, rotations, translation, ofile, bofile, normal, nparticles, gpu, ngpu, nthreads, precision, max_level, max_level_extended, dim, quantity])
 
 Calculate the power density in a rectangle either defined by three points, or by defining the plane the rectangle is in and the width, and then rotating and translating it to where it needs be.  The simplest is outlined in the first example below.  By default (dim=2) this returns a list whose position coordinates are in the local coordinate space x1 and x2 (*ie* they do not include the rotations and translation).  if dim=3 the coordinates in the return list are in absolute 3D space.
 
@@ -4486,13 +5022,34 @@ nparticles : int
     Number of particles to use for multi-particle calculations
 
 gpu : int
-    Use the gpu or not (0 or 1)
+    Use the gpu or not (0 or 1).  If 1 will attempt to use ALL gpus available.  This is overridden if you use the input 'ngpu'
+
+ngpu : int or list
+    If ngpu is an int, use that number of gpus (if available).
+    If ngpu is a list, the list should be a list of gpus you wish to use
+
 
 nthreads : int
     Number of threads to use
 
+precision : float
+    Calculation precision parameter (typically 0.01 which is 1%)
+
+max_level: int
+    Maximum "level" to use for trajectory in the calculation.  Level N corresponds to a total of 2**(N+2) trajectory points.  You cannot go beyond the internal maximum.  You are not guaranteed precision parameter is met if this is used.
+
+max_level_extended: int
+    Maximum "level" to use for trajectory in the calculation.  If set to higher than max_level the computation will proceed beyond max_level without creating trajectory arrays in memory (but it will be slower)
+
 dim : int
     Defaults to 2 where output is in the local plane coordinates X1 and X2.  If you want the return to be given in 3D set dim=3 which will return with X, Y, and Z in absolute coordinates.
+
+quantity: str
+    Quantity to return.
+    Available are:
+        'power density' (default)
+        'precision' - Estimated precision for each point
+        'level'     - Trajectory level reached (npoints = 2**(n+1) - 1), if return is -1 the requested precision was not reached
 
 Returns
 -------
@@ -4530,8 +5087,13 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
   int         NormalDirection = 0;
   int         NParticles = 0;
   int         GPU = -1;
+  PyObject*   NGPU = 0x0;
   int         NThreads = 0;
   int         Dim = 2;
+  double      Precision = 0.01;
+  int         MaxLevel = -2;
+  int         MaxLevelExtended = 0;
+  char const* ReturnQuantityChars = "power density";
   const char* OutFileNameText = "";
   const char* OutFileNameBinary = "";
 
@@ -4547,11 +5109,16 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
                                  "normal",
                                  "nparticles",
                                  "gpu",
+                                 "ngpu",
                                  "nthreads",
+                                 "precision",
+                                 "max_level",
+                                 "max_level_extended",
                                  "dim",
+                                 "quantity",
                                   NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|sOOOOssiiiii",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|sOOOOssiiiOidiiis",
                                    const_cast<char **>(kwlist),
                                    &List_NPoints,
                                    &SurfacePlane,
@@ -4564,8 +5131,13 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
                                    &NormalDirection,
                                    &NParticles,
                                    &GPU,
+                                   &NGPU,
                                    &NThreads,
-                                   &Dim)) {
+                                   &Precision,
+                                   &MaxLevel,
+                                   &MaxLevelExtended,
+                                   &Dim,
+                                   &ReturnQuantityChars)) {
     return NULL;
   }
 
@@ -4702,13 +5274,401 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
     return NULL;
   }
 
+  // Check ngpu input
+  int NumberOfGPUs = -1;
+  std::vector<int> GPUVector;
+  if (NGPU != 0x0) {
+    if (PyLong_Check(NGPU)) {
+      NumberOfGPUs = (int) PyLong_AsLong(NGPU);
+    } else if (PyList_Check(NGPU)) {
+      OSCARSPY::ListToVectorInt(NGPU, GPUVector);
+    }
+  }
+
+  int ReturnQuantity = 0;
+  std::string ReturnQuantityStr = ReturnQuantityChars;
+  std::transform(ReturnQuantityStr.begin(), ReturnQuantityStr.end(), ReturnQuantityStr.begin(), ::toupper);
+  if (ReturnQuantityStr == "POWER DENSITY" || ReturnQuantityStr == "POWERDENSITY") {
+    ReturnQuantity = 0;
+  } else if (ReturnQuantityStr == "PRECISION") {
+    ReturnQuantity = 1;
+  } else if (ReturnQuantityStr == "LEVEL") {
+    ReturnQuantity = 2;
+  } else {
+    PyErr_SetString(PyExc_ValueError, "'quantity' must be: 'power density', 'precision', 'level', or blank");
+    return NULL;
+  }
+
+
   // Container for Point plus scalar
   T3DScalarContainer PowerDensityContainer;
 
   // Actually calculate the spectrum
   bool const Directional = NormalDirection == 0 ? false : true;
   try {
-    self->obj->CalculatePowerDensity(Surface, PowerDensityContainer, Dim, Directional, NParticles, NThreads, GPU);
+    self->obj->CalculatePowerDensity(Surface,
+                                     PowerDensityContainer,
+                                     Dim,
+                                     Directional,
+                                     Precision,
+                                     MaxLevel,
+                                     MaxLevelExtended,
+                                     NParticles,
+                                     NThreads,
+                                     GPU,
+                                     NumberOfGPUs,
+                                     GPUVector,
+                                     ReturnQuantity);
+
+  } catch (std::length_error e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
+  } catch (std::out_of_range e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
+  } catch (std::invalid_argument e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
+  }
+
+  // If not converged print warning
+  if (!PowerDensityContainer.AllConverged()) {
+    OSCARSPY::PyPrint_stderr("Not all points converged to desired precision.  Can try increasing 'max_level_extended'\n");
+  }
+
+  // Write the output file if requested
+  // Text output
+  if (std::string(OutFileNameText) != "") {
+    PowerDensityContainer.WriteToFileText(OutFileNameText, Dim);
+  }
+
+  // Binary output
+  if (std::string(OutFileNameBinary) != "") {
+    PowerDensityContainer.WriteToFileBinary(OutFileNameBinary, Dim);
+  }
+
+
+  // Build the output list of: [[[x, y, z], PowerDensity], [...]]
+  // Create a python list
+  PyObject *PList = PyList_New(0);
+
+  // UPDATE: URGENT: PD output ofile, bofile
+  size_t const NPoints = PowerDensityContainer.GetNPoints();
+
+  PyObject* Value;
+
+  for (size_t i = 0; i != NPoints; ++i) {
+    T3DScalar P = PowerDensityContainer.GetPoint(i);
+
+    // Inner list for each point
+    PyObject *PList2 = PyList_New(0);
+
+
+    // Add position and value to list
+    Value = OSCARSPY::TVector3DAsList(P.GetX());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
+    Value = Py_BuildValue("f", P.GetV());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
+    PyList_Append(PList, PList2);
+    Py_DECREF(PList2);
+
+  }
+
+  return PList;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const char* DOC_OSCARSSR_CalculatePowerDensitySTL = R"docstring(
+calculate_power_density_stl(ifiles [, rotations, translation, ofile, bofile, stlofile, normal, scale, nparticles, gpu, ngpu, nthreads, precision, max_level, max_level_extended, quantity])
+
+Calculate the power density on surfaces described in STL format input files
+
+See the :doc:`MathematicalNotes` section for the expression used in this calculation.
+
+You **must** specify either both (*plane* and *width*) or *x0x1x2*
+
+Parameters
+----------
+ifiles : list[str]
+    A list of STL files to import.
+
+rotations : list, optional
+    3-element list representing rotations around x, y, and z axes: [:math:`\theta_x, \theta_y, \theta_z`]
+
+translation : list, optional
+    3-element list representing a translation in space [x, y, z]
+
+ofile : str
+    Output file name
+
+bofile : str
+    Binary output file name
+
+stlofile : str
+    STL output file name.  Will include RGB color information in the attribute byte count, maybe
+
+normal : int
+    -1 if you wish to reverse the normal vector, 0 if you wish to ignore the +/- direction in computations, 1 if you with to use the direction of the normal vector as given. 
+
+scale : float
+    What to scale the dimensions by.  Default input is in meters.
+
+nparticles : int
+    Number of particles to use for multi-particle calculations
+
+gpu : int
+    Use the gpu or not (0 or 1).  If 1 will attempt to use ALL gpus available.  This is overridden if you use the input 'ngpu'
+
+ngpu : int or list
+    If ngpu is an int, use that number of gpus (if available).
+    If ngpu is a list, the list should be a list of gpus you wish to use
+
+
+nthreads : int
+    Number of threads to use
+
+precision : float
+    Calculation precision parameter (typically 0.01 which is 1%)
+
+max_level: int
+    Maximum "level" to use for trajectory in the calculation.  Level N corresponds to a total of 2**(N+2) trajectory points.  You cannot go beyond the internal maximum.  You are not guaranteed precision parameter is met if this is used.
+
+max_level_extended: int
+    Maximum "level" to use for trajectory in the calculation.  If set to higher than max_level the computation will proceed beyond max_level without creating trajectory arrays in memory (but it will be slower)
+
+quantity: str
+    Quantity to return.
+    Available are:
+        'power density' (default)
+        'precision' - Estimated precision for each point
+        'level'     - Trajectory level reached (npoints = 2**(n+1) - 1), if return is -1 the requested precision was not reached
+
+Returns
+-------
+power_density : list
+    This return list is NOT the same as other power density calculations.  The return format is as follows:
+    [ [[[T0x, T0y, T0z], [T1x, T1y, T1z], [T2x, T2y, T2z]], PD], [...], ...]
+    where the Ts are the triangle vertices, and PD is the power density in the center of that triangle.
+
+Examples
+--------
+coming
+)docstring";
+static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObject* args, PyObject *keywds)
+{
+  // Calculate the spectrum given an observation point, and energy range
+
+  PyObject*   List_Files = PyList_New(0);
+  const char* InFileName = "";
+  PyObject*   List_Translation = PyList_New(0);
+  PyObject*   List_Rotations   = PyList_New(0);
+  int         NormalDirection = -1;    // Default to -1 for STL
+  double      Scale = 1;
+  int         NParticles = 0;
+  int         GPU = -1;
+  PyObject*   NGPU = 0x0;
+  int         NThreads = 0;
+  double      Precision = 0.01;
+  int         MaxLevel = -2;
+  int         MaxLevelExtended = 0;
+  char const* ReturnQuantityChars = "power density";
+  const char* OutFileNameText = "";
+  const char* OutFileNameBinary = "";
+  const char* OutFileNameSTL = "";
+
+  int const Dim = 3;
+
+
+  static const char *kwlist[] = {"ifiles",
+                                 "ifile",
+                                 "rotations",
+                                 "translation",
+                                 "ofile",
+                                 "bofile",
+                                 "stlofile",
+                                 "normal",
+                                 "scale",
+                                 "nparticles",
+                                 "gpu",
+                                 "ngpu",
+                                 "nthreads",
+                                 "precision",
+                                 "max_level",
+                                 "max_level_extended",
+                                 "quantity",
+                                  NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|OsOOsssidiiOidiii",
+                                   const_cast<char **>(kwlist),
+                                   &List_Files,
+                                   &InFileName,
+                                   &List_Rotations,
+                                   &List_Translation,
+                                   &OutFileNameText,
+                                   &OutFileNameBinary,
+                                   &OutFileNameSTL,
+                                   &NormalDirection,
+                                   &Scale,
+                                   &NParticles,
+                                   &GPU,
+                                   &NGPU,
+                                   &NThreads,
+                                   &Precision,
+                                   &MaxLevel,
+                                   &MaxLevelExtended,
+                                   &ReturnQuantityChars)) {
+    return NULL;
+  }
+
+  // Check if a beam is at least defined
+  if (self->obj->GetNParticleBeams() < 1) {
+    PyErr_SetString(PyExc_ValueError, "No particle beam defined");
+    return NULL;
+  }
+
+
+
+  // Vectors for rotations and translations.  Default to 0
+  TVector3D Rotations(0, 0, 0);
+  TVector3D Translation(0, 0, 0);
+
+  // Check for Rotations in the input
+  if (PyList_Size(List_Rotations) != 0) {
+    try {
+      Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
+      return NULL;
+    }
+  }
+
+
+  // Check for Translation in the input
+  if (PyList_Size(List_Translation) != 0) {
+    try {
+      Translation = OSCARSPY::ListAsTVector3D(List_Translation);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
+      return NULL;
+    }
+  }
+
+
+
+  // Check number of particles
+  if (NParticles < 0) {
+    PyErr_SetString(PyExc_ValueError, "'nparticles' must be >= 1 (sort of)");
+    return NULL;
+  }
+
+
+  // Check GPU parameter
+  if (GPU != 0 && GPU != 1 && GPU != -1) {
+    PyErr_SetString(PyExc_ValueError, "'gpu' must be 0 or 1");
+    return NULL;
+  }
+
+  // Check NThreads parameter
+  if (NThreads < 0) {
+    PyErr_SetString(PyExc_ValueError, "'nthreads' must be > 0");
+    return NULL;
+  }
+
+  // Check you are not trying to use threads and GPU
+  if (NThreads > 0 && GPU == 1) {
+    PyErr_SetString(PyExc_ValueError, "gpu is 1 and nthreads > 0.  Both are not currently allowed.");
+    return NULL;
+  }
+
+  // Check ngpu input
+  int NumberOfGPUs = -1;
+  std::vector<int> GPUVector;
+  if (NGPU != 0x0) {
+    if (PyLong_Check(NGPU)) {
+      NumberOfGPUs = (int) PyLong_AsLong(NGPU);
+    } else if (PyList_Check(NGPU)) {
+      OSCARSPY::ListToVectorInt(NGPU, GPUVector);
+    }
+  }
+
+  int ReturnQuantity = 0;
+  std::string ReturnQuantityStr = ReturnQuantityChars;
+  std::transform(ReturnQuantityStr.begin(), ReturnQuantityStr.end(), ReturnQuantityStr.begin(), ::toupper);
+  if (ReturnQuantityStr == "POWER DENSITY" || ReturnQuantityStr == "POWERDENSITY") {
+    ReturnQuantity = 0;
+  } else if (ReturnQuantityStr == "PRECISION") {
+    ReturnQuantity = 1;
+  } else if (ReturnQuantityStr == "LEVEL") {
+    ReturnQuantity = 2;
+  } else {
+    PyErr_SetString(PyExc_ValueError, "'quantity' must be: 'power density', 'precision', 'level', or blank");
+    return NULL;
+  }
+
+  TTriangle3DContainer STLContainer;
+  try {
+    STLContainer.ReadSTLFile(InFileName, Scale);
+  } catch (...) {
+    PyErr_SetString(PyExc_ValueError, "Cannot read STL file");
+    return NULL;
+  }
+  STLContainer.RotateSelfXYZ(Rotations);
+  STLContainer.TranslateSelf(Translation);
+
+
+  TSurfacePoints_3D Surface;
+
+  for (size_t istl = 0; istl != STLContainer.GetNPoints(); ++istl) {
+    TVector3D Center = STLContainer.GetPoint(istl).GetCenter();
+    if (NormalDirection < 0) {
+      Surface.AddPoint(Center, -STLContainer.GetPoint(istl).GetNormal());
+    } else {
+      Surface.AddPoint(Center, STLContainer.GetPoint(istl).GetNormal());
+    }
+  }
+
+  // Container for Point plus scalar
+  T3DScalarContainer PowerDensityContainer;
+
+  // Actually calculate the spectrum
+  bool const Directional = NormalDirection == 0 ? false : true;
+  try {
+    self->obj->CalculatePowerDensity(Surface,
+                                     PowerDensityContainer,
+                                     Dim,
+                                     Directional,
+                                     Precision,
+                                     MaxLevel,
+                                     MaxLevelExtended,
+                                     NParticles,
+                                     NThreads,
+                                     GPU,
+                                     NumberOfGPUs,
+                                     GPUVector,
+                                     ReturnQuantity);
+
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -4731,6 +5691,11 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
     PowerDensityContainer.WriteToFileBinary(OutFileNameBinary, Dim);
   }
 
+  if (std::string(OutFileNameSTL) != "") {
+    STLContainer.WriteSTLFile(OutFileNameSTL);
+  }
+      
+
 
   // Build the output list of: [[[x, y, z], PowerDensity], [...]]
   // Create a python list
@@ -4739,17 +5704,39 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
   // UPDATE: URGENT: PD output ofile, bofile
   size_t const NPoints = PowerDensityContainer.GetNPoints();
 
+  PyObject* Value;
+
   for (size_t i = 0; i != NPoints; ++i) {
     T3DScalar P = PowerDensityContainer.GetPoint(i);
+    TTriangle3D T = STLContainer.GetPoint(i);
 
     // Inner list for each point
     PyObject *PList2 = PyList_New(0);
 
+    PyObject *PListT = PyList_New(0);
+
+    Value = OSCARSPY::TVector3DAsList(T[0]);
+    PyList_Append(PListT, Value);
+    Py_DECREF(Value);
+
+    Value = OSCARSPY::TVector3DAsList(T[1]);
+    PyList_Append(PListT, Value);
+    Py_DECREF(Value);
+
+    Value = OSCARSPY::TVector3DAsList(T[2]);
+    PyList_Append(PListT, Value);
+    Py_DECREF(Value);
 
     // Add position and value to list
-    PyList_Append(PList2, OSCARSPY::TVector3DAsList(P.GetX()));
-    PyList_Append(PList2, Py_BuildValue("f", P.GetV()));
+    PyList_Append(PList2, PListT);
+    Py_DECREF(PListT);
+
+    Value = Py_BuildValue("f", P.GetV());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
     PyList_Append(PList, PList2);
+    Py_DECREF(PList2);
 
   }
 
@@ -4776,7 +5763,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
 
 
 const char* DOC_OSCARSSR_CalculatePowerDensityLine = R"docstring(
-calculate_power_density_line(x1, x2, normal_direction, npoints [, ofile, bofile, normal, nparticles, gpu, nthreads])
+calculate_power_density_line(x1, x2, normal_direction, npoints [, ofile, bofile, normal, nparticles, gpu, nthreads, precision, max_level])
 
 See the :doc:`MathematicalNotes` section for the expression used in this calculation.
 
@@ -4812,6 +5799,15 @@ gpu : int
 nthreads : int
     Number of threads to use
 
+precision : float
+    Calculation precision parameter (typically 0.01 which is 1%)
+
+max_level: int
+    Maximum "level" to us for trajectory in the calculation.  Level N corresponds to a total of 2**(N+2) trajectory points.  You cannot go beyond the internal maximum.  You are not guaranteed precision parameter is met if this is used.
+
+max_level_extended: int
+    Maximum "level" to use for trajectory in the calculation.  If set to higher than max_level the computation will proceed beyond max_level without creating trajectory arrays in memory (but it will be slower)
+
 Returns
 -------
 power_density_1d : list
@@ -4831,6 +5827,9 @@ static PyObject* OSCARSSR_CalculatePowerDensityLine (OSCARSSRObject* self, PyObj
   int         NThreads = 0;
   const char* OutFileNameText = "";
   const char* OutFileNameBinary = "";
+  double      Precision = 0.01;
+  int         MaxLevel = -2;
+  int         MaxLevelExtended = 0;
   int         Dim = 1;
 
 
@@ -4843,10 +5842,13 @@ static PyObject* OSCARSSR_CalculatePowerDensityLine (OSCARSSRObject* self, PyObj
                                  "nparticles",
                                  "gpu",
                                  "nthreads",
+                                 "precision",
+                                 "max_level",
+                                 "max_level_extended",
                                  "dim",
                                   NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OO|issiiiii",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OO|issiiiidiii",
                                    const_cast<char **>(kwlist),
                                    &List_x1,
                                    &List_x2,
@@ -4857,6 +5859,9 @@ static PyObject* OSCARSSR_CalculatePowerDensityLine (OSCARSSRObject* self, PyObj
                                    &NParticles,
                                    &GPU,
                                    &NThreads,
+                                   &Precision,
+                                   &MaxLevel,
+                                   &MaxLevelExtended,
                                    &Dim
                                    )) {
     return NULL;
@@ -4945,7 +5950,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityLine (OSCARSSRObject* self, PyObj
   // Actually calculate the spectrum
   bool const Directional = NormalDirection == 0 ? false : true;
   try {
-    self->obj->CalculatePowerDensity(Surface, PowerDensityContainer, Dim, Directional, NParticles, NThreads, GPU);
+    self->obj->CalculatePowerDensity(Surface, PowerDensityContainer, Dim, Directional, Precision, MaxLevel, MaxLevelExtended, NParticles, NThreads, GPU);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -4973,6 +5978,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityLine (OSCARSSRObject* self, PyObj
   // Create a python list
   PyObject *PList = PyList_New(0);
 
+  PyObject* Value;
 
   for (size_t i = 0; i != NPoints; ++i) {
     T3DScalar P = PowerDensityContainer.GetPoint(i);
@@ -4982,9 +5988,16 @@ static PyObject* OSCARSSR_CalculatePowerDensityLine (OSCARSSRObject* self, PyObj
 
 
     // Add position and value to list
-    PyList_Append(PList2, OSCARSPY::TVector3DAsList(P.GetX()));
-    PyList_Append(PList2, Py_BuildValue("f", P.GetV()));
+    Value = OSCARSPY::TVector3DAsList(P.GetX());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
+    Value = Py_BuildValue("f", P.GetV());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
     PyList_Append(PList, PList2);
+    Py_DECREF(PList2);
 
   }
 
@@ -5011,7 +6024,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityLine (OSCARSSRObject* self, PyObj
 
 
 const char* DOC_OSCARSSR_CalculateFlux = R"docstring(
-calculate_flux(energy_eV, points [, normal, rotations, translation, nparticles, nthreads, gpu, ngpu, ofile, bofile])
+calculate_flux(energy_eV, points [, normal, rotations, translation, nparticles, nthreads, gpu, ngpu, precision, max_level, max_level_extended, ofile, bofile, quantity])
 
 Calculates the flux at a given set of points
 
@@ -5048,11 +6061,27 @@ ngpu : int or list
     If ngpu is an int, use that number of gpus (if available).
     If ngpu is a list, the list should be a list of gpus you wish to use
 
+precision : float
+    Calculation precision parameter (typically 0.01 which is 1%)
+
+max_level: int
+    Maximum "level" to us for trajectory in the calculation.  Level N corresponds to a total of 2**(N+2) trajectory points.  You cannot go beyond the internal maximum.  You are not guaranteed precision parameter is met if this is used.
+
+max_level_extended: int
+    Maximum "level" to us for trajectory in the calculation.  If set to higher than max_level the computation will proceed beyond max_level without creating trajectory arrays in memory (but it will be slower)
+
 ofile : str
     Output file name
 
 bofile : str
     Binary output file name
+
+quantity: str
+    Quantity to return.
+    Available are:
+        'power density' (default)
+        'precision' - Estimated precision for each point
+        'level'     - Trajectory level reached (npoints = 2**(n+1) - 1), if return is -1 the requested precision was not reached
 
 Returns
 -------
@@ -5072,9 +6101,13 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
   int         NParticles = 0;
   int         NThreads = 0;
   int         GPU = -1;
-  PyObject*   NGPU;
+  PyObject*   NGPU = 0x0;
+  double      Precision = 0.01;
+  int         MaxLevel = -2;
+  int         MaxLevelExtended = 0;
   char const* OutFileNameText = "";
   char const* OutFileNameBinary = "";
+  char const* ReturnQuantityChars = "flux";
 
 
   static const char *kwlist[] = {"energy_eV",
@@ -5086,11 +6119,15 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
                                  "nthreads",
                                  "gpu",
                                  "ngpu",
+                                 "precision",
+                                 "max_level",
+                                 "max_level_extended",
                                  "ofile",
                                  "bofile",
+                                 "quantity",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|dOiOOiiiOss",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|dOiOOiiiOdiisss",
                                    const_cast<char **>(kwlist),
                                    &Energy_eV,
                                    &List_Points,
@@ -5101,8 +6138,12 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
                                    &NThreads,
                                    &GPU,
                                    &NGPU,
+                                   &Precision,
+                                   &MaxLevel,
+                                   &MaxLevelExtended,
                                    &OutFileNameText,
-                                   &OutFileNameBinary)) {
+                                   &OutFileNameBinary,
+                                   &ReturnQuantityChars)) {
     return NULL;
   }
 
@@ -5204,11 +6245,28 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
   // Check ngpu input
   int NumberOfGPUs = -1;
   std::vector<int> GPUVector;
-  if (PyLong_Check(NGPU)) {
-    NumberOfGPUs = (int) PyLong_AsLong(NGPU);
-  } else if (PyList_Check(NGPU)) {
-    OSCARSPY::ListToVectorInt(NGPU, GPUVector);
+  if (NGPU != 0x0) {
+    if (PyLong_Check(NGPU)) {
+      NumberOfGPUs = (int) PyLong_AsLong(NGPU);
+    } else if (PyList_Check(NGPU)) {
+      OSCARSPY::ListToVectorInt(NGPU, GPUVector);
+    }
   }
+
+  int ReturnQuantity = 0;
+  std::string ReturnQuantityStr = ReturnQuantityChars;
+  std::transform(ReturnQuantityStr.begin(), ReturnQuantityStr.end(), ReturnQuantityStr.begin(), ::toupper);
+  if (ReturnQuantityStr == "FLUX") {
+    ReturnQuantity = 0;
+  } else if (ReturnQuantityStr == "PRECISION") {
+    ReturnQuantity = 1;
+  } else if (ReturnQuantityStr == "LEVEL") {
+    ReturnQuantity = 2;
+  } else {
+    PyErr_SetString(PyExc_ValueError, "'quantity' must be: 'flux', 'precision', 'level', or blank");
+    return NULL;
+  }
+
 
   // Container for Point plus scalar
   T3DScalarContainer FluxContainer;
@@ -5216,7 +6274,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
   try {
     throw;
     // UPDATE: Must fix single flux to accept polarizaton and angle
-    self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, "all", 0, TVector3D(1, 0, 0), TVector3D(0, 1, 0), NParticles, NThreads, GPU, NumberOfGPUs, GPUVector, Dim);
+    self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, "all", 0, TVector3D(1, 0, 0), TVector3D(0, 1, 0), NParticles, NThreads, GPU, NumberOfGPUs, GPUVector, Precision, MaxLevel, MaxLevelExtended, Dim, ReturnQuantity);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -5226,6 +6284,10 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
   } catch (std::invalid_argument e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
+  }
+
+  if (!FluxContainer.AllConverged()) {
+    OSCARSPY::PyPrint_stderr("Not all points converged to desired precision.  Can try increasing 'max_level_extended'\n");
   }
 
   // Write the output file if requested
@@ -5245,6 +6307,8 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
 
   size_t const NPoints = FluxContainer.GetNPoints();
 
+  PyObject* Value;
+
   for (size_t i = 0; i != NPoints; ++i) {
     T3DScalar P = FluxContainer.GetPoint(i);
 
@@ -5253,9 +6317,16 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
 
 
     // Add position and value to list
-    PyList_Append(PList2, OSCARSPY::TVector3DAsList(P.GetX()));
-    PyList_Append(PList2, Py_BuildValue("f", P.GetV()));
+    Value = OSCARSPY::TVector3DAsList(P.GetX());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
+    Value = Py_BuildValue("f", P.GetV());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
     PyList_Append(PList, PList2);
+    Py_DECREF(PList2);
 
   }
 
@@ -5273,7 +6344,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
 
 
 const char* DOC_OSCARSSR_CalculateFluxRectangle = R"docstring(
-calculate_flux_rectangle(energy_eV, npoints [, plane, normal, dim, width, rotations, translation, x0x1x2, polarization, angle, horizontal_direction, propogation_direction, nparticles, nthreads, gpu, ngpu, ofile, bofile])
+calculate_flux_rectangle(energy_eV, npoints [, plane, normal, dim, width, rotations, translation, x0x1x2, polarization, angle, horizontal_direction, propogation_direction, nparticles, nthreads, gpu, ngpu, precision, max_level, max_level_extended, quantity, ofile, bofile])
 
 Calculate the flux density in a rectangle either defined by three points, or by defining the plane the rectangle is in and the width, and then rotating and translating it to where it needs be.  The simplest is outlined in the first example below.  By default (dim=2) this returns a list whose position coordinates are in the local coordinate space x1 and x2 (*ie* they do not include the rotations and translation).  if dim=3 the coordinates in the return list are in absolute 3D space.
 
@@ -5335,6 +6406,21 @@ ngpu : int or list
     If ngpu is an int, use that number of gpus (if available).
     If ngpu is a list, the list should be a list of gpus you wish to use
 
+precision : float
+    Calculation precision parameter (typically 0.01 which is 1%)
+
+max_level: int
+    Maximum "level" to use for trajectory in the calculation.  Level N corresponds to a total of 2**(N+2) trajectory points.  You cannot go beyond the internal maximum.  You are not guaranteed precision parameter is met if this is used.
+
+max_level_extended: int
+    Maximum "level" to use for trajectory in the calculation.  If set to higher than max_level the computation will proceed beyond max_level without creating trajectory arrays in memory (but it will be slower)
+
+quantity: str
+    Quantity to return.
+    Available are:
+        'flux'        (default)
+        'precision' - Estimated precision for each point
+        'level'     - Trajectory level reached (npoints = 2**(n+1) - 1), if return is -1 the requested precision was not reached
 
 ofile : str
     Output file name
@@ -5372,6 +6458,10 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   int         NThreads = 0;
   int         GPU = -1;
   PyObject*   NGPU = 0x0;
+  double      Precision = 0.01;
+  int         MaxLevel = -2;
+  int         MaxLevelExtended = 0;
+  char const* ReturnQuantityChars = "flux";
   char const* OutFileNameText = "";
   char const* OutFileNameBinary = "";
 
@@ -5393,11 +6483,15 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
                                  "nthreads",
                                  "gpu",
                                  "ngpu",
+                                 "precision",
+                                 "max_level",
+                                 "max_level_extended",
+                                 "quantity",
                                  "ofile",
                                  "bofile",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dO|siiOOOOsdOOiiiOss",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dO|siiOOOOsdOOiiiOdiisss",
                                    const_cast<char **>(kwlist),
                                    &Energy_eV,
                                    &List_NPoints,
@@ -5416,6 +6510,10 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
                                    &NThreads,
                                    &GPU,
                                    &NGPU,
+                                   &Precision,
+                                   &MaxLevel,
+                                   &MaxLevelExtended,
+                                   &ReturnQuantityChars,
                                    &OutFileNameText,
                                    &OutFileNameBinary)) {
     return NULL;
@@ -5594,15 +6692,46 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
     }
   }
 
+  int ReturnQuantity = 0;
+  std::string ReturnQuantityStr = ReturnQuantityChars;
+  std::transform(ReturnQuantityStr.begin(), ReturnQuantityStr.end(), ReturnQuantityStr.begin(), ::toupper);
+  if (ReturnQuantityStr == "FLUX") {
+    ReturnQuantity = 0;
+  } else if (ReturnQuantityStr == "PRECISION") {
+    ReturnQuantity = 1;
+  } else if (ReturnQuantityStr == "LEVEL") {
+    ReturnQuantity = 2;
+  } else {
+    PyErr_SetString(PyExc_ValueError, "'quantity' must be: 'flux', 'precision', 'level', or blank");
+    return NULL;
+  }
+
+
   // Container for Point plus scalar
   T3DScalarContainer FluxContainer;
 
-  // Actually calculate the spectrum
   // UPDATE: Needed, directional?
   //bool const Directional = NormalDirection == 0 ? false : true;
 
   try {
-    self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, Polarization, Angle, HorizontalDirection, PropogationDirection, NParticles, NThreads, GPU, NumberOfGPUs, GPUVector, Dim);
+    self->obj->CalculateFlux(Surface,
+                             Energy_eV,
+                             FluxContainer,
+                             Polarization,
+                             Angle,
+                             HorizontalDirection,
+                             PropogationDirection,
+                             NParticles,
+                             NThreads,
+                             GPU,
+                             NumberOfGPUs,
+                             GPUVector,
+                             Precision,
+                             MaxLevel,
+                             MaxLevelExtended,
+                             Dim,
+                             ReturnQuantity);
+
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -5612,6 +6741,10 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   } catch (std::invalid_argument e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
+  }
+
+  if (!FluxContainer.AllConverged()) {
+    OSCARSPY::PyPrint_stderr("Not all points converged to desired precision.  Can try increasing 'max_level_extended'\n");
   }
 
   // Write the output file if requested
@@ -5632,6 +6765,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
 
   size_t const NPoints = FluxContainer.GetNPoints();
 
+  PyObject* Value;
   for (size_t i = 0; i != NPoints; ++i) {
     T3DScalar P = FluxContainer.GetPoint(i);
 
@@ -5640,9 +6774,16 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
 
 
     // Add position and value to list
-    PyList_Append(PList2, OSCARSPY::TVector3DAsList(P.GetX()));
-    PyList_Append(PList2, Py_BuildValue("f", P.GetV()));
+    Value = OSCARSPY::TVector3DAsList(P.GetX());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
+    Value = Py_BuildValue("f", P.GetV());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
     PyList_Append(PList, PList2);
+    Py_DECREF(PList2);
 
   }
 
@@ -5996,6 +7137,8 @@ static PyObject* OSCARSSR_AverageT3DScalars (OSCARSSRObject* self, PyObject* arg
   // Number of points in container
   size_t const NPoints = Container.GetNPoints();
 
+  PyObject* Value;
+
   for (size_t i = 0; i != NPoints; ++i) {
 
     // This point in container
@@ -6006,9 +7149,16 @@ static PyObject* OSCARSSR_AverageT3DScalars (OSCARSSRObject* self, PyObject* arg
 
 
     // Add position and value to list
-    PyList_Append(PList2, OSCARSPY::TVector3DAsList(P.GetX()));
-    PyList_Append(PList2, Py_BuildValue("f", P.GetV()));
+    Value = OSCARSPY::TVector3DAsList(P.GetX());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
+    Value = Py_BuildValue("f", P.GetV());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
     PyList_Append(PList, PList2);
+    Py_DECREF(PList2);
 
   }
 
@@ -6268,6 +7418,8 @@ static PyObject* OSCARSSR_CalculateElectricFieldTimeDomain (OSCARSSRObject* self
 
   size_t const NPoints = XYZT.GetNPoints();
 
+  PyObject* Value;
+
   for (size_t i = 0; i != NPoints; ++i) {
     T3DScalar P = XYZT.GetPoint(i);
 
@@ -6276,9 +7428,16 @@ static PyObject* OSCARSSR_CalculateElectricFieldTimeDomain (OSCARSSRObject* self
 
 
     // Add position and value to list
-    PyList_Append(PList2, Py_BuildValue("f", P.GetV()));
-    PyList_Append(PList2, OSCARSPY::TVector3DAsList(P.GetX()));
+    Value = Py_BuildValue("f", P.GetV());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
+    Value = OSCARSPY::TVector3DAsList(P.GetX());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
     PyList_Append(PList, PList2);
+    Py_DECREF(PList2);
 
   }
 
@@ -6311,7 +7470,7 @@ static PyObject* OSCARSSR_PrintGPU (OSCARSSRObject* self)
   std::ostringstream ostream;
   ostream << "*GPUs*\n";
   ostream << "Use GPU Globally: " << self->obj->GetUseGPUGlobal() << "\n";
-  ostream << "Number of GPUs: " << NGPU << std::endl;
+  ostream << "Number of GPUs: " << NGPU << "\n" << std::endl;
 
   if (NGPU == -1) {
     ostream << " GPU not enabled in this compiled binary\n";
@@ -6321,12 +7480,45 @@ static PyObject* OSCARSSR_PrintGPU (OSCARSSRObject* self)
     ostream << "GPU " << i << "\n";
     ostream << self->obj->GetGPUInfo(i) << "\n";
   }
+  ostream << std::endl;
 
-  // Python printing
-  PyObject* sys = PyImport_ImportModule( "sys");
-  PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
-  std::string Message = ostream.str();
-  PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+  OSCARSPY::PyPrint_stdout(ostream.str());
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
+
+const char* DOC_OSCARSSR_PrintNThreads = R"docstring(
+print_gpu()
+
+Print information about all gpus to standard out
+
+Parameters
+----------
+None
+
+Returns
+-------
+None
+)docstring";
+static PyObject* OSCARSSR_PrintNThreads (OSCARSSRObject* self)
+{
+  // Print all magnetic stored in OSCARSSR
+
+  int const NThreads = self->obj->GetNThreadsGlobal();
+  // Out string stream for printing beam information
+  std::ostringstream ostream;
+  ostream << "*NThreads Globals*\n";
+  ostream << "Number of Threads to use: " << NThreads << "\n" << std::endl;
+
+  OSCARSPY::PyPrint_stdout(ostream.str());
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -6361,6 +7553,7 @@ static PyObject* OSCARSSR_PrintAll (OSCARSSRObject* self)
   OSCARSSR_PrintElectricFields(self);
   OSCARSSR_PrintDriftVolumes(self);
   OSCARSSR_PrintGPU(self);
+  OSCARSSR_PrintNThreads(self);
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -6389,6 +7582,7 @@ static PyObject* OSCARSSR_Fake (OSCARSSRObject* self, PyObject* args, PyObject *
 
 
 static PyMethodDef OSCARSSR_methods_fake[] = {
+  {"version",                           (PyCFunction) OSCARSSR_Version, METH_NOARGS,               DOC_OSCARSSR_Version},
   {"pi",                                (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_Pi},
   {"qe",                                (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_Qe},
   {"me",                                (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_Me},
@@ -6425,7 +7619,7 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   {"add_efield_uniform",                (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldUniform},
   {"add_efield_undulator",              (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldIdealUndulator},
   {"remove_efield",                     (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_RemoveElectricField},
-  {"get_efield",                        (PyCFunction) OSCARSSR_Fake, METH_VARARGS,                 DOC_OSCARSSR_GetEField},
+  {"get_efield",                        (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetEField},
   {"clear_efields",                     (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_ClearElectricFields},
   {"print_efields",                     (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_PrintElectricFields},
  
@@ -6436,8 +7630,11 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
                                                                                           
   {"set_particle_beam",                 (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_SetParticleBeam},
   {"add_particle_beam",                 (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddParticleBeam},
+  {"set_particle_beam_size",            (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_SetParticleBeamSize},
   {"clear_particle_beams",              (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_ClearParticleBeams},
   {"print_particle_beams",              (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_PrintParticleBeams},
+                                                                                          
+  {"set_twiss_parameters",              (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_SetTwissParameters},
                                                                                           
   {"set_new_particle",                  (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_SetNewParticle},
   {"get_particle_x0",                   (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_GetParticleX0},
@@ -6458,6 +7655,7 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   {"calculate_total_power",             (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_CalculateTotalPower},
   {"calculate_power_density",           (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensity},
   {"calculate_power_density_rectangle", (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensityRectangle},
+  {"calculate_power_density_stl",       (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensitySTL},
   {"calculate_power_density_line",      (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensityLine},
 
   {"calculate_flux",                    (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateFlux},
@@ -6490,6 +7688,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   // We must tell python about the function we allow access as well as give them nice
   // python names, and tell python the method of input parameters.
 
+  {"version",                           (PyCFunction) OSCARSSR_Version,                         METH_NOARGS,                  DOC_OSCARSSR_Version},
   {"pi",                                (PyCFunction) OSCARSSR_Pi,                              METH_NOARGS,                  DOC_OSCARSSR_Pi},
   {"qe",                                (PyCFunction) OSCARSSR_Qe,                              METH_NOARGS,                  DOC_OSCARSSR_Qe},
   {"me",                                (PyCFunction) OSCARSSR_Me,                              METH_NOARGS,                  DOC_OSCARSSR_Me},
@@ -6526,7 +7725,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"add_efield_uniform",                (PyCFunction) OSCARSSR_AddElectricFieldUniform,         METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldUniform},
   {"add_efield_undulator",              (PyCFunction) OSCARSSR_AddElectricFieldIdealUndulator,  METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldIdealUndulator},
   {"remove_efield",                     (PyCFunction) OSCARSSR_RemoveElectricField,             METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_RemoveElectricField},
-  {"get_efield",                        (PyCFunction) OSCARSSR_GetEField,                       METH_VARARGS,                 DOC_OSCARSSR_GetEField},
+  {"get_efield",                        (PyCFunction) OSCARSSR_GetEField,                       METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetEField},
   {"clear_efields",                     (PyCFunction) OSCARSSR_ClearElectricFields,             METH_NOARGS,                  DOC_OSCARSSR_ClearElectricFields},
   {"print_efields",                     (PyCFunction) OSCARSSR_PrintElectricFields,             METH_NOARGS,                  DOC_OSCARSSR_PrintElectricFields},
  
@@ -6537,9 +7736,12 @@ static PyMethodDef OSCARSSR_methods[] = {
                                                                                           
   {"set_particle_beam",                 (PyCFunction) OSCARSSR_SetParticleBeam,                 METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_SetParticleBeam},
   {"add_particle_beam",                 (PyCFunction) OSCARSSR_AddParticleBeam,                 METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddParticleBeam},
+  {"set_particle_beam_size",            (PyCFunction) OSCARSSR_SetParticleBeamSize,             METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_SetParticleBeamSize},
   {"clear_particle_beams",              (PyCFunction) OSCARSSR_ClearParticleBeams,              METH_NOARGS,                  DOC_OSCARSSR_ClearParticleBeams},
   {"print_particle_beams",              (PyCFunction) OSCARSSR_PrintParticleBeams,              METH_NOARGS,                  DOC_OSCARSSR_PrintParticleBeams},
-                                                                                          
+     
+  {"set_twiss_parameters",              (PyCFunction) OSCARSSR_SetTwissParameters,              METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_SetTwissParameters},
+
   {"set_new_particle",                  (PyCFunction) OSCARSSR_SetNewParticle,                  METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_SetNewParticle},
   {"get_particle_x0",                   (PyCFunction) OSCARSSR_GetParticleX0,                   METH_NOARGS,                  DOC_OSCARSSR_GetParticleX0},
   {"get_particle_beta0",                (PyCFunction) OSCARSSR_GetParticleBeta0,                METH_NOARGS,                  DOC_OSCARSSR_GetParticleBeta0},
@@ -6559,6 +7761,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"calculate_total_power",             (PyCFunction) OSCARSSR_CalculateTotalPower,             METH_NOARGS,                  DOC_OSCARSSR_CalculateTotalPower},
   {"calculate_power_density",           (PyCFunction) OSCARSSR_CalculatePowerDensity,           METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensity},
   {"calculate_power_density_rectangle", (PyCFunction) OSCARSSR_CalculatePowerDensityRectangle,  METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensityRectangle},
+  {"calculate_power_density_stl",       (PyCFunction) OSCARSSR_CalculatePowerDensitySTL,        METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensitySTL},
   {"calculate_power_density_line",      (PyCFunction) OSCARSSR_CalculatePowerDensityLine,       METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensityLine},
 
   {"calculate_flux",                    (PyCFunction) OSCARSSR_CalculateFlux,                   METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateFlux},
@@ -6722,11 +7925,8 @@ PyMODINIT_FUNC PyInit_sr(void)
   PyModule_AddObject(m, "sr", (PyObject *)&OSCARSSRType);
 
 
-  // Print copyright notice
-  PyObject* sys = PyImport_ImportModule( "sys");
-  PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
   std::string Message = "OSCARS v" + OSCARSPY::GetVersionString() + " - Open Source Code for Advanced Radiation Simulation\nBrookhaven National Laboratory, Upton NY, USA\nhttp://oscars.bnl.gov\noscars@bnl.gov\n";
-  PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+  OSCARSPY::PyPrint_stdout(Message);
 
   return m;
 }
@@ -6743,11 +7943,8 @@ PyMODINIT_FUNC initsr(OSCARSSRObject* self, PyObject* args, PyObject* kwds)
   Py_INCREF(&OSCARSSRType);
   PyModule_AddObject(m, "sr", (PyObject *)&OSCARSSRType);
 
-  // Print copyright notice
-  PyObject* sys = PyImport_ImportModule( "sys");
-  PyObject* s_out = PyObject_GetAttrString(sys, "stdout");
   std::string Message = "OSCARS v" + OSCARSPY::GetVersionString() + " - Open Source Code for Advanced Radiation Simulation\nBrookhaven National Laboratory, Upton NY, USA\nhttp://oscars.bnl.gov\noscars@bnl.gov\n";
-  PyObject_CallMethod(s_out, "write", "s", Message.c_str());
+  OSCARSPY::PyPrint_stdout(Message);
 
   return;
 }
@@ -6774,18 +7971,26 @@ static PyObject* OSCARSSR_GetT3DScalarAsList (T3DScalarContainer const& C)
   // Number of points in trajectory calculation
   size_t NPoints = C.GetNPoints();
 
+  PyObject* Value;
+
   // Loop over all points
   for (size_t i = 0; i != NPoints; ++i) {
     // Create a python list
     PyObject *PList2 = PyList_New(0);
 
-    PyObject *X = OSCARSPY::TVector3DAsList(C.GetPoint(i).GetX());
     double const V = C.GetPoint(i).GetV();
 
     // Add position and Beta to list
-    PyList_Append(PList2, X);
-    PyList_Append(PList2, Py_BuildValue("f", V));
+    Value = OSCARSPY::TVector3DAsList(C.GetPoint(i).GetX());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
+    Value = Py_BuildValue("f", V);
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
     PyList_Append(PList, PList2);
+    Py_DECREF(PList2);
   }
 
   // Return the python list

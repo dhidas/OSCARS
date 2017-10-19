@@ -115,31 +115,6 @@ TField3D_Grid::~TField3D_Grid ()
 
 
 
-double TField3D_Grid::GetFx (double const X, double const Y, double const Z) const
-{
-  return this->GetF(TVector3D(X, Y, Z)).GetX();
-}
-
-
-
-
-double TField3D_Grid::GetFy (double const X, double const Y, double const Z) const
-{
-  return this->GetF(TVector3D(X, Y, Z)).GetY();
-}
-
-
-
-
-double TField3D_Grid::GetFz (double const X, double const Y, double const Z) const
-{
-  return this->GetF(TVector3D(X, Y, Z)).GetZ();
-}
-
-
-
-
-
 TVector3D TField3D_Grid::GetF (double const X, double const Y, double const Z) const
 {
   return this->GetF(TVector3D(X, Y, Z));
@@ -884,10 +859,10 @@ void TField3D_Grid::ReadFile_Binary (std::string const& InFileName,
   // Header 0: Number of characters in comment, then comment
   int NCommentChars;
   fi.read((char*) &NCommentChars, sizeof(int));
-  char Comment[NCommentChars + 1];
+  char* Comment = new char(NCommentChars + 1);
   fi.read(Comment, NCommentChars * sizeof(char));
   Comment[NCommentChars] = '\0';
-
+  delete [] Comment;
 
   // Header 1: Version number
   int Version;
@@ -896,9 +871,10 @@ void TField3D_Grid::ReadFile_Binary (std::string const& InFileName,
   // Header 2: Number of chars in format string, then format string
   int NFormatChars;
   fi.read((char*) &NFormatChars, sizeof(int));
-  char Format[NFormatChars+1];
+  char* Format = new char(NFormatChars+1);
   fi.read(Format, NFormatChars * sizeof(char));
   Format[NFormatChars] = '\0';
+  delete [] Format;
 
 
   // Check version number
