@@ -25,22 +25,30 @@ def ideal_undulator(osr, field, length, period, pieces, height, gap,
     t_width -- width of each terminating magnet
     t_field -- |maximum field strength| of each terminating magnet
     """
-    br, l, p, m, h, g, e, td, tw, tbr = (field, length, period, pieces,
-                                         height, gap, packing, t_distance,
-                                         t_width, t_field)
+    br = field 
+    l = length
+    p = period
+    m = pieces
+    h = height
+    g = gap
+    e = packing
+    td = t_distance
+    tw = t_width
+    tbr = t_field
     w = e * p / m
     d = l / 2.0
-    constants = (-2 * br * math.sin(e*math.pi/m) * math.e**(-math.pi*g/p)
-                 *(1 - math.e**(-2 * math.pi * h / p)) * m / math.pi)
+    constants = (-2.0 * br * math.sin(e * math.pi / m) 
+                    * math.e**(-math.pi * g / p)
+                    * (1.0 - math.e**(-2.0 * math.pi * h / p))
+                    * m / math.pi)
     
-    def f_und(z):
-        if -l/2 <= z <= l/2:
+    def f_und(x, y, z, t):
+        if -l/2.0 <= z and z <= l/2.0:
             return [0, constants * math.cos(2 * math.pi * z / p), 0]
         else:
             return [0, 0, 0]
     
     osr.add_bfield_function(f_und) 
-    return osr # Need to check on Python reference symantics
 
 
 def b_y_pre_op_ints(osr, upper_bound=1.34, lower_bound=-1.33):
@@ -94,8 +102,8 @@ def b_y(osr, sr_info):
     
     Keyword arguments:
     osr -- oscars sr object with a b field added to it
-    sr_info -- List containing the following info:
-        (length, t_distance, t_width, t_field)
+    sr_info -- Array containing the following info:
+        [length, t_distance, t_width, t_field]
         length -- length of undulator centered at 0 without t mags
         t_distance -- distance from origin to each terminating magnet
         t_width -- width of each terminating magnet
@@ -200,9 +208,9 @@ def b_y(osr, sr_info):
     
     # Return callable for weighted sum function depending on pmu or osr
     def min_fun(u):
-        return traj_norm(point=[0,0,5], osr=osr, beta=[u[0], u[1]], 
-                             gamma=[u[2], u[3]])
-
+        return traj_norm(beta=[u[0], u[1]], gamma=[u[2], u[3]], osr=osr,
+                         point=[0, 0, 5])
+    
     lowest_bound = -sr_info[1] - sr_info[2] # -1.35
     lower_bound = -sr_info[1] # -1.33
     upper_bound = sr_info[1] # 1.34
