@@ -25,17 +25,7 @@ before_install:
     pyenv install $PYTHON;
     fi
   - echo "Installing CUDA"
-  - wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1204/x86_64/cuda-repo-ubuntu1204_6.5-14_amd64.deb
-  - sudo dpkg -i cuda-repo-ubuntu1204_6.5-14_amd64.deb
-  - cd ${TRAVIS_BUILD_DIR}
-  - sudo apt-get update
-  - sudo apt-get install cuda-drivers cuda-core-6-5 cuda-cudart-dev-6-5
-  - echo "Creating symbolic link to OpenCL because 12.04 CUDA doesn't do it."
-  - sudo ln -s /usr/local/cuda-6.5/lib64/libOpenCL.so /usr/lib/x86_64-linux-gnu/libOpenCL.so
-  - sudo apt-get install -qq g++-4.8
-  - export CXX="g++-4.8"
-  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 90
-  - sudo ln -s /usr/lib/x86_64-linux-gnu/libgfortran.so.3 /usr/lib/libgfortran.so
+  - source .travis/install-cuda.sh
 
 install:
   - pip install .
