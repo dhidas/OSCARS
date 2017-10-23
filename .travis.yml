@@ -11,11 +11,11 @@ compiler:
   - clang
 
 python:
-  - "2.7"
-  - "3.3"
-  - "3.4"
+#  - "2.7"
+#  - "3.3"
+#  - "3.4"
   - "3.5"
-  - "3.6"
+#  - "3.6"
 
 before_install: 
   - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
