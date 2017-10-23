@@ -3,20 +3,26 @@ sudo: false
 
 os:
   - linux
-#  - osx
+  - osx
 
 compiler:
  - gcc
  - clang
 
 python:
-  - "2.6"
   - "2.7"
-  - "3.2"
   - "3.3"
   - "3.4"
   - "3.5"
   - "3.6"
+
+before_install: 
+  - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
+    brew update;
+    brew install mono;
+    brew install pyenv;
+    pyenv install $PYTHON;
+    fi
 
 install:
  - pip install .
