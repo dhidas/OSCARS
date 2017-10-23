@@ -72,6 +72,18 @@ class OSCARSTH
                                     double const NPeriods,
                                     int    const Harmonic) const;
 
+    TVector2D UndulatorFluxB (double const BField,
+                              double const Period,
+                              int    const NPeriods,
+                              int    const Harmonic
+                              ) const;
+
+    TVector2D UndulatorFluxK (double const K,
+                              double const Period,
+                              int    const NPeriods,
+                              int    const N
+                              ) const;
+
     double UndulatorFluxWeak (double const K,
                               double const Period,
                               double const NPeriods,
