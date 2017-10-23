@@ -1,6 +1,6 @@
 export CUDA=7.0-28
-travis_retry wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1204/x86_64/cuda-7.0_${CUDA}_amd64.deb
-travis_retry sudo dpkg -i cuda-7.0_${CUDA}_amd64.deb
+travis_retry wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1204/x86_64/cuda-7-0_${CUDA}_amd64.deb
+travis_retry sudo dpkg -i cuda-7-0_${CUDA}_amd64.deb
 travis_retry sudo apt-get update -qq
 export CUDA_APT=${CUDA}
 export CUDA_APT=${CUDA_APT/./-}
