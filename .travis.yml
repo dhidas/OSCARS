@@ -1,8 +1,13 @@
 language: python
+sudo: false
 
 os:
   - linux
   - osx
+
+compiler:
+ - gcc
+ - clang
 
 python:
  - 3.6
