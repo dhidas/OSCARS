@@ -25,6 +25,7 @@ before_install:
     pyenv install $PYTHON;
     fi
   - echo "Installing CUDA"
+  - sudo apt-get update
   - wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1204/x86_64/cuda-repo-ubuntu1204_7.0-28_amd64.deb
   - sudo dpkg -i cuda-repo-ubuntu1204_7.0-28_amd64.deb
   - cd ${TRAVIS_BUILD_DIR}
