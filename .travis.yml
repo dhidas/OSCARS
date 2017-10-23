@@ -1,9 +1,10 @@
 language: python
-sudo: false
+sudo: required
+dist: precise
 
 os:
   - linux
-  - osx
+#  - osx
 
 compiler:
  - gcc
