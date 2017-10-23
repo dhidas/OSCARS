@@ -2,7 +2,7 @@ export CUDA_VERSION=7.0-28
 
 
 wget "http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1204/x86_64/cuda-repo-ubuntu1204_${CUDA_VERSION}_amd64.deb";
-sudo dpkg -C cuda-repo-ubuntu1204_${CUDA_VERSION}_amd64.deb;
+sudo dpkg -c cuda-repo-ubuntu1204_${CUDA_VERSION}_amd64.deb;
 echo hi
 sudo dpkg -i cuda-repo-ubuntu1204_${CUDA_VERSION}_amd64.deb;
 sudo apt-get update -qq;
