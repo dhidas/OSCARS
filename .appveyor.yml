@@ -2,7 +2,7 @@ version: 1.0.{build}
 clone_depth: 50  # The same depth Travis has
 
 image:
-- Visual Studio 2013
+- Visual Studio 2015
 
 environment:
   matrix:
