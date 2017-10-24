@@ -28,5 +28,5 @@ nvcc -V
 
 #mingw32-make.exe -f Makefile
 
-nvcc -DCUDA -cudart static -std=c++11 -shared --compiler-options '-fPIC' -Iinclude -c src\OSCARSSR_Cuda.cu -o lib\OSCARSSR_Cuda.o
-nvcc -DCUDA -cudart static -std=c++11 -shared --compiler-options '-fPIC' -Iinclude -c src\OSCARSTH_Cuda.cu -o lib\OSCARSTH_Cuda.o
+nvcc -DCUDA -cudart static -shared -Iinclude -c src\OSCARSSR_Cuda.cu -o lib\OSCARSSR_Cuda.o
+nvcc -DCUDA -cudart static -shared -Iinclude -c src\OSCARSTH_Cuda.cu -o lib\OSCARSTH_Cuda.o
