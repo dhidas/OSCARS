@@ -14,9 +14,10 @@ exit /B 1
 )
 
 set PATH=%ProgramFiles%\NVIDIA GPU Computing Toolkit\CUDA\v8.0\bin;%ProgramFiles%\NVIDIA GPU Computing Toolkit\CUDA\v8.0\libnvvp;%PATH%
+set PATH=C:\MinGW\bin;%PATH%
 
 nvcc -V
 
-choco install cyg-get
 
-make
+
+mingw32-make.exe -f Makefile
