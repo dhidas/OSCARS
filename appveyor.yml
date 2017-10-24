@@ -15,15 +15,15 @@ environment:
 
 
 
-install:
+#install:
   #- "%PYTHON%\\Scripts\\pip install --disable-pip-version-check --user --upgrade pip"
   #- "%PYTHON%\\Scripts\\pip install scipy numpy matplotlib"
 
   # We need wheel installed to build wheels
   #- "%PYTHON%\\python.exe -m pip install wheel"
-  - "build.cmd %PYTHON%\\python.exe setup.py install"
 
-build: off
+build:
+  - "build.cmd %PYTHON%\\python.exe setup.py install"
 
 #test_script:
   # Put your test command here.
