@@ -9,11 +9,11 @@ python:
 
 os:
   - linux
-#  - osx
+  - osx
 
-#compiler:
-#  - gcc
-# - clang
+compiler:
+  - gcc
+  - clang
 
 install:
   - sudo apt-get update
