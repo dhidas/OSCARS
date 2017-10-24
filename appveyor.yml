@@ -26,7 +26,7 @@ install:
 
 build: off
 
-test:
+test_script:
   # Put your test command here.
   # If you don't need to build C extensions on 64-bit Python 3.3 or 3.4,
   # you can remove "build.cmd" from the front of the command, as it's
