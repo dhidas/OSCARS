@@ -17,10 +17,10 @@ os:
 
 install:
   - sudo apt-get update
-  - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
-      export MYSYS="MacOSX"
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      export MYSYS="MacOSX";
     else
-      export MYSYS="Linux"
+      export MYSYS="Linux";
     fi
   # We do this conditionally because it saves us some downloading if the
   # version is the same.
