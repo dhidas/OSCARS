@@ -18,6 +18,4 @@ set PATH=C:\MinGW\bin;%PATH%
 
 nvcc -V
 
-
-
 mingw32-make.exe -f Makefile
