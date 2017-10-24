@@ -15,6 +15,10 @@ exit /B 1
 
 echo %PATH%
 
+
+dir "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\INCLUDE\"
+exit
+
 set PATH=%ProgramFiles%\NVIDIA GPU Computing Toolkit\CUDA\v8.0\bin;%ProgramFiles%\NVIDIA GPU Computing Toolkit\CUDA\v8.0\libnvvp;%PATH%
 set PATH=C:\MinGW\bin;%PATH%
 set PATH=C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin;%PATH%
