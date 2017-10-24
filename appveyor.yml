@@ -18,11 +18,12 @@ environment:
 
 
 install:
-  - "%PYTHON%\\Scripts\\pip install --disable-pip-version-check --user --upgrade pip"
+  #- "%PYTHON%\\Scripts\\pip install --disable-pip-version-check --user --upgrade pip"
   #- "%PYTHON%\\Scripts\\pip install scipy numpy matplotlib"
 
   # We need wheel installed to build wheels
-  - "%PYTHON%\\python.exe -m pip install wheel"
+  #- "%PYTHON%\\python.exe -m pip install wheel"
+  - "%PYTHON%\\python.exe setup.py install"
 
 build: off
 
@@ -36,13 +37,13 @@ build: off
   # to put the Python version you want to use on PATH.
   #- "%PYTHON%\\python.exe test/test.py"
 
-after_test:
+#after_test:
   # This step builds your wheels.
   # Again, you only need build.cmd if you're building C extensions for
   # 64-bit Python 3.3/3.4. And you need to use %PYTHON% to get the correct
   # interpreter
   #- "%PYTHON%\\python.exe setup.py bdist_wheel"
-  - "%PYTHON%\\python.exe test/test.py"
+  #- "%PYTHON%\\python.exe test/test.py"
 
 #artifacts:
   # bdist_wheel puts your built wheel in the dist directory
