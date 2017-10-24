@@ -13,6 +13,8 @@ echo "Failed to install CUDA"
 exit /B 1
 )
 
+echo %PATH%
+
 set PATH=%ProgramFiles%\NVIDIA GPU Computing Toolkit\CUDA\v8.0\bin;%ProgramFiles%\NVIDIA GPU Computing Toolkit\CUDA\v8.0\libnvvp;%PATH%
 set PATH=C:\MinGW\bin;%PATH%
 
