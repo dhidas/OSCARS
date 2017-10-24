@@ -18,10 +18,9 @@ echo %PATH%
 set PATH=%ProgramFiles%\NVIDIA GPU Computing Toolkit\CUDA\v8.0\bin;%ProgramFiles%\NVIDIA GPU Computing Toolkit\CUDA\v8.0\libnvvp;%PATH%
 set PATH=C:\MinGW\bin;%PATH%
 set PATH=C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin;%PATH%
-set INCLUDE=C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt;%INCLUDE%
-set LIB=C:\Program Files (x86)\Windows Kits\10\Lib\10.0.10240.0\um\x64;C:\Program Files (x86)\Windows Kits\10\Lib\10.0.10240.0\ucrt\x64;%LIB%
+set INCLUDE=C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\INCLUDE;%INCLUDE%
+#set LIB=C:\Program Files (x86)\Windows Kits\10\Lib\10.0.10240.0\um\x64;C:\Program Files (x86)\Windows Kits\10\Lib\10.0.10240.0\ucrt\x64;%LIB%
 
-dir C:\Program Files (x86)\Windows Kits\10\Include\10.0.10240.0\ucrt
 
 nvcc -V
 
