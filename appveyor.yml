@@ -11,15 +11,15 @@ environment:
     - PYTHON: "C:\\Python35-x64"
     - PYTHON: "C:\\Python36-x64"
 
-build_script:
-- cmd: >-
-    call ".ci\\build_cuda.cmd"
-
 install:
   # We need wheel installed to build wheels
   - "%PYTHON%\\python.exe -m pip install wheel setuptools"
 
-build: off
+build: on
+
+build_script:
+- cmd: >-
+    call ".ci\\build_cuda.cmd"
 
 after_test:
   - ".ci\\build.cmd %PYTHON%\\python.exe setup.py bdist_wheel"
