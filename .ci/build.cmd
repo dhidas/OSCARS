@@ -7,13 +7,25 @@
 :: https://github.com/cython/cython/wiki/CythonExtensionsOnWindows
 
 IF "%DISTUTILS_USE_SDK%"=="1" (
-    ECHO Configuring environment to build with MSVC on a 64bit architecture
-    ECHO Using Windows SDK 7.1
-    "C:\Program Files\Microsoft SDKs\Windows\v7.1\Setup\WindowsSdkVer.exe" -q -version:v7.1
-    CALL "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64 /release
-    SET MSSdk=1
-    REM Need the following to allow tox to see the SDK compiler
-    SET TOX_TESTENV_PASSENV=DISTUTILS_USE_SDK MSSdk INCLUDE LIB
+    IF %ARCH% == 64 (
+        IF %SET_SDK_64% == Y (
+            ECHO Configuring Windows SDK %WINDOWS_SDK_VERSION% for Python %MAJOR_PYTHON_VERSION% on a 64 bit architecture
+            SET DISTUTILS_USE_SDK=1
+            SET MSSdk=1
+            "%WIN_SDK_ROOT%\%WINDOWS_SDK_VERSION%\Setup\WindowsSdkVer.exe" -q -version:%WINDOWS_SDK_VERSION%
+            "%WIN_SDK_ROOT%\%WINDOWS_SDK_VERSION%\Bin\SetEnv.cmd" /x64 /release
+            ECHO Executing: %COMMAND_TO_RUN%
+            call %COMMAND_TO_RUN% || EXIT 1
+        ) ELSE (
+            ECHO Using default MSVC build environment for 64 bit architecture
+            ECHO Executing: %COMMAND_TO_RUN%
+            call %COMMAND_TO_RUN% || EXIT 1
+        )
+    ) ELSE (
+        ECHO Using default MSVC build environment for 32 bit architecture
+        ECHO Executing: %COMMAND_TO_RUN%
+        call %COMMAND_TO_RUN% || EXIT 1
+    )
 ) ELSE (
     ECHO Using default MSVC build environment
 )
