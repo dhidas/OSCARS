@@ -1,6 +1,6 @@
 language: python
-sudo: required
-dist: precise
+sudo: false
+dist: trusty
 
 os:
   - linux
@@ -24,8 +24,6 @@ before_install:
     brew install pyenv;
     pyenv install $PYTHON;
     fi
-  - echo "Installing CUDA"
-  - source .travis/install-cuda.sh
 
 install:
   - pip install .
