@@ -1,6 +1,4 @@
 
-dir "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\INCLUDE\"
-exit
 echo Downloading CUDA toolkit 8
 appveyor DownloadFile  https://developer.nvidia.com/compute/cuda/8.0/prod/local_installers/cuda_8.0.44_windows-exe -FileName cuda_8.0.44_windows.exe
 echo Installing CUDA toolkit 8
@@ -23,7 +21,7 @@ set PATH=%ProgramFiles%\NVIDIA GPU Computing Toolkit\CUDA\v8.0\bin;%ProgramFiles
 set PATH=C:\MinGW\bin;%PATH%
 set PATH=C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin;%PATH%
 set INCLUDE=C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\INCLUDE;%INCLUDE%
-#set LIB=C:\Program Files (x86)\Windows Kits\10\Lib\10.0.10240.0\um\x64;C:\Program Files (x86)\Windows Kits\10\Lib\10.0.10240.0\ucrt\x64;%LIB%
+set LIB=C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\LIB;%LIB%
 
 
 nvcc -V
