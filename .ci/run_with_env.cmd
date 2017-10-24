@@ -32,6 +32,7 @@ IF %MAJOR_PYTHON_VERSION% == 2 (
         )
     ) ELSE (
         ECHO Unsupported Python version: "%MAJOR_PYTHON_VERSION%"
+        ECHO Python is: "%PYTHON_VERSION%"
         EXIT 1
     )
 )
