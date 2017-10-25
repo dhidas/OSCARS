@@ -32,5 +32,5 @@ dir "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\INCLUDE"
 nvcc -V
 
 
-nvcc -DCUDA -cudart static -shared -Iinclude -c src\OSCARSSR_Cuda.cu -o lib\OSCARSSR_Cuda.o
-nvcc -DCUDA -cudart static -shared -Iinclude -c src\OSCARSTH_Cuda.cu -o lib\OSCARSTH_Cuda.o
+nvcc -DCUDA -cudart static -shared -Iinclude -I%INCLUDE% -c src\OSCARSSR_Cuda.cu -o lib\OSCARSSR_Cuda.o
+nvcc -DCUDA -cudart static -shared -Iinclude -I%INCLUDE% -c src\OSCARSTH_Cuda.cu -o lib\OSCARSTH_Cuda.o
