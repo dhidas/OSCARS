@@ -9,8 +9,7 @@
 ////////////////////////////////////////////////////////////////////
 
 #include <vector>
-//#include <mutex>
-#include <Winbase.h>
+#include <mutex>
 
 #include "TParticleTrajectoryPoint.h"
 #include "TVector3D.h"
