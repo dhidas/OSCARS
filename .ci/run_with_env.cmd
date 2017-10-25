@@ -6,17 +6,24 @@ SET WIN_WDK=c:\Program Files (x86)\Windows Kits\10\Include\wdf
 
 :: Based on the Python version, determine what SDK version to use, and whether
 :: to set the SDK for 64-bit.
+ECHO hi1
 IF %MAJOR_PYTHON_VERSION% == 2 (
+    ECHO py2
     SET WINDOWS_SDK_VERSION="v7.0"
     SET SET_SDK_64=Y
 ) ELSE (
+    ECHO elsepy3orgrate
     IF %MAJOR_PYTHON_VERSION% == 3 (
+        ECHO py3
         SET WINDOWS_SDK_VERSION="v7.1"
         IF %MINOR_PYTHON_VERSION% LEQ 4 (
+            ECHO minorlessthan4
             SET SET_SDK_64=Y
         ) ELSE (
+            ECHO minorNOTlessthan4
             SET SET_SDK_64=N
             IF EXIST "%WIN_WDK%" (
+                ECHO WIN_WDK exists
                 :: See: https://connect.microsoft.com/VisualStudio/feedback/details/1610302/
                 REN "%WIN_WDK%" 0wdf
             )
@@ -27,6 +34,7 @@ IF %MAJOR_PYTHON_VERSION% == 2 (
     )
 )
 
+ECHO pasthefirstset
 IF %ARCH% == 64 (
     IF %SET_SDK_64% == Y (
         ECHO Configuring Windows SDK %WINDOWS_SDK_VERSION% for Python %MAJOR_PYTHON_VERSION% on a 64 bit architecture
