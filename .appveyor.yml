@@ -131,6 +131,7 @@ install:
   # pip will build them from source using the MSVC compiler matching the
   # target Python version and architecture
   #- "%CMD_IN_ENV% pip install -r dev-requirements.txt"
+  - "%CMD_IN_ENV% python setup.py install"
 
 build_script:
   # Build the compiled extension
@@ -145,7 +146,6 @@ after_test:
   - "%CMD_IN_ENV% python setup.py bdist_wheel"
   - "%CMD_IN_ENV% python setup.py bdist_wininst"
   - "%CMD_IN_ENV% python setup.py bdist_msi"
-  - "%CMD_IN_ENV% pip install ."
   - ps: "ls dist"
 
 artifacts:
