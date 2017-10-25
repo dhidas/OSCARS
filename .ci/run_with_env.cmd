@@ -4,6 +4,14 @@ SET COMMAND_TO_RUN=%*
 SET WIN_SDK_ROOT=C:\Program Files\Microsoft SDKs\Windows
 SET WIN_WDK=c:\Program Files (x86)\Windows Kits\10\Include\wdf
 
+:: Extract the major and minor versions, and allow for the minor version to be
+:: more than 9.  This requires the version number to have two dots in it.
+SET MAJOR_PYTHON_VERSION=%PYTHON:~0,1%
+IF "%PYTHON:~3,1%" == "." (
+    SET MINOR_PYTHON_VERSION=%PYTHON:~2,1%
+) ELSE (
+    SET MINOR_PYTHON_VERSION=%PYTHON:~2,2%
+)
 
 :: Based on the Python version, determine what SDK version to use, and whether
 :: to set the SDK for 64-bit.
@@ -24,7 +32,6 @@ IF %MAJOR_PYTHON_VERSION% == 2 (
         )
     ) ELSE (
         ECHO Unsupported Python version: "%MAJOR_PYTHON_VERSION%"
-        ECHO Python is: "%PYTHON_VERSION%"
         EXIT 1
     )
 )
