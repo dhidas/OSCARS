@@ -7,7 +7,7 @@ SET WIN_WDK=c:\Program Files (x86)\Windows Kits\10\Include\wdf
 :: Based on the Python version, determine what SDK version to use, and whether
 :: to set the SDK for 64-bit.
 ECHO hi1
-IF %MAJOR_PYTHON_VERSION% == 2 (
+IF "%MAJOR_PYTHON_VERSION%" == "2" (
     ECHO py2
     SET WINDOWS_SDK_VERSION="v7.0"
     SET SET_SDK_64=Y
