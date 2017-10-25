@@ -23,7 +23,7 @@ IF %MAJOR_PYTHON_VERSION% == 2 (
             SET SET_SDK_64=Y
         ) ELSE (
             ECHO minorNOTlessthan4
-            SET SET_SDK_64=Y
+            SET SET_SDK_64=N
             IF EXIST "%WIN_WDK%" (
                 ECHO WIN_WDK exists
                 :: See: https://connect.microsoft.com/VisualStudio/feedback/details/1610302/
