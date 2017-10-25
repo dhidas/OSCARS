@@ -1,5 +1,3 @@
-import math
-import copy
 import numpy as np
 import scipy.optimize as op
 import scipy.integrate as integrate
@@ -175,8 +173,7 @@ def b_y(osr, sr_info):
     # Return the minimum distance between a point and the trajectory
     def min_dist(beta, gamma, osr=None, point=[0, 0, 0]):
         osr.remove_bfield('term')
-        osr.add_bfield_function(b_y_term(beta, gamma), name='term')
-        global trajectory 
+        osr.add_bfield_function(b_y_term(beta, gamma), name='term') 
         trajectory = osr.calculate_trajectory()
         trajec = []
         for i in range(len(trajectory)):
@@ -188,6 +185,7 @@ def b_y(osr, sr_info):
     # Return the weighted sum of the position and direction differences
     def traj_norm(beta, gamma, osr, point):
         (min_index, min_distance) = min_dist(beta, gamma, osr, point)
+        trajectory = osr.calculate_trajectory()
         vel = trajectory[min_index][2]
         vel_ideal = np.array([0, 0, 1])
         vel = np.array(vel)
@@ -231,8 +229,9 @@ def b_y(osr, sr_info):
     
     # Optional Visualization
     print('\nSolution array: ' + str(op_f.x))
-    plot_trajectory_position(trajectory)
-    plot_trajectory_velocity(trajectory)
-    plot_bfield(osr, -sr_info[1]-2*sr_info[2], sr_info[1]+2*sr_info[2])
-    
-    return (beta, gamma)
+    trajectory = osr.calculate_trajectory()
+    plot_trajectory_position(trajectory, ofile='corrected-traj.svg')
+    #plot_trajectory_velocity(trajectory)
+    #plot_bfield(osr, -sr_info[1]-2*sr_info[2], sr_info[1]+2*sr_info[2])
+    print('Hello world')
+    return trajectory
