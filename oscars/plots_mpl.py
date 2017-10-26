@@ -182,6 +182,43 @@ def plot_power_density(V, title=None, xlabel='X1 Axis [$m$]', ylabel='X2 Axis [$
     return
 
 
+def write_power_density_csv(V, ofile=''):
+    """write histogram with equal spacing"""
+ 
+
+    if ofile is '':
+        raise ValueError('Must specify an output file')
+
+    X = [item[0][0] for item in V]
+    Y = [item[0][1] for item in V]
+    P = [item[1]    for item in V]
+
+    NX = len(np.unique(X))
+    NY = len(np.unique(Y))
+
+    with open(ofile, 'w') as f:
+        f.write('            , ')
+        for ix in range(NX):
+            f.write('{: 11.5e}'.format(X[ix * NY]))
+            if ix < NX:
+                f.write(', ')
+        f.write('\n')
+
+        for j in range(NY):
+            f.write('{: 11.5e}'.format(Y[j]))
+            f.write(', ')
+            for i in range(NX):
+                ip = i * NY + j
+ 
+                f.write('{: 11.5e}'.format(P[ip]))
+                if i < NX:
+                    f.write(', ')
+            f.write('\n')
+
+
+    return
+
+
 def plot_power_density_2d1d(V, x1=None, x2=None, title=None, xlabel='[$m$]', ylabel='[$W / mm^2$]', xlim=None, ylim=None, show=True, ofile='', figsize=None, ret=False):
     """Plot a 2D histogram with equal spacing"""
 

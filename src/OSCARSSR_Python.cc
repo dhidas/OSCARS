@@ -3313,7 +3313,9 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
     ThisBeam->SetBeamDistribution(TParticleBeam::kBeamDistribution_Gaussian);
   } else {
     // Beam distribution to filament
-    ThisBeam->SetBeamDistribution(TParticleBeam::kBeamDistribution_Filament);
+    if (std::strlen(Beam) == 0) {
+      ThisBeam->SetBeamDistribution(TParticleBeam::kBeamDistribution_Filament);
+    }
   }
 
   // Check for no beam
