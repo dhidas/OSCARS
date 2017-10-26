@@ -35,5 +35,6 @@ nvcc -V
 ECHO nvcc -DCUDA -cudart static -shared -Iinclude -I%INC% -c src\OSCARSSR_Cuda.cu -o lib\OSCARSSR_Cuda.o
 ECHO nvcc -DCUDA -cudart static -shared -Iinclude -I%INC% -c src\OSCARSTH_Cuda.cu -o lib\OSCARSTH_Cuda.o
 
-ECHO nvcc -DCUDA -cudart static -shared -Iinclude -I%INC% -c src\OSCARSSR_Cuda.cu -o lib\OSCARSSR_Cuda.o
-ECHO nvcc -DCUDA -cudart static -shared -Iinclude -I%INC% -c src\OSCARSTH_Cuda.cu -o lib\OSCARSTH_Cuda.o
+dir "lib"
+
+echo done build cuda
