@@ -69,9 +69,9 @@ install:
 #    else
 #      export MYSYS="Linux";
 #    fi
-
-
-  - python setup.py install
+#
+#
+#  - python setup.py install
 
 script:
   - python test/test.py
