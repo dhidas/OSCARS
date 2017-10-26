@@ -24,6 +24,7 @@ set PATH=C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin;%PATH%
 set INCLUDE=C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\INCLUDE;%INCLUDE%
 set LIB=C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\LIB;%LIB%
 set INCLUDE=C:\Program Files (x86)\Windows Kits\10\Include\10.0.10586\ucrt;%INCLUDE%
+set INC=C:\Program Files (x86)\Windows Kits\10\Include\10.0.10586\ucrt;%INCLUDE%
 set LIB=C:\Program Files (x86)\Windows Kits\10\Lib\10.0.10586\um\x64;C;\Program Files (x86)\Windows Kits\10\Lib\10.0.10586\ucrt\x64;%LIB%
 
 echo include dir
@@ -31,6 +32,8 @@ dir "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\INCLUDE"
 
 nvcc -V
 
+ECHO nvcc -DCUDA -cudart static -shared -Iinclude -I%INC% -c src\OSCARSSR_Cuda.cu -o lib\OSCARSSR_Cuda.o
+ECHO nvcc -DCUDA -cudart static -shared -Iinclude -I%INC% -c src\OSCARSTH_Cuda.cu -o lib\OSCARSTH_Cuda.o
 
-nvcc -DCUDA -cudart static -shared -Iinclude -I%INCLUDE% -c src\OSCARSSR_Cuda.cu -o lib\OSCARSSR_Cuda.o
-nvcc -DCUDA -cudart static -shared -Iinclude -I%INCLUDE% -c src\OSCARSTH_Cuda.cu -o lib\OSCARSTH_Cuda.o
+ECHO nvcc -DCUDA -cudart static -shared -Iinclude -I%INC% -c src\OSCARSSR_Cuda.cu -o lib\OSCARSSR_Cuda.o
+ECHO nvcc -DCUDA -cudart static -shared -Iinclude -I%INC% -c src\OSCARSTH_Cuda.cu -o lib\OSCARSTH_Cuda.o
