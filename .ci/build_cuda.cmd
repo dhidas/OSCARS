@@ -32,11 +32,11 @@ dir "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\INCLUDE"
 
 nvcc -V
 
-ECHO nvcc -DCUDA -cudart static -shared -Iinclude -I"%INC%" -I"%INCLUDE%" -c src\OSCARSSR_Cuda.cu -o lib\OSCARSSR_Cuda.o
-ECHO nvcc -DCUDA -cudart static -shared -Iinclude -I"%INC%" -I"%INCLUDE%" -c src\OSCARSTH_Cuda.cu -o lib\OSCARSTH_Cuda.o
 
-nvcc -DCUDA -cudart static -shared -Iinclude -I"%INC%" -I"%INCLUDE%" -c src\OSCARSSR_Cuda.cu -o lib\OSCARSSR_Cuda.o
-nvcc -DCUDA -cudart static -shared -Iinclude -I"%INC%" -I"%INCLUDE%" -c src\OSCARSTH_Cuda.cu -o lib\OSCARSTH_Cuda.o
+ECHO nvcc -DCUDA -cudart static -shared -Iinclude -I"C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\INCLUDE" -I"C:\Program Files (x86)\Windows Kits\10\Include\10.0.10586\ucrt" -c src\OSCARSSR_Cuda.cu -o lib\OSCARSSR_Cuda.o
+ECHO nvcc -DCUDA -cudart static -shared -Iinclude -I"C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\INCLUDE" -I"C:\Program Files (x86)\Windows Kits\10\Include\10.0.10586\ucrt" -c src\OSCARSTH_Cuda.cu -o lib\OSCARSTH_Cuda.o
+nvcc -DCUDA -cudart static -shared -Iinclude -I"C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\INCLUDE" -I"C:\Program Files (x86)\Windows Kits\10\Include\10.0.10586\ucrt" -c src\OSCARSSR_Cuda.cu -o lib\OSCARSSR_Cuda.o
+nvcc -DCUDA -cudart static -shared -Iinclude -I"C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\INCLUDE" -I"C:\Program Files (x86)\Windows Kits\10\Include\10.0.10586\ucrt" -c src\OSCARSTH_Cuda.cu -o lib\OSCARSTH_Cuda.o
 
 dir "lib"
 dir "."
