@@ -1,20 +1,20 @@
-#language: generic
-language: python
-python:
-  # We don't actually use the Travis Python, but this keeps it organized.
-  - "2.7"
-  - "3.3"
-  - "3.4"
-  - "3.5"
-  - "3.6"
+language: generic
+#language: python
+#python:
+#  # We don't actually use the Travis Python, but this keeps it organized.
+#  - "2.7"
+#  - "3.3"
+#  - "3.4"
+#  - "3.5"
+#  - "3.6"
 
 os:
-  - linux
-#  - osx
+#  - linux
+  - osx
 
 compiler:
-  - gcc
-#  - clang
+#  - gcc
+  - clang
 
 # Perform the manual steps on osx to install python3 and activate venv
 before_install:
