@@ -230,7 +230,7 @@ def b_y(osr, sr_info):
     # Optional Visualization
     print('\nSolution array: ' + str(op_f.x))
     trajectory = osr.calculate_trajectory()
-    plot_trajectory_position(trajectory, ofile='corrected-traj.svg')
+    plot_trajectory_position(trajectory)
     #plot_trajectory_velocity(trajectory)
     #plot_bfield(osr, -sr_info[1]-2*sr_info[2], sr_info[1]+2*sr_info[2])
     print('Hello world')
