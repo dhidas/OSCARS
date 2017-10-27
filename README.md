@@ -102,7 +102,7 @@ conda install -n root git
 conda install -n root pyyaml
 
 # Download OSCARS
-git clone https://github.com/dhidas/OSCARS -b 2.00.02
+git clone https://github.com/dhidas/OSCARS -b 2.00.04
 
 # Create a new "conda environment" and install the required Python packages.
 cd OSCARS
