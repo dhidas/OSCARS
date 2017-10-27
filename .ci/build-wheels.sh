@@ -7,6 +7,10 @@ yum install -y atlas-devel
 PYALL="cp27-cp27m cp27-cp27mu cp33-cp33m cp34-cp34m cp35-cp35m cp36-cp36m"
 #PYALL="cp36-cp36m"
 
+pwd
+ls .
+
+
 ls -l /opt/python/
 # Compile wheels
 for PYBIN in $PYALL; do
