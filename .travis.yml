@@ -2,12 +2,12 @@ env:
   global:
     - TWINE_USERNAME=dhidas
 
+language: python
 
 matrix:
   include:
-    language: python
-    os: linux
-    python: 3.6
+    - os: linux
+    - python: 3.6
     - sudo: required
       services:
         - docker
