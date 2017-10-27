@@ -8,7 +8,9 @@ PYALL="cp27-cp27m cp27-cp27mu cp33-cp33m cp34-cp34m cp35-cp35m cp36-cp36m"
 pwd
 ls .
 
-ls $HOME
+ls /io
+
+cd /io
 
 ls -l /opt/python/
 # Compile wheels
