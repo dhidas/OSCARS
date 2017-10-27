@@ -13,6 +13,9 @@ matrix:
         - docker
       env: DOCKER_IMAGE=quay.io/pypa/manylinux1_x86_64
 
+    - os: osx
+      PYVER=3.5
+
 install:
   - pip install -U twine
   - docker pull $DOCKER_IMAGE
@@ -44,11 +47,11 @@ compiler:
 #  - clang
 
 # Perform the manual steps on osx to install python3 and activate venv
-#before_install:
-#    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
-#    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install python3; fi
-#    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then virtualenv venv -p python3; fi
-#    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then source venv/bin/activate; fi
+before_install:
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install python$PYVER; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then virtualenv venv -p python3; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then source venv/bin/activate; fi
 
 
 #install:
