@@ -3,6 +3,7 @@ env:
     - TWINE_USERNAME=dhidas
 
 os: linux
+language: python
 python: 3.6
 
 matrix:
@@ -24,6 +25,7 @@ script:
 #  - python -m pip install twine
 #  - python -m twine upload wheelhouse/*.whl
 
+skip_cleanup: true
 
 #deploy:
 #  provider: pypi
