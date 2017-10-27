@@ -2,6 +2,7 @@ env:
   global:
     - TWINE_USERNAME=dhidas
 
+os: linux
 python: 3.6
 
 matrix:
