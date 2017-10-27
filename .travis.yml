@@ -2,7 +2,7 @@ env:
   global:
     - TWINE_USERNAME=dhidas
 
-language: python
+language: generic
 python:
   - "2.7"
   - "3.3"
