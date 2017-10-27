@@ -1,54 +1,37 @@
-env:
-  global:
-    - TWINE_USERNAME=dhidas
+language: generic
 
-language: python
 
-matrix:
-  include:
-    - python: 3.6
-      os: linux
-      sudo: required
-      services:
-        - docker
-      env: DOCKER_IMAGE=quay.io/pypa/manylinux1_x86_64
-
-install:
-  - pip install -U twine
-  - docker pull $DOCKER_IMAGE
-
-script:
-  - pip install -U twine
-  - docker run --rm -v `pwd`:/io $DOCKER_IMAGE $PRE_CMD /io/.ci/build-wheels.sh
-  - ls wheelhouse/
-  #- twine upload -r pypi wheelhouse/*manylinux1_x86_64.whl
-
-skip_cleanup: true
-
-#language: generic
-#language: python
-#python:
-#  # We don't actually use the Travis Python, but this keeps it organized.
-#  - "2.7"
-#  - "3.3"
-#  - "3.4"
-#  - "3.5"
-#  - "3.6"
-
-#os:
-#  - linux
-#  - osx
+os:
+  - osx
 
 compiler:
-#  - gcc
-#  - clang
+  - clang
 
-# Perform the manual steps on osx to install python3 and activate venv
-#before_install:
-#    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update          ; fi
-#    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install python3; fi
-#    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then virtualenv venv -p python3; fi
-#    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then source venv/bin/activate; fi
+python:
+  2.7
+  3.3
+  3.4
+  3.5
+  3.6
+
+before_install:
+    - brew update
+    - brew install python$TRAVIS_PYTHON_VERSION
+    - virtualenv venv -p python$TRAVIS_PYTHON_VERSION
+    - source venv/bin/activate
+
+install:
+  - python setup.py install
+
+script:
+  - python test/test.py
+
+
+
+
+
+
+
 
 
 #install:
