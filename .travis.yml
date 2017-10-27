@@ -28,13 +28,14 @@ matrix:
       env: DOCKER_IMAGE=quay.io/pypa/manylinux1_x86_64
 
 install:
-  - pip install -U twine
-  - docker pull $DOCKER_IMAGE
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install -U twine ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then docker pull $DOCKER_IMAGE ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then python setup.py install ; fi
 
 script:
-  - pip install -U twine
-  - docker run --rm -v `pwd`:/io $DOCKER_IMAGE $PRE_CMD /io/.ci/build-wheels.sh
-  - ls wheelhouse/
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pip install -U twine ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then docker run --rm -v `pwd`:/io $DOCKER_IMAGE $PRE_CMD /io/.ci/build-wheels.sh ; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then python test/test.py ; fi
 
 compiler:
 #  - gcc
