@@ -21,7 +21,7 @@ matrix:
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install pyenv ; fi
+  #- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install pyenv ; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pyenv versions ; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pyenv install $PYVER ; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pyenv local $PYVER ; fi
