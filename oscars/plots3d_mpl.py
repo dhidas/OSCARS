@@ -290,7 +290,7 @@ def plot_bfield3D (srs, xlim=[-0.02, 0.02], ylim=[-0.02, 0.02], zlim=[-0.2, 0.02
 
 
 
-def plot_surface(surface, xlim=None, ylim=None, zlim=None, **kwargs):
+def plot_surface(surface, xlim=None, ylim=None, zlim=None, alpha=0.5, **kwargs):
     """plot a parametric surface in 3d"""
 
 
@@ -325,7 +325,7 @@ def plot_surface(surface, xlim=None, ylim=None, zlim=None, **kwargs):
         ax.set_ylim(zlim[0], zlim[1])
 
 
-    ax.plot_surface(X2, Z2, Y2, rstride=1, cstride=1, alpha=0.5, **kwargs)
+    ax.plot_surface(X2, Z2, Y2, rstride=1, cstride=1, alpha=alpha, **kwargs)
     ax.invert_xaxis()
 
     plt.show()
