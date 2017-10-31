@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import scipy.optimize as op
 import scipy.integrate as integrate
@@ -231,7 +232,6 @@ def b_y(osr, sr_info):
     print('\nSolution array: ' + str(op_f.x))
     trajectory = osr.calculate_trajectory()
     plot_trajectory_position(trajectory)
-    #plot_trajectory_velocity(trajectory)
-    #plot_bfield(osr, -sr_info[1]-2*sr_info[2], sr_info[1]+2*sr_info[2])
-    print('Hello world')
+    plot_trajectory_velocity(trajectory)
+    plot_bfield(osr, -sr_info[1]-2*sr_info[2], sr_info[1]+2*sr_info[2])
     return trajectory
