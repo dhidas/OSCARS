@@ -18,8 +18,8 @@ class TField
   // This class is designed to be a base class for a field object.
 
   public:
-    virtual TVector3D GetF  (double const, double const, double const) const = 0;
-    virtual TVector3D GetF  (TVector3D const&) const = 0;
+    virtual TVector3D GetF  (double const, double const, double const, double const T = 0) const = 0;
+    virtual TVector3D GetF  (TVector3D const&, double const T = 0) const = 0;
 
     void SetName (std::string const& Name)
     {

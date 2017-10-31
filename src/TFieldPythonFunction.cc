@@ -31,12 +31,9 @@ TFieldPythonFunction::~TFieldPythonFunction ()
 
 
 
-TVector3D TFieldPythonFunction::GetF (TVector3D const& X) const
+TVector3D TFieldPythonFunction::GetF (TVector3D const& X, double const T) const
 {
   // Get the magnetic field from a python function.
-
-  // For the future
-  double T = 0;
 
   // Check to see the function is callable
   if (!PyCallable_Check(fPythonFunction)) {
@@ -82,33 +79,9 @@ TVector3D TFieldPythonFunction::GetF (TVector3D const& X) const
 
 
 
-TVector3D TFieldPythonFunction::GetF (double const X, double const Y, double const Z) const
+TVector3D TFieldPythonFunction::GetF (double const X, double const Y, double const Z, double const T) const
 {
-  return this->GetF(TVector3D(X, Y, Z));
-}
-
-
-
-
-double TFieldPythonFunction::GetFx (double const X, double const Y, double const Z) const
-{
-  return this->GetF(X, Y, Z).GetX();
-}
-
-
-
-
-double TFieldPythonFunction::GetFy (double const X, double const Y, double const Z) const
-{
-  return this->GetF(X, Y, Z).GetY();
-}
-
-
-
-
-double TFieldPythonFunction::GetFz (double const X, double const Y, double const Z) const
-{
-  return this->GetF(X, Y, Z).GetZ();
+  return this->GetF(TVector3D(X, Y, Z), T);
 }
 
 

@@ -77,7 +77,7 @@ void TTriangle3DContainer::ReadSTLFile (std::string const& FileName,
   // Open the input file
   std::ifstream fi(FileName.c_str(), std::ios::binary);
   if (!fi.is_open()) {
-    throw;
+    throw std::ifstream::failure("cannot open file");
   }
 
   char H[80];

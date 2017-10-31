@@ -24,8 +24,8 @@ class TField3D_Gaussian : public TField
 
     ~TField3D_Gaussian ();
 
-    TVector3D GetF  (double const X, double const Y, double const Z) const;
-    TVector3D GetF  (TVector3D const& X) const;
+    TVector3D GetF  (double const X, double const Y, double const Z, double const T = 0) const;
+    TVector3D GetF  (TVector3D const& X, double const T = 0) const;
 
     bool IsWithinRange (double const X, double const Y, double const Z) const;
 

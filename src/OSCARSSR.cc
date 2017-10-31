@@ -173,19 +173,19 @@ void OSCARSSR::ClearMagneticFields ()
 
 
 
-TVector3D OSCARSSR::GetB (double const X, double const Y, double const Z) const
+TVector3D OSCARSSR::GetB (double const X, double const Y, double const Z, double const T) const
 {
   // Return summed Bx from container
-  return this->fBFieldContainer.GetF(X, Y, Z);
+  return this->fBFieldContainer.GetF(X, Y, Z, T);
 }
 
 
 
 
-TVector3D OSCARSSR::GetB (TVector3D const& X) const
+TVector3D OSCARSSR::GetB (TVector3D const& X, double const T) const
 {
   // Return summed Bx from container
-  return this->fBFieldContainer.GetF(X);
+  return this->fBFieldContainer.GetF(X, T);
 }
 
 
@@ -347,19 +347,19 @@ void OSCARSSR::WriteFieldBinary (std::string const& BorE,
 
 
 
-TVector3D OSCARSSR::GetE (double const X, double const Y, double const Z) const
+TVector3D OSCARSSR::GetE (double const X, double const Y, double const Z, double const T) const
 {
   // Return summed E from container
-  return this->fEFieldContainer.GetF(TVector3D(X, Y, Z));
+  return this->fEFieldContainer.GetF(TVector3D(X, Y, Z), T);
 }
 
 
 
 
-TVector3D OSCARSSR::GetE (TVector3D const& X) const
+TVector3D OSCARSSR::GetE (TVector3D const& X, double const T) const
 {
   // Return summed E from container
-  return this->fEFieldContainer.GetF(X);
+  return this->fEFieldContainer.GetF(X, T);
 }
 
 
@@ -860,6 +860,8 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
   // Set delta T for the trajectory
   ParticleTrajectory.SetDeltaT(DeltaT);
 
+  (this->*fDerivativesFunction)(P.GetT0() / TOSCARSSR::C(), x, dxdt, P);
+
   // Loop over points in the forward direction
   for (size_t i = 0; i != NPointsForward; ++i) {
 
@@ -897,10 +899,10 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
   double const DeltaTReversed = -DeltaT;
 
   // Loop over all points "before" the initial point
-  for (size_t i = 0; i != NPointsBackward; ++i) {
+  for (size_t i = 0; i != NPointsBackward + 1; ++i) {
 
     // This time
-    double t = P.GetT0() / TOSCARSSR::C() + DeltaTReversed * (i + 1);
+    double t = P.GetT0() / TOSCARSSR::C() + DeltaTReversed * (i);
 
     if (fDriftVolumeContainer.IsInside(TVector3D(x[0], x[2], x[4]))) {
       x[0] += DeltaTReversed * x[1];
@@ -912,7 +914,9 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
       RK4(x, dxdt, N, t, DeltaTReversed, x, P);
 
       // Add the point to the trajectory
-      ParticleTrajectory.AddPoint(x[0], x[2], x[4], x[1] / TOSCARSSR::C(), x[3] / TOSCARSSR::C(), x[5] / TOSCARSSR::C(), dxdt[1] / TOSCARSSR::C(), dxdt[3] / TOSCARSSR::C(), dxdt[5] / TOSCARSSR::C(), t);
+      if (i > 0) {
+        ParticleTrajectory.AddPoint(x[0], x[2], x[4], x[1] / TOSCARSSR::C(), x[3] / TOSCARSSR::C(), x[5] / TOSCARSSR::C(), dxdt[1] / TOSCARSSR::C(), dxdt[3] / TOSCARSSR::C(), dxdt[5] / TOSCARSSR::C(), t);
+      }
     }
   }
 
@@ -985,7 +989,7 @@ void OSCARSSR::DerivativesE (double t, double x[], double dxdt[], TParticleA con
   // x[5] - Vz
 
   // BField at this point
-  TVector3D const E = this->GetE(x[0], x[2], x[4]);
+  TVector3D const E = this->GetE(x[0], x[2], x[4], t);
 
   double const QoverMTimesSqrtOneMinusBetaSquared = P.GetQ() / P.GetM() * sqrt(1. - (x[1]*x[1] + x[3]*x[3] + x[5]*x[5]) / (TOSCARSSR::C() * TOSCARSSR::C()));
   double const BetaDotE = (x[1] * E.GetX() + x[3] * E.GetY() + x[5] * E.GetZ()) / TOSCARSSR::C();
@@ -1016,7 +1020,7 @@ void OSCARSSR::DerivativesB (double t, double x[], double dxdt[], TParticleA con
   // x[5] - Vz
 
   // BField at this point
-  TVector3D const B = this->GetB(x[0], x[2], x[4]);
+  TVector3D const B = this->GetB(x[0], x[2], x[4], t);
 
   double const QoverMGamma = P.GetQoverMGamma();
 
@@ -1046,8 +1050,8 @@ void OSCARSSR::DerivativesEB (double t, double x[], double dxdt[], TParticleA co
   // x[5] - Vz
 
   // BField at this point
-  TVector3D const B = this->GetB(x[0], x[2], x[4]);
-  TVector3D const E = this->GetE(x[0], x[2], x[4]);
+  TVector3D const B = this->GetB(x[0], x[2], x[4], t);
+  TVector3D const E = this->GetE(x[0], x[2], x[4], t);
 
   double const QoverMTimesSqrtOneMinusBetaSquared = P.GetQ() / P.GetM() * sqrt(1. - (x[1]*x[1] + x[3]*x[3] + x[5]*x[5]) / (TOSCARSSR::C() * TOSCARSSR::C()));
   double const BetaDotE = (x[1] * E.GetX() + x[3] * E.GetY() + x[5] * E.GetZ()) / TOSCARSSR::C();
@@ -1079,7 +1083,7 @@ void OSCARSSR::Derivatives (double t, double x[], double dxdt[], TParticleA cons
   // x[5] - Vz
 
   // BField at this point
-  TVector3D const B = this->GetB(x[0], x[2], x[4]);
+  TVector3D const B = this->GetB(x[0], x[2], x[4], t);
 
   double const QoverMGamma = P.GetQoverMGamma();
 
