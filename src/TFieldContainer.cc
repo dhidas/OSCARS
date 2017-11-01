@@ -88,16 +88,16 @@ TVector3D TFieldContainer::GetF (TVector3D const& X, double const T, std::string
 
   // Is this named or not?
   if (Name == "") {
+    // Loop over all Fields for summing fields
+    for (std::vector<TField*>::const_iterator it = fFields.begin(); it != fFields.end(); ++it) {
+      Sum += (*it)->GetF(X);
+    }
+  } else {
     // Loop over Fields for summing fields, select any with this exact name
     for (std::vector<TField*>::const_iterator it = fFields.begin(); it != fFields.end(); ++it) {
       if ((*it)->GetName() == Name) {
         Sum += (*it)->GetF(X);
       }
-    }
-  } else {
-    // Loop over all Fields for summing fields
-    for (std::vector<TField*>::const_iterator it = fFields.begin(); it != fFields.end(); ++it) {
-      Sum += (*it)->GetF(X);
     }
   }
 

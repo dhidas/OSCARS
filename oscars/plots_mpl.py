@@ -484,7 +484,7 @@ def plot_spectra(spectra, label=None, show=True, ofile='', title='', loc=None, l
 
 
 
-def plot_bfield(osr, mymin=-1, mymax=1, ylim=None, show=True, ofile='', axis='Z', npoints=20000, between_two_points=None, ret=False):
+def plot_bfield(osr, mymin=-1, mymax=1, t=0, name='', ylim=None, show=True, ofile='', axis='Z', npoints=20000, between_two_points=None, ret=False):
     """Plot the magnetic field as a function of Z"""
 
 
@@ -507,26 +507,27 @@ def plot_bfield(osr, mymin=-1, mymax=1, ylim=None, show=True, ofile='', axis='Z'
             y = p0[1] + step[1] * float(i)
             z = p0[2] + step[2] * float(i)
 
-            Bx.append(osr.get_bfield([x, y, z])[0])
-            By.append(osr.get_bfield([x, y, z])[1])
-            Bz.append(osr.get_bfield([x, y, z])[2])
+            B = osr.get_bfield([x, y, z], t, name)
+
+            Bx.append(B[0])
+            By.append(B[1])
+            Bz.append(B[2])
             axis = 'Position'
     else:
         P = np.linspace(mymin, mymax, npoints)
-        if axis is 'X':
-            Bx = [osr.get_bfield([p, 0, 0])[0] for p in P]
-            By = [osr.get_bfield([p, 0, 0])[1] for p in P]
-            Bz = [osr.get_bfield([p, 0, 0])[2] for p in P]
-        elif axis is 'Y':
-            Bx = [osr.get_bfield([0, p, 0])[0] for p in P]
-            By = [osr.get_bfield([0, p, 0])[1] for p in P]
-            Bz = [osr.get_bfield([0, p, 0])[2] for p in P]
-        elif axis is 'Z':
-            Bx = [osr.get_bfield([0, 0, p])[0] for p in P]
-            By = [osr.get_bfield([0, 0, p])[1] for p in P]
-            Bz = [osr.get_bfield([0, 0, p])[2] for p in P]
-        else:
-            raise
+        B = []
+        for p in P:
+            if axis is 'X':
+                B = osr.get_bfield([p, 0, 0], t, name)
+            elif axis is 'Y':
+                B = osr.get_bfield([0, p, 0], t, name)
+            elif axis is 'Z':
+                B = osr.get_bfield([0, 0, p], t, name)
+            else:
+                raise
+            Bx.append(B[0])
+            By.append(B[1])
+            Bz.append(B[2])
 
     plt.figure(1, figsize=(18, 4.5))
     plt.subplot(131)
@@ -586,26 +587,27 @@ def plot_efield(osr, mymin=-1, mymax=1, ylim=None, show=True, ofile='', axis='Z'
             y = p0[1] + step[1] * float(i)
             z = p0[2] + step[2] * float(i)
 
-            Bx.append(osr.get_efield([x, y, z])[0])
-            By.append(osr.get_efield([x, y, z])[1])
-            Bz.append(osr.get_efield([x, y, z])[2])
+            B = osr.get_bfield([x, y, z], t, name)
+
+            Bx.append(B[0])
+            By.append(B[1])
+            Bz.append(B[2])
             axis = 'Position'
     else:
         P = np.linspace(mymin, mymax, npoints)
-        if axis is 'X':
-            Bx = [osr.get_efield([p, 0, 0])[0] for p in P]
-            By = [osr.get_efield([p, 0, 0])[1] for p in P]
-            Bz = [osr.get_efield([p, 0, 0])[2] for p in P]
-        elif axis is 'Y':
-            Bx = [osr.get_efield([0, p, 0])[0] for p in P]
-            By = [osr.get_efield([0, p, 0])[1] for p in P]
-            Bz = [osr.get_efield([0, p, 0])[2] for p in P]
-        elif axis is 'Z':
-            Bx = [osr.get_efield([0, 0, p])[0] for p in P]
-            By = [osr.get_efield([0, 0, p])[1] for p in P]
-            Bz = [osr.get_efield([0, 0, p])[2] for p in P]
-        else:
-            raise
+        B = []
+        for p in P:
+            if axis is 'X':
+                B = osr.get_bfield([p, 0, 0], t, name)
+            elif axis is 'Y':
+                B = osr.get_bfield([0, p, 0], t, name)
+            elif axis is 'Z':
+                B = osr.get_bfield([0, 0, p], t, name)
+            else:
+                raise
+            Bx.append(B[0])
+            By.append(B[1])
+            Bz.append(B[2])
 
     plt.figure(1, figsize=(18, 4.5))
     plt.subplot(131)

@@ -173,19 +173,19 @@ void OSCARSSR::ClearMagneticFields ()
 
 
 
-TVector3D OSCARSSR::GetB (double const X, double const Y, double const Z, double const T) const
+TVector3D OSCARSSR::GetB (double const X, double const Y, double const Z, double const T, std::string const& Name) const
 {
   // Return summed Bx from container
-  return this->fBFieldContainer.GetF(X, Y, Z, T);
+  return this->fBFieldContainer.GetF(TVector3D(X, Y, Z), T, Name);
 }
 
 
 
 
-TVector3D OSCARSSR::GetB (TVector3D const& X, double const T) const
+TVector3D OSCARSSR::GetB (TVector3D const& X, double const T, std::string const& Name) const
 {
   // Return summed Bx from container
-  return this->fBFieldContainer.GetF(X, T);
+  return this->fBFieldContainer.GetF(X, T, Name);
 }
 
 
@@ -347,19 +347,19 @@ void OSCARSSR::WriteFieldBinary (std::string const& BorE,
 
 
 
-TVector3D OSCARSSR::GetE (double const X, double const Y, double const Z, double const T) const
+TVector3D OSCARSSR::GetE (double const X, double const Y, double const Z, double const T, std::string const& Name) const
 {
   // Return summed E from container
-  return this->fEFieldContainer.GetF(TVector3D(X, Y, Z), T);
+  return this->fEFieldContainer.GetF(TVector3D(X, Y, Z), T, Name);
 }
 
 
 
 
-TVector3D OSCARSSR::GetE (TVector3D const& X, double const T) const
+TVector3D OSCARSSR::GetE (TVector3D const& X, double const T, std::string const& Name) const
 {
   // Return summed E from container
-  return this->fEFieldContainer.GetF(X, T);
+  return this->fEFieldContainer.GetF(X, T, Name);
 }
 
 
