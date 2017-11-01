@@ -96,7 +96,7 @@ def b_y_pre_op_plot(z_list, osr, upper_bound=1.34, lower_bound=-1.33):
             (z >= lower_bound and z <= upper_bound) else 0) for z in z_list]
     
     
-def b_y(osr, sr_info):
+def b_y(osr, sr_info, point=None):
     """Return osr with optimized b field.
     
     Keyword arguments:
@@ -205,10 +205,11 @@ def b_y(osr, sr_info):
                 return [0, 0, 0]
         return field
     
-    # Return callable for weighted sum function depending on pmu or osr
+    # Return callable in terms of the vector u.
     def min_fun(u):
-        return traj_norm(beta=[u[0], u[1]], gamma=[u[2], u[3]], osr=osr,
-                         point=[0, 0, 5])
+        if point == None:
+            point = [0, 0, sr_info[1]+sr_info[2]]
+        return traj_norm(beta=[u[0],u[1]], gamma=[u[2],u[3]], osr=osr, point)
     
     lowest_bound = -sr_info[1] - sr_info[2] # -1.35
     lower_bound = -sr_info[1] # -1.33
@@ -234,4 +235,5 @@ def b_y(osr, sr_info):
     plot_trajectory_position(trajectory)
     plot_trajectory_velocity(trajectory)
     plot_bfield(osr, -sr_info[1]-2*sr_info[2], sr_info[1]+2*sr_info[2])
+    
     return trajectory
