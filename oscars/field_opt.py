@@ -209,7 +209,8 @@ def b_y(osr, sr_info, point=None):
     def min_fun(u):
         if point == None:
             point = [0, 0, sr_info[1]+sr_info[2]]
-        return traj_norm(beta=[u[0],u[1]], gamma=[u[2],u[3]], osr=osr, point)
+        return traj_norm(beta=[u[0],u[1]], gamma=[u[2],u[3]], osr=osr, 
+                         point=point)
     
     lowest_bound = -sr_info[1] - sr_info[2] # -1.35
     lower_bound = -sr_info[1] # -1.33
