@@ -207,8 +207,9 @@ def b_y(osr, sr_info, point=None):
     
     # Return callable in terms of the vector u.
     def min_fun(u):
+        nonlocal point
         if point == None:
-            nonlocal point = [0, 0, sr_info[1]+sr_info[2]]
+            point = [0, 0, sr_info[1]+sr_info[2]]
         return traj_norm(beta=[u[0],u[1]], gamma=[u[2],u[3]], osr=osr, 
                          point=point)
     
