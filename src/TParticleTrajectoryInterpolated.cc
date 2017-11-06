@@ -211,7 +211,7 @@ void TParticleTrajectoryInterpolated::FillTParticleTrajectoryPoints (TParticleTr
 
 
 
-int TParticleTrajectoryInterpolated::GetNPointsThisLevel (int const Level) const
+int TParticleTrajectoryInterpolated::GetNPointsThisLevel (int const Level)
 {
   return pow(2, Level);
 }
@@ -219,11 +219,8 @@ int TParticleTrajectoryInterpolated::GetNPointsThisLevel (int const Level) const
 
 
 
-int TParticleTrajectoryInterpolated::GetNPointsInclusiveToLevel (int const Level) const
+int TParticleTrajectoryInterpolated::GetNPointsInclusiveToLevel (int const Level)
 {
-  // Level checking
-  this->LevelCheck(Level);
-
   return pow(2, Level + 1) - 1;
 }
 

@@ -4761,7 +4761,8 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
   int         MaxLevel = -2;
   int         MaxLevelExtended = 0;
   char const* ReturnQuantityChars = "power density";
-  char const* OutFileName = "";
+  char const* OutFileNameText = "";
+  char const* OutFileNameBinary = "";
 
 
   static const char *kwlist[] = {"points",
@@ -4777,9 +4778,10 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
                                  "max_level_extended",
                                  "quantity",
                                  "ofile",
+                                 "bofile",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|iOOiiOidiiss",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|iOOiiOidiisss",
                                    const_cast<char **>(kwlist),
                                    &List_Points,
                                    &NormalDirection,
@@ -4793,7 +4795,8 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
                                    &MaxLevel,
                                    &MaxLevelExtended,
                                    &ReturnQuantityChars,
-                                   &OutFileName)) {
+                                   &OutFileNameText,
+                                   &OutFileNameBinary)) {
     return NULL;
   }
 
@@ -4963,14 +4966,14 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
 
   // Write the output file if requested
   // Text output
-  //if (std::string(OutFileNameText) != "") {
-  //  PowerDensityContainer.WriteToFileText(OutFileNameText, Dim);
-  //}
+  if (std::string(OutFileNameText) != "") {
+    PowerDensityContainer.WriteToFileText(OutFileNameText, Dim);
+  }
 
   // Binary output
-  //if (std::string(OutFileNameBinary) != "") {
-  //  PowerDensityContainer.WriteToFileBinary(OutFileNameBinary, Dim);
-  //}
+  if (std::string(OutFileNameBinary) != "") {
+    PowerDensityContainer.WriteToFileBinary(OutFileNameBinary, Dim);
+  }
 
 
   // Build the output list of: [[[x, y, z], PowerDensity], [...]]
