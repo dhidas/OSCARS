@@ -125,7 +125,7 @@ def power_density_3d(srs, surface,
 
 def power_density_3ds(srs, surface, ax,
                     normal=1, rotations=[0, 0, 0], translation=[0, 0, 0], nparticles=0, gpu=0, nthreads=0,
-                    alpha=0.4, transparent=True, max_level=-2):
+                    alpha=0.4, transparent=True, max_level=-2, ofile=''):
     """calculate power density for and plot a parametric surface in 3d"""
 
     points = []
@@ -136,7 +136,7 @@ def power_density_3ds(srs, surface, ax,
             points.append([surface.position(u, v), surface.normal(u, v)])
 
 
-    power_density = srs.calculate_power_density(points=points, normal=normal, rotations=rotations, translation=translation, nparticles=nparticles, gpu=gpu, nthreads=nthreads, max_level=max_level)
+    power_density = srs.calculate_power_density(points=points, normal=normal, rotations=rotations, translation=translation, nparticles=nparticles, gpu=gpu, nthreads=nthreads, max_level=max_level, ofile=ofile)
     P = [item[1] for item in power_density]
 
     X2 = []
@@ -368,11 +368,33 @@ def plot_trajectory3d(trajectory, figsize=None):
 
 
 
+def get_surface_points (surface=None, surfaces=None, translation=None):
+
+    points = []
+    if surface is not None and surfaces is not None:
+        raise ValueError('pick one: surface or surfaces')
+
+    if surface is not None:
+        surfaces = [surface]
+
+    for surface in surfaces:
+        for u in np.linspace(surface.ustart, surface.ustop, surface.nu):
+            for v in np.linspace(surface.vstart, surface.vstop, surface.nv):
+                p = surface.position(u, v)
+                if translation is not None:
+                    p[0] += translation[0]
+                    p[1] += translation[1]
+                    p[2] += translation[2]
+                points.append([p, surface.normal(u, v)])
+
+    return points
 
 
 
 
-def plot_power_density_scatter (V, s=10):
+
+
+def plot_power_density_scatter (V, s=10, figsize=None):
 
     if len(V) == 0:
         return
@@ -391,7 +413,7 @@ def plot_power_density_scatter (V, s=10):
     else:
         C = [p / pmax for p in P]
 
-    Cen3D = plt.figure()
+    Cen3D = plt.figure(figsize=figsize)
     ax = Cen3D.add_subplot(111, projection='3d')
 
     ax.scatter(X, Z, Y, c=C, s=s, alpha=1)
