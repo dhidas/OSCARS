@@ -537,6 +537,13 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
     throw std::invalid_argument("No GPU found");
   }
 
+  // Number of levels to calculate and pre-upload
+  int const NLevelsPreComputed = 10;
+
+  // Number of pre-conputed trajectory points
+  int const NTPreComputed = TParticleTrajectoryInterpolated::GetNPointsInclusiveToLevel(NLevelsPreComputed);
+
+
   // Make sure that a gpu listed is within the range and not a duplicate
   std::vector<int> GPUsToUse;
   for (std::vector<int>::const_iterator it = GPUVector.begin(); it != GPUVector.end(); ++it) {
@@ -584,9 +591,11 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
 
   int *h_ns;
   int *h_nt;
+  int *h_nl;  // Number of pre-computed trajectory levels
   cuDoubleComplex *h_pol;
   cudaHostAlloc((void**) &h_ns,     sizeof(int),    cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void**) &h_nt,     sizeof(int),    cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_nl,     sizeof(int),    cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void**) &h_pol, 3 * sizeof(cuDoubleComplex), cudaHostAllocWriteCombined | cudaHostAllocMapped);
 
   // First one, set particle and trajectory
@@ -600,6 +609,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   // Needed number of points in the track and time step
   *h_nt     = (int) OSR.GetCurrentParticle().GetTrajectoryInterpolated().GetNPoints();
   *h_ns     = (int) Surface.GetNPoints();
+  *h_nl     = NLevelsPreComputed;
 
   // Photon polarization
   h_pol[0] = make_cuDoubleComplex(PhotonPolarizationVector.GetX().real(), PhotonPolarizationVector.GetX().imag());
@@ -619,6 +629,12 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   for (int i = 0; i < NRemainderBlocks; ++i) {
     ++NBlocksThisGPU[i];
   }
+
+  // Initial trajectory
+  double  *h_tt;
+  double  *h_tx,   *h_ty,   *h_tz;
+  double  *h_tbx,  *h_tby,  *h_tbz;
+  double  *h_tax,  *h_tay,  *h_taz;
 
   // Interpolating structure
   double  *h_t;
@@ -653,6 +669,17 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   double **h_result;
 
   // Allocate host memory
+  cudaHostAlloc((void**) &h_tt,     NTPreComputed * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_tx,     NTPreComputed * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_ty,     NTPreComputed * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_tz,     NTPreComputed * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_tbx,    NTPreComputed * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_tby,    NTPreComputed * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_tbz,    NTPreComputed * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_tax,    NTPreComputed * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_tay,    NTPreComputed * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void**) &h_taz,    NTPreComputed * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
+
   cudaHostAlloc((void**) &h_t,       *h_nt * sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void**) &h_tstart,          sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void**) &h_tstop,           sizeof(double),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
@@ -716,6 +743,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   double **d_tstart;
   double **d_tstop;
   int    **d_ns;
+  int    **d_nl;
 
   cuDoubleComplex **d_pol;
 
@@ -763,6 +791,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   cudaHostAlloc((void **) &d_tstart, NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void **) &d_tstop,  NGPUsToUse * sizeof(double*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
   cudaHostAlloc((void **) &d_ns,     NGPUsToUse * sizeof(int*),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
+  cudaHostAlloc((void **) &d_nl,     NGPUsToUse * sizeof(int*),     cudaHostAllocWriteCombined | cudaHostAllocMapped);
 
   cudaHostAlloc((void **) &d_pol,    NGPUsToUse * sizeof(cuDoubleComplex*),  cudaHostAllocWriteCombined | cudaHostAllocMapped);
 
@@ -814,6 +843,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
     cudaMalloc((void **) &d_tstart[i],             sizeof(double));
     cudaMalloc((void **) &d_tstop[i],              sizeof(double));
     cudaMalloc((void **) &d_ns[i],                 sizeof(int));
+    cudaMalloc((void **) &d_nl[i],                 sizeof(int));
 
     cudaMalloc((void **) &d_pol[i],            3 * sizeof(cuDoubleComplex));
 
@@ -875,6 +905,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   int const d0 = GPUsToUse[0];
   cudaSetDevice(d0);
   cudaMemcpyAsync(d_ns[0],    h_ns,          sizeof(int),    cudaMemcpyHostToDevice);
+  cudaMemcpyAsync(d_nl[0],    h_nl,          sizeof(int),    cudaMemcpyHostToDevice);
   cudaMemcpyAsync(d_pol[0],   h_pol,     3 * sizeof(cuDoubleComplex), cudaMemcpyHostToDevice);
   cudaMemcpyAsync(d_c0[0],    h_c0,          sizeof(double), cudaMemcpyHostToDevice);
   cudaMemcpyAsync(d_c2[0],    h_c2,          sizeof(double), cudaMemcpyHostToDevice);
@@ -892,6 +923,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
     int const d1 = GPUsToUse[i+1];
     cudaSetDevice(d);
     cudaMemcpyPeerAsync( d_ns[i+1],     d1, d_ns[i],     d, sizeof(int));
+    cudaMemcpyPeerAsync( d_nl[i+1],     d1, d_nl[i],     d, sizeof(int));
     cudaMemcpyPeerAsync( d_pol[i+1],    d1, d_pol[i],    d, 3 * sizeof(cuDoubleComplex));
     cudaMemcpyPeerAsync( d_c0[i+1],     d1, d_c0[i],     d, sizeof(double));
     cudaMemcpyPeerAsync( d_c2[i+1],     d1, d_c2[i],     d, sizeof(double));
@@ -905,7 +937,8 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
     cudaMemcpyPeerAsync( d_rt[i+1],     d1, d_rt[i],     d, sizeof(int));
   }
 
-  // Set first trajectory
+
+  // Set interpolating trajectory
   TOMATH::TSpline1D3<TParticleTrajectoryPoint> const& T = OSR.GetCurrentParticle().GetTrajectoryInterpolated().GetSpline();
   int const NPointsThisTrajectory = T.GetNPoints();
   *h_nt = NPointsThisTrajectory;
