@@ -394,7 +394,7 @@ def get_surface_points (surface=None, surfaces=None, translation=None):
 
 
 
-def plot_power_density_scatter (V, s=10, figsize=None):
+def plot_power_density_scatter (V, s=10, title='Power Density [$W/mm^2$]', figsize=None, bbox_inches='tight', alpha=1, transparent=True, ofile=None, colorbar=True):
 
     if len(V) == 0:
         return
@@ -415,15 +415,27 @@ def plot_power_density_scatter (V, s=10, figsize=None):
 
     Cen3D = plt.figure(figsize=figsize)
     ax = Cen3D.add_subplot(111, projection='3d')
+    plt.title(title)
 
-    ax.scatter(X, Z, Y, c=C, s=s, alpha=1)
+    ax.scatter(X, Z, Y, c=C, s=s, alpha=alpha)
     ax.invert_xaxis()
 
     ax.set_xlabel('X [m]')
     ax.set_ylabel('Z [m]')
     ax.set_zlabel('Y [m]')
+
+    m = cm.ScalarMappable()
+    m.set_array(P)
+    if colorbar is True:
+        plt.colorbar(m, format='%.0e')
+        #plt.colorbar(m, format=r'%3.1f')
+
+    if ofile is not None:
+        plt.savefig(ofile, bbox_inches=bbox_inches, transparent=transparent)
+
     plt.show()
 
+    return
 
 
 
@@ -433,7 +445,7 @@ def plot_power_density_scatter (V, s=10, figsize=None):
 
 
 
-def plot_power_density_stl (P, title='Power Density [$W/mm^2$]', elev=30, azim=30, alpha=0.8, bbox_inches='tight', transparent=True, ofile=None):
+def plot_power_density_stl (P, title='Power Density [$W/mm^2$]', elev=30, azim=30, alpha=0.8, bbox_inches='tight', transparent=True, ofile=None, colorbar=True):
 
     pmax = max([p[1] for p in P])
 
@@ -473,6 +485,10 @@ def plot_power_density_stl (P, title='Power Density [$W/mm^2$]', elev=30, azim=3
     ax.set_xlabel('X [m]')
     ax.set_ylabel('Z [m]')
     ax.set_zlabel('Y [m]')
+
+    if colorbar is True:
+        plt.colorbar(m, format='%.0e')
+        #plt.colorbar(m, format=r'%3.1f')
 
     if ofile is not None:
         plt.savefig(ofile, bbox_inches=bbox_inches, transparent=transparent)
