@@ -240,6 +240,10 @@ TVector2D OSCARSTH::UndulatorFluxOnAxisK (double const K, double const Period, d
 {
   // Return the on-axis flux for this K value and harmonic
 
+  if (Harmonic % 2 != 1) {
+    return TVector2D(0, 0);
+  }
+
   double const BeamEnergyGeV = fParticleBeam.GetE0();
 
   double const n = Harmonic;
@@ -276,6 +280,10 @@ TVector2D OSCARSTH::UndulatorFluxOnAxisK (double const K, double const Period, d
   double const wn = w1 / w2;
   double const omega_1 = TOSCARSSR::FrequencyToEv(wn);
 
+  if (Harmonic % 2 != 1) {
+    return TVector2D(omega_1, 0);
+  }
+
   return TVector2D(omega_1, h00);
 }
 
@@ -283,7 +291,10 @@ TVector2D OSCARSTH::UndulatorFluxOnAxisK (double const K, double const Period, d
 
 
 
-TVector2D OSCARSTH::UndulatorFluxOnAxisB (double const BField, double const Period, double const NPeriods, int const Harmonic) const
+TVector2D OSCARSTH::UndulatorFluxOnAxisB (double const BField,
+                                          double const Period,
+                                          double const NPeriods,
+                                          int const Harmonic) const
 {
   // Return the on-axis flux for this K value and harmonic
 
@@ -291,6 +302,83 @@ TVector2D OSCARSTH::UndulatorFluxOnAxisB (double const BField, double const Peri
   double const K = this->UndulatorK(BField, Period);
 
   return this->UndulatorFluxOnAxisK(K, Period, NPeriods, Harmonic);
+}
+
+
+
+
+
+
+
+
+TVector2D OSCARSTH::UndulatorFluxB (double const BField,
+                                    double const Period,
+                                    int    const NPeriods,
+                                    int    const Harmonic
+                                    ) const
+{
+  // Return the on-axis theoretical brightness for a planar undulator
+
+  return UndulatorFluxK(this->UndulatorK(BField, Period), Period, NPeriods, Harmonic);
+}
+
+
+
+
+
+
+
+
+TVector2D OSCARSTH::UndulatorFluxK (double const K,
+                                    double const Period,
+                                    int    const NPeriods,
+                                    int    const N
+                                    ) const
+{
+  // Return the on-axis theoretical brightness for a planar undulator
+  if (N % 2 == 0) {
+    return TVector2D(0, 0);
+  }
+
+
+  // Properties from beam
+  double    const Gamma          = fParticleBeam.GetGamma();
+  TVector2D const Beta           = fParticleBeam.GetTwissBeta();
+  TVector2D const Emittance      = fParticleBeam.GetEmittance();
+  double    const Current        = fParticleBeam.GetCurrent();
+
+  // Check that we can do this calculation, else reject
+  if (Gamma == 0 || Beta[0] == 0 || Beta[1] == 0 || Emittance[0] == 0 || Emittance[1] == 0 || Current == 0) {
+    throw std::invalid_argument("Beam definition incorrect for this calculation: Check energy, current, beta, emittance");
+  }
+
+  double const sigx = sqrt(Emittance[0] * Beta[0]);
+  double const sigy = sqrt(Emittance[1] * Beta[1]);
+
+  double const sigxp = sqrt(Emittance[0] / Beta[0]);
+  double const sigyp = sqrt(Emittance[1] / Beta[1]);
+
+  double const K2 = K * K;
+
+  double const Lambda = Period / (2 * Gamma * Gamma) * (1. + K2 / 2.) / (double) N;
+  double const Energy_eV = UndulatorEnergyAtHarmonicK(K, Period, N);
+
+  double const Fn = K2 * N * N / pow(1. + K2 / 2., 2) * pow(
+      TOMATH::BesselJ( (N - 1) / 2, N * K2 / (4 * (1. + 0.5 * K2))) - TOMATH::BesselJ( (N + 1) / 2, N * K2 / (4 * (1. + 0.5 * K2))),
+      2);
+
+  double const Qn = (1. + K2 / 2.) * Fn / (double) N;
+
+  double const Fu = TOSCARSSR::Pi() * TOSCARSSR::Alpha() * NPeriods * 0.001 * Current / TOSCARSSR::Qe() * Qn;
+
+
+  double const sigr = 1 / TOSCARSSR::FourPi() * sqrt(Lambda * Period * NPeriods);
+  double const sigrp = sqrt(Lambda / (Period * NPeriods));
+  double const SigmaXP = sqrt(sigxp * sigxp + sigrp * sigrp);
+  double const SigmaYP = sqrt(sigyp * sigyp + sigrp * sigrp);
+
+
+  return TVector2D(Energy_eV, Fu / (TOSCARSSR::Pi2() * SigmaXP * SigmaYP) * 1.e-6);
 }
 
 
@@ -462,6 +550,7 @@ TVector2D OSCARSTH::UndulatorBrightnessK (double const K,
   double const SigmaY = sqrt(sigy * sigy + sigr * sigr);
   double const SigmaXP = sqrt(sigxp * sigxp + sigrp * sigrp);
   double const SigmaYP = sqrt(sigyp * sigyp + sigrp * sigrp);
+
 
   return TVector2D(Energy_eV, Fu / (4 * TOSCARSSR::Pi2() * SigmaX * SigmaY * SigmaXP * SigmaYP) * 1.e-12);
 }
@@ -662,7 +751,7 @@ void OSCARSTH::WigglerFluxKPoints (double         const  K,
 
 
 
-
+/*
 TParticleBeam& OSCARSTH::SetParticleBeam (std::string const& Beam, std::string const& Name)
 {
   // Add a particle beam
@@ -697,6 +786,63 @@ TParticleBeam& OSCARSTH::SetParticleBeam (double const Energy_GeV,
   fParticleBeam.SetEta(Eta);
 
   return fParticleBeam;
+}
+*/
+
+
+
+TParticleBeam& OSCARSTH::AddParticleBeam (std::string const& Type,
+                                          std::string const& Name,
+                                          TVector3D const& X0,
+                                          TVector3D const& V0,
+                                          double const Energy_GeV,
+                                          double const T0,
+                                          double const Current,
+                                          double const Weight,
+                                          double const Charge,
+                                          double const Mass)
+{
+  // Add a particle beam
+  // Type        - The name of the particle type that you want to use
+  // Name        - A user specified 'name' for this beam
+  // X0          - Initial position in X,Y,Z
+  // V0          - A vector pointing in the direction of the velocity of arbitrary magnitude
+  // Energy_GeV  - Energy of particle beam in GeV
+  // T0          - Time of initial conditions, specified in units of [m] (for v = c)
+  // Current     - Beam current in Amperes
+  // Weight      - Relative weight to give this beam when randomly sampling
+  // Charge      - Charge of custom particle
+  // Mass        - Mass of custom particle
+
+  this->ClearParticleBeams();
+  fParticleBeam = fParticleBeamContainer.AddNewParticleBeam(Type, Name, X0, V0, Energy_GeV, T0, Current, Weight, Charge, Mass);
+  return fParticleBeam;
+}
+
+
+
+
+TParticleBeam& OSCARSTH::AddParticleBeam (std::string const& Beam,
+                                          std::string const& Name,
+                                          double const Weight)
+{
+  // Add a particle beam
+  // Beam - The name of the predefined particle beam to add
+
+  this->ClearParticleBeams();
+  fParticleBeam = fParticleBeamContainer.AddNewParticleBeam(Beam, Name, Weight);
+  return fParticleBeam;
+}
+
+
+
+
+void OSCARSTH::ClearParticleBeams ()
+{
+  // Clear the contents of the particle beam container
+  fParticleBeamContainer.Clear();
+
+  return;
 }
 
 

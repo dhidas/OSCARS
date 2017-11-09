@@ -29,11 +29,8 @@ class TField3D_IdealUndulator : public TField
 
     ~TField3D_IdealUndulator ();
 
-    double    GetFx (double const X, double const Y, double const Z) const;
-    double    GetFy (double const X, double const Y, double const Z) const;
-    double    GetFz (double const X, double const Y, double const Z) const;
-    TVector3D GetF  (double const X, double const Y, double const Z) const;
-    TVector3D GetF  (TVector3D const& X) const;
+    TVector3D GetF  (double const X, double const Y, double const Z, double const T = 0) const;
+    TVector3D GetF  (TVector3D const& X, double const T = 0) const;
 
     void Init (TVector3D   const& Field,
                TVector3D   const& Period,

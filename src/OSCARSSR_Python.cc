@@ -1499,7 +1499,7 @@ static PyObject* OSCARSSR_RemoveMagneticField (OSCARSSRObject* self, PyObject* a
 
 
 const char* DOC_OSCARSSR_GetBField = R"docstring(
-get_bfield(x)
+get_bfield(x [, t, name])
 
 Get the 3D field at any point in space.  This is the sum of all fields added to this OSCARS object.
 
@@ -1507,6 +1507,12 @@ Parameters
 ----------
 x : list
     A 3D list representing a point in space [x, y, z]
+
+t : float
+    time at which you wish to know the field.  optional, default is 0
+
+name : str
+    Name of the field you want.  All fields with this name will be summed.  Optional.
 
 Returns
 -------
@@ -1518,14 +1524,20 @@ static PyObject* OSCARSSR_GetBField (OSCARSSRObject* self, PyObject* args, PyObj
   // Get the magnetic field at a point as a 3D list [Bx, By, Bz]
 
   // Python list object
-  PyObject* List = 0x0;//PyList_New(0);;
+  PyObject* List = 0x0;//PyList_New(0);
+  double T = 0;
+  char const* Name = "";
 
   static const char *kwlist[] = {"x",
+                                 "t",
+                                 "name",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|ds",
                                    const_cast<char **>(kwlist),
-                                   &List)) {
+                                   &List,
+                                   &T,
+                                   &Name)) {
     return NULL;
   }
 
@@ -1539,7 +1551,7 @@ static PyObject* OSCARSSR_GetBField (OSCARSSRObject* self, PyObject* args, PyObj
   }
 
   // Set the object variable
-  TVector3D const B = self->obj->GetB(X);
+  TVector3D const B = self->obj->GetB(X, T, Name);
 
   // Create a python list
   PyObject *PList = OSCARSPY::TVector3DAsList(B);
@@ -2454,7 +2466,7 @@ static PyObject* OSCARSSR_RemoveElectricField (OSCARSSRObject* self, PyObject* a
 
 
 const char* DOC_OSCARSSR_GetEField = R"docstring(
-get_efield(x)
+get_efield(x [, t, name])
 
 Get the 3D field at any point in space.  This is the sum of all fields added to this OSCARS object.
 
@@ -2462,6 +2474,13 @@ Parameters
 ----------
 x : list
     A 3D list representing a point in space [x, y, z]
+
+t : float
+    time at which you wish to know the field.  optional, default is 0
+
+name : str
+    Name of the field you want.  All fields with this name will be summed.  Optional.
+
 
 Returns
 -------
@@ -2474,13 +2493,18 @@ static PyObject* OSCARSSR_GetEField (OSCARSSRObject* self, PyObject* args, PyObj
 
   // Python list object
   PyObject* List = PyList_New(0);
+  double T = 0;
+  char const* Name = "";
 
   static const char *kwlist[] = {"x",
+                                 "t",
+                                 "name",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|ds",
                                    const_cast<char **>(kwlist),
-                                   &List)) {
+                                   &T,
+                                   &Name)) {
     return NULL;
   }
 
@@ -2494,7 +2518,7 @@ static PyObject* OSCARSSR_GetEField (OSCARSSRObject* self, PyObject* args, PyObj
   }
 
   // Set the object variable
-  TVector3D const F = self->obj->GetE(X);
+  TVector3D const F = self->obj->GetE(X, T, Name);
 
   // Create a python list
   PyObject *PList = OSCARSPY::TVector3DAsList(F);
@@ -3099,7 +3123,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   // Lists and variables some with initial values
   char const* Type                       = "electron";
   char const* Name                       = "";
-  double      Energy_GeV                 = 0;
+  double      Energy_GeV                 = -1;
   double      Sigma_Energy_GeV           = 0;
   double      T0                         = 0;
   double      Current                    = 0;
@@ -3196,9 +3220,18 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
       PyErr_SetString(PyExc_ValueError, "Error in predefined beam name / definition");
       return NULL;
     }
+
+    if (Energy_GeV >= 0) {
+      ThisBeam->SetE0(Energy_GeV);
+    }
+
   }
 
 
+  // default is 0
+  if (Energy_GeV == -1) {
+    Energy_GeV = 0;
+  }
 
   // Initial position
   if (List_Position != 0x0) {
@@ -4728,7 +4761,8 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
   int         MaxLevel = -2;
   int         MaxLevelExtended = 0;
   char const* ReturnQuantityChars = "power density";
-  char const* OutFileName = "";
+  char const* OutFileNameText = "";
+  char const* OutFileNameBinary = "";
 
 
   static const char *kwlist[] = {"points",
@@ -4744,9 +4778,10 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
                                  "max_level_extended",
                                  "quantity",
                                  "ofile",
+                                 "bofile",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|iOOiiOidiiss",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|iOOiiOidiisss",
                                    const_cast<char **>(kwlist),
                                    &List_Points,
                                    &NormalDirection,
@@ -4760,7 +4795,8 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
                                    &MaxLevel,
                                    &MaxLevelExtended,
                                    &ReturnQuantityChars,
-                                   &OutFileName)) {
+                                   &OutFileNameText,
+                                   &OutFileNameBinary)) {
     return NULL;
   }
 
@@ -4930,14 +4966,14 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
 
   // Write the output file if requested
   // Text output
-  //if (std::string(OutFileNameText) != "") {
-  //  PowerDensityContainer.WriteToFileText(OutFileNameText, Dim);
-  //}
+  if (std::string(OutFileNameText) != "") {
+    PowerDensityContainer.WriteToFileText(OutFileNameText, Dim);
+  }
 
   // Binary output
-  //if (std::string(OutFileNameBinary) != "") {
-  //  PowerDensityContainer.WriteToFileBinary(OutFileNameBinary, Dim);
-  //}
+  if (std::string(OutFileNameBinary) != "") {
+    PowerDensityContainer.WriteToFileBinary(OutFileNameBinary, Dim);
+  }
 
 
   // Build the output list of: [[[x, y, z], PowerDensity], [...]]
@@ -7602,7 +7638,7 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
                                                                                           
   {"add_bfield_file",                   (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticField},
   {"add_bfield_interpolated",           (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldInterpolated},
-  {"add_bfield_function",               (PyCFunction) OSCARSSR_Fake, METH_VARARGS,                 DOC_OSCARSSR_AddMagneticFieldFunction},
+  {"add_bfield_function",               (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldFunction},
   {"add_bfield_gaussian",               (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldGaussian},
   {"add_bfield_uniform",                (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldUniform},
   {"add_bfield_undulator",              (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldIdealUndulator},
@@ -7614,7 +7650,7 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
 
   {"add_efield_file",                   (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricField},
   {"add_efield_interpolated",           (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldInterpolated},
-  {"add_efield_function",               (PyCFunction) OSCARSSR_Fake, METH_VARARGS,                 DOC_OSCARSSR_AddElectricFieldFunction},
+  {"add_efield_function",               (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldFunction},
   {"add_efield_gaussian",               (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldGaussian},
   {"add_efield_uniform",                (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldUniform},
   {"add_efield_undulator",              (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldIdealUndulator},
@@ -7658,7 +7694,7 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   {"calculate_power_density_stl",       (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensitySTL},
   {"calculate_power_density_line",      (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensityLine},
 
-  {"calculate_flux",                    (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateFlux},
+  //{"calculate_flux",                    (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateFlux},
   {"calculate_flux_rectangle",          (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateFluxRectangle},
 
   {"average_spectra",                   (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AverageSpectra},
@@ -7720,7 +7756,7 @@ static PyMethodDef OSCARSSR_methods[] = {
 
   {"add_efield_file",                   (PyCFunction) OSCARSSR_AddElectricField,                METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricField},
   {"add_efield_interpolated",           (PyCFunction) OSCARSSR_AddElectricFieldInterpolated,    METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldInterpolated},
-  {"add_efield_function",               (PyCFunction) OSCARSSR_AddElectricFieldFunction,        METH_VARARGS,                 DOC_OSCARSSR_AddElectricFieldFunction},
+  {"add_efield_function",               (PyCFunction) OSCARSSR_AddElectricFieldFunction,        METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldFunction},
   {"add_efield_gaussian",               (PyCFunction) OSCARSSR_AddElectricFieldGaussian,        METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldGaussian},
   {"add_efield_uniform",                (PyCFunction) OSCARSSR_AddElectricFieldUniform,         METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldUniform},
   {"add_efield_undulator",              (PyCFunction) OSCARSSR_AddElectricFieldIdealUndulator,  METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldIdealUndulator},
@@ -7764,7 +7800,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"calculate_power_density_stl",       (PyCFunction) OSCARSSR_CalculatePowerDensitySTL,        METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensitySTL},
   {"calculate_power_density_line",      (PyCFunction) OSCARSSR_CalculatePowerDensityLine,       METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensityLine},
 
-  {"calculate_flux",                    (PyCFunction) OSCARSSR_CalculateFlux,                   METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateFlux},
+  //{"calculate_flux",                    (PyCFunction) OSCARSSR_CalculateFlux,                   METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateFlux},
   {"calculate_flux_rectangle",          (PyCFunction) OSCARSSR_CalculateFluxRectangle,          METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateFluxRectangle},
 
   {"average_spectra",                   (PyCFunction) OSCARSSR_AverageSpectra,                  METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AverageSpectra},

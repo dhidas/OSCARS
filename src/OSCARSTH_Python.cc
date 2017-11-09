@@ -677,6 +677,248 @@ static PyObject* OSCARSTH_DipoleBrightness (OSCARSTHObject* self, PyObject* args
 
 
 
+const char* DOC_OSCARSTH_UndulatorFlux = R"docstring(
+undulator_flux(period, nperiods, harmonic, [, bfield_range, K_range, npoints, bfield_points, K_points, minimum, ofile, bofile])
+
+Get the on-axis flux for an ideal undulator given K for a specific harmonic.  Should specify either K or bfield, but not both.  You *must* have previously defined a beam including the emittance and beta function.
+
+Parameters
+----------
+period : float
+    Undulator period length [m]
+
+nperiods : int
+    Number of periods
+
+harmonic : int
+    Harmonic number of interest
+
+bfield_range : list
+    [min, max] of bfield range of interest
+
+K_range : list
+    [min, max] of K range of interest
+
+npoints : int
+    number of points to use when bfield_range or K_range is specified
+
+bfield_points : list
+    List of bfield points to calculate flux at
+
+K_points : list
+    List of K points to calculate flux at
+
+minimum : float
+    Any flux below the minimum will not be included in the return list
+
+ofile : str
+    Output file name
+
+bofile : str
+    Binary output file name
+
+Returns
+-------
+[energy_eV, flux]s : list[[float, float], ...]
+    Photon energy [eV] and flux [photons/s/0.1%bw/mrad^2] for the given parameters
+
+Examples
+--------
+Get the harmonic peak spectrum for a undulator with a period of 0.050 [m] having 41 periods and a bfield ranging from 0.05 to 0.8 [T] from the 1st harmonic
+
+    >>> oth.undulator_flux(period=0.050, nperiods=41, harmonic=1, bfield_range=[0.05, 0.8], npoints=1000)
+
+Get the photon energy and flux for a undulator with a period of 0.050 [m] having 41 periods and K value of 1.8674577 from the 1st harmonic
+
+    >>> oth.undulator_flux(period=0.050, nperiods=41, harmonic=1, K=1.8674577)
+)docstring";
+static PyObject* OSCARSTH_UndulatorFlux (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
+{
+  // Return a list of points corresponding to the flux in a given energy range for a given vertical angle.
+  // This approximation assumes that the particle beam is perpendicular to the magnetic field
+
+  // Require 2 arguments
+  double       Period            = 0;
+  int          NPeriods          = 0;
+  int          Harmonic          = 0;
+  PyObject*    List_BFieldRange  = PyList_New(0);
+  PyObject*    List_KRange       = PyList_New(0);
+  int          NPoints           = 0;
+  PyObject*    List_BFieldPoints = PyList_New(0);
+  PyObject*    List_KPoints      = PyList_New(0);
+  double       Minimum           = 0;
+  const char*  OutFileNameText   = "";
+  const char*  OutFileNameBinary = "";
+
+  // Input variable list
+  static const char *kwlist[] = {"period",
+                                 "nperiods",
+                                 "harmonic",
+                                 "bfield_range",
+                                 "K_range",
+                                 "npoints",
+                                 "bfield_points",
+                                 "K_points",
+                                 "minimum",
+                                 "ofile",
+                                 "bofile",
+                                 NULL};
+
+  // Parse inputs
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dii|OOiOOdss",
+                                   const_cast<char **>(kwlist),
+                                   &Period,
+                                   &NPeriods,
+                                   &Harmonic,
+                                   &List_BFieldRange,
+                                   &List_KRange,
+                                   &NPoints,
+                                   &List_BFieldPoints,
+                                   &List_KPoints,
+                                   &Minimum,
+                                   &OutFileNameText,
+                                   &OutFileNameBinary)) {
+    return NULL;
+  }
+
+  // CHeck if beam is ok
+  if (!self->obj->CheckBeam()) {
+    PyErr_SetString(PyExc_ValueError, "particle beam not correctly defined");
+    return NULL;
+  }
+
+  // Check harmonic number is > 0
+  if (Harmonic <= 0) {
+    PyErr_SetString(PyExc_ValueError, "'harmonic' must be > 0");
+    return NULL;
+  }
+
+  // Check period
+  if (Period <= 0) {
+    PyErr_SetString(PyExc_ValueError, "'period' must be > 0");
+    return NULL;
+  }
+
+  // Check nperiods
+  if (NPeriods <= 0) {
+    PyErr_SetString(PyExc_ValueError, "'nperiod' must be > 0");
+    return NULL;
+  }
+
+  // Check not overlapping definitions
+  int const SizeSumLists =  PyList_Size(List_BFieldRange)
+                             + PyList_Size(List_KRange)
+                             + PyList_Size(List_BFieldPoints)
+                             + PyList_Size(List_KPoints);
+  if (!(PyList_Size(List_BFieldRange)  == SizeSumLists ||
+        PyList_Size(List_KRange)       == SizeSumLists ||
+        PyList_Size(List_BFieldPoints) == SizeSumLists ||
+        PyList_Size(List_KPoints)      == SizeSumLists)) {
+    PyErr_SetString(PyExc_ValueError, "May only specify one of: 'bfield_range', 'K_range', 'bfield_points', 'K_points'");
+    return NULL;
+  }
+
+  // Container for spectrum
+  TSpectrumContainer SpectrumContainer;
+
+  if (Harmonic % 2 != 1) {
+    return OSCARSPY::GetSpectrumAsList(SpectrumContainer);
+  }
+
+  TVector2D Range;
+  std::vector<double> Points;
+
+  // Init container based on inputs
+  if (PyList_Size(List_BFieldRange) > 0 && NPoints > 1) {
+    try {
+      Range = OSCARSPY::ListAsTVector2D(List_BFieldRange);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'bfield_range'");
+      return NULL;
+    }
+
+    // Add each point
+    for (int i = 0; i < NPoints; ++i) {
+      double BField = Range[0] + (Range[1] - Range[0]) / (double) (NPoints - 1) * (double) i;
+      TVector2D const Result = self->obj->UndulatorFluxB(BField, Period, NPeriods, Harmonic);
+      if (Result[1] >= Minimum) {
+        SpectrumContainer.AddPoint(Result[0], Result[1]);
+      }
+    }
+
+  } else if (PyList_Size(List_KRange) > 0 && NPoints > 1) {
+    try {
+      Range = OSCARSPY::ListAsTVector2D(List_KRange);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'K_range'");
+      return NULL;
+    }
+
+    // Add each point
+    for (int i = 0; i < NPoints; ++i) {
+      double K = Range[0] + (Range[1] - Range[0]) / (double) (NPoints - 1) * (double) i;
+      TVector2D const Result = self->obj->UndulatorFluxK(K, Period, NPeriods, Harmonic);
+      if (Result[1] >= Minimum) {
+        SpectrumContainer.AddPoint(Result[0], Result[1]);
+      }
+    }
+
+  } else if (PyList_Size(List_BFieldPoints) > 0) {
+    for (int i = 0; i < PyList_Size(List_BFieldPoints); ++i) {
+      Points.push_back(PyFloat_AsDouble(PyList_GetItem(List_BFieldPoints, i)));
+    }
+
+    // Add each point
+    for (size_t i = 0; i < Points.size(); ++i) {
+      TVector2D const Result = self->obj->UndulatorFluxB(Points[i], Period, NPeriods, Harmonic);
+      if (Result[1] >= Minimum) {
+        SpectrumContainer.AddPoint(Result[0], Result[1]);
+      }
+    }
+
+  } else if (PyList_Size(List_KPoints) > 0) {
+    for (int i = 0; i < PyList_Size(List_KPoints); ++i) {
+      Points.push_back(PyFloat_AsDouble(PyList_GetItem(List_KPoints, i)));
+    }
+
+    // Add each point
+    for (size_t i = 0; i < Points.size(); ++i) {
+      TVector2D const Result = self->obj->UndulatorFluxK(Points[i], Period, NPeriods, Harmonic);
+      if (Result[1] >= Minimum) {
+        SpectrumContainer.AddPoint(Result[0], Result[1]);
+      }
+    }
+
+  } else {
+    PyErr_SetString(PyExc_ValueError, "Incorrect input format in input, possibly check that npoints > 1?");
+    return NULL;
+  }
+
+  // Don't need to hold on to this any longer
+  Points.clear();
+
+  // Write to file if output is requested
+  if (std::string(OutFileNameText) != "") {
+    SpectrumContainer.WriteToFileText(OutFileNameText);
+  }
+  if (std::string(OutFileNameBinary) != "") {
+    SpectrumContainer.WriteToFileBinary(OutFileNameBinary);
+  }
+
+  // Return the spectrum
+  return OSCARSPY::GetSpectrumAsList(SpectrumContainer);
+}
+
+
+
+
+
+
+
+
+
+
+
 
 const char* DOC_OSCARSTH_UndulatorFluxOnAxis = R"docstring(
 undulator_flux_onaxis(period, nperiods, harmonic, [, bfield_range, K_range, npoints, bfield_points, K_points, minimum, ofile, bofile])
@@ -821,6 +1063,10 @@ static PyObject* OSCARSTH_UndulatorFluxOnAxis (OSCARSTHObject* self, PyObject* a
 
   // Container for spectrum
   TSpectrumContainer SpectrumContainer;
+
+  if (Harmonic % 2 != 1) {
+    return OSCARSPY::GetSpectrumAsList(SpectrumContainer);
+  }
 
   TVector2D Range;
   std::vector<double> Points;
@@ -1923,17 +2169,34 @@ static PyObject* OSCARSTH_BesselK (OSCARSTHObject* self, PyObject* args, PyObjec
 const char* DOC_OSCARSTH_SetParticleBeam = R"docstring(
 set_particle_beam([, type, name, energy_GeV, d0, x0, beam, sigma_energy_GeV, t0, current, weight, rotations, translation, horizontal_direction, beta, alpha, gamma, emittance, eta, lattice_reference, mass, charge])
 
-Add a particle beam to the OSCARS object with a name given by *name*.  There is no limit to the number of different particle beams one can add.  They are added with a *weight* which is by default 1.  The weight is used in random sampling when asking for a new particle, for example in oscars.sr.set_new_particle().  If the *beam* parameter is given you only need to specify *name* and *x0*.
+This function is the same as add_particle_beam(), but it clears all particle beams before the 'add'.
+)docstring";
+static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
+{
+  // Clear all particle beams, add this beam, and set a new particle
+
+  self->obj->ClearParticleBeams();
+
+  PyObject* ret = OSCARSTH_AddParticleBeam(self, args, keywds);
+  if (ret == NULL) {
+    return ret;
+  }
+
+  //self->obj->SetNewParticle("", "ideal");
+
+  return ret;
+}
+
+
+
+
+const char* DOC_OSCARSTH_AddParticleBeam = R"docstring(
+add_particle_beam([, type, name, energy_GeV, d0, x0, beam, sigma_energy_GeV, t0, current, weight, rotations, translation, horizontal_direction, beta, alpha, gamma, emittance, eta, lattice_reference, mass, charge])
+
+Add a particle beam to the OSCARS object with a name given by *name*.  There is no limit to the number of different particle beams one can add.  They are added with a *weight* which is by default 1.  The weight is used in random sampling when asking for a new particle, for example in set_new_particle().  If the *beam* parameter is given you only need to specify *name* and *x0*.
 
 Supported particle types for *type* are:
     * electron
-    * positron
-    * muon
-    * anti-muon
-    * proton
-    * anti-proton
-    * pi+
-    * pi-
 
 Parameters
 ----------
@@ -2014,26 +2277,20 @@ Examples
 --------
 Add an electron beam with 0.500 [A] current at an initial position of [0, 0, 0] in the Y direction with energy of 3 [GeV]
 
-    >>> osr.add_particle_beam(type='electron', name='beam_0', x0=[0, 0, 0], d0=[0, 1, 0], energy_GeV=3, current=0.500)
-
-Add a positron beam with 0.500 [A] current at an initial position of [-2, 0, 0] in the direction given by theta in the X-Y plane with energy of 3 [GeV]
-
-    >>> from math import sin, cos
-    >>> theta = 0.25 * osr.pi()
-    >>> osr.add_particle_beam(type='positron', name='beam_0', x0=[-2, 0, 0], d0=[sin(theta), cos(theta), 0], energy_GeV=3, current=0.500)
+    >>> oth.add_particle_beam(type='electron', energy_GeV=3, current=0.500)
 
 Add a predefined beam for the NSLSII short straight section
 
-    >>> osr.add_particle_beam(beam='NSLSII-ShortStraight', name='beam_0', x0=[-2, 0, 0])
+    >>> oth.add_particle_beam(beam='NSLSII-ShortStraight')
 )docstring";
-static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
+static PyObject* OSCARSTH_AddParticleBeam (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {
   // Add a particle beam to the experiment
 
   // Lists and variables some with initial values
-  char const* Type                       = "";
+  char const* Type                       = "electron";
   char const* Name                       = "";
-  double      Energy_GeV                 = 0;
+  double      Energy_GeV                 = -1;
   double      Sigma_Energy_GeV           = 0;
   double      T0                         = 0;
   double      Current                    = 0;
@@ -2041,17 +2298,17 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
   double      Mass                       = 0;
   double      Charge                     = 0;
   char const* Beam                       = "";
-  PyObject*   List_Position              = PyList_New(0);
-  PyObject*   List_Direction             = PyList_New(0);
-  PyObject*   List_Rotations             = PyList_New(0);
-  PyObject*   List_Translation           = PyList_New(0);
-  PyObject*   List_Horizontal_Direction  = PyList_New(0);
-  PyObject*   List_Beta                  = PyList_New(0);
-  PyObject*   List_Alpha                 = PyList_New(0);
-  PyObject*   List_Gamma                 = PyList_New(0);
-  PyObject*   List_Emittance             = PyList_New(0);
-  PyObject*   List_Eta                   = PyList_New(0);
-  PyObject*   List_Lattice_Reference     = PyList_New(0);
+  PyObject*   List_Position              = 0x0;
+  PyObject*   List_Direction             = 0x0;
+  PyObject*   List_Rotations             = 0x0;
+  PyObject*   List_Translation           = 0x0;
+  PyObject*   List_Horizontal_Direction  = 0x0;
+  PyObject*   List_Beta                  = 0x0;
+  PyObject*   List_Alpha                 = 0x0;
+  PyObject*   List_Gamma                 = 0x0;
+  PyObject*   List_Emittance             = 0x0;
+  PyObject*   List_Eta                   = 0x0;
+  PyObject*   List_Lattice_Reference     = 0x0;
 
   TVector3D Position(0, 0, 0);
   TVector3D Direction(0, 0, 1);
@@ -2116,6 +2373,8 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
     return NULL;
   }
 
+  // Clear particle beam (only one beam in TH)
+  self->obj->ClearParticleBeams();
 
   // Are you asking for one of the predefined beams?
   bool const HasPredefinedBeam = std::strlen(Beam) != 0 ? true : false;
@@ -2125,17 +2384,26 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
   // Check if beam is defined (for predefined beams)
   if (HasPredefinedBeam) {
     try {
-      ThisBeam = &(self->obj->SetParticleBeam(Beam, Name));
+      ThisBeam = &(self->obj->AddParticleBeam(Beam, Name, Weight));
     } catch (...) {
       PyErr_SetString(PyExc_ValueError, "Error in predefined beam name / definition");
       return NULL;
     }
+
+    if (Energy_GeV >= 0) {
+      ThisBeam->SetE0(Energy_GeV);
+    }
+
   }
 
 
+  // default is 0
+  if (Energy_GeV == -1) {
+    Energy_GeV = 0;
+  }
 
   // Initial position
-  if (PyList_Size(List_Position) != 0) {
+  if (List_Position != 0x0) {
     try {
       Position = OSCARSPY::ListAsTVector3D(List_Position);
     } catch (std::length_error e) {
@@ -2145,8 +2413,14 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
 
   }
 
+  // Energy check
+  if (Energy_GeV < 0) {
+    PyErr_SetString(PyExc_ValueError, "We do not currently support negative energy beams.  Please change 'energy_GeV' to >= 0");
+    return NULL;
+  }
+
   // Initial direction
-  if (PyList_Size(List_Direction) != 0) {
+  if (List_Direction != 0x0) {
     try {
       Direction = OSCARSPY::ListAsTVector3D(List_Direction);
     } catch (std::length_error e) {
@@ -2156,7 +2430,7 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
   }
 
   // Check for Rotations in the input
-  if (PyList_Size(List_Rotations) != 0) {
+  if (List_Rotations != 0x0) {
     try {
       Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
     } catch (std::length_error e) {
@@ -2167,7 +2441,7 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
 
 
   // Check for Translation in the input
-  if (PyList_Size(List_Translation) != 0) {
+  if (List_Translation != 0x0) {
     try {
       Translation = OSCARSPY::ListAsTVector3D(List_Translation);
     } catch (std::length_error e) {
@@ -2178,7 +2452,7 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
 
 
   // Check for Horizontal_Direction in the input
-  if (PyList_Size(List_Horizontal_Direction) != 0) {
+  if (List_Horizontal_Direction != 0x0) {
     try {
       Horizontal_Direction = OSCARSPY::ListAsTVector3D(List_Horizontal_Direction);
     } catch (std::length_error e) {
@@ -2186,7 +2460,7 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
       return NULL;
     }
   } else {
-    Horizontal_Direction = -Direction.Orthogonal().UnitVector();
+    Horizontal_Direction = -Direction.Orthogonal();
   }
   Horizontal_Direction = Horizontal_Direction.UnitVector();
 
@@ -2199,24 +2473,51 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
   // Add the particle beam
   if (std::strlen(Beam) == 0) {
     try {
-      ThisBeam = &(self->obj->SetParticleBeam(Energy_GeV, Current, Beta, Emittance, Sigma_Energy_GeV, Eta));
+      if (std::string(Type) == "custom") {
+        if (Mass == 0 || Charge == 0) {
+          PyErr_SetString(PyExc_ValueError, "'mass' or 'charge' is zero");
+          return NULL;
+        }
+        // UPDATE: for custom beams
+        ThisBeam = &(self->obj->AddParticleBeam(Type, Name, Position, Direction, Energy_GeV, T0, Current, Weight, Charge, Mass));
+      } else {
+        ThisBeam = &(self->obj->AddParticleBeam(Type, Name, Position, Direction, Energy_GeV, T0, Current, Weight));
+      }
     } catch (std::invalid_argument e) {
       PyErr_SetString(PyExc_ValueError, "invalid argument in adding particle beam.  possibly 'name' already exists");
       return NULL;
     }
   }
 
+  // Change predefined beam accordingly
+  if (HasPredefinedBeam) {
+    if (List_Direction != 0x0) {
+      ThisBeam->SetU0(Direction);
+    }
+    ThisBeam->SetX0(Position);
+  }
+
+  // Set horizontal direction
+  ThisBeam->SetHorizontalDirection(Horizontal_Direction);
 
   // UPDATE
   // Check for Emittance in the input
-  if (PyList_Size(List_Emittance) != 0) {
+  if (List_Emittance != 0x0) {
     try {
       Emittance = OSCARSPY::ListAsTVector2D(List_Emittance);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'emittance'");
       return NULL;
     }
+
+    // Set emittance and beam distribution
     ThisBeam->SetEmittance(Emittance);
+    ThisBeam->SetBeamDistribution(TParticleBeam::kBeamDistribution_Gaussian);
+  } else {
+    // Beam distribution to filament
+    if (std::strlen(Beam) == 0) {
+      ThisBeam->SetBeamDistribution(TParticleBeam::kBeamDistribution_Filament);
+    }
   }
 
   // Check for no beam
@@ -2237,7 +2538,7 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
 
   // Check for beta, alpha, gammain the input
   int HasBAG = 0x0;
-  if (PyList_Size(List_Beta) != 0) {
+  if (List_Beta != 0x0) {
     try {
       Beta = OSCARSPY::ListAsTVector2D(List_Beta);
       HasBAG |= 0x4;
@@ -2246,7 +2547,7 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
       return NULL;
     }
   }
-  if (PyList_Size(List_Alpha) != 0) {
+  if (List_Alpha != 0x0) {
     try {
       Alpha = OSCARSPY::ListAsTVector2D(List_Alpha);
       HasBAG |= 0x2;
@@ -2255,7 +2556,7 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
       return NULL;
     }
   }
-  if (PyList_Size(List_Gamma) != 0) {
+  if (List_Gamma != 0x0) {
     try {
       Gamma = OSCARSPY::ListAsTVector2D(List_Gamma);
       HasBAG |= 0x1;
@@ -2267,7 +2568,7 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
 
   // Check for Lattice reference in the input
   bool HasReferencePoint = false;
-  if (PyList_Size(List_Lattice_Reference) != 0) {
+  if (List_Lattice_Reference != 0x0) {
     try {
       Lattice_Reference = OSCARSPY::ListAsTVector3D(List_Lattice_Reference);
       HasReferencePoint = true;
@@ -2275,8 +2576,8 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'lattice_reference'");
       return NULL;
     }
-    ThisBeam->SetTwissLatticeReference(Lattice_Reference);
   }
+  ThisBeam->SetTwissLatticeReference(Lattice_Reference);
 
   // Set correct twiss parameters
   switch (HasBAG) {
@@ -2299,15 +2600,15 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
       break;
   }
 
-  if (PyList_Size(List_Eta) != 0) {
+  if (List_Eta != 0x0) {
     try {
       Eta = OSCARSPY::ListAsTVector2D(List_Eta);
-      ThisBeam->SetEta(Eta);
     } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'gamma'");
       return NULL;
     }
   }
+  ThisBeam->SetEta(Eta);
 
 
   if (T0 != 0) {
@@ -2321,6 +2622,10 @@ static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args,
   Py_INCREF(Py_None);
   return Py_None;
 }
+
+
+
+
 
 
 
@@ -2356,7 +2661,7 @@ None
 )docstring";
 static PyObject* OSCARSTH_PrintAll (OSCARSTHObject* self)
 {
-  // Print all particle beams stored in OSCARSSR
+  // Print all particle beams stored
 
   // Out string stream for printing beam information
   std::ostringstream ostream;
@@ -2427,12 +2732,13 @@ static PyMethodDef OSCARSTH_methods[] = {
   {"dipole_critical_wavelength",                 (PyCFunction) OSCARSTH_DipoleCriticalWavelength,                METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleCriticalWavelength},
   {"dipole_brightness",                          (PyCFunction) OSCARSTH_DipoleBrightness,                        METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleBrightness},
 
+  {"undulator_flux",                             (PyCFunction) OSCARSTH_UndulatorFlux,                           METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorFlux},
   {"undulator_flux_onaxis",                      (PyCFunction) OSCARSTH_UndulatorFluxOnAxis,                     METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorFluxOnAxis},
   {"undulator_brightness",                       (PyCFunction) OSCARSTH_UndulatorBrightness,                     METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorBrightness},
   {"undulator_energy_harmonic",                  (PyCFunction) OSCARSTH_UndulatorEnergyHarmonic,                 METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorEnergyHarmonic},
 
   {"wiggler_spectrum",                           (PyCFunction) OSCARSTH_WigglerSpectrum,                         METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_WigglerSpectrum},
-  {"wiggler_flux",                               (PyCFunction) OSCARSTH_WigglerFluxRectangle,                             METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_WigglerFluxRectangle},
+  {"wiggler_flux",                               (PyCFunction) OSCARSTH_WigglerFluxRectangle,                    METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_WigglerFluxRectangle},
 
   {"bessel_j",                                   (PyCFunction) OSCARSTH_BesselJ,                                 METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_BesselJ},
   {"bessel_k",                                   (PyCFunction) OSCARSTH_BesselK,                                 METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_BesselK},
@@ -2462,6 +2768,7 @@ static PyMethodDef OSCARSTH_methods_fake[] = {
   {"dipole_critical_wavelength",                 (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleCriticalWavelength},
   {"dipole_brightness",                          (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_DipoleBrightness},
 
+  {"undulator_flux",                             (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorFlux},
   {"undulator_flux_onaxis",                      (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorFluxOnAxis},
   {"undulator_brightness",                       (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorBrightness},
   {"undulator_energy_harmonic",                  (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorEnergyHarmonic},

@@ -65,7 +65,7 @@ TField3D_Gaussian::~TField3D_Gaussian ()
 
 
 
-TVector3D TField3D_Gaussian::GetF (double const X, double const Y, double const Z) const
+TVector3D TField3D_Gaussian::GetF (double const X, double const Y, double const Z, double const T) const
 {
   return this->GetF(TVector3D(X, Y, Z));
 }
@@ -73,7 +73,7 @@ TVector3D TField3D_Gaussian::GetF (double const X, double const Y, double const 
 
 
 
-TVector3D TField3D_Gaussian::GetF (TVector3D const& X) const
+TVector3D TField3D_Gaussian::GetF (TVector3D const& X, double const T) const
 {
   // Get the magnetic field at a point in space.
 

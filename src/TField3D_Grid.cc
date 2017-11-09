@@ -115,7 +115,7 @@ TField3D_Grid::~TField3D_Grid ()
 
 
 
-TVector3D TField3D_Grid::GetF (double const X, double const Y, double const Z) const
+TVector3D TField3D_Grid::GetF (double const X, double const Y, double const Z, double const T) const
 {
   return this->GetF(TVector3D(X, Y, Z));
 }
@@ -129,7 +129,7 @@ size_t TField3D_Grid::GetIndex (size_t const ix, size_t const iy, size_t const i
 
 
 
-TVector3D TField3D_Grid::GetF (TVector3D const& XIN) const
+TVector3D TField3D_Grid::GetF (TVector3D const& XIN, double const T) const
 {
   // Get the field at a point in space.  Must rotate point into coordinate system, then translate it.
 
@@ -862,7 +862,7 @@ void TField3D_Grid::ReadFile_Binary (std::string const& InFileName,
   char* Comment = new char(NCommentChars + 1);
   fi.read(Comment, NCommentChars * sizeof(char));
   Comment[NCommentChars] = '\0';
-  delete [] Comment;
+  delete Comment;
 
   // Header 1: Version number
   int Version;
@@ -874,7 +874,7 @@ void TField3D_Grid::ReadFile_Binary (std::string const& InFileName,
   char* Format = new char(NFormatChars+1);
   fi.read(Format, NFormatChars * sizeof(char));
   Format[NFormatChars] = '\0';
-  delete [] Format;
+  delete Format;
 
 
   // Check version number

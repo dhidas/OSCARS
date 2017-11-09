@@ -1,7 +1,7 @@
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 import numpy as np
-def fit_spectrum_gaussian (spectrum, xranges=[], n=None, figsize=None, quiet=False):
+def fit_spectrum_gaussian (spectrum, xranges=[], n=None, figsize=None, quiet=True):
     """Fit multiple gaussians in ranges given to spectrum
 
     asdd
@@ -35,8 +35,9 @@ def fit_spectrum_gaussian (spectrum, xranges=[], n=None, figsize=None, quiet=Fal
 
     if n is None:
         for i in range(len(xranges)):
-            XP = [s[0] for s in spectrum if s[0] >= xranges[i][0] and s[0] <= xranges[i][1]]
-            YP = [s[1] for s in spectrum if s[0] >= xranges[i][0] and s[0] <= xranges[i][1]]
+            xr = xranges[i]
+            XP = [s[0] for s in spectrum if s[0] >= xr[0] and s[0] <= xr[1]]
+            YP = [s[1] for s in spectrum if s[0] >= xr[0] and s[0] <= xr[1]]
 
 
             amplitude_guess = max(YP)
@@ -44,10 +45,19 @@ def fit_spectrum_gaussian (spectrum, xranges=[], n=None, figsize=None, quiet=Fal
 
             try:
                 popt, pcov = curve_fit(func, XP, YP, p0=[amplitude_guess, x_guess, sigma_guess])
-                fit_results.append(list(popt))
+                if popt[1] >= xr[0] and popt[1] <= xr[1]:
+                    fit_results.append(list(popt))
             except RuntimeError:
-                popt = [amplitude_guess, x_guess, 10]
-                fit_results.append(list(popt))
+                pass
+                #popt = [amplitude_guess, x_guess, 10]
+                #max_s = 0
+                #max_x = 0
+                #for ix in range(len(XP)):
+                #    if XP[i] >= xr[0] and XP[i] <= xr[1] and YP[i] > max_s:
+                #        max_s = YP[i]
+                #        max_x = XP[i]
+                #if max_s != 0:
+                #    fit_results.append([max_s, max_x, 10])
 
     else:
         XP = [s[0] for s in spectrum]

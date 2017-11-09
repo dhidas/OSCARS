@@ -103,11 +103,11 @@ class OSCARSSR
                            int const Version);
 
 
-    TVector3D GetB  (double const, double const, double const) const;
-    TVector3D GetB  (TVector3D const&) const;
+    TVector3D GetB  (double const X, double const Y, double const Z, double const T = 0, std::string const& Name = "") const;
+    TVector3D GetB  (TVector3D const& X, double const T = 0, std::string const& Name = "") const;
 
-    TVector3D GetE  (double const, double const, double const) const;
-    TVector3D GetE  (TVector3D const&) const;
+    TVector3D GetE  (double const X, double const Y, double const Z, double const T = 0, std::string const& Name = "") const;
+    TVector3D GetE  (TVector3D const& X, double const T = 0, std::string const& Name = "") const;
 
 
     // Functions related to the particle beam(s)

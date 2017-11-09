@@ -72,29 +72,33 @@ void TFieldContainer::RemoveField (std::string const& Name)
 
 
 
-TVector3D TFieldContainer::GetF (double const X, double const Y, double const Z) const
+TVector3D TFieldContainer::GetF (double const X, double const Y, double const Z, double const T, std::string const& Name) const
 {
   TVector3D Sum(0, 0, 0);
 
-  TVector3D const P(X, Y, Z);
-  // Loop over Fields for summing fields
-  for (std::vector<TField*>::const_iterator it = fFields.begin(); it != fFields.end(); ++it) {
-    Sum += (*it)->GetF(P);
-  }
-
-  return Sum;
+  return this->GetF(TVector3D(X, Y, Z), T, Name);
 }
 
 
 
 
-TVector3D TFieldContainer::GetF (TVector3D const& X) const
+TVector3D TFieldContainer::GetF (TVector3D const& X, double const T, std::string const& Name) const
 {
   TVector3D Sum(0, 0, 0);
 
-  // Loop over Fields for summing fields
-  for (std::vector<TField*>::const_iterator it = fFields.begin(); it != fFields.end(); ++it) {
-    Sum += (*it)->GetF(X);
+  // Is this named or not?
+  if (Name == "") {
+    // Loop over all Fields for summing fields
+    for (std::vector<TField*>::const_iterator it = fFields.begin(); it != fFields.end(); ++it) {
+      Sum += (*it)->GetF(X);
+    }
+  } else {
+    // Loop over Fields for summing fields, select any with this exact name
+    for (std::vector<TField*>::const_iterator it = fFields.begin(); it != fFields.end(); ++it) {
+      if ((*it)->GetName() == Name) {
+        Sum += (*it)->GetF(X);
+      }
+    }
   }
 
   return Sum;

@@ -181,6 +181,43 @@ def plot_power_density(V, title=None, xlabel='X1 Axis [$m$]', ylabel='X2 Axis [$
     return
 
 
+def write_power_density_csv(V, ofile=''):
+    """write histogram with equal spacing"""
+ 
+
+    if ofile is '':
+        raise ValueError('Must specify an output file')
+
+    X = [item[0][0] for item in V]
+    Y = [item[0][1] for item in V]
+    P = [item[1]    for item in V]
+
+    NX = len(np.unique(X))
+    NY = len(np.unique(Y))
+
+    with open(ofile, 'w') as f:
+        f.write('            , ')
+        for ix in range(NX):
+            f.write('{: 11.5e}'.format(X[ix * NY]))
+            if ix < NX:
+                f.write(', ')
+        f.write('\n')
+
+        for j in range(NY):
+            f.write('{: 11.5e}'.format(Y[j]))
+            f.write(', ')
+            for i in range(NX):
+                ip = i * NY + j
+ 
+                f.write('{: 11.5e}'.format(P[ip]))
+                if i < NX:
+                    f.write(', ')
+            f.write('\n')
+
+
+    return
+
+
 def plot_power_density_2d1d(V, x1=None, x2=None, title=None, xlabel='[$m$]', ylabel='[$W / mm^2$]', xlim=None, ylim=None, show=True, ofile='', figsize=None, ret=False):
     """Plot a 2D histogram with equal spacing"""
 
@@ -446,7 +483,7 @@ def plot_spectra(spectra, label=None, show=True, ofile='', title='', loc=None, l
 
 
 
-def plot_bfield(osr, mymin=-1, mymax=1, ylim=None, show=True, ofile='', axis='Z', npoints=20000, between_two_points=None, ret=False):
+def plot_bfield(osr, mymin=-1, mymax=1, t=0, name='', ylim=None, show=True, ofile='', axis='Z', npoints=20000, between_two_points=None, ret=False):
     """Plot the magnetic field as a function of Z"""
 
 
@@ -469,26 +506,27 @@ def plot_bfield(osr, mymin=-1, mymax=1, ylim=None, show=True, ofile='', axis='Z'
             y = p0[1] + step[1] * float(i)
             z = p0[2] + step[2] * float(i)
 
-            Bx.append(osr.get_bfield([x, y, z])[0])
-            By.append(osr.get_bfield([x, y, z])[1])
-            Bz.append(osr.get_bfield([x, y, z])[2])
+            B = osr.get_bfield([x, y, z], t, name)
+
+            Bx.append(B[0])
+            By.append(B[1])
+            Bz.append(B[2])
             axis = 'Position'
     else:
         P = np.linspace(mymin, mymax, npoints)
-        if axis is 'X':
-            Bx = [osr.get_bfield([p, 0, 0])[0] for p in P]
-            By = [osr.get_bfield([p, 0, 0])[1] for p in P]
-            Bz = [osr.get_bfield([p, 0, 0])[2] for p in P]
-        elif axis is 'Y':
-            Bx = [osr.get_bfield([0, p, 0])[0] for p in P]
-            By = [osr.get_bfield([0, p, 0])[1] for p in P]
-            Bz = [osr.get_bfield([0, p, 0])[2] for p in P]
-        elif axis is 'Z':
-            Bx = [osr.get_bfield([0, 0, p])[0] for p in P]
-            By = [osr.get_bfield([0, 0, p])[1] for p in P]
-            Bz = [osr.get_bfield([0, 0, p])[2] for p in P]
-        else:
-            raise
+        B = []
+        for p in P:
+            if axis is 'X':
+                B = osr.get_bfield([p, 0, 0], t, name)
+            elif axis is 'Y':
+                B = osr.get_bfield([0, p, 0], t, name)
+            elif axis is 'Z':
+                B = osr.get_bfield([0, 0, p], t, name)
+            else:
+                raise
+            Bx.append(B[0])
+            By.append(B[1])
+            Bz.append(B[2])
 
     plt.figure(1, figsize=(18, 4.5))
     plt.subplot(131)
@@ -548,26 +586,27 @@ def plot_efield(osr, mymin=-1, mymax=1, ylim=None, show=True, ofile='', axis='Z'
             y = p0[1] + step[1] * float(i)
             z = p0[2] + step[2] * float(i)
 
-            Bx.append(osr.get_efield([x, y, z])[0])
-            By.append(osr.get_efield([x, y, z])[1])
-            Bz.append(osr.get_efield([x, y, z])[2])
+            B = osr.get_bfield([x, y, z], t, name)
+
+            Bx.append(B[0])
+            By.append(B[1])
+            Bz.append(B[2])
             axis = 'Position'
     else:
         P = np.linspace(mymin, mymax, npoints)
-        if axis is 'X':
-            Bx = [osr.get_efield([p, 0, 0])[0] for p in P]
-            By = [osr.get_efield([p, 0, 0])[1] for p in P]
-            Bz = [osr.get_efield([p, 0, 0])[2] for p in P]
-        elif axis is 'Y':
-            Bx = [osr.get_efield([0, p, 0])[0] for p in P]
-            By = [osr.get_efield([0, p, 0])[1] for p in P]
-            Bz = [osr.get_efield([0, p, 0])[2] for p in P]
-        elif axis is 'Z':
-            Bx = [osr.get_efield([0, 0, p])[0] for p in P]
-            By = [osr.get_efield([0, 0, p])[1] for p in P]
-            Bz = [osr.get_efield([0, 0, p])[2] for p in P]
-        else:
-            raise
+        B = []
+        for p in P:
+            if axis is 'X':
+                B = osr.get_bfield([p, 0, 0], t, name)
+            elif axis is 'Y':
+                B = osr.get_bfield([0, p, 0], t, name)
+            elif axis is 'Z':
+                B = osr.get_bfield([0, 0, p], t, name)
+            else:
+                raise
+            Bx.append(B[0])
+            By.append(B[1])
+            Bz.append(B[2])
 
     plt.figure(1, figsize=(18, 4.5))
     plt.subplot(131)
@@ -660,20 +699,20 @@ def plot_electric_field_vs_time(efield, show=True, ofile='', ret=False):
 
 
 
-def plot_undulator_flux_onaxis(oth, period, nperiods, harmonics, minimum=0, bfield=None, K=None, show=True, ret=False, title='Flux On-Axis', figsize=None, ofile=None):
+def plot_undulator_flux_onaxis(oth, period, nperiods, harmonics, minimum=0, bfield_range=None, k_range=None, show=True, ret=False, title='Flux On-Axis', npoints=500, figsize=None, ofile=None):
     '''Plot the on-axis flux of an undulator.  More docstring needed'''
 
-    if bfield is None and K is None:
-        raise ValueError('bfield or K must be defined')
+    if bfield_range is None and k_range is None:
+        raise ValueError('bfield_range or k_range must be defined')
 
-    if bfield is not None and K is not None:
-        raise ValueError('bfield and K cannot both be defined.  pick one or the other')
+    if bfield_range is not None and k_range is not None:
+        raise ValueError('bfield_range and k_range cannot both be defined.  pick one or the other')
 
-    if bfield is not None:
-        if len(bfield) is not 2:
-            raise ValueError('bfield must be: [min, max]')
+    if bfield_range is not None:
+        if len(bfield_range) is not 2:
+            raise ValueError('bfield_range must be: [min, max]')
         else:
-            K = [oth.undulator_K(bfield[0], period), oth.undulator_K(bfield[1], period)]
+            k_range = [oth.undulator_K(bfield_range[0], period), oth.undulator_K(bfield_range[1], period)]
 
     # Size and limits
     plt.figure(1, figsize=figsize)
@@ -682,22 +721,20 @@ def plot_undulator_flux_onaxis(oth, period, nperiods, harmonics, minimum=0, bfie
 
     # Loop over all harmonics
     for i in harmonics:
-        
-        R = []
-        for k in np.linspace(K[1], K[0], 300):
-            ev_flux = oth.undulator_flux_onaxis(K=k,
-                                                period=period,
-                                                nperiods=nperiods,
-                                                harmonic=i
-                                               )
-            if ev_flux[1] >= minimum:
-                R.append(ev_flux)
+        if i % 2 != 1:
+            continue
 
-        X = []
-        Y = []
-        for j in range(len(R)):
-            X.append(R[j][0])
-            Y.append(R[j][1])
+        fl = oth.undulator_flux_onaxis(
+            K_range=k_range,
+            period=period,
+            nperiods=nperiods,
+            harmonic=i,
+            npoints=npoints
+            )
+
+        X = [f[0] for f in fl]
+        Y = [f[1] for f in fl]
+
         plt.plot(X, Y, label=str(i))
 
     plt.legend(title='Harmonics')
