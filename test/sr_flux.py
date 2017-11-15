@@ -7,10 +7,7 @@ import oscars.sr
 from oscars.plots_mpl import *
 
 # Create a new OSCARS object
-osr = oscars.sr.sr()
-
-# Set default number of threads
-osr.set_nthreads_global(8)
+osr = oscars.sr.sr(gpu=1, nthreads=16)
 
 # Clear any existing fields (just good habit in notebook style) and add an undulator field
 osr.clear_bfields()
@@ -39,11 +36,13 @@ osr.print_all()
 flux = osr.calculate_flux_rectangle(plane='XY',
                                     energy_eV=152,
                                     width=[0.01, 0.01],
-                                    npoints=[21, 21],
+                                    npoints=[401, 401],
                                     translation=[0, 0, 30],
                                     ofile='sr_flux.txt',
-                                    bofile='sr_flux.dat')
-plot_flux(flux, ofile='sr_flux.png', title='Flux: Calculated')
+                                    bofile='sr_flux.dat',
+                                    quantity='flux')
+plot_flux(flux, ofile='sr_flux.png', title='Flux: Calculated', show=False)
+exit(0)
 
 
 

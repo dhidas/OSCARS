@@ -230,7 +230,12 @@ __device__ static __inline__ double Interpolate (double *fx, int* nx, double* fy
 
 
 
-__global__ void OSCARSSR_Cuda_FluxGPU (double *t,
+__global__ void OSCARSSR_Cuda_FluxGPU (
+                                       int     *nl,
+                                       double  *tx,   double *ty,   double *tz,
+                                       double  *tbx,  double *tby,  double *tbz,
+                                       double  *tax,  double *tay,  double *taz,
+                                       double *t,
                                        double  *x,   double *y,   double *z,
                                        double  *xp,  double *yp,  double *zp,
                                        double  *bx,  double *by,  double *bz,
@@ -275,6 +280,157 @@ __global__ void OSCARSSR_Cuda_FluxGPU (double *t,
 
   bool use_pol = cuCabs(pol[0]) > 0.1 || cuCabs(pol[1]) > 0.1 || cuCabs(pol[2]) > 0.1 ? true : false;
 
+
+  // DeltaT for all levels up to this level
+  double dt_total = 0;
+
+  // Is this thread a valid surface point?
+  bool const in_surface = ((is < *ns) ? true : false);
+
+  // I will consider you "done" if you are not a valid surface
+  bool done = !in_surface;
+
+  // Are all threads in this block done?
+  __shared__ bool _all_done;
+
+  // Start off with the assumption that not all threads are done
+  _all_done = false;
+  __syncthreads();
+
+
+  // Number of trajectory points in current level
+  int this_nt = 1;
+
+
+  // Result up to this level and from last level for comparison
+  double this_result = 0;
+  double last_result = 1;
+
+  // Keep track of phase for precision
+  double ThisPhase = 0;
+  double LastPhase = 0;
+  double MaxDPhase = 0;
+
+  // Run through pre-computed levels first
+  for (int ilevel = 0; ilevel < *nl; ++ilevel) {
+
+    // Keep track of phase for precision
+    ThisPhase = 0;
+    LastPhase = 0;
+    MaxDPhase = 0;
+
+    dt_total = (*tstop - *tstart) / pow(2., ilevel+1);//(*tstop - *tstart) / (2 * this_nt);
+
+    // deltaT this level and Time start this level
+    double const dt = (*tstop - *tstart) / this_nt;//(*tstop - *tstart) / this_nt;
+    double const ts = *tstart + (*tstop - *tstart) / (2*this_nt);//*tstart + (*tstop - *tstart) / (2. * this_nt);
+
+      // If this thread is not done then do some more calculations
+    if (!done) {
+      for (int ilp = 0; ilp < this_nt; ++ilp) {
+        int const i = this_nt - 1 + ilp;
+        double const time = ts + ilp * dt;
+
+        // Distance to observer
+        double const D = sqrt( pow( (ox) - tx[i], 2) + pow( (oy) - ty[i], 2) + pow((oz) - tz[i], 2) );
+
+        // Normal in direction of observer
+        double const NX = ((ox) - tx[i]) / D;
+        double const NY = ((oy) - ty[i]) / D;
+        double const NZ = ((oz) - tz[i]) / D;
+
+        // Magnitude of Beta squared
+        double const One_Minus_BMag2 = 1. -  (tbx[i] * tbx[i] + tby[i] * tby[i] + tbz[i] * tbz[i]);
+
+        // N dot Beta
+        double const NDotBeta = NX * tbx[i] + NY * tby[i] + NZ * tbz[i];
+
+        // Field contibutions
+        double const FarFieldDenominator =  D * (pow(1. - NDotBeta, 2));
+        double const NearFieldDenominator = D * FarFieldDenominator;
+        double const NearField_X = One_Minus_BMag2 * (NX - tbx[i]) / NearFieldDenominator;
+        double const NearField_Y = One_Minus_BMag2 * (NY - tby[i]) / NearFieldDenominator;
+        double const NearField_Z = One_Minus_BMag2 * (NZ - tbz[i]) / NearFieldDenominator;
+
+        double const FFX = (NY - tby[i]) * taz[i] - (NZ - tbz[i]) * tay[i];
+        double const FFY = (NZ - tbz[i]) * tax[i] - (NX - tbx[i]) * taz[i];
+        double const FFZ = (NX - tbx[i]) * tay[i] - (NY - tby[i]) * tax[i];
+
+        double const FarField_X = (NY * FFZ - NZ * FFY) / FarFieldDenominator;
+        double const FarField_Y = (NZ * FFX - NX * FFZ) / FarFieldDenominator;
+        double const FarField_Z = (NX * FFY - NY * FFX) / FarFieldDenominator;
+
+
+        // Phase/Exponent for fourier transformed field
+        ThisPhase = -(*Omega) * (time + D / (*C));
+        double const PhaseTestValue = fabs(ThisPhase - LastPhase);
+        if (ilp != 0 && PhaseTestValue > MaxDPhase) {
+          MaxDPhase = PhaseTestValue;
+        }
+        LastPhase = ThisPhase;
+        cuDoubleComplex Exponent = make_cuDoubleComplex(0, ThisPhase);
+
+        cuDoubleComplex X1 = make_cuDoubleComplex(NearField_X + FarField_X, 0);
+        cuDoubleComplex Y1 = make_cuDoubleComplex(NearField_Y + FarField_Y, 0);
+        cuDoubleComplex Z1 = make_cuDoubleComplex(NearField_Z + FarField_Z, 0);
+
+        cuDoubleComplex MyEXP = cuCexp(Exponent);
+
+        cuDoubleComplex X2 = cuCmul(X1, MyEXP);
+        cuDoubleComplex Y2 = cuCmul(Y1, MyEXP);
+        cuDoubleComplex Z2 = cuCmul(Z1, MyEXP);
+
+        // Add to current sums
+        SumEX = cuCadd(SumEX, X2);
+        SumEY = cuCadd(SumEY, Y2);
+        SumEZ = cuCadd(SumEZ, Z2);
+
+      }
+    }
+    if (in_surface && !done) {
+      cuDoubleComplex TSumEX = cuCmul(make_cuDoubleComplex((*C0) * (dt_total), 0), SumEX);
+      cuDoubleComplex TSumEY = cuCmul(make_cuDoubleComplex((*C0) * (dt_total), 0), SumEY);
+      cuDoubleComplex TSumEZ = cuCmul(make_cuDoubleComplex((*C0) * (dt_total), 0), SumEZ);
+
+      if (use_pol) {
+        cuDoubleComplex DotProduct = cuCadd(cuCadd(cuCmul(cuConj(TSumEX), pol[0]), cuCmul(cuConj(TSumEY), pol[1])), cuCmul(cuConj(TSumEZ), pol[2]));
+
+        TSumEX = cuCmul(pol[0], DotProduct);
+        TSumEY = cuCmul(pol[1], DotProduct);
+        TSumEZ = cuCmul(pol[2], DotProduct);
+      }
+
+      double const EX = (TSumEX.x * TSumEX.x + TSumEX.y * TSumEX.y);
+      double const EY = (TSumEY.x * TSumEY.x + TSumEY.y * TSumEY.y);
+      double const EZ = (TSumEZ.x * TSumEZ.x + TSumEZ.y * TSumEZ.y);
+
+      // Result up to this point
+      this_result = fabs((*C2) * (EX + EY + EZ));
+
+      result_precision = fabs((last_result - this_result) / last_result);
+
+      // If below desired precision set as done
+      if ( ilevel > 8 && result_precision < *prec && MaxDPhase < PI ) {
+        done = true;
+        result_level = ilevel;
+      }
+
+      // Keep track of last result for precision test
+      last_result = this_result;
+    }
+    this_nt *= 2;
+  }
+
+
+
+
+
+
+
+
+
+
+
   // Trajectory interpolated on fly and stored in shared memory for this block
   __shared__ double _t[NTHREADS_PER_BLOCK];
   __shared__ double _x[NTHREADS_PER_BLOCK];
@@ -287,37 +443,17 @@ __global__ void OSCARSSR_Cuda_FluxGPU (double *t,
   __shared__ double _ay[NTHREADS_PER_BLOCK];
   __shared__ double _az[NTHREADS_PER_BLOCK];
 
-  // Are all threads in this block done?
-  __shared__ bool _all_done;
 
-  // Is this thread a valid surface point?
-  bool const in_surface = ((is < *ns) ? true : false);
-
-  // I will consider you "done" if you are not a valid surface
-  bool done = !in_surface;
-
-  // Start off with the assumption that not all threads are done
-  _all_done = false;
-
-
-  // Number of trajectory points in current level
-  int this_nt = 1;
-
-
-  // Result up to this level and from last level for comparison
-  double this_result = 0;
-  double last_result = 1;
-
-  // DeltaT for all levels up to this level
-  double dt_total = 0;
+  // MUST SYNC THREADS HERE!!!!!
+  __syncthreads();
 
   // Loop over all levels 
-  for (int ilevel = 0; (ilevel <= *ml) && !_all_done; ++ilevel) {
+  for (int ilevel = *nl; (ilevel <= *ml) && !_all_done; ++ilevel) {
 
     // Keep track of phase for precision
-    double ThisPhase = 0;
-    double LastPhase = 0;
-    double MaxDPhase = 0;
+    ThisPhase = 0;
+    LastPhase = 0;
+    MaxDPhase = 0;
 
     // DeltaT inclusive up to this level
     dt_total = (*tstop - *tstart) / pow(2., ilevel+1);//(*tstop - *tstart) / (2 * this_nt);
@@ -538,7 +674,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   }
 
   // Number of levels to calculate and pre-upload
-  int const NLevelsPreComputed = 10;
+  int const NLevelsPreComputed = 4;
 
   // Number of pre-conputed trajectory points
   int const NTPreComputed = TParticleTrajectoryInterpolated::GetNPointsInclusiveToLevel(NLevelsPreComputed);
@@ -977,18 +1113,19 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
     TParticleTrajectoryPoints const& TPTP = Particle.GetTrajectoryLevel(ilevel);
     int const NThisLevel = TPTP.GetNPoints();
     for (int ip = 0; ip < NThisLevel; ++ip) {
+      ++ipt;
       TVector3D const X = TPTP.GetX(ip);
       TVector3D const B = TPTP.GetB(ip);
       TVector3D const A = TPTP.GetAoverC(ip);
-      h_tx[++ipt]  = X.GetX();
-      h_ty[++ipt]  = X.GetY();
-      h_tz[++ipt]  = X.GetZ();
-      h_tbx[++ipt] = B.GetX();
-      h_tbx[++ipt] = B.GetY();
-      h_tbx[++ipt] = B.GetZ();
-      h_tax[++ipt] = A.GetX();
-      h_tax[++ipt] = A.GetY();
-      h_tax[++ipt] = A.GetZ();
+      h_tx[ipt]  = X.GetX();
+      h_ty[ipt]  = X.GetY();
+      h_tz[ipt]  = X.GetZ();
+      h_tbx[ipt] = B.GetX();
+      h_tby[ipt] = B.GetY();
+      h_tbz[ipt] = B.GetZ();
+      h_tax[ipt] = A.GetX();
+      h_tay[ipt] = A.GetY();
+      h_taz[ipt] = A.GetZ();
 
     }
   }
@@ -1137,6 +1274,10 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
       cudaSetDevice(d);
       cudaEventSynchronize(event_resultcopy[ig]);
       OSCARSSR_Cuda_FluxGPU<<<NBlocksThisGPU[ig], NThreadsPerBlock>>>(
+                                                                      d_nl[ig],
+                                                                      d_tx[ig],   d_ty[ig],   d_tz[ig],
+                                                                      d_tbx[ig],  d_tby[ig],  d_tbz[ig],
+                                                                      d_tax[ig],  d_tay[ig],  d_taz[ig],
                                                                       d_t[ig],
                                                                       d_x[ig],   d_y[ig],   d_z[ig],
                                                                       d_xp[ig],  d_yp[ig],  d_zp[ig],
@@ -1194,18 +1335,19 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
         TParticleTrajectoryPoints const& TPTP = Particle.GetTrajectoryLevel(ilevel);
         int const NThisLevel = TPTP.GetNPoints();
         for (int ip = 0; ip < NThisLevel; ++ip) {
+          ++ipt;
           TVector3D const X = TPTP.GetX(ip);
           TVector3D const B = TPTP.GetB(ip);
           TVector3D const A = TPTP.GetAoverC(ip);
-          h_tx[++ipt]  = X.GetX();
-          h_ty[++ipt]  = X.GetY();
-          h_tz[++ipt]  = X.GetZ();
-          h_tbx[++ipt] = B.GetX();
-          h_tbx[++ipt] = B.GetY();
-          h_tbx[++ipt] = B.GetZ();
-          h_tax[++ipt] = A.GetX();
-          h_tax[++ipt] = A.GetY();
-          h_tax[++ipt] = A.GetZ();
+          h_tx[ipt]  = X.GetX();
+          h_ty[ipt]  = X.GetY();
+          h_tz[ipt]  = X.GetZ();
+          h_tbx[ipt] = B.GetX();
+          h_tby[ipt] = B.GetY();
+          h_tbz[ipt] = B.GetZ();
+          h_tax[ipt] = A.GetX();
+          h_tay[ipt] = A.GetY();
+          h_taz[ipt] = A.GetZ();
 
         }
       }
