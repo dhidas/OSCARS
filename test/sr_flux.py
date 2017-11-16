@@ -36,7 +36,7 @@ osr.print_all()
 flux = osr.calculate_flux_rectangle(plane='XY',
                                     energy_eV=152,
                                     width=[0.01, 0.01],
-                                    npoints=[401, 401],
+                                    npoints=[501, 501],
                                     translation=[0, 0, 30],
                                     ofile='sr_flux.txt',
                                     bofile='sr_flux.dat',
