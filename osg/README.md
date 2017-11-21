@@ -8,6 +8,7 @@ In order to compile the oscars package for osg we must setup the correct environ
 # Load the desired modules
 module load gcc/4.9.2
 module load python/3.5.2
+module load all-pkgs
 
 # Compile OSCARS locally
 python3 setup.py build_ext --inplace

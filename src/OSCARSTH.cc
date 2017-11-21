@@ -691,7 +691,9 @@ TParticleBeam& OSCARSTH::SetParticleBeam (double const Energy_GeV,
 
   fParticleBeam = TParticleBeam("electron", Name, Energy_GeV, Current);
   fParticleBeam.SetWeight(1);
-  fParticleBeam.SetBetaEmittance(TVector3D(1, 0, 0), Beta, Emittance, TVector3D(0, 0, 0), SigmaEnergyGeV);
+  fParticleBeam.SetEmittance(Emittance);
+  fParticleBeam.SetTwissBetaAlpha(Beta, TVector2D(0, 0));
+  fParticleBeam.SetSigmaEnergyGeV(SigmaEnergyGeV);
   fParticleBeam.SetEta(Eta);
 
   return fParticleBeam;

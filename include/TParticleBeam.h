@@ -93,12 +93,6 @@ class TParticleBeam : public TParticleA
                              TVector3D const& Reference = TVector3D(0, 0, 0),
                              bool const HasReference = false);
 
-    void SetBetaEmittance (TVector3D const& HorizontalDirection,
-                           TVector2D const& Beta,
-                           TVector2D const& Emittance,
-                           TVector3D const& SigmaAt,
-                           double const SigmaEnergyGeV);
-
     void SetHorizontalDirection (TVector3D const& HorizontalDirection);
 
     void SetTwissLatticeReference (TVector3D const& L);

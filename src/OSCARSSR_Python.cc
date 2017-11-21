@@ -3099,7 +3099,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   // Lists and variables some with initial values
   char const* Type                       = "electron";
   char const* Name                       = "";
-  double      Energy_GeV                 = 0;
+  double      Energy_GeV                 = -1;
   double      Sigma_Energy_GeV           = 0;
   double      T0                         = 0;
   double      Current                    = 0;
@@ -3196,9 +3196,18 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
       PyErr_SetString(PyExc_ValueError, "Error in predefined beam name / definition");
       return NULL;
     }
+
+    if (Energy_GeV >= 0) {
+      ThisBeam->SetE0(Energy_GeV);
+    }
+
   }
 
 
+  // default is 0
+  if (Energy_GeV == -1) {
+    Energy_GeV = 0;
+  }
 
   // Initial position
   if (List_Position != 0x0) {
@@ -3313,7 +3322,9 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
     ThisBeam->SetBeamDistribution(TParticleBeam::kBeamDistribution_Gaussian);
   } else {
     // Beam distribution to filament
-    ThisBeam->SetBeamDistribution(TParticleBeam::kBeamDistribution_Filament);
+    if (std::strlen(Beam) == 0) {
+      ThisBeam->SetBeamDistribution(TParticleBeam::kBeamDistribution_Filament);
+    }
   }
 
   // Check for no beam
@@ -7600,7 +7611,7 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
                                                                                           
   {"add_bfield_file",                   (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticField},
   {"add_bfield_interpolated",           (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldInterpolated},
-  {"add_bfield_function",               (PyCFunction) OSCARSSR_Fake, METH_VARARGS,                 DOC_OSCARSSR_AddMagneticFieldFunction},
+  {"add_bfield_function",               (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldFunction},
   {"add_bfield_gaussian",               (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldGaussian},
   {"add_bfield_uniform",                (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldUniform},
   {"add_bfield_undulator",              (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldIdealUndulator},
@@ -7612,7 +7623,7 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
 
   {"add_efield_file",                   (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricField},
   {"add_efield_interpolated",           (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldInterpolated},
-  {"add_efield_function",               (PyCFunction) OSCARSSR_Fake, METH_VARARGS,                 DOC_OSCARSSR_AddElectricFieldFunction},
+  {"add_efield_function",               (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldFunction},
   {"add_efield_gaussian",               (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldGaussian},
   {"add_efield_uniform",                (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldUniform},
   {"add_efield_undulator",              (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldIdealUndulator},
@@ -7656,7 +7667,7 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   {"calculate_power_density_stl",       (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensitySTL},
   {"calculate_power_density_line",      (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensityLine},
 
-  {"calculate_flux",                    (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateFlux},
+  //{"calculate_flux",                    (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateFlux},
   {"calculate_flux_rectangle",          (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateFluxRectangle},
 
   {"average_spectra",                   (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AverageSpectra},
@@ -7718,7 +7729,7 @@ static PyMethodDef OSCARSSR_methods[] = {
 
   {"add_efield_file",                   (PyCFunction) OSCARSSR_AddElectricField,                METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricField},
   {"add_efield_interpolated",           (PyCFunction) OSCARSSR_AddElectricFieldInterpolated,    METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldInterpolated},
-  {"add_efield_function",               (PyCFunction) OSCARSSR_AddElectricFieldFunction,        METH_VARARGS,                 DOC_OSCARSSR_AddElectricFieldFunction},
+  {"add_efield_function",               (PyCFunction) OSCARSSR_AddElectricFieldFunction,        METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldFunction},
   {"add_efield_gaussian",               (PyCFunction) OSCARSSR_AddElectricFieldGaussian,        METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldGaussian},
   {"add_efield_uniform",                (PyCFunction) OSCARSSR_AddElectricFieldUniform,         METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldUniform},
   {"add_efield_undulator",              (PyCFunction) OSCARSSR_AddElectricFieldIdealUndulator,  METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddElectricFieldIdealUndulator},
@@ -7762,7 +7773,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"calculate_power_density_stl",       (PyCFunction) OSCARSSR_CalculatePowerDensitySTL,        METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensitySTL},
   {"calculate_power_density_line",      (PyCFunction) OSCARSSR_CalculatePowerDensityLine,       METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensityLine},
 
-  {"calculate_flux",                    (PyCFunction) OSCARSSR_CalculateFlux,                   METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateFlux},
+  //{"calculate_flux",                    (PyCFunction) OSCARSSR_CalculateFlux,                   METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateFlux},
   {"calculate_flux_rectangle",          (PyCFunction) OSCARSSR_CalculateFluxRectangle,          METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateFluxRectangle},
 
   {"average_spectra",                   (PyCFunction) OSCARSSR_AverageSpectra,                  METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AverageSpectra},

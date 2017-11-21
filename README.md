@@ -1,5 +1,8 @@
 # OSCARS - Open Source Code for Advanced Radiation Simulation
 
+[![Build Status](https://travis-ci.org/dhidas/OSCARS.svg?branch=master)](https://travis-ci.org/dhidas/OSCARS)
+[![Build status](https://ci.appveyor.com/api/projects/status/485457m1fdd38dar/branch/master?svg=true)](https://ci.appveyor.com/project/dhidas/oscars/branch/master)
+
 This is the OSCARS developer repository.  The main OSCARS website is <http://oscars.bnl.gov>
 
 ## Installation - Basic
@@ -99,7 +102,7 @@ conda install -n root git
 conda install -n root pyyaml
 
 # Download OSCARS
-git clone https://github.com/dhidas/OSCARS -b 2.00.00
+git clone https://github.com/dhidas/OSCARS -b 2.0.6
 
 # Create a new "conda environment" and install the required Python packages.
 cd OSCARS
