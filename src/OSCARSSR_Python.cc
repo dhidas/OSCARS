@@ -1351,35 +1351,11 @@ static PyObject* OSCARSSR_AddMagneticFieldIdealUndulator (OSCARSSRObject* self, 
 
 
 const char* DOC_OSCARSSR_AddMagneticFieldHalbach = R"docstring(
-add_bfield_halbach(bfield, period, nperiods [, phase, rotations, translation, taper, name])
+add_bfield_halbach()
 
-Adds an ideal sinusoidal undulator field with a given maximum bfield amplitude, period, and number of periods.  Optionally one can specify the phase offset (in [rad]), rotations and translation.  The number of periods given is the full number of fields not counting the terminating fields.
 
 Parameters
 ----------
-bfield : list
-    A list representing the peak field [Bx, By, Bz] in [T]
-
-period : list
-    Length of one period
-
-nperiods : int
-    Number of periods
-
-phase : float
-    Phase offset in [rad]
-
-rotations : list, optional
-    3-element list representing rotations around x, y, and z axes: [:math:`\theta_x, \theta_y, \theta_z`]
-
-translation : list, optional
-    3-element list representing a translation in space [x, y, z]
-
-taper : float
-    The fractional change of the bfield per meter along the magnetic axis
-
-name : str
-    Name of this field
 
 Returns
 -------
@@ -1389,7 +1365,7 @@ Examples
 --------
 Add an idealized undulator with 41 periods having a period of 0.050 [m] with a maximum field of 1 [T] in the y-direction where the magnetic axis is along the z-axis
 
-    >>> osr.add_bfield_undulator(bfield=[0, 1, 0], period=[0, 0, 0.050], nperiods=41)
+    >>> osr.add_
 )docstring";
 static PyObject* OSCARSSR_AddMagneticFieldHalbach (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
 {
@@ -1453,7 +1429,7 @@ static PyObject* OSCARSSR_AddMagneticFieldHalbach (OSCARSSRObject* self, PyObjec
   }
 
   // Check Magnet Height
-  if (MagnetHeight > 0) {
+  if (MagnetHeight <= 0) {
     PyErr_SetString(PyExc_ValueError, "'magnet_height' must be > 0");
     return NULL;
   }
@@ -7788,6 +7764,7 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   {"add_bfield_gaussian",               (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldGaussian},
   {"add_bfield_uniform",                (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldUniform},
   {"add_bfield_undulator",              (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldIdealUndulator},
+  {"add_bfield_halbach",                (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldHalbach},
   {"add_bfield_quadrupole",             (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldQuadrupole},
   {"remove_bfield",                     (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_RemoveMagneticField},
   {"get_bfield",                        (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetBField},
@@ -7894,6 +7871,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"add_bfield_gaussian",               (PyCFunction) OSCARSSR_AddMagneticFieldGaussian,        METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldGaussian},
   {"add_bfield_uniform",                (PyCFunction) OSCARSSR_AddMagneticFieldUniform,         METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldUniform},
   {"add_bfield_undulator",              (PyCFunction) OSCARSSR_AddMagneticFieldIdealUndulator,  METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldIdealUndulator},
+  {"add_bfield_halbach",                (PyCFunction) OSCARSSR_AddMagneticFieldHalbach,         METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldHalbach},
   {"add_bfield_quadrupole",             (PyCFunction) OSCARSSR_AddMagneticFieldQuadrupole,      METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldQuadrupole},
   {"remove_bfield",                     (PyCFunction) OSCARSSR_RemoveMagneticField,             METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_RemoveMagneticField},
   {"get_bfield",                        (PyCFunction) OSCARSSR_GetBField,                       METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetBField},
