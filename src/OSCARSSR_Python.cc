@@ -25,6 +25,7 @@
 #include "TField3D_Gaussian.h"
 #include "TField3D_UniformBox.h"
 #include "TField3D_IdealUndulator.h"
+#include "TField3D_Halbach.h"
 #include "TField3D_Quadrupole.h"
 #include "TDriftBox.h"
 #include "TRandomA.h"
@@ -1337,6 +1338,127 @@ static PyObject* OSCARSSR_AddMagneticFieldIdealUndulator (OSCARSSRObject* self, 
 
   // Add field
   self->obj->AddMagneticField( (TField*) new TField3D_IdealUndulator(Field, Period, NPeriods, Translation, Phase, Taper, Name));
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
+
+const char* DOC_OSCARSSR_AddMagneticFieldHalbach = R"docstring(
+add_bfield_halbach()
+
+
+Parameters
+----------
+
+Returns
+-------
+None
+
+Examples
+--------
+Add an idealized undulator with 41 periods having a period of 0.050 [m] with a maximum field of 1 [T] in the y-direction where the magnetic axis is along the z-axis
+
+    >>> osr.add_
+)docstring";
+static PyObject* OSCARSSR_AddMagneticFieldHalbach (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
+{
+  // Add a magnetic field for undulator
+
+  // Lists and variables
+  double      BField           = 0;
+  double      Period           = 0;
+  double      MagnetWidth      = 0;
+  int         NPerPeriod       = 4;
+  double      Gap              = 0;
+  double      MagnetHeight     = 0;
+  int         NPeriods         = 0;
+  char const* Name             = "";
+
+  TVector3D Rotations(0, 0, 0);
+  TVector3D Translation(0, 0, 0);
+
+  // Input variables and parsing
+  static const char *kwlist[] = {"bfield",
+                                 "period",
+                                 "nperiods",
+                                 "gap",
+                                 "magnet_height",
+                                 "magnet_width",
+                                 "n_per_period",
+                                 "name",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ddidd|dis",
+                                   const_cast<char **>(kwlist),
+                                   &BField,
+                                   &Period,
+                                   &NPeriods,
+                                   &Gap,
+                                   &MagnetHeight,
+                                   &MagnetWidth,
+                                   &NPerPeriod,
+                                   &Name
+                                   )) {
+    return NULL;
+  }
+
+
+  // Check period
+  if (Period <= 0) {
+    PyErr_SetString(PyExc_ValueError, "'period' must be > 0");
+    return NULL;
+  }
+
+  // Check nperiods
+  if (NPeriods < 1) {
+    PyErr_SetString(PyExc_ValueError, "'nperiods' must be > 0");
+    return NULL;
+  }
+
+  // Check gap
+  if (Gap <= 0) {
+    PyErr_SetString(PyExc_ValueError, "'gap' must be > 0");
+    return NULL;
+  }
+
+  // Check Magnet Height
+  if (MagnetHeight <= 0) {
+    PyErr_SetString(PyExc_ValueError, "'magnet_height' must be > 0");
+    return NULL;
+  }
+
+  // Check NPerPeriod (sometimes called M)
+  if (NPerPeriod < 2) {
+    PyErr_SetString(PyExc_ValueError, "'n_per_period' must be >= 2");
+    return NULL;
+  }
+
+  // Check magnet width
+  if (MagnetWidth == 0) {
+    MagnetWidth = Period / (double) NPerPeriod;
+  } else if (MagnetWidth < 0) {
+    PyErr_SetString(PyExc_ValueError, "'magnet_width' must be > 0");
+    return NULL;
+  } else if (MagnetWidth > Period / (double) NPerPeriod) {
+    PyErr_SetString(PyExc_ValueError, "'magnet_width' * 'n_per_period' must be < 'period'");
+    return NULL;
+  }
+
+  // Rotate field and sigma
+  // UPDATE: check this
+  //Field.RotateSelfXYZ(Rotations);
+  //Period.RotateSelfXYZ(Rotations);
+
+
+  // Add field
+  self->obj->AddMagneticField( (TField*) new TField3D_Halbach(BField, Period, NPeriods, Gap, MagnetHeight, MagnetWidth, NPerPeriod, Name));
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -7642,6 +7764,7 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   {"add_bfield_gaussian",               (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldGaussian},
   {"add_bfield_uniform",                (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldUniform},
   {"add_bfield_undulator",              (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldIdealUndulator},
+  {"add_bfield_halbach",                (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldHalbach},
   {"add_bfield_quadrupole",             (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldQuadrupole},
   {"remove_bfield",                     (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_RemoveMagneticField},
   {"get_bfield",                        (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetBField},
@@ -7748,6 +7871,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"add_bfield_gaussian",               (PyCFunction) OSCARSSR_AddMagneticFieldGaussian,        METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldGaussian},
   {"add_bfield_uniform",                (PyCFunction) OSCARSSR_AddMagneticFieldUniform,         METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldUniform},
   {"add_bfield_undulator",              (PyCFunction) OSCARSSR_AddMagneticFieldIdealUndulator,  METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldIdealUndulator},
+  {"add_bfield_halbach",                (PyCFunction) OSCARSSR_AddMagneticFieldHalbach,         METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldHalbach},
   {"add_bfield_quadrupole",             (PyCFunction) OSCARSSR_AddMagneticFieldQuadrupole,      METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldQuadrupole},
   {"remove_bfield",                     (PyCFunction) OSCARSSR_RemoveMagneticField,             METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_RemoveMagneticField},
   {"get_bfield",                        (PyCFunction) OSCARSSR_GetBField,                       METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetBField},
