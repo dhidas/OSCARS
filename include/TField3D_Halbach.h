@@ -29,6 +29,7 @@ class TField3D_Halbach : public TField
 
     void Print (std::ostream&) const;
 
+    double GetField () const;
 
   private:
     double fField;
@@ -45,7 +46,9 @@ class TField3D_Halbach : public TField
 inline std::ostream& operator << (std::ostream& os, TField3D_Halbach const& o)
 {
   // For easy printing
-  os << "TField3D_Halbach" << "\n";
+  os << "TField3D_Halbach" << "\n"
+     << "Name:           " << o.GetName() << "\n"
+     << "Field:          " << o.GetField() << "\n";
 
   return os;
 }

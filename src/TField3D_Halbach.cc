@@ -73,3 +73,11 @@ void TField3D_Halbach::Print (std::ostream& os) const
   os << *this << std::endl;
   return;
 }
+
+
+
+double TField3D_Halbach::GetField () const
+{
+  return fField;
+}
+
