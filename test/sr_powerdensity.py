@@ -7,10 +7,8 @@ import oscars.sr
 from oscars.plots_mpl import *
 
 # Create a new OSCARS object
-osr = oscars.sr.sr()
+osr = oscars.sr.sr(gpu=1, nthreads=16)
 
-# Set default number of threads
-osr.set_nthreads_global(8)
 
 # Clear any existing fields (just good habit in notebook style) and add an undulator field
 osr.clear_bfields()
@@ -38,7 +36,7 @@ osr.print_all()
 # Calculate power density
 power_density = osr.calculate_power_density_rectangle(plane='XY',
                                                       width=[0.04, 0.04],
-                                                      npoints=[21, 21],
+                                                      npoints=[501, 501],
                                                       translation=[0, 0, 30],
                                                       ofile='sr_powerdensity.txt',
                                                       bofile='sr_powerdensity.dat')

@@ -7,10 +7,8 @@ import oscars.sr
 from oscars.plots_mpl import *
 
 # Create a new OSCARS object
-osr = oscars.sr.sr()
+osr = oscars.sr.sr(gpu=1, nthreads=16)
 
-# Set default number of threads
-osr.set_nthreads_global(8)
 
 # Clear any existing fields (just good habit in notebook style) and add an undulator field
 osr.clear_bfields()
@@ -36,10 +34,8 @@ osr.print_all()
 # Calculate spectrum
 spectrum = osr.calculate_spectrum(obs=[0, 0, 30],
                                   energy_range_eV=[100, 200],
-                                  npoints=200,
                                   ofile='sr_spectrum.txt',
                                   bofile='sr_spectrum.dat')
-
 # Plot spectrum
 plot_spectrum(spectrum, ofile='sr_spectrum.png', title='Spectrum: Calculated')
 
