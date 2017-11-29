@@ -59,17 +59,24 @@ TVector3D TField3D_Halbach::GetF (TVector3D const& X, double const T) const
 {
   // Field for Halback undulator!
 
-  // Swiped straight from IdealUndulator, mildly edited:
-  double const Z = X.GetZ();
+  double fLength = fPeriod * fNPeriods / 2.0;
 
-  
-  
   double fEpsilon =((double) fNPerPeriod) * fMagnetWidth / fPeriod;
   double fBY = -2 * fField * cos(2 * M_PI * X.GetZ() / fPeriod) * sin(fEpsilon * M_PI / fNPerPeriod) * fNPerPeriod / M_PI * exp(-M_PI * fGap / fPeriod) * (1 - exp(-2 * M_PI * fMagnetHeight / fPeriod));
-
   
-
-  return TVector3D(0.0, fBY, 0.0);
+  if (X.GetZ() < fLength + fPeriod && X.GetZ() > -fLength - fPeriod) {
+    double a = 1.0;
+    if (X.GetZ() > fLength || X.GetZ() < -fLength) {
+      if (X.GetZ() > fLength + fPeriod / 2.0 || X.GetZ() < -fLength - fPeriod / 2.0) {
+        a = 0.25;
+      } else {
+        a = 0.75;
+      }
+    }
+    return TVector3D(0.0, a * fBY, 0.0); 
+  } else {
+    return TVector3D(0.0, 0.0, 0.0);  
+  }
 }
 
 
