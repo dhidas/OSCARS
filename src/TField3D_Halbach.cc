@@ -8,7 +8,7 @@
 
 
 #include "TField3D_Halbach.h"
-
+#include "math.h"
 
 TField3D_Halbach::TField3D_Halbach ()
 {
@@ -59,13 +59,67 @@ TVector3D TField3D_Halbach::GetF (TVector3D const& X, double const T) const
 {
   // Field for Halback undulator!
 
-  // assume s is z
+  // Swiped straight from IdealUndulator, mildly edited:
+  double const Z = X.GetZ();
 
-  return TVector3D(0, 0, 0);
+  
+  
+  double fEpsilon =((double) fNPerPeriod) * fMagnetWidth / fPeriod;
+  double fBY = -2 * fField * cos(2 * M_PI * X.GetZ() / fPeriod) * sin(fEpsilon * M_PI / fNPerPeriod) * fNPerPeriod / M_PI * exp(-M_PI * fGap / fPeriod) * (1 - exp(-2 * M_PI * fMagnetHeight / fPeriod));
+
+  
+
+  return TVector3D(0.0, fBY, 0.0);
 }
 
 
+double TField3D_Halbach::GetField () const
+{
+  // Return the remnant field
+  return fField;
+}
 
+
+double TField3D_Halbach::GetPeriod () const
+{
+  // Return the period
+  return fPeriod;
+}
+
+
+int TField3D_Halbach::GetNPeriods () const
+{
+  // Return the number of periods
+  return fNPeriods;
+}
+
+
+double TField3D_Halbach::GetGap () const
+{
+  // Return the gap length
+  return fGap;
+}
+
+
+double TField3D_Halbach::GetMagnetHeight () const
+{
+  // Return the magnet height
+  return fMagnetHeight;
+}
+
+
+double TField3D_Halbach::GetMagnetWidth () const
+{
+  // Return the magnet width
+  return fMagnetWidth;
+}
+
+
+int TField3D_Halbach::GetNPerPeriod () const
+{
+  // Return the number of magnets per period
+  return fNPerPeriod;
+}
 
 
 void TField3D_Halbach::Print (std::ostream& os) const
