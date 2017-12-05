@@ -84,7 +84,7 @@ def power_density_3d(srs, surface,
         ax.set_ylim(zlim[0], zlim[1])
 
 
-    ax.plot_surface(X2, Z2, Y2, facecolors=cm.viridis(colors), rstride=1, cstride=1, alpha=alpha, linewidth=0)
+    ax.plot_surface(np.asarray(X2), np.asarray(Z2), np.asarray(Y2), facecolors=cm.viridis(colors), rstride=1, cstride=1, alpha=alpha, linewidth=0)
     ax.invert_xaxis()
 
     if axis is not None:
@@ -171,7 +171,7 @@ def power_density_3ds(srs, surface, ax,
 
 
     #ax.invert_xaxis()
-    return ax.plot_surface(X2, Z2, Y2, facecolors=cm.viridis(colors), rstride=1, cstride=1, alpha=alpha)
+    return ax.plot_surface(np.asarray(X2), np.asarray(Z2), np.asarray(Y2), facecolors=cm.viridis(colors), rstride=1, cstride=1, alpha=alpha)
 
 
 
@@ -325,7 +325,7 @@ def plot_surface(surface, xlim=None, ylim=None, zlim=None, alpha=0.5, **kwargs):
         ax.set_ylim(zlim[0], zlim[1])
 
 
-    ax.plot_surface(X2, Z2, Y2, rstride=1, cstride=1, alpha=alpha, **kwargs)
+    ax.plot_surface(np.asarray(X2), np.asarray(Z2), np.asarray(Y2), rstride=1, cstride=1, alpha=0.5, **kwargs)
     ax.invert_xaxis()
 
     plt.show()
