@@ -6,6 +6,8 @@ import oscars.sr
 # Import basic plot utilities (matplotlib).  You don't need these to run OSCARS, but it's used here for basic plots
 from oscars.plots_mpl import *
 
+import time
+
 # Create a new OSCARS object
 osr = oscars.sr.sr(gpu=1, nthreads=16)
 
@@ -31,18 +33,20 @@ osr.set_ctstartstop(0, 2)
 # Print info
 osr.print_all()
 
-
+tstart = time.time()
 # Calculate spectrum zoom
 flux = osr.calculate_flux_rectangle(plane='XY',
                                     energy_eV=152,
                                     width=[0.01, 0.01],
-                                    npoints=[401, 401],
+                                    npoints=[1001, 1001],
                                     translation=[0, 0, 30],
                                     ofile='sr_flux.txt',
                                     bofile='sr_flux.dat',
                                     quantity='flux')
-plot_flux(flux, ofile='sr_flux.png', title='Flux: Calculated', show=False)
+print('time', time.time() - tstart)
 exit(0)
+#plot_flux(flux, ofile='sr_flux.png', title='Flux: Calculated', show=False)
+print('time', time.time() - tstart)
 
 
 
