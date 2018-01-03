@@ -440,9 +440,13 @@ def plot_power_density_scatter (V, s=10, title='Power Density [$W/mm^2$]', figsi
 
 
 
-def plot_power_density_stl (P, title='Power Density [$W/mm^2$]', elev=30, azim=30, alpha=0.8, bbox_inches='tight', transparent=True, ofile=None, colorbar=True):
+def plot_power_density_stl (P, title='Power Density [$W/mm^2$]', elev=30, azim=30, alpha=0.8, bbox_inches='tight', xlim=None, ylim=None, zlim=None, transparent=True, ofile=None, colorbar=True, mymax=None):
 
     pmax = max([p[1] for p in P])
+    if mymax is not None:
+        pmax = mymax
+
+    print(pmax)
 
     m = cm.ScalarMappable(cm.viridis)
 
@@ -477,6 +481,13 @@ def plot_power_density_stl (P, title='Power Density [$W/mm^2$]', elev=30, azim=3
     ax.set_xlim([xmin, xmax])
     ax.set_ylim([ymin, ymax])
     ax.set_zlim([zmin, zmax])
+    if xlim is not None:
+        ax.set_xlim(xlim[0], xlim[1])
+    if ylim is not None:
+        ax.set_zlim(ylim[0], ylim[1])
+    if zlim is not None:
+        ax.set_ylim(zlim[0], zlim[1])
+
     ax.set_xlabel('X [m]')
     ax.set_ylabel('Z [m]')
     ax.set_zlabel('Y [m]')
