@@ -4707,9 +4707,6 @@ static PyObject* OSCARSSR_CalculateTotalPower (OSCARSSRObject* self, PyObject* a
   } catch (std::out_of_range e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
-  } catch (std::out_of_range e) {
-    PyErr_SetString(PyExc_ValueError, e.what());
-    return NULL;
   }
 
   return Py_BuildValue("f", Power);
