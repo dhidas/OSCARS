@@ -3,7 +3,7 @@
 
 #define OSCARS_VMAJOR 2
 #define OSCARS_VMINOR 0
-#define OSCARS_REVISION 6
+#define OSCARS_REVISION 7
 #define OSCARS_RELEASE NULL
 
 #endif
