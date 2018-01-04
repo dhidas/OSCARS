@@ -2432,7 +2432,10 @@ void OSCARSSR::CalculatePowerDensityGPU (TSurfacePoints const& Surface,
 
 
 
-double OSCARSSR::CalculateTotalPower ()
+double OSCARSSR::CalculateTotalPower (double const Precision,
+                                      int    const MaxLevel,
+                                      int    const MaxLevelExtended,
+                                      int    const ReturnQuantity)
 {
   // UPDATE: commet
 
@@ -2445,14 +2448,18 @@ double OSCARSSR::CalculateTotalPower ()
     }
   }
 
-  return this->CalculateTotalPower(fParticle);
+  return this->CalculateTotalPower(fParticle, Precision, MaxLevel, MaxLevelExtended, ReturnQuantity);
 }
 
 
 
 
 
-double OSCARSSR::CalculateTotalPower (TParticleA& Particle)
+double OSCARSSR::CalculateTotalPower (TParticleA& Particle,
+                                      double const Precision,
+                                      int    const MaxLevel,
+                                      int    const MaxLevelExtended,
+                                      int    const ReturnQuantity)
 {
   // Calculate total power out
 
@@ -2461,39 +2468,104 @@ double OSCARSSR::CalculateTotalPower (TParticleA& Particle)
     throw std::out_of_range("no particle defined");
   }
 
-  // Grab the Trajectory
-  TParticleTrajectoryPoints& T = Particle.GetTrajectory();
 
-  // Calculate trajectory if it doesn't exist
-  if (Particle.GetTrajectory().GetNPoints() == 0) {
-    this->CalculateTrajectory(Particle);
+  // Check you are not requesting a level above the maximum
+  if (MaxLevel > TParticleA::kMaxTrajectoryLevel) {
+    std::cerr << "WARNING: MaxLevel > TParticleA::kMaxTrajectoryLevel.  Setting MaxLevel to TParticleA::kMaxTrajectoryLevel" << std::endl;
+  }
+
+  // Set the level to stop at if requested, but not above the hard limit
+  int const LevelStopMemory = MaxLevel >= -1  && MaxLevel <= TParticleA::kMaxTrajectoryLevel ? MaxLevel : TParticleA::kMaxTrajectoryLevel;
+  int const LevelStopWithExtended = MaxLevelExtended > LevelStopMemory ? MaxLevelExtended : LevelStopMemory;
+
+  // Extended trajectory (not using memory for storage of arrays
+  TParticleTrajectoryInterpolatedPoints TE;
+
+  // Alternative outputs
+  double Result_Precision = -1;
+  int    Result_Level     = -1;
+
+  double ThisSum = -1;
+  double LastSum = -1;
+  int    LastLevel = 0;
+
+  // Summing for this power density
+  double Sum = 0;
+
+
+  for (int iLevel = 0; iLevel <= LevelStopWithExtended; ++iLevel) {
+    LastLevel = iLevel;
+
+    // Keep track of Beta for precision
+    TVector3D Last_Beta(0, 0, 0);
+    double BetaDiffMax = -1;
+
+    // Grab the Trajectory (using memory arrays) if below level threshold, else set NULL
+    TParticleTrajectoryPoints const& TM = Particle.GetTrajectoryLevel(iLevel <= LevelStopMemory ? iLevel : 0);
+    if (iLevel > LevelStopMemory) {
+      TE = Particle.GetTrajectoryExtendedLevel(iLevel);
+    }
+
+    // Number of points in the trajectory
+    size_t const NTPoints = iLevel <= LevelStopMemory ? TM.GetNPoints() : TE.GetNPoints();
+
+    // Loop over trajectory points
+    for (int iT = 0; iT != NTPoints; ++iT) {
+
+      TParticleTrajectoryPoint const& PP = (iLevel <= LevelStopMemory ? TM.GetPoint(iT) : TE.GetTrajectoryPoint(iT));
+
+      // Get Beta, and Acceleration (over c)
+      TVector3D const& B = PP.GetB();
+      TVector3D const& AoverC = PP.GetAoverC();
+
+      double const BetaDiff = (B - Last_Beta).Mag();
+      if (iT > 0 && BetaDiff > BetaDiffMax) {
+        BetaDiffMax = BetaDiff;
+      }
+      Last_Beta = B;
+
+      Sum += (AoverC.Mag2() - (B.Cross(AoverC)).Mag2());
+    }
+
+    double const ThisSum = Sum * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(iLevel);
+
+    Result_Precision = fabs(ThisSum - LastSum) / LastSum;
+    if (iLevel > 8 && Result_Precision < Precision && BetaDiffMax < 2. / (Particle.GetGamma())) {
+      Result_Level = iLevel;
+      break;
+    } else if (iLevel > 8 && ThisSum == LastSum) {
+      // The assumption here is that zero is last and now
+      Result_Level = iLevel;
+      Result_Precision = 0;
+      break;
+    }
+
+    LastSum = ThisSum;
+  }
+
+  double const ResultPower = LastSum * fabs(Particle.GetQ() * Particle.GetCurrent()) * pow(Particle.GetGamma(), 6) / (6 * TOSCARSSR::Pi() * TOSCARSSR::Epsilon0() * TOSCARSSR::C());
+
+  double ReturnValue = 0;
+
+  switch (ReturnQuantity) {
+    case 1:
+      ReturnValue = Result_Precision;
+      break;
+    case 2:
+      ReturnValue = (double) Result_Level;
+      break;
+    default:
+      ReturnValue = ResultPower;
+      break;
   }
 
 
-  // Number of points in Trajectory
-  size_t const NTPoints = T.GetNPoints();
-
-  // Timestep from trajectory
-  double const DeltaT = T.GetDeltaT();
-
-  // For summing total power
-  double TotalPower = 0;
-
-
-  // Loop over all points in trajectory
-  for (size_t i = 0; i != NTPoints; ++i) {
-    TVector3D const& B = T.GetB(i);
-    TVector3D const& AoverC = T.GetAoverC(i);
-
-    TotalPower += (AoverC.Mag2() - (B.Cross(AoverC)).Mag2()) * DeltaT;
-
+  // If a point does not converge mark it
+  if (Result_Level == -1) {
+    throw std::out_of_range("total power calculation did not converge.  Try increasing max_level or decreasing precision");
   }
 
-  // Undulators, Wigglers and their applications, p42
-  TotalPower *= fabs(Particle.GetQ() * Particle.GetCurrent()) * pow(Particle.GetGamma(), 6) / (6 * TOSCARSSR::Pi() * TOSCARSSR::Epsilon0() * TOSCARSSR::C());
-
-
-  return TotalPower;
+  return ReturnValue;
 }
 
 

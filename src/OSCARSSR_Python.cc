@@ -4619,21 +4619,75 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
 
 
 const char* DOC_OSCARSSR_CalculateTotalPower = R"docstring(
-calculate_total_power()
+calculate_total_power([, precision, max_level, max_level_extended, quantity])
 
 Calculate the total radiated power based on the current particle and that particle's beam current.
 
 See the :doc:`MathematicalNotes` section for the expression used in this calculation.
 
+precision : float
+    Calculation precision parameter (typically 0.01 which is 1%)
+
+max_level: int
+    Maximum "level" to use for trajectory in the calculation.  Level N corresponds to a total of 2**(N+2) trajectory points.  You cannot go beyond the internal maximum.  You are not guaranteed precision parameter is met if this is used.
+
+
+max_level_extended: int
+    Maximum "level" to use for trajectory in the calculation.  If set to higher than max_level the computation will proceed beyond max_level without creating trajectory arrays in memory (but it will be slower)
+
+quantity: str
+    Quantity to return.
+    Available are:
+        'power'     - (default)
+        'precision' - Estimated precision
+        'level'     - Trajectory level reached (npoints = 2**(n+1) - 1), if return is -1 the requested precision was not reached
 
 Returns
 -------
 power : float
     Total power in [W]
 )docstring";
-static PyObject* OSCARSSR_CalculateTotalPower (OSCARSSRObject* self)
+static PyObject* OSCARSSR_CalculateTotalPower (OSCARSSRObject* self, PyObject* args, PyObject *keywds)
 {
   // Calculate the total power radiated by the current particle
+
+  double      Precision = 0.01;
+  int         MaxLevel = -2;
+  int         MaxLevelExtended = 0;
+  char const* ReturnQuantityChars = "power";
+
+
+  static const char *kwlist[] = {"precision",
+                                 "max_level",
+                                 "max_level_extended",
+                                 "quantity",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|diis",
+                                   const_cast<char **>(kwlist),
+                                   &Precision,
+                                   &MaxLevel,
+                                   &MaxLevelExtended,
+                                   &ReturnQuantityChars)) {
+    return NULL;
+  }
+
+
+  int ReturnQuantity = 0;
+  std::string ReturnQuantityStr = ReturnQuantityChars;
+  std::transform(ReturnQuantityStr.begin(), ReturnQuantityStr.end(), ReturnQuantityStr.begin(), ::toupper);
+  if (ReturnQuantityStr == "POWER" || ReturnQuantityStr == "POWER") {
+    ReturnQuantity = 0;
+  } else if (ReturnQuantityStr == "PRECISION") {
+    ReturnQuantity = 1;
+  } else if (ReturnQuantityStr == "LEVEL") {
+    ReturnQuantity = 2;
+  } else {
+    PyErr_SetString(PyExc_ValueError, "'quantity' must be: 'power', 'precision', 'level', or blank");
+    return NULL;
+  }
+
+
 
   double Power = 0;
 
@@ -4646,8 +4700,11 @@ static PyObject* OSCARSSR_CalculateTotalPower (OSCARSSRObject* self)
   // Return the total power
   // UPDATE: This does not fail when no beam defined
   try {
-    Power = self->obj->CalculateTotalPower();
+    Power = self->obj->CalculateTotalPower(Precision, MaxLevel, MaxLevelExtended, ReturnQuantity);
   } catch (std::length_error e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
+  } catch (std::out_of_range e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
   } catch (std::out_of_range e) {
@@ -7661,7 +7718,7 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
 
   {"calculate_spectrum",                (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateSpectrum},
 
-  {"calculate_total_power",             (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_CalculateTotalPower},
+  {"calculate_total_power",             (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateTotalPower},
   {"calculate_power_density",           (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensity},
   {"calculate_power_density_rectangle", (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensityRectangle},
   {"calculate_power_density_stl",       (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensitySTL},
@@ -7767,7 +7824,7 @@ static PyMethodDef OSCARSSR_methods[] = {
 
   {"calculate_spectrum",                (PyCFunction) OSCARSSR_CalculateSpectrum,               METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateSpectrum},
 
-  {"calculate_total_power",             (PyCFunction) OSCARSSR_CalculateTotalPower,             METH_NOARGS,                  DOC_OSCARSSR_CalculateTotalPower},
+  {"calculate_total_power",             (PyCFunction) OSCARSSR_CalculateTotalPower,             METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateTotalPower},
   {"calculate_power_density",           (PyCFunction) OSCARSSR_CalculatePowerDensity,           METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensity},
   {"calculate_power_density_rectangle", (PyCFunction) OSCARSSR_CalculatePowerDensityRectangle,  METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensityRectangle},
   {"calculate_power_density_stl",       (PyCFunction) OSCARSSR_CalculatePowerDensitySTL,        METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensitySTL},
