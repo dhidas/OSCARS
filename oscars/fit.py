@@ -117,7 +117,7 @@ def fit_spectrum_gaussian (spectrum, xranges=[], n=None, figsize=None, quiet=Tru
 
 
 
-def correct_trajectory(osr, position=[0, 0, 1], beta=[0, 0, 1], bfields=[]):
+def correct_trajectory(osr, position=[0, 0, 1], beta=[0, 0, 1], bfields=[], tol=1e-18):
     """
     Correct the trajectory using bfield kicks
     Parameters
@@ -193,7 +193,7 @@ def correct_trajectory(osr, position=[0, 0, 1], beta=[0, 0, 1], bfields=[]):
         return (  ms + (mb[0] - beta[0])**2 + (mb[1] - beta[1])**2 + (mb[2] - beta[2])**2 )
 
     #res = minimize(bfield_kicks, x0, method='nelder-mead', options={'xtol': 1e-8}, bounds=[[1, -1], [1, -1]])
-    res = minimize(bfield_kicks, x0, tol=1e-16, bounds=bounds)
+    res = minimize(bfield_kicks, x0, tol=tol, bounds=bounds)
 
     print('Minimization bfield factors:', res.x)
 
