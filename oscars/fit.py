@@ -8,7 +8,6 @@ import numpy as np
 def fit_spectrum_gaussian (spectrum, xranges=[], n=None, figsize=None, quiet=True):
     """Fit multiple gaussians in ranges given to spectrum
 
-    asdd
     """
 
     if n is None and len(xranges) == 0:
@@ -171,7 +170,7 @@ def correct_trajectory(osr, position=[0, 0, 1], beta=[0, 0, 1], bfields=[], tol=
 
 
         # Set a new particle and calculate trajectory.  After remove kick
-        osr.set_new_particle()
+        osr.set_new_particle(particle='ideal')
         trj = osr.calculate_trajectory()
 
         for ib in range(len(bfields)):
