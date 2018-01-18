@@ -1524,8 +1524,9 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
       }
       ThisMag = ThisSumE.Dot( ThisSumE.CC() ).real();
 
+
       Result_Precision = fabs(ThisMag - LastMag) / LastMag;
-      if (iLevel > 8 && Result_Precision < Precision && MaxDPhase < TOSCARSSR::Pi()) {
+      if ( (iLevel > 8 && Result_Precision < Precision && MaxDPhase < TOSCARSSR::Pi()) || (iLevel > 8 && MaxDPhase < TOSCARSSR::Pi() && ThisMag == LastMag)) {
         Result_Level = iLevel;
         break;
       }
@@ -2965,7 +2966,7 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
       ThisMag = ThisSumE.Dot( ThisSumE.CC() ).real();
 
       Result_Precision = fabs(ThisMag - LastMag) / LastMag;
-      if (iLevel > 8 && Result_Precision < Precision && MaxDPhase < TOSCARSSR::Pi()) {
+      if ( (iLevel > 8 && Result_Precision < Precision && MaxDPhase < TOSCARSSR::Pi()) || (iLevel > 8 && MaxDPhase < TOSCARSSR::Pi() && ThisMag == LastMag)) {
         Result_Level = iLevel;
         break;
       }

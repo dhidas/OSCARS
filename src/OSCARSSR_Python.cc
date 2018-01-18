@@ -4361,14 +4361,14 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
   // Calculate the spectrum given an observation point, and energy range
 
 
-  PyObject*   List_Obs                  = PyList_New(0);
+  PyObject*   List_Obs                  = 0x0;
   int         NPoints                   = 0;
-  PyObject*   List_EnergyRange_eV       = PyList_New(0);
-  PyObject*   List_Points_eV            = PyList_New(0);
-  char const* Polarization              = "all";
+  PyObject*   List_EnergyRange_eV       = 0x0;
+  PyObject*   List_Points_eV            = 0x0;
+  char const* PolarizationIn            = "";
   double      Angle                     = 0;
-  PyObject*   List_HorizontalDirection  = PyList_New(0);
-  PyObject*   List_PropogationDirection = PyList_New(0);
+  PyObject*   List_HorizontalDirection  = 0x0;
+  PyObject*   List_PropogationDirection = 0x0;
   double      Precision                 = 0.01;
   int         MaxLevel                  = -2;
   int         MaxLevelExtended          = 0;
@@ -4410,7 +4410,7 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
                                    &List_EnergyRange_eV,
                                    &List_Points_eV,
                                    &List_Points_eV,
-                                   &Polarization,
+                                   &PolarizationIn,
                                    &Angle,
                                    &List_HorizontalDirection,
                                    &List_PropogationDirection,
@@ -4443,14 +4443,16 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
 
   // Add all values to a vector
   std::vector<double> VPoints_eV;
-  for (int i = 0; i < PyList_Size(List_Points_eV); ++i) {
-    VPoints_eV.push_back(PyFloat_AsDouble(PyList_GetItem(List_Points_eV, i)));
+  if (List_Points_eV != 0x0) {
+    for (int i = 0; i < PyList_Size(List_Points_eV); ++i) {
+      VPoints_eV.push_back(PyFloat_AsDouble(PyList_GetItem(List_Points_eV, i)));
+    }
   }
 
   double EStart = 0;
   double EStop = 0;
 
-  if (PyList_Size(List_EnergyRange_eV) != 0) {
+  if (List_EnergyRange_eV != 0x0) {
     if (PyList_Size(List_EnergyRange_eV) == 2) {
       EStart = PyFloat_AsDouble(PyList_GetItem(List_EnergyRange_eV, 0));
       EStop  = PyFloat_AsDouble(PyList_GetItem(List_EnergyRange_eV, 1));
@@ -4474,8 +4476,8 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
 
 
   // Check for HorizontalDirection in the input
-  TVector3D HorizontalDirection(0, 0, 0);
-  if (PyList_Size(List_HorizontalDirection) != 0) {
+  TVector3D HorizontalDirection(1, 0, 0);
+  if (List_HorizontalDirection != 0x0 && PyList_Size(List_HorizontalDirection) != 0) {
     try {
       HorizontalDirection = OSCARSPY::ListAsTVector3D(List_HorizontalDirection);
     } catch (std::length_error e) {
@@ -4486,8 +4488,8 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
 
 
   // Check for PropogationDirection in the input
-  TVector3D PropogationDirection(0, 0, 0);
-  if (PyList_Size(List_PropogationDirection) != 0) {
+  TVector3D PropogationDirection(0, 0, 1);
+  if (List_PropogationDirection != 0x0 && PyList_Size(List_PropogationDirection) != 0) {
     try {
       PropogationDirection = OSCARSPY::ListAsTVector3D(List_PropogationDirection);
     } catch (std::length_error e) {
@@ -4555,6 +4557,20 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
   } else {
     PyErr_SetString(PyExc_ValueError, "'quantity' must be: 'flux', 'precision', 'level', or blank");
     return NULL;
+  }
+
+  // If all is specified make sure no angle is specified
+  if (std::string(PolarizationIn) == "all" && Angle != 0) {
+    PyErr_SetString(PyExc_ValueError, "cannot specify 'all' and 'angle'.  This is to save you");
+    return NULL;
+  }
+
+  // If Angle is specified and polarization is blank set it to linear
+  std::string Polarization = "all";
+  if (strlen(PolarizationIn) != 0) {
+    Polarization = PolarizationIn;
+  } else if (Angle != 0) {
+    Polarization = "linear";
   }
 
   // Actually calculate the spectrum
@@ -6513,10 +6529,10 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   int         NormalDirection = 0;
   int         Dim = 2;
   double      Energy_eV = 0;
-  char const* Polarization = "all";
+  char const* PolarizationIn = "";
   double      Angle = 0;
-  PyObject*   List_HorizontalDirection = PyList_New(0);
-  PyObject*   List_PropogationDirection = PyList_New(0);
+  PyObject*   List_HorizontalDirection  = 0x0;
+  PyObject*   List_PropogationDirection = 0x0;
   int         NParticles = 0;
   int         NThreads = 0;
   int         GPU = -1;
@@ -6565,7 +6581,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
                                    &List_Rotations,
                                    &List_Translation,
                                    &List_X0X1X2,
-                                   &Polarization,
+                                   &PolarizationIn,
                                    &Angle,
                                    &List_HorizontalDirection,
                                    &List_PropogationDirection,
@@ -6697,8 +6713,8 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
 
 
   // Check for HorizontalDirection in the input
-  TVector3D HorizontalDirection(0, 0, 0);
-  if (PyList_Size(List_HorizontalDirection) != 0) {
+  TVector3D HorizontalDirection(1, 0, 0);
+  if (List_HorizontalDirection != 0x0 && PyList_Size(List_HorizontalDirection) != 0) {
     try {
       HorizontalDirection = OSCARSPY::ListAsTVector3D(List_HorizontalDirection);
     } catch (std::length_error e) {
@@ -6709,8 +6725,8 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
 
 
   // Check for PropogationDirection in the input
-  TVector3D PropogationDirection(0, 0, 0);
-  if (PyList_Size(List_PropogationDirection) != 0) {
+  TVector3D PropogationDirection(0, 0, 1);
+  if (List_PropogationDirection != 0x0 && PyList_Size(List_PropogationDirection) != 0) {
     try {
       PropogationDirection = OSCARSPY::ListAsTVector3D(List_PropogationDirection);
     } catch (std::length_error e) {
@@ -6775,6 +6791,20 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
 
   // UPDATE: Needed, directional?
   //bool const Directional = NormalDirection == 0 ? false : true;
+
+  // If all is specified make sure no angle is specified
+  if (std::string(PolarizationIn) == "all" && Angle != 0) {
+    PyErr_SetString(PyExc_ValueError, "cannot specify 'all' and 'angle'.  This is to save you");
+    return NULL;
+  }
+
+  // If Angle is specified and polarization is blank set it to linear
+  std::string Polarization = "all";
+  if (strlen(PolarizationIn) != 0) {
+    Polarization = PolarizationIn;
+  } else if (Angle != 0) {
+    Polarization = "linear";
+  }
 
   try {
     self->obj->CalculateFlux(Surface,
