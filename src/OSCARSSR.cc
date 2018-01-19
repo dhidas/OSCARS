@@ -1255,19 +1255,6 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
   }
 
 
-  // Check polarization
-  if (Polarization == "all" ||
-      Polarization == "linear-horizontal" ||
-      Polarization == "linear-vertical"   ||
-      Polarization == "linear"            ||
-      Polarization == "circular-left"     ||
-      Polarization == "circular-right") {
-    // Do nothing
-  } else {
-    throw std::invalid_argument("Polarization requested not recognized");
-  }
-
-
   // Which cpmpute method will we use, gpu, multi-thread, or single-thread
   if (UseGPU) {
     // Send to GPU function
@@ -1371,7 +1358,7 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
                                         size_t const iThread,
                                         size_t const NThreads,
                                         bool& Done,
-                                        std::string const& Polarization,
+                                        std::string const& PolarizationIn,
                                         double const Angle,
                                         TVector3D const& HorizontalDirection,
                                         TVector3D const& PropogationDirection,
@@ -1427,24 +1414,32 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
   TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * I );
 
   TVector3DC PolarizationVector(0, 0, 0);
-  if (Polarization == "all") {
+
+  // Put polarization string in all upper case
+  std::string Polarization = PolarizationIn;
+  std::transform(Polarization.begin(), Polarization.end(), Polarization.begin(), ::tolower);
+  std::replace(Polarization.begin(), Polarization.end(), ' ', '-');
+
+  if (Polarization.find("all") != std::string::npos) {
     // Do Nothing
-  } else if (Polarization == "linear-horizontal") {
+  } else if (Polarization.find("linear-horizontal") != std::string::npos || Polarization.find("lh") != std::string::npos) {
     PolarizationVector = HorizontalDirection;
-  } else if (Polarization == "linear-vertical") {
+  } else if (Polarization.find("linear-vertical") != std::string::npos || Polarization.find("lv") != std::string::npos) {
     PolarizationVector = VerticalDirection;
   } else if (Polarization == "linear") {
     TVector3D PolarizationAngle = HorizontalDirection;
     PolarizationAngle.RotateSelf(Angle, PropogationDirection);
     PolarizationVector = PolarizationAngle;
-  } else if (Polarization == "circular-left") {
+  } else if (Polarization.find("circular-left") != std::string::npos || Polarization.find("cl") != std::string::npos) {
     PolarizationVector = Positive;
-  } else if (Polarization == "circular-right") {
+  } else if (Polarization.find("circular-right") != std::string::npos || Polarization.find("cr") != std::string::npos) {
     PolarizationVector = Negative;
   } else {
     // Throw invalid argument if polarization is not recognized
     throw std::invalid_argument("Polarization requested not recognized");
   }
+
+
 
 
   // Extended trajectory (not using memory for storage of arrays
@@ -2696,18 +2691,6 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
     throw std::out_of_range("wROng dimension");
   }
 
-  // Check polarization
-  if (Polarization == "all" ||
-      Polarization == "linear-horizontal" ||
-      Polarization == "linear-vertical"   ||
-      Polarization == "linear"            ||
-      Polarization == "circular-left"     ||
-      Polarization == "circular-right") {
-    // Do nothing
-  } else {
-    throw std::invalid_argument("Polarization requested not recognized");
-  }
-
 
   // Which cpmpute method will we use, gpu, multi-thread, or single-thread
   if (UseGPU) {
@@ -2818,7 +2801,7 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
                                     size_t const iFirst,
                                     size_t const iLast,
                                     bool& Done,
-                                    std::string const& Polarization,
+                                    std::string const& PolarizationIn,
                                     double const Angle,
                                     TVector3D const& HorizontalDirection,
                                     TVector3D const& PropogationDirection,
@@ -2863,19 +2846,25 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
   TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * I );
 
   TVector3DC PolarizationVector(0, 0, 0);
-  if (Polarization == "all") {
+
+  // Put polarization string in all upper case
+  std::string Polarization = PolarizationIn;
+  std::transform(Polarization.begin(), Polarization.end(), Polarization.begin(), ::tolower);
+  std::replace(Polarization.begin(), Polarization.end(), ' ', '-');
+
+  if (Polarization.find("all") != std::string::npos) {
     // Do Nothing
-  } else if (Polarization == "linear-horizontal") {
+  } else if (Polarization.find("linear-horizontal") != std::string::npos || Polarization.find("lh") != std::string::npos) {
     PolarizationVector = HorizontalDirection;
-  } else if (Polarization == "linear-vertical") {
+  } else if (Polarization.find("linear-vertical") != std::string::npos || Polarization.find("lv") != std::string::npos) {
     PolarizationVector = VerticalDirection;
   } else if (Polarization == "linear") {
     TVector3D PolarizationAngle = HorizontalDirection;
     PolarizationAngle.RotateSelf(Angle, PropogationDirection);
     PolarizationVector = PolarizationAngle;
-  } else if (Polarization == "circular-left") {
+  } else if (Polarization.find("circular-left") != std::string::npos || Polarization.find("cl") != std::string::npos) {
     PolarizationVector = Positive;
-  } else if (Polarization == "circular-right") {
+  } else if (Polarization.find("circular-right") != std::string::npos || Polarization.find("cr") != std::string::npos) {
     PolarizationVector = Negative;
   } else {
     // Throw invalid argument if polarization is not recognized

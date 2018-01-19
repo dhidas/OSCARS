@@ -4276,7 +4276,7 @@ static PyObject* OSCARSSR_GetTrajectory (OSCARSSRObject* self)
 
 
 const char* DOC_OSCARSSR_CalculateSpectrum = R"docstring(
-calculate_spectrum(obs [, npoints, energy_range_eV, energy_points_eV, points_eV, polarization, angle, horizontal_direction, propogation_direction, precision, max_level, nparticles, nthreads, gpu, ngpu, quantity, ofile, bofile])
+calculate_spectrum(obs [, npoints, energy_range_eV, energy_points_eV, points_eV, polarization, angle, horizontal_direction=[1, 0, 0], propogation_direction=[0, 0, 1], precision, max_level, nparticles, nthreads, gpu, ngpu, quantity, ofile, bofile])
 
 Calculate the spectrum given a point in space, the range in energy, and the number of points.  The calculation uses the current particle and its initial conditions.  If the trajectory has not been calculated it is calculated first.  The units of this calculation are [:math:`photons / mm^2 / 0.1% bw / s`]
 
@@ -4299,13 +4299,13 @@ points_eV : list
     A list of points to calculate the flux at ie [12.3, 45.6, 78.9, 123.4]
 
 polarization : str
-    Which polarization mode to calculate.  Can be 'all', 'linear-horizontal', 'linear-vertical', 'circular-left', 'circular-right', or 'linear' (if linear you must specify the angle parameter)
+    Which polarization mode to calculate.  Can be 'all', 'linear-horizontal', 'linear-vertical', 'circular-left', 'circular-right', or 'linear' (if linear you must specify the angle parameter).  The short versions are 'lh', 'lv', 'cl', 'cr'.  Theses are not case-sensative.   There is no need to specify 'linear' if you give the angle parameter.
 
 horizontal_direction : list
-    The direction you consider to be horizontal.  Should be perpendicular to the photon beam propogation direction
+    The direction you consider to be horizontal.  Should be perpendicular to the photon beam propogation direction.  Default is [1, 0, 0]
 
-vertical_direction : list
-    Same as horizontal_direction but the vertical direction
+propogation_direction : list
+    Propogation direction of photon beam. Default is [0, 0, 1]
 
 precision : float
     Calculation precision parameter (typically 0.01 which is 1%)
@@ -4317,7 +4317,7 @@ max_level_extended: int
     Maximum "level" to use for trajectory in the calculation.  If set to higher than max_level the computation will proceed beyond max_level without creating trajectory arrays in memory (but it will be slower)
 
 angle : float
-    Only used if polarization='linear' is specified.  The 'angle' is that from the horizontal_direction for the polarization directino you are interested in
+    The 'angle' is that from the horizontal_direction for the polarization direction you are interested in
 
 nparticles : int
     The number of particles you wish to run for a multi-particle simulation
@@ -4366,7 +4366,7 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
   PyObject*   List_EnergyRange_eV       = 0x0;
   PyObject*   List_Points_eV            = 0x0;
   char const* PolarizationIn            = "";
-  double      Angle                     = 0;
+  double      Angle                     = 112188979912321;
   PyObject*   List_HorizontalDirection  = 0x0;
   PyObject*   List_PropogationDirection = 0x0;
   double      Precision                 = 0.01;
@@ -4560,7 +4560,7 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
   }
 
   // If all is specified make sure no angle is specified
-  if (std::string(PolarizationIn) == "all" && Angle != 0) {
+  if (std::string(PolarizationIn) == "all" && Angle != 112188979912321) {
     PyErr_SetString(PyExc_ValueError, "cannot specify 'all' and 'angle'.  This is to save you");
     return NULL;
   }
@@ -4569,7 +4569,7 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
   std::string Polarization = "all";
   if (strlen(PolarizationIn) != 0) {
     Polarization = PolarizationIn;
-  } else if (Angle != 0) {
+  } else if (Angle != 112188979912321) {
     Polarization = "linear";
   }
 
@@ -6423,7 +6423,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
 
 
 const char* DOC_OSCARSSR_CalculateFluxRectangle = R"docstring(
-calculate_flux_rectangle(energy_eV, npoints [, plane, normal, dim, width, rotations, translation, x0x1x2, polarization, angle, horizontal_direction, propogation_direction, nparticles, nthreads, gpu, ngpu, precision, max_level, max_level_extended, quantity, ofile, bofile])
+calculate_flux_rectangle(energy_eV, npoints [, plane, normal, dim, width, rotations, translation, x0x1x2, polarization, angle, horizontal_direction=[1, 0, 0], propogation_direction=[0, 0, 1], nparticles, nthreads, gpu, ngpu, precision, max_level, max_level_extended, quantity, ofile, bofile])
 
 Calculate the flux density in a rectangle either defined by three points, or by defining the plane the rectangle is in and the width, and then rotating and translating it to where it needs be.  The simplest is outlined in the first example below.  By default (dim=2) this returns a list whose position coordinates are in the local coordinate space x1 and x2 (*ie* they do not include the rotations and translation).  if dim=3 the coordinates in the return list are in absolute 3D space.
 
@@ -6461,16 +6461,16 @@ x0x1x2 : list
     List of three points [[x0, y0, z0], [x1, y1, z1], [x2, y2, z2]] defining a parallelogram (vectors 0->1, and 0->2)
 
 polarization : str
-    Which polarization mode to calculate.  Can be 'all', 'linear-horizontal', 'linear-vertical', 'circular-left', 'circular-right', or 'linear' (if linear you must specify the angle parameter)
+    Which polarization mode to calculate.  Can be 'all', 'linear-horizontal', 'linear-vertical', 'circular-left', 'circular-right', or 'linear' (if linear you must specify the angle parameter).  The short versions are 'lh', 'lv', 'cl', 'cr'.  Theses are not case-sensative.   There is no need to specify 'linear' if you give the angle parameter.
 
 angle : float
     Only used if polarization='linear' is specified.  The 'angle' is that from the horizontal_direction for the polarization directino you are interested in
 
 horizontal_direction : list
-    The direction you consider to be horizontal.  Should be perpendicular to the photon beam propogation direction
+    The direction you consider to be horizontal.  Should be perpendicular to the photon beam propogation direction.  Default is [1, 0, 0]
 
 propogation_direction : list
-    Propogation direction of photon beam
+    Propogation direction of photon beam. Default is [0, 0, 1]
 
 nparticles : int
     The number of particles you wish to run for a multi-particle simulation
@@ -6530,7 +6530,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   int         Dim = 2;
   double      Energy_eV = 0;
   char const* PolarizationIn = "";
-  double      Angle = 0;
+  double      Angle                     = 112188979912321;
   PyObject*   List_HorizontalDirection  = 0x0;
   PyObject*   List_PropogationDirection = 0x0;
   int         NParticles = 0;
@@ -6793,7 +6793,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   //bool const Directional = NormalDirection == 0 ? false : true;
 
   // If all is specified make sure no angle is specified
-  if (std::string(PolarizationIn) == "all" && Angle != 0) {
+  if (std::string(PolarizationIn) == "all" && Angle != 112188979912321) {
     PyErr_SetString(PyExc_ValueError, "cannot specify 'all' and 'angle'.  This is to save you");
     return NULL;
   }
@@ -6802,7 +6802,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   std::string Polarization = "all";
   if (strlen(PolarizationIn) != 0) {
     Polarization = PolarizationIn;
-  } else if (Angle != 0) {
+  } else if (Angle != 112188979912321) {
     Polarization = "linear";
   }
 
