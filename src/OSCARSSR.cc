@@ -2217,7 +2217,7 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
       double const ThisSum = Sum * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(iLevel);
 
       Result_Precision = fabs(ThisSum - LastSum) / LastSum;
-      if (iLevel > 8 && Result_Precision < Precision && BetaDiffMax < 2. / (Particle.GetGamma())) {
+      if ( (iLevel > 8 && Result_Precision < Precision && BetaDiffMax < 2. / (Particle.GetGamma())) || (iLevel > 8 && BetaDiffMax < 2. / (Particle.GetGamma()) && ThisSum == LastSum) ) {
         Result_Level = iLevel;
         break;
       } else if (iLevel > 8 && ThisSum == LastSum) {
