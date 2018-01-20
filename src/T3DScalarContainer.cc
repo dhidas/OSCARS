@@ -214,7 +214,7 @@ void T3DScalarContainer::AverageFromFilesText (std::vector<std::string> const& F
   }
 
   fNotConverged.clear();
-  fNotConverged.resize(fValues.size() / (8 * sizeof(int)), 0);
+  fNotConverged.resize(fValues.size() / (8 * sizeof(int)) + 1, 0);
 
   return;
 }
@@ -367,7 +367,7 @@ void T3DScalarContainer::AverageFromFilesBinary (std::vector<std::string> const&
   }
 
   fNotConverged.clear();
-  fNotConverged.resize(fValues.size() / (8 * sizeof(int)), 0);
+  fNotConverged.resize(fValues.size() / (8 * sizeof(int)) + 1, 0);
 
   return;
 }

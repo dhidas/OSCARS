@@ -4,6 +4,6 @@
 #define OSCARS_VMAJOR 2
 #define OSCARS_VMINOR 1
 #define OSCARS_REVISION 0
-#define OSCARS_RELEASE "dev4"
+#define OSCARS_RELEASE "dev5"
 
 #endif

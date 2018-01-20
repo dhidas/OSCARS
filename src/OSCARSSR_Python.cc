@@ -4423,7 +4423,7 @@ static PyObject* OSCARSSR_GetTrajectory (OSCARSSRObject* self)
 
 
 const char* DOC_OSCARSSR_CalculateSpectrum = R"docstring(
-calculate_spectrum(obs [, npoints, energy_range_eV, energy_points_eV, points_eV, polarization, angle, horizontal_direction, propogation_direction, precision, max_level, nparticles, nthreads, gpu, ngpu, quantity, ofile, bofile])
+calculate_spectrum(obs [, npoints, energy_range_eV, energy_points_eV, points_eV, polarization, angle, horizontal_direction=[1, 0, 0], propogation_direction=[0, 0, 1], precision, max_level, nparticles, nthreads, gpu, ngpu, quantity, ofile, bofile])
 
 Calculate the spectrum given a point in space, the range in energy, and the number of points.  The calculation uses the current particle and its initial conditions.  If the trajectory has not been calculated it is calculated first.  The units of this calculation are [:math:`photons / mm^2 / 0.1% bw / s`]
 
@@ -4446,13 +4446,13 @@ points_eV : list
     A list of points to calculate the flux at ie [12.3, 45.6, 78.9, 123.4]
 
 polarization : str
-    Which polarization mode to calculate.  Can be 'all', 'linear-horizontal', 'linear-vertical', 'circular-left', 'circular-right', or 'linear' (if linear you must specify the angle parameter)
+    Which polarization mode to calculate.  Can be 'all', 'linear-horizontal', 'linear-vertical', 'circular-left', 'circular-right', or 'linear' (if linear you must specify the angle parameter).  The short versions are 'lh', 'lv', 'cl', 'cr'.  Theses are not case-sensative.   There is no need to specify 'linear' if you give the angle parameter.
 
 horizontal_direction : list
-    The direction you consider to be horizontal.  Should be perpendicular to the photon beam propogation direction
+    The direction you consider to be horizontal.  Should be perpendicular to the photon beam propogation direction.  Default is [1, 0, 0]
 
-vertical_direction : list
-    Same as horizontal_direction but the vertical direction
+propogation_direction : list
+    Propogation direction of photon beam. Default is [0, 0, 1]
 
 precision : float
     Calculation precision parameter (typically 0.01 which is 1%)
@@ -4464,7 +4464,7 @@ max_level_extended: int
     Maximum "level" to use for trajectory in the calculation.  If set to higher than max_level the computation will proceed beyond max_level without creating trajectory arrays in memory (but it will be slower)
 
 angle : float
-    Only used if polarization='linear' is specified.  The 'angle' is that from the horizontal_direction for the polarization directino you are interested in
+    The 'angle' is that from the horizontal_direction for the polarization direction you are interested in
 
 nparticles : int
     The number of particles you wish to run for a multi-particle simulation
@@ -4508,14 +4508,14 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
   // Calculate the spectrum given an observation point, and energy range
 
 
-  PyObject*   List_Obs                  = PyList_New(0);
+  PyObject*   List_Obs                  = 0x0;
   int         NPoints                   = 0;
-  PyObject*   List_EnergyRange_eV       = PyList_New(0);
-  PyObject*   List_Points_eV            = PyList_New(0);
-  char const* Polarization              = "all";
-  double      Angle                     = 0;
-  PyObject*   List_HorizontalDirection  = PyList_New(0);
-  PyObject*   List_PropogationDirection = PyList_New(0);
+  PyObject*   List_EnergyRange_eV       = 0x0;
+  PyObject*   List_Points_eV            = 0x0;
+  char const* PolarizationIn            = "";
+  double      Angle                     = 112188979912321;
+  PyObject*   List_HorizontalDirection  = 0x0;
+  PyObject*   List_PropogationDirection = 0x0;
   double      Precision                 = 0.01;
   int         MaxLevel                  = -2;
   int         MaxLevelExtended          = 0;
@@ -4557,7 +4557,7 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
                                    &List_EnergyRange_eV,
                                    &List_Points_eV,
                                    &List_Points_eV,
-                                   &Polarization,
+                                   &PolarizationIn,
                                    &Angle,
                                    &List_HorizontalDirection,
                                    &List_PropogationDirection,
@@ -4590,14 +4590,16 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
 
   // Add all values to a vector
   std::vector<double> VPoints_eV;
-  for (int i = 0; i < PyList_Size(List_Points_eV); ++i) {
-    VPoints_eV.push_back(PyFloat_AsDouble(PyList_GetItem(List_Points_eV, i)));
+  if (List_Points_eV != 0x0) {
+    for (int i = 0; i < PyList_Size(List_Points_eV); ++i) {
+      VPoints_eV.push_back(PyFloat_AsDouble(PyList_GetItem(List_Points_eV, i)));
+    }
   }
 
   double EStart = 0;
   double EStop = 0;
 
-  if (PyList_Size(List_EnergyRange_eV) != 0) {
+  if (List_EnergyRange_eV != 0x0) {
     if (PyList_Size(List_EnergyRange_eV) == 2) {
       EStart = PyFloat_AsDouble(PyList_GetItem(List_EnergyRange_eV, 0));
       EStop  = PyFloat_AsDouble(PyList_GetItem(List_EnergyRange_eV, 1));
@@ -4621,8 +4623,8 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
 
 
   // Check for HorizontalDirection in the input
-  TVector3D HorizontalDirection(0, 0, 0);
-  if (PyList_Size(List_HorizontalDirection) != 0) {
+  TVector3D HorizontalDirection(1, 0, 0);
+  if (List_HorizontalDirection != 0x0 && PyList_Size(List_HorizontalDirection) != 0) {
     try {
       HorizontalDirection = OSCARSPY::ListAsTVector3D(List_HorizontalDirection);
     } catch (std::length_error e) {
@@ -4633,8 +4635,8 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
 
 
   // Check for PropogationDirection in the input
-  TVector3D PropogationDirection(0, 0, 0);
-  if (PyList_Size(List_PropogationDirection) != 0) {
+  TVector3D PropogationDirection(0, 0, 1);
+  if (List_PropogationDirection != 0x0 && PyList_Size(List_PropogationDirection) != 0) {
     try {
       PropogationDirection = OSCARSPY::ListAsTVector3D(List_PropogationDirection);
     } catch (std::length_error e) {
@@ -4704,6 +4706,20 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
     return NULL;
   }
 
+  // If all is specified make sure no angle is specified
+  if (std::string(PolarizationIn) == "all" && Angle != 112188979912321) {
+    PyErr_SetString(PyExc_ValueError, "cannot specify 'all' and 'angle'.  This is to save you");
+    return NULL;
+  }
+
+  // If Angle is specified and polarization is blank set it to linear
+  std::string Polarization = "all";
+  if (strlen(PolarizationIn) != 0) {
+    Polarization = PolarizationIn;
+  } else if (Angle != 112188979912321) {
+    Polarization = "linear";
+  }
+
   // Actually calculate the spectrum
   try {
     self->obj->CalculateSpectrum(Obs,
@@ -4766,21 +4782,75 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
 
 
 const char* DOC_OSCARSSR_CalculateTotalPower = R"docstring(
-calculate_total_power()
+calculate_total_power([, precision, max_level, max_level_extended, quantity])
 
 Calculate the total radiated power based on the current particle and that particle's beam current.
 
 See the :doc:`MathematicalNotes` section for the expression used in this calculation.
 
+precision : float
+    Calculation precision parameter (typically 0.01 which is 1%)
+
+max_level: int
+    Maximum "level" to use for trajectory in the calculation.  Level N corresponds to a total of 2**(N+2) trajectory points.  You cannot go beyond the internal maximum.  You are not guaranteed precision parameter is met if this is used.
+
+
+max_level_extended: int
+    Maximum "level" to use for trajectory in the calculation.  If set to higher than max_level the computation will proceed beyond max_level without creating trajectory arrays in memory (but it will be slower)
+
+quantity: str
+    Quantity to return.
+    Available are:
+        'power'     - (default)
+        'precision' - Estimated precision
+        'level'     - Trajectory level reached (npoints = 2**(n+1) - 1), if return is -1 the requested precision was not reached
 
 Returns
 -------
 power : float
     Total power in [W]
 )docstring";
-static PyObject* OSCARSSR_CalculateTotalPower (OSCARSSRObject* self)
+static PyObject* OSCARSSR_CalculateTotalPower (OSCARSSRObject* self, PyObject* args, PyObject *keywds)
 {
   // Calculate the total power radiated by the current particle
+
+  double      Precision = 0.01;
+  int         MaxLevel = -2;
+  int         MaxLevelExtended = 0;
+  char const* ReturnQuantityChars = "power";
+
+
+  static const char *kwlist[] = {"precision",
+                                 "max_level",
+                                 "max_level_extended",
+                                 "quantity",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|diis",
+                                   const_cast<char **>(kwlist),
+                                   &Precision,
+                                   &MaxLevel,
+                                   &MaxLevelExtended,
+                                   &ReturnQuantityChars)) {
+    return NULL;
+  }
+
+
+  int ReturnQuantity = 0;
+  std::string ReturnQuantityStr = ReturnQuantityChars;
+  std::transform(ReturnQuantityStr.begin(), ReturnQuantityStr.end(), ReturnQuantityStr.begin(), ::toupper);
+  if (ReturnQuantityStr == "POWER" || ReturnQuantityStr == "POWER") {
+    ReturnQuantity = 0;
+  } else if (ReturnQuantityStr == "PRECISION") {
+    ReturnQuantity = 1;
+  } else if (ReturnQuantityStr == "LEVEL") {
+    ReturnQuantity = 2;
+  } else {
+    PyErr_SetString(PyExc_ValueError, "'quantity' must be: 'power', 'precision', 'level', or blank");
+    return NULL;
+  }
+
+
 
   double Power = 0;
 
@@ -4793,7 +4863,7 @@ static PyObject* OSCARSSR_CalculateTotalPower (OSCARSSRObject* self)
   // Return the total power
   // UPDATE: This does not fail when no beam defined
   try {
-    Power = self->obj->CalculateTotalPower();
+    Power = self->obj->CalculateTotalPower(Precision, MaxLevel, MaxLevelExtended, ReturnQuantity);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -6503,7 +6573,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
 
 
 const char* DOC_OSCARSSR_CalculateFluxRectangle = R"docstring(
-calculate_flux_rectangle(energy_eV, npoints [, plane, normal, dim, width, rotations, translation, x0x1x2, polarization, angle, horizontal_direction, propogation_direction, nparticles, nthreads, gpu, ngpu, precision, max_level, max_level_extended, quantity, ofile, bofile])
+calculate_flux_rectangle(energy_eV, npoints [, plane, normal, dim, width, rotations, translation, x0x1x2, polarization, angle, horizontal_direction=[1, 0, 0], propogation_direction=[0, 0, 1], nparticles, nthreads, gpu, ngpu, precision, max_level, max_level_extended, quantity, ofile, bofile])
 
 Calculate the flux density in a rectangle either defined by three points, or by defining the plane the rectangle is in and the width, and then rotating and translating it to where it needs be.  The simplest is outlined in the first example below.  By default (dim=2) this returns a list whose position coordinates are in the local coordinate space x1 and x2 (*ie* they do not include the rotations and translation).  if dim=3 the coordinates in the return list are in absolute 3D space.
 
@@ -6541,16 +6611,16 @@ x0x1x2 : list
     List of three points [[x0, y0, z0], [x1, y1, z1], [x2, y2, z2]] defining a parallelogram (vectors 0->1, and 0->2)
 
 polarization : str
-    Which polarization mode to calculate.  Can be 'all', 'linear-horizontal', 'linear-vertical', 'circular-left', 'circular-right', or 'linear' (if linear you must specify the angle parameter)
+    Which polarization mode to calculate.  Can be 'all', 'linear-horizontal', 'linear-vertical', 'circular-left', 'circular-right', or 'linear' (if linear you must specify the angle parameter).  The short versions are 'lh', 'lv', 'cl', 'cr'.  Theses are not case-sensative.   There is no need to specify 'linear' if you give the angle parameter.
 
 angle : float
     Only used if polarization='linear' is specified.  The 'angle' is that from the horizontal_direction for the polarization directino you are interested in
 
 horizontal_direction : list
-    The direction you consider to be horizontal.  Should be perpendicular to the photon beam propogation direction
+    The direction you consider to be horizontal.  Should be perpendicular to the photon beam propogation direction.  Default is [1, 0, 0]
 
 propogation_direction : list
-    Propogation direction of photon beam
+    Propogation direction of photon beam. Default is [0, 0, 1]
 
 nparticles : int
     The number of particles you wish to run for a multi-particle simulation
@@ -6609,10 +6679,10 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   int         NormalDirection = 0;
   int         Dim = 2;
   double      Energy_eV = 0;
-  char const* Polarization = "all";
-  double      Angle = 0;
-  PyObject*   List_HorizontalDirection = PyList_New(0);
-  PyObject*   List_PropogationDirection = PyList_New(0);
+  char const* PolarizationIn = "";
+  double      Angle                     = 112188979912321;
+  PyObject*   List_HorizontalDirection  = 0x0;
+  PyObject*   List_PropogationDirection = 0x0;
   int         NParticles = 0;
   int         NThreads = 0;
   int         GPU = -1;
@@ -6661,7 +6731,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
                                    &List_Rotations,
                                    &List_Translation,
                                    &List_X0X1X2,
-                                   &Polarization,
+                                   &PolarizationIn,
                                    &Angle,
                                    &List_HorizontalDirection,
                                    &List_PropogationDirection,
@@ -6793,8 +6863,8 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
 
 
   // Check for HorizontalDirection in the input
-  TVector3D HorizontalDirection(0, 0, 0);
-  if (PyList_Size(List_HorizontalDirection) != 0) {
+  TVector3D HorizontalDirection(1, 0, 0);
+  if (List_HorizontalDirection != 0x0 && PyList_Size(List_HorizontalDirection) != 0) {
     try {
       HorizontalDirection = OSCARSPY::ListAsTVector3D(List_HorizontalDirection);
     } catch (std::length_error e) {
@@ -6805,8 +6875,8 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
 
 
   // Check for PropogationDirection in the input
-  TVector3D PropogationDirection(0, 0, 0);
-  if (PyList_Size(List_PropogationDirection) != 0) {
+  TVector3D PropogationDirection(0, 0, 1);
+  if (List_PropogationDirection != 0x0 && PyList_Size(List_PropogationDirection) != 0) {
     try {
       PropogationDirection = OSCARSPY::ListAsTVector3D(List_PropogationDirection);
     } catch (std::length_error e) {
@@ -6871,6 +6941,20 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
 
   // UPDATE: Needed, directional?
   //bool const Directional = NormalDirection == 0 ? false : true;
+
+  // If all is specified make sure no angle is specified
+  if (std::string(PolarizationIn) == "all" && Angle != 112188979912321) {
+    PyErr_SetString(PyExc_ValueError, "cannot specify 'all' and 'angle'.  This is to save you");
+    return NULL;
+  }
+
+  // If Angle is specified and polarization is blank set it to linear
+  std::string Polarization = "all";
+  if (strlen(PolarizationIn) != 0) {
+    Polarization = PolarizationIn;
+  } else if (Angle != 112188979912321) {
+    Polarization = "linear";
+  }
 
   try {
     self->obj->CalculateFlux(Surface,
@@ -7812,7 +7896,7 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
 
   {"calculate_spectrum",                (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateSpectrum},
 
-  {"calculate_total_power",             (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_CalculateTotalPower},
+  {"calculate_total_power",             (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateTotalPower},
   {"calculate_power_density",           (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensity},
   {"calculate_power_density_rectangle", (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensityRectangle},
   {"calculate_power_density_stl",       (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensitySTL},
@@ -7919,7 +8003,7 @@ static PyMethodDef OSCARSSR_methods[] = {
 
   {"calculate_spectrum",                (PyCFunction) OSCARSSR_CalculateSpectrum,               METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateSpectrum},
 
-  {"calculate_total_power",             (PyCFunction) OSCARSSR_CalculateTotalPower,             METH_NOARGS,                  DOC_OSCARSSR_CalculateTotalPower},
+  {"calculate_total_power",             (PyCFunction) OSCARSSR_CalculateTotalPower,             METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateTotalPower},
   {"calculate_power_density",           (PyCFunction) OSCARSSR_CalculatePowerDensity,           METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensity},
   {"calculate_power_density_rectangle", (PyCFunction) OSCARSSR_CalculatePowerDensityRectangle,  METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensityRectangle},
   {"calculate_power_density_stl",       (PyCFunction) OSCARSSR_CalculatePowerDensitySTL,        METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensitySTL},

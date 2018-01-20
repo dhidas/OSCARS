@@ -1259,19 +1259,6 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
   }
 
 
-  // Check polarization
-  if (Polarization == "all" ||
-      Polarization == "linear-horizontal" ||
-      Polarization == "linear-vertical"   ||
-      Polarization == "linear"            ||
-      Polarization == "circular-left"     ||
-      Polarization == "circular-right") {
-    // Do nothing
-  } else {
-    throw std::invalid_argument("Polarization requested not recognized");
-  }
-
-
   // Which cpmpute method will we use, gpu, multi-thread, or single-thread
   if (UseGPU) {
     // Send to GPU function
@@ -1375,7 +1362,7 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
                                         size_t const iThread,
                                         size_t const NThreads,
                                         bool& Done,
-                                        std::string const& Polarization,
+                                        std::string const& PolarizationIn,
                                         double const Angle,
                                         TVector3D const& HorizontalDirection,
                                         TVector3D const& PropogationDirection,
@@ -1431,24 +1418,32 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
   TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * I );
 
   TVector3DC PolarizationVector(0, 0, 0);
-  if (Polarization == "all") {
+
+  // Put polarization string in all upper case
+  std::string Polarization = PolarizationIn;
+  std::transform(Polarization.begin(), Polarization.end(), Polarization.begin(), ::tolower);
+  std::replace(Polarization.begin(), Polarization.end(), ' ', '-');
+
+  if (Polarization.find("all") != std::string::npos) {
     // Do Nothing
-  } else if (Polarization == "linear-horizontal") {
+  } else if (Polarization.find("linear-horizontal") != std::string::npos || Polarization.find("lh") != std::string::npos) {
     PolarizationVector = HorizontalDirection;
-  } else if (Polarization == "linear-vertical") {
+  } else if (Polarization.find("linear-vertical") != std::string::npos || Polarization.find("lv") != std::string::npos) {
     PolarizationVector = VerticalDirection;
   } else if (Polarization == "linear") {
     TVector3D PolarizationAngle = HorizontalDirection;
     PolarizationAngle.RotateSelf(Angle, PropogationDirection);
     PolarizationVector = PolarizationAngle;
-  } else if (Polarization == "circular-left") {
+  } else if (Polarization.find("circular-left") != std::string::npos || Polarization.find("cl") != std::string::npos) {
     PolarizationVector = Positive;
-  } else if (Polarization == "circular-right") {
+  } else if (Polarization.find("circular-right") != std::string::npos || Polarization.find("cr") != std::string::npos) {
     PolarizationVector = Negative;
   } else {
     // Throw invalid argument if polarization is not recognized
     throw std::invalid_argument("Polarization requested not recognized");
   }
+
+
 
 
   // Extended trajectory (not using memory for storage of arrays
@@ -1528,8 +1523,9 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
       }
       ThisMag = ThisSumE.Dot( ThisSumE.CC() ).real();
 
+
       Result_Precision = fabs(ThisMag - LastMag) / LastMag;
-      if (iLevel > 8 && Result_Precision < Precision && MaxDPhase < TOSCARSSR::Pi()) {
+      if ( (iLevel > 8 && Result_Precision < Precision && MaxDPhase < TOSCARSSR::Pi()) || (iLevel > 8 && MaxDPhase < TOSCARSSR::Pi() && ThisMag == LastMag)) {
         Result_Level = iLevel;
         break;
       }
@@ -2220,7 +2216,7 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
       double const ThisSum = Sum * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(iLevel);
 
       Result_Precision = fabs(ThisSum - LastSum) / LastSum;
-      if (iLevel > 8 && Result_Precision < Precision && BetaDiffMax < 2. / (Particle.GetGamma())) {
+      if ( (iLevel > 8 && Result_Precision < Precision && BetaDiffMax < 2. / (Particle.GetGamma())) || (iLevel > 8 && BetaDiffMax < 2. / (Particle.GetGamma()) && ThisSum == LastSum) ) {
         Result_Level = iLevel;
         break;
       } else if (iLevel > 8 && ThisSum == LastSum) {
@@ -2436,7 +2432,10 @@ void OSCARSSR::CalculatePowerDensityGPU (TSurfacePoints const& Surface,
 
 
 
-double OSCARSSR::CalculateTotalPower ()
+double OSCARSSR::CalculateTotalPower (double const Precision,
+                                      int    const MaxLevel,
+                                      int    const MaxLevelExtended,
+                                      int    const ReturnQuantity)
 {
   // UPDATE: commet
 
@@ -2449,14 +2448,18 @@ double OSCARSSR::CalculateTotalPower ()
     }
   }
 
-  return this->CalculateTotalPower(fParticle);
+  return this->CalculateTotalPower(fParticle, Precision, MaxLevel, MaxLevelExtended, ReturnQuantity);
 }
 
 
 
 
 
-double OSCARSSR::CalculateTotalPower (TParticleA& Particle)
+double OSCARSSR::CalculateTotalPower (TParticleA& Particle,
+                                      double const Precision,
+                                      int    const MaxLevel,
+                                      int    const MaxLevelExtended,
+                                      int    const ReturnQuantity)
 {
   // Calculate total power out
 
@@ -2465,39 +2468,104 @@ double OSCARSSR::CalculateTotalPower (TParticleA& Particle)
     throw std::out_of_range("no particle defined");
   }
 
-  // Grab the Trajectory
-  TParticleTrajectoryPoints& T = Particle.GetTrajectory();
 
-  // Calculate trajectory if it doesn't exist
-  if (Particle.GetTrajectory().GetNPoints() == 0) {
-    this->CalculateTrajectory(Particle);
+  // Check you are not requesting a level above the maximum
+  if (MaxLevel > TParticleA::kMaxTrajectoryLevel) {
+    std::cerr << "WARNING: MaxLevel > TParticleA::kMaxTrajectoryLevel.  Setting MaxLevel to TParticleA::kMaxTrajectoryLevel" << std::endl;
+  }
+
+  // Set the level to stop at if requested, but not above the hard limit
+  int const LevelStopMemory = MaxLevel >= -1  && MaxLevel <= TParticleA::kMaxTrajectoryLevel ? MaxLevel : TParticleA::kMaxTrajectoryLevel;
+  int const LevelStopWithExtended = MaxLevelExtended > LevelStopMemory ? MaxLevelExtended : LevelStopMemory;
+
+  // Extended trajectory (not using memory for storage of arrays
+  TParticleTrajectoryInterpolatedPoints TE;
+
+  // Alternative outputs
+  double Result_Precision = -1;
+  int    Result_Level     = -1;
+
+  double ThisSum = -1;
+  double LastSum = -1;
+  int    LastLevel = 0;
+
+  // Summing for this power density
+  double Sum = 0;
+
+
+  for (int iLevel = 0; iLevel <= LevelStopWithExtended; ++iLevel) {
+    LastLevel = iLevel;
+
+    // Keep track of Beta for precision
+    TVector3D Last_Beta(0, 0, 0);
+    double BetaDiffMax = -1;
+
+    // Grab the Trajectory (using memory arrays) if below level threshold, else set NULL
+    TParticleTrajectoryPoints const& TM = Particle.GetTrajectoryLevel(iLevel <= LevelStopMemory ? iLevel : 0);
+    if (iLevel > LevelStopMemory) {
+      TE = Particle.GetTrajectoryExtendedLevel(iLevel);
+    }
+
+    // Number of points in the trajectory
+    size_t const NTPoints = iLevel <= LevelStopMemory ? TM.GetNPoints() : TE.GetNPoints();
+
+    // Loop over trajectory points
+    for (int iT = 0; iT != NTPoints; ++iT) {
+
+      TParticleTrajectoryPoint const& PP = (iLevel <= LevelStopMemory ? TM.GetPoint(iT) : TE.GetTrajectoryPoint(iT));
+
+      // Get Beta, and Acceleration (over c)
+      TVector3D const& B = PP.GetB();
+      TVector3D const& AoverC = PP.GetAoverC();
+
+      double const BetaDiff = (B - Last_Beta).Mag();
+      if (iT > 0 && BetaDiff > BetaDiffMax) {
+        BetaDiffMax = BetaDiff;
+      }
+      Last_Beta = B;
+
+      Sum += (AoverC.Mag2() - (B.Cross(AoverC)).Mag2());
+    }
+
+    double const ThisSum = Sum * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(iLevel);
+
+    Result_Precision = fabs(ThisSum - LastSum) / LastSum;
+    if (iLevel > 8 && Result_Precision < Precision && BetaDiffMax < 2. / (Particle.GetGamma())) {
+      Result_Level = iLevel;
+      break;
+    } else if (iLevel > 8 && ThisSum == LastSum) {
+      // The assumption here is that zero is last and now
+      Result_Level = iLevel;
+      Result_Precision = 0;
+      break;
+    }
+
+    LastSum = ThisSum;
+  }
+
+  double const ResultPower = LastSum * fabs(Particle.GetQ() * Particle.GetCurrent()) * pow(Particle.GetGamma(), 6) / (6 * TOSCARSSR::Pi() * TOSCARSSR::Epsilon0() * TOSCARSSR::C());
+
+  double ReturnValue = 0;
+
+  switch (ReturnQuantity) {
+    case 1:
+      ReturnValue = Result_Precision;
+      break;
+    case 2:
+      ReturnValue = (double) Result_Level;
+      break;
+    default:
+      ReturnValue = ResultPower;
+      break;
   }
 
 
-  // Number of points in Trajectory
-  size_t const NTPoints = T.GetNPoints();
-
-  // Timestep from trajectory
-  double const DeltaT = T.GetDeltaT();
-
-  // For summing total power
-  double TotalPower = 0;
-
-
-  // Loop over all points in trajectory
-  for (size_t i = 0; i != NTPoints; ++i) {
-    TVector3D const& B = T.GetB(i);
-    TVector3D const& AoverC = T.GetAoverC(i);
-
-    TotalPower += (AoverC.Mag2() - (B.Cross(AoverC)).Mag2()) * DeltaT;
-
+  // If a point does not converge mark it
+  if (Result_Level == -1) {
+    throw std::out_of_range("total power calculation did not converge.  Try increasing max_level or decreasing precision");
   }
 
-  // Undulators, Wigglers and their applications, p42
-  TotalPower *= fabs(Particle.GetQ() * Particle.GetCurrent()) * pow(Particle.GetGamma(), 6) / (6 * TOSCARSSR::Pi() * TOSCARSSR::Epsilon0() * TOSCARSSR::C());
-
-
-  return TotalPower;
+  return ReturnValue;
 }
 
 
@@ -2627,18 +2695,6 @@ void OSCARSSR::CalculateFlux (TSurfacePoints const& Surface,
     throw std::out_of_range("wROng dimension");
   }
 
-  // Check polarization
-  if (Polarization == "all" ||
-      Polarization == "linear-horizontal" ||
-      Polarization == "linear-vertical"   ||
-      Polarization == "linear"            ||
-      Polarization == "circular-left"     ||
-      Polarization == "circular-right") {
-    // Do nothing
-  } else {
-    throw std::invalid_argument("Polarization requested not recognized");
-  }
-
 
   // Which cpmpute method will we use, gpu, multi-thread, or single-thread
   if (UseGPU) {
@@ -2749,7 +2805,7 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
                                     size_t const iFirst,
                                     size_t const iLast,
                                     bool& Done,
-                                    std::string const& Polarization,
+                                    std::string const& PolarizationIn,
                                     double const Angle,
                                     TVector3D const& HorizontalDirection,
                                     TVector3D const& PropogationDirection,
@@ -2794,19 +2850,25 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
   TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * I );
 
   TVector3DC PolarizationVector(0, 0, 0);
-  if (Polarization == "all") {
+
+  // Put polarization string in all upper case
+  std::string Polarization = PolarizationIn;
+  std::transform(Polarization.begin(), Polarization.end(), Polarization.begin(), ::tolower);
+  std::replace(Polarization.begin(), Polarization.end(), ' ', '-');
+
+  if (Polarization.find("all") != std::string::npos) {
     // Do Nothing
-  } else if (Polarization == "linear-horizontal") {
+  } else if (Polarization.find("linear-horizontal") != std::string::npos || Polarization.find("lh") != std::string::npos) {
     PolarizationVector = HorizontalDirection;
-  } else if (Polarization == "linear-vertical") {
+  } else if (Polarization.find("linear-vertical") != std::string::npos || Polarization.find("lv") != std::string::npos) {
     PolarizationVector = VerticalDirection;
   } else if (Polarization == "linear") {
     TVector3D PolarizationAngle = HorizontalDirection;
     PolarizationAngle.RotateSelf(Angle, PropogationDirection);
     PolarizationVector = PolarizationAngle;
-  } else if (Polarization == "circular-left") {
+  } else if (Polarization.find("circular-left") != std::string::npos || Polarization.find("cl") != std::string::npos) {
     PolarizationVector = Positive;
-  } else if (Polarization == "circular-right") {
+  } else if (Polarization.find("circular-right") != std::string::npos || Polarization.find("cr") != std::string::npos) {
     PolarizationVector = Negative;
   } else {
     // Throw invalid argument if polarization is not recognized
@@ -2897,7 +2959,7 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
       ThisMag = ThisSumE.Dot( ThisSumE.CC() ).real();
 
       Result_Precision = fabs(ThisMag - LastMag) / LastMag;
-      if (iLevel > 8 && Result_Precision < Precision && MaxDPhase < TOSCARSSR::Pi()) {
+      if ( (iLevel > 8 && Result_Precision < Precision && MaxDPhase < TOSCARSSR::Pi()) || (iLevel > 8 && MaxDPhase < TOSCARSSR::Pi() && ThisMag == LastMag)) {
         Result_Level = iLevel;
         break;
       }

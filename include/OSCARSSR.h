@@ -326,8 +326,16 @@ class OSCARSSR
                                    int    const MaxLevelExtended,
                                    int    const ReturnQuantity);
 
-    double CalculateTotalPower ();
-    double CalculateTotalPower (TParticleA&);
+    double CalculateTotalPower (double const Precision = 0.01,
+                                int    const MaxLevel = TParticleA::kMaxTrajectoryLevel,
+                                int    const MaxLevelExtended = 0,
+                                int    const ReturnQuantity = 0);
+
+    double CalculateTotalPower (TParticleA& Particle,
+                                double const Precision,
+                                int    const MaxLevel,
+                                int    const MaxLevelExtended,
+                                int    const ReturnQuantity);
 
 
     // Flux Calculations
