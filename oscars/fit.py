@@ -1,7 +1,11 @@
 from scipy.optimize import curve_fit, minimize
-import matplotlib.pyplot as plt
 import numpy as np
+import warnings
 
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    warnings.warn('matplotlib cannot be imported')
 
 
 

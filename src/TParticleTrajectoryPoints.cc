@@ -547,8 +547,9 @@ void TParticleTrajectoryPoints::ReadFromFileBinary (std::string const& FileName)
   }
 
   // Read input format
-  char FormatIn[FormatLength+1];
-  FormatIn[FormatLength] = '\0';
+  int const LastChar = FormatLength;
+  char FormatIn[LastChar+1];
+  FormatIn[LastChar] = '\0';
   f.read((char*) FormatIn, FormatLength * sizeof(char));
 
   // Transform input format
