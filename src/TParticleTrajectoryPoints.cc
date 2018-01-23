@@ -571,7 +571,7 @@ void TParticleTrajectoryPoints::ReadFromFileBinary (std::string const& FileName)
 
 
   // For data reading
-  float v[FormatWords.size()];
+  float* v = new float[FormatWords.size()];
 
   // Variables to read from file
   float   t  = 0;
@@ -649,6 +649,9 @@ void TParticleTrajectoryPoints::ReadFromFileBinary (std::string const& FileName)
       this->AddPoint( TVector3D(x, y, z), TVector3D(bx, by, bz), TVector3D(ax, ay, az) * TOSCARSSR::C(), t );
     }
   }
+
+  // Delete data vector
+  delete v;
 
   return;
 }
