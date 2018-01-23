@@ -538,7 +538,7 @@ void TParticleTrajectoryPoints::ReadFromFileBinary (std::string const& FileName)
   }
 
   // Read format length as first word
-  int FormatLength;
+  int FormatLength = 0;
   f.read((char*) &FormatLength, sizeof(int));
 
   // Check format length
