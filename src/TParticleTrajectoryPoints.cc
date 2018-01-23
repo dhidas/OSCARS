@@ -238,45 +238,109 @@ void TParticleTrajectoryPoints::ReverseArrays ()
 
 
 
-void TParticleTrajectoryPoints::WriteToFile (std::string const& FileName) const
+void TParticleTrajectoryPoints::WriteToFile (std::string const& FileName, std::string const& FormatIn) const
 {
   // Write the trajectory data to a file in text format
 
   // Open file for writing
   std::ofstream f(FileName.c_str());
   if (!f.is_open()) {
-    throw;
+    throw std::ifstream::failure("cannot open output file");
   }
 
-  // Write header
-  f << "# T X Y Z BX BY BZ" << std::endl;
+  std::string Format = FormatIn;
+  std::transform(Format.begin(), Format.end(), Format.begin(), ::toupper);
 
-  // Set the ofstream in scientific output mode
-  f << std::scientific;
-  f.precision(35);
+  // Write in default format
+  if (Format == "DEFAULT") {
+    Format = "T X Y Z BX BY BZ AX AY AZ";
 
-  // Loop over all points and print to file
-  for (size_t i = 0; i != fP.size(); ++i) {
-    f << fT[i]
-      << " "
-      << fP[i].GetX().GetX()
-      << " "
-      << fP[i].GetX().GetY()
-      << " "
-      << fP[i].GetX().GetZ()
-      << " "
-      << fP[i].GetB().GetX()
-      << " "
-      << fP[i].GetB().GetY()
-      << " "
-      << fP[i].GetB().GetZ()
-      << " "
-      << fP[i].GetAoverC().GetX()
-      << " "
-      << fP[i].GetAoverC().GetY()
-      << " "
-      << fP[i].GetAoverC().GetZ()
-      << std::endl;
+    // Write header
+    f << "# " << Format << std::endl;
+
+    // Set the ofstream in scientific output mode
+    f << std::scientific;
+    f.precision(35);
+
+    // Loop over all points and print to file
+    for (size_t i = 0; i != fP.size(); ++i) {
+      f << fT[i]
+        << " "
+        << fP[i].GetX().GetX()
+        << " "
+        << fP[i].GetX().GetY()
+        << " "
+        << fP[i].GetX().GetZ()
+        << " "
+        << fP[i].GetB().GetX()
+        << " "
+        << fP[i].GetB().GetY()
+        << " "
+        << fP[i].GetB().GetZ()
+        << " "
+        << fP[i].GetAoverC().GetX() * TOSCARSSR::C()
+        << " "
+        << fP[i].GetAoverC().GetY() * TOSCARSSR::C()
+        << " "
+        << fP[i].GetAoverC().GetZ() * TOSCARSSR::C()
+        << std::endl;
+    }
+  } else {
+
+    // String stream
+    std::istringstream FormatStream(Format);
+    std::vector<std::string> FormatWords;
+    for (std::string ss; FormatStream >> ss; ) {
+      FormatWords.push_back(ss.c_str());
+    }
+
+    if (FormatWords.size() < 1) {
+      throw std::length_error("Format must contain at least one element");
+    }
+
+    // Write header
+    f << "# " << FormatIn << std::endl;
+
+    // Set the ofstream in scientific output mode
+    f << std::scientific;
+    f.precision(35);
+
+    // Loop over all points and print to file
+    for (size_t i = 0; i != fP.size(); ++i) {
+
+      for (std::vector<std::string>::iterator it = FormatWords.begin(); it != FormatWords.end(); ++it) {
+        
+        // Which component to write
+        if (*it == "T") {
+          f << fT[i];
+        } else if (*it == "X") {
+          f << fP[i].GetX().GetX();
+        } else if (*it == "Y") {
+          f << fP[i].GetX().GetY();
+        } else if (*it == "Z") {
+          f << fP[i].GetX().GetZ();
+        } else if (*it == "BX") {
+          f << fP[i].GetB().GetX();
+        } else if (*it == "BY") {
+          f << fP[i].GetB().GetY();
+        } else if (*it == "BZ") {
+          f << fP[i].GetB().GetZ();
+        } else if (*it == "AX") {
+          f << fP[i].GetAoverC().GetX() * TOSCARSSR::C();
+        } else if (*it == "AY") {
+          f << fP[i].GetAoverC().GetY() * TOSCARSSR::C();
+        } else if (*it == "AZ") {
+          f << fP[i].GetAoverC().GetZ() * TOSCARSSR::C();
+        } else {
+          throw std::invalid_argument("format specifier not recognized");
+        }
+
+        if (it < FormatWords.end() - 1) {
+          f << " ";
+        }
+      }
+      f << std::endl;
+    }
   }
 
   // Close file
@@ -288,42 +352,116 @@ void TParticleTrajectoryPoints::WriteToFile (std::string const& FileName) const
 
 
 
-void TParticleTrajectoryPoints::WriteToFileBinary (std::string const& FileName) const
+void TParticleTrajectoryPoints::WriteToFileBinary (std::string const& FileName, std::string const & FormatIn) const
 {
   // Write the trajectory data to a file in text format
 
   // Open file for writing
   std::ofstream f(FileName.c_str(), std::ios::binary);
   if (!f.is_open()) {
-    throw;
+    throw std::ifstream::failure("cannot open output file");
   }
 
-  // For writing data
-  float v = 0;
 
-  // Loop over all points and print to file
-  for (size_t i = 0; i != fP.size(); ++i) {
+  // Transform input format
+  std::string Format = FormatIn;
+  std::transform(Format.begin(), Format.end(), Format.begin(), ::toupper);
 
-    v = (float) fT[i];
-    f.write((char*) &v, sizeof(float));
-    v = (float) fP[i].GetX().GetX();
-    f.write((char*) &v, sizeof(float));
-    v = (float) fP[i].GetX().GetY();
-    f.write((char*) &v, sizeof(float));
-    v = (float) fP[i].GetX().GetZ();
-    f.write((char*) &v, sizeof(float));
-    v = (float) fP[i].GetB().GetX();
-    f.write((char*) &v, sizeof(float));
-    v = (float) fP[i].GetB().GetY();
-    f.write((char*) &v, sizeof(float));
-    v = (float) fP[i].GetB().GetZ();
-    f.write((char*) &v, sizeof(float));
-    v = (float) fP[i].GetAoverC().GetX();
-    f.write((char*) &v, sizeof(float));
-    v = (float) fP[i].GetAoverC().GetY();
-    f.write((char*) &v, sizeof(float));
-    v = (float) fP[i].GetAoverC().GetZ();
-    f.write((char*) &v, sizeof(float));
+
+  // Write in default format
+  if (Format == "DEFAULT") {
+    Format = "T X Y Z BX BY BZ AX AY AZ";
+
+    // Length of format string to be stored in binary file as char(s)
+    int const FormatLength = (int) Format.size();
+
+    // Write binary header
+    f.write((char*) &FormatLength, sizeof(int));
+    f.write((char*) Format.c_str(), FormatLength * sizeof(char));
+
+    // For writing data
+    float v = 0;
+
+    // Loop over all points and print to file
+    for (size_t i = 0; i != fP.size(); ++i) {
+      v = (float) fT[i];
+      f.write((char*) &v, sizeof(float));
+      v = (float) fP[i].GetX().GetX();
+      f.write((char*) &v, sizeof(float));
+      v = (float) fP[i].GetX().GetY();
+      f.write((char*) &v, sizeof(float));
+      v = (float) fP[i].GetX().GetZ();
+      f.write((char*) &v, sizeof(float));
+      v = (float) fP[i].GetB().GetX();
+      f.write((char*) &v, sizeof(float));
+      v = (float) fP[i].GetB().GetY();
+      f.write((char*) &v, sizeof(float));
+      v = (float) fP[i].GetB().GetZ();
+      f.write((char*) &v, sizeof(float));
+      v = (float) fP[i].GetAoverC().GetX() * TOSCARSSR::C();
+      f.write((char*) &v, sizeof(float));
+      v = (float) fP[i].GetAoverC().GetY() * TOSCARSSR::C();
+      f.write((char*) &v, sizeof(float));
+      v = (float) fP[i].GetAoverC().GetZ() * TOSCARSSR::C();
+      f.write((char*) &v, sizeof(float));
+    }
+  } else {
+
+    // String stream
+    std::istringstream FormatStream(Format);
+    std::vector<std::string> FormatWords;
+    for (std::string ss; FormatStream >> ss; ) {
+      FormatWords.push_back(ss.c_str());
+    }
+
+    if (FormatWords.size() < 1) {
+      throw std::length_error("Format must contain at least one element");
+    }
+
+    // Length of format string to be stored in binary file as char(s)
+    int const FormatLength = (int) Format.size();
+
+    // Write binary header
+    f.write((char*) &FormatLength, sizeof(int));
+    f.write((char*) Format.c_str(), FormatLength * sizeof(char));
+
+    // For writing data
+    float v = 0;
+
+
+    // Loop over all points and print to file
+    for (size_t i = 0; i != fP.size(); ++i) {
+
+      for (std::vector<std::string>::iterator it = FormatWords.begin(); it != FormatWords.end(); ++it) {
+        
+        // Which component to write
+        if (*it == "T") {
+          v = (float) fT[i];
+        } else if (*it == "X") {
+          v = (float) fP[i].GetX().GetX();
+        } else if (*it == "Y") {
+          v = (float) fP[i].GetX().GetY();
+        } else if (*it == "Z") {
+          v = (float) fP[i].GetX().GetZ();
+        } else if (*it == "BX") {
+          v = (float) fP[i].GetB().GetX();
+        } else if (*it == "BY") {
+          v = (float) fP[i].GetB().GetY();
+        } else if (*it == "BZ") {
+          v = (float) fP[i].GetB().GetZ();
+        } else if (*it == "AX") {
+          v = (float) fP[i].GetAoverC().GetX() * TOSCARSSR::C();
+        } else if (*it == "AY") {
+          v = (float) fP[i].GetAoverC().GetY() * TOSCARSSR::C();
+        } else if (*it == "AZ") {
+          v = (float) fP[i].GetAoverC().GetZ() * TOSCARSSR::C();
+        } else {
+          throw std::invalid_argument("format specifier not recognized");
+        }
+        f.write((char*) &v, sizeof(float));
+
+      }
+    }
   }
 
   // Close file
@@ -338,6 +476,8 @@ void TParticleTrajectoryPoints::WriteToFileBinary (std::string const& FileName) 
 void TParticleTrajectoryPoints::ReadFromFile (std::string const& FileName)
 {
   // Read a text file of the trajectory
+  // UPDATE: Read Text File - Add format
+  throw;
 
   // Open the input file for reading
   std::ifstream f(FileName.c_str());
@@ -397,6 +537,39 @@ void TParticleTrajectoryPoints::ReadFromFileBinary (std::string const& FileName)
     throw;
   }
 
+  // Read format length as first word
+  int FormatLength;
+  f.read((char*) &FormatLength, sizeof(int));
+
+  // Check format length
+  if (FormatLength < 1) {
+    throw;
+  }
+
+  // Read input format
+  char FormatIn[FormatLength+1];
+  FormatIn[FormatLength] = '\0';
+  f.read((char*) FormatIn, FormatLength * sizeof(char));
+
+  // Transform input format
+  std::string Format = FormatIn;
+  std::transform(Format.begin(), Format.end(), Format.begin(), ::toupper);
+
+  // Ordered vector of inputs
+  std::istringstream FormatStream(Format);
+  std::vector<std::string> FormatWords;
+  for (std::string ss; FormatStream >> ss; ) {
+    FormatWords.push_back(ss.c_str());
+  }
+
+  if (FormatWords.size() < 1) {
+    throw std::length_error("Format must contain at least one element");
+  }
+
+
+  // For data reading
+  float v[FormatWords.size()];
+
   // Variables to read from file
   float   t  = 0;
   float   x  = 0;
@@ -405,29 +578,72 @@ void TParticleTrajectoryPoints::ReadFromFileBinary (std::string const& FileName)
   float   bx = 0;
   float   by = 0;
   float   bz = 0;
-  float aocx = 0;
-  float aocy = 0;
-  float aocz = 0;
+  float   ax = 0;
+  float   ay = 0;
+  float   az = 0;
+
+  int   it  = -1;
+  int   ix  = -1;
+  int   iy  = -1;
+  int   iz  = -1;
+  int   ibx = -1;
+  int   iby = -1;
+  int   ibz = -1;
+  int   iax = -1;
+  int   iay = -1;
+  int   iaz = -1;
+
+  for (size_t i = 0; i != FormatWords.size(); ++i) {
+    std::string const& Word = FormatWords[i];
+
+    // Which component index is which variable
+    if (Word == "T") {
+      it = i;
+    } else if (Word == "X") {
+      ix = i;
+    } else if (Word == "Y") {
+      iy = i;
+    } else if (Word == "Z") {
+      iz = i;
+    } else if (Word == "BX") {
+      ibx = i;
+    } else if (Word == "BY") {
+      iby = i;
+    } else if (Word == "BZ") {
+      ibz = i;
+    } else if (Word == "AX") {
+      iax = i;
+    } else if (Word == "AY") {
+      iay = i;
+    } else if (Word == "AZ") {
+      iaz = i;
+    } else {
+      throw std::invalid_argument("format specifier not recognized");
+    }
+  }
 
   while (!f.eof()) {
 
-    // Read data
-    f.read( (char*)    &t, sizeof(float));
-    f.read( (char*)    &x, sizeof(float));
-    f.read( (char*)    &y, sizeof(float));
-    f.read( (char*)    &z, sizeof(float));
-    f.read( (char*)   &bx, sizeof(float));
-    f.read( (char*)   &by, sizeof(float));
-    f.read( (char*)   &bz, sizeof(float));
-    f.read( (char*) &aocx, sizeof(float));
-    f.read( (char*) &aocy, sizeof(float));
-    f.read( (char*) &aocz, sizeof(float));
+    for (size_t i = 0; i != FormatWords.size(); ++i) {
+      f.read( (char*)    &v[i], sizeof(float));
+    }
+
+    if (it != -1) { t = v[it]; }
+    if (ix != -1) { x = v[ix]; }
+    if (iy != -1) { y = v[iy]; }
+    if (iz != -1) { z = v[iz]; }
+    if (ibx != -1) { bx = v[ibx]; }
+    if (iby != -1) { by = v[iby]; }
+    if (ibz != -1) { bz = v[ibz]; }
+    if (iax != -1) { ax = v[iax]; }
+    if (iay != -1) { ay = v[iay]; }
+    if (iaz != -1) { az = v[iaz]; }
 
     // If end of file, stop, otherwise add to trajectory
     if (f.eof()) {
       break;
     } else {
-      this->AddPoint( TVector3D(x, y, z), TVector3D(bx, by, bz), TVector3D(aocx, aocy, aocz), t );
+      this->AddPoint( TVector3D(x, y, z), TVector3D(bx, by, bz), TVector3D(ax, ay, az) * TOSCARSSR::C(), t );
     }
   }
 

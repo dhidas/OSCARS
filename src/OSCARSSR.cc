@@ -937,6 +937,53 @@ TParticleTrajectoryPoints const& OSCARSSR::GetTrajectory ()
 
 
 
+TParticleTrajectoryPoints& OSCARSSR::GetNewTrajectory ()
+{
+  // Get the trajectory for *the* current particle in fParticle
+
+  fParticle.ResetTrajectoryData();
+  return fParticle.GetTrajectory();
+}
+
+
+
+
+void OSCARSSR::WriteTrajectory (std::string const& OutFileName, std::string const& OutFormat)
+{
+  GetTrajectory().WriteToFile(OutFileName, OutFormat);
+  return;
+}
+
+
+
+
+void OSCARSSR::WriteTrajectoryBinary (std::string const& OutFileName, std::string const& OutFormat)
+{
+  GetTrajectory().WriteToFileBinary(OutFileName, OutFormat);
+  return;
+}
+
+
+
+
+void OSCARSSR::ReadTrajectory (std::string const& InFileName)
+{
+  GetNewTrajectory().ReadFromFile(InFileName);
+  return;
+}
+
+
+
+
+void OSCARSSR::ReadTrajectoryBinary (std::string const& InFileName)
+{
+  GetNewTrajectory().ReadFromFileBinary(InFileName);
+  return;
+}
+
+
+
+
 void OSCARSSR::ClearTrajectory ()
 {
   fParticle.ResetTrajectoryData();

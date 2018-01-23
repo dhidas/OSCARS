@@ -4145,7 +4145,7 @@ static PyObject* OSCARSSR_CorrectTrajectory (OSCARSSRObject* self)
 
 
 const char* DOC_OSCARSSR_CalculateTrajectory = R"docstring(
-calculate_trajectory()
+calculate_trajectory(, [ofile, bofile, oformat])
 
 Calculates the trajectory for the current internal particle.  This calculates the trajectory in 3D from the time set by oscars.sr.set_ctstart() to the time set by oscars.sr.set_ctstop() beginning at the *t0* given by the particle beam from which this particle comes from.  It first does a forward propogation to the stop time, then a backward propogation to the start time.
 
@@ -4155,16 +4155,41 @@ If you have a current particle loaded using *SetNewParticle* this method will ca
 
 Parameters
 ----------
-None
+ofile: str
+    Text output file name
+
+bofile: str
+    Binary output file name
+
+oformat : str
+    Format of output file.  Any order of: T, X, Y, Z, BX, BY, BZ, AX, AY, AZ.  B is for beta, A is acceleration
 
 Returns
 -------
 trajectory : list
     A list of points of the form [[[x, y, z], [Beta_x, Beta_y, Beta_z]], ...]
 )docstring";
-static PyObject* OSCARSSR_CalculateTrajectory (OSCARSSRObject* self)
+static PyObject* OSCARSSR_CalculateTrajectory (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
 {
-  // Get the CTStop variable from OSCARSSR
+
+  const char* OutFileNameText           = "";
+  const char* OutFileNameBinary         = "";
+  const char* OutFormat                 = "";
+
+  // Input variable list
+  static const char *kwlist[] = {"ofile",
+                                 "bofile",
+                                 "oformat",
+                                 NULL};
+
+  // Parse inputs
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sss",
+                                   const_cast<char **>(kwlist),
+                                   &OutFileNameText,
+                                   &OutFileNameBinary,
+                                   &OutFormat)) {
+    return NULL;
+  }
 
   try {
     self->obj->CalculateTrajectory();
@@ -4172,6 +4197,32 @@ static PyObject* OSCARSSR_CalculateTrajectory (OSCARSSRObject* self)
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
   } catch (std::out_of_range e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
+  }
+
+  // Write to file if output specified
+  try {
+    // Text file output
+    if (std::strlen(OutFileNameText) != 0 && std::strlen(OutFormat) != 0) {
+      self->obj->WriteTrajectory(OutFileNameText, OutFormat);
+    } else if (std::strlen(OutFileNameText) != 0) {
+      self->obj->WriteTrajectory(OutFileNameText);
+    }
+
+    // Binary file output
+    if (std::strlen(OutFileNameBinary) != 0 && std::strlen(OutFormat) != 0) {
+      self->obj->WriteTrajectoryBinary(OutFileNameBinary, OutFormat);
+    } else if (std::strlen(OutFileNameBinary) != 0) {
+      self->obj->WriteTrajectoryBinary(OutFileNameBinary);
+    }
+  } catch (std::length_error e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
+  } catch (std::ifstream::failure e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
+  } catch (std::invalid_argument e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
   }
@@ -4242,6 +4293,84 @@ static PyObject* OSCARSSR_GetTrajectory (OSCARSSRObject* self)
   // Return the python list
   return PList;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+const char* DOC_OSCARSSR_SetTrajectory = R"docstring(
+set_trajectory(, [ifile, bifile])
+
+UPDATE: This about ctstartstop
+
+
+
+Parameters
+----------
+ifile: str
+    Text input file name
+
+bifile: str
+    Binary input file name
+
+
+Returns
+-------
+None
+)docstring";
+static PyObject* OSCARSSR_SetTrajectory (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
+{
+
+  const char* InFileNameText           = "";
+  const char* InFileNameBinary         = "";
+  //const char* InFormat                 = "";
+
+  // Input variable list
+  static const char *kwlist[] = {"ifile",
+                                 "bifile",
+                                 NULL};
+
+  // Parse inputs
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ss",
+                                   const_cast<char **>(kwlist),
+                                   &InFileNameText,
+                                   &InFileNameBinary)) {
+    return NULL;
+  }
+
+
+  // Write to file if output specified
+  try {
+    // Text file output
+    if (std::strlen(InFileNameText) != 0) {
+      self->obj->ReadTrajectory(InFileNameText);
+    } else if (std::strlen(InFileNameBinary) != 0) {
+      self->obj->ReadTrajectoryBinary(InFileNameBinary);
+    }
+
+  } catch (std::length_error e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
+  } catch (std::ifstream::failure e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
+  } catch (std::invalid_argument e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
+  }
+
+  // Return the trajectory
+  return OSCARSSR_GetTrajectory(self);
+}
+
+
 
 
 
@@ -7739,9 +7868,10 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   {"clear_drifts",                      (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_ClearDriftVolumes},
   {"print_drifts",                      (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_PrintDriftVolumes},
 
-  {"correct_trajectory",                (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_CorrectTrajectory},
-  {"calculate_trajectory",              (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_CalculateTrajectory},
+  //{"correct_trajectory",                (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_CorrectTrajectory},
+  {"calculate_trajectory",              (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateTrajectory},
   {"get_trajectory",                    (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_GetTrajectory},
+  {"set_trajectory",                    (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_SetTrajectory},
 
   {"calculate_spectrum",                (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateSpectrum},
 
@@ -7845,9 +7975,10 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"clear_drifts",                      (PyCFunction) OSCARSSR_ClearDriftVolumes,               METH_NOARGS,                  DOC_OSCARSSR_ClearDriftVolumes},
   {"print_drifts",                      (PyCFunction) OSCARSSR_PrintDriftVolumes,               METH_NOARGS,                  DOC_OSCARSSR_PrintDriftVolumes},
                                                                                           
-  {"correct_trajectory",                (PyCFunction) OSCARSSR_CorrectTrajectory,               METH_NOARGS,                  DOC_OSCARSSR_CorrectTrajectory},
-  {"calculate_trajectory",              (PyCFunction) OSCARSSR_CalculateTrajectory,             METH_NOARGS,                  DOC_OSCARSSR_CalculateTrajectory},
+  //{"correct_trajectory",                (PyCFunction) OSCARSSR_CorrectTrajectory,               METH_NOARGS,                  DOC_OSCARSSR_CorrectTrajectory},
+  {"calculate_trajectory",              (PyCFunction) OSCARSSR_CalculateTrajectory,             METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateTrajectory},
   {"get_trajectory",                    (PyCFunction) OSCARSSR_GetTrajectory,                   METH_NOARGS,                  DOC_OSCARSSR_GetTrajectory},
+  {"set_trajectory",                    (PyCFunction) OSCARSSR_SetTrajectory,                   METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_SetTrajectory},
 
   {"calculate_spectrum",                (PyCFunction) OSCARSSR_CalculateSpectrum,               METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateSpectrum},
 

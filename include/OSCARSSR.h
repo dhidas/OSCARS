@@ -160,6 +160,11 @@ class OSCARSSR
     void CalculateTrajectory ();
     void CalculateTrajectory (TParticleA&);
     TParticleTrajectoryPoints const& GetTrajectory ();
+    TParticleTrajectoryPoints& GetNewTrajectory ();
+    void WriteTrajectory        (std::string const& OutFileName, std::string const& OutFormat = "DEFAULT");
+    void WriteTrajectoryBinary  (std::string const& OutFileName, std::string const& OutFormat = "DEFAULT");
+    void ReadTrajectory         (std::string const& InFileName);
+    void ReadTrajectoryBinary   (std::string const& InFileName);
     void ClearTrajectory ();
 
     void SetNPointsTrajectory (size_t const);
