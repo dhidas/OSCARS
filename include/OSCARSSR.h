@@ -50,7 +50,8 @@ class OSCARSSR
                                        TVector3D const& Rotations = TVector3D(0, 0, 0),
                                        TVector3D const& Translation = TVector3D(0, 0, 0),
                                        std::vector<double> const& Scaling = std::vector<double>(),
-                                       std::string const& Name = "");
+                                       std::string const& Name = "",
+                                       std::string const& OutFileName = "");
 
     void AddMagneticField (TField*);
 

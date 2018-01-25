@@ -754,6 +754,7 @@ static PyObject* OSCARSSR_AddMagneticFieldInterpolated (OSCARSSRObject* self, Py
   PyObject*   List_Translation = PyList_New(0);
   PyObject*   List_Scaling     = PyList_New(0);
   char const* Name             = "";
+  char const* OutFileName      = "";
 
   TVector3D Rotations(0, 0, 0);
   TVector3D Translation(0, 0, 0);
@@ -770,9 +771,10 @@ static PyObject* OSCARSSR_AddMagneticFieldInterpolated (OSCARSSRObject* self, Py
                                  "translation",
                                  "scale",
                                  "name",
+                                 "ofile",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "Osd|OOOs",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "Osd|OOOss",
                                    const_cast<char **>(kwlist),
                                    &List_Mapping,
                                    &FileFormat,
@@ -780,7 +782,8 @@ static PyObject* OSCARSSR_AddMagneticFieldInterpolated (OSCARSSRObject* self, Py
                                    &List_Rotations,
                                    &List_Translation,
                                    &List_Scaling,
-                                   &Name)) {
+                                   &Name,
+                                   &OutFileName)) {
     return NULL;
   }
 
@@ -845,7 +848,19 @@ static PyObject* OSCARSSR_AddMagneticFieldInterpolated (OSCARSSRObject* self, Py
 
   // Add the magnetic field to the OSCARSSR object
   try {
-    self->obj->AddMagneticFieldInterpolated(Mapping, FileFormat, Parameter, Rotations, Translation, Scaling, Name);
+    self->obj->AddMagneticFieldInterpolated(Mapping, FileFormat, Parameter, Rotations, Translation, Scaling, Name, OutFileName);
+  } catch (std::length_error e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
+  } catch (std::ifstream::failure e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
+  } catch (std::out_of_range e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
+  } catch (std::invalid_argument e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
   } catch (...) {
     PyErr_SetString(PyExc_ValueError, "Could not import magnetic field.  Check filenames and 'iformat' are correct");
     return NULL;

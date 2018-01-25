@@ -1,6 +1,8 @@
-import os.path
+import os
 import copy
 import numpy as np
+import uuid
+import oscars.sr
 
 def read_file_list(ifile, idir=None):
     """
@@ -110,6 +112,116 @@ def read_file_list2(ifile, gap=None, phase_mode=None, phase=None, idir=None):
                     mylist.append([g, fn])
             
     return mylist
+
+
+
+
+
+
+
+def read_file_list_interpolate_2d(ifile, iformat, gap=None, phase_mode=None, phase=None, idir=None, tmpdir=None, ofile=None):
+    """
+    read a list of parameters and filenames from a file.  Interpolate across phases for each gap to get
+    desired phase at each gap, then Interpolate across gaps to arrive at gap and phase, for a given mode
+    
+    The file format should be four columns separated by whitespace.
+    The columns are gap value, phase mode, phase value, file name.
+    Whitespace in the phase mode is not allowed.
+
+    One must specify: gap, phase, phase_mode
+    
+    Parameters
+    ----------
+    ifile : str
+        Full path to file containing the list of parameters and filenames
+
+    gap : float
+        Gap value of interest (must be exact match, not interpolated)
+
+    phase_mode : str
+        Phase mode of interest
+
+    phase : float
+        Phase value
+        
+    idir : str
+        Path to directory where the files are contained if not in the 'ifile' directory
+        
+    Returns
+    -------
+    file_list : list
+        List of [gap, phase_mode, phase, filename]s
+    """
+
+    if ofile is None:
+        raise ValueError('Must specify output file as ofile')
+
+    # Set temporary directory for interpolating results
+    if tmpdir is None:
+        tmpdir = '.OSCARS_tmp_' + str(uuid.uuid4())
+
+    if os.path.exists(tmpdir):
+        raise
+
+    os.makedirs(tmpdir)
+    
+    # Directory where files are
+    mydir = os.path.dirname(ifile)
+    if idir is not None:
+        mydir = idir
+
+    # oscars.sr object for interpolation
+    osr = oscars.sr.sr(gpu=0, nthreads=1)
+
+    # Store all phases that a gap has
+    phases_at_gap = dict()
+    
+    #print(mydir)
+    # List we will return
+    mylist=[]
+    with open(ifile, 'r') as fi:
+        for l in fi:
+            ls = l.split()
+            if len(ls) < 4:
+                continue
+            if ls[0].lstrip()[0] == '#':
+                continue
+                
+            g  = float(ls[0])
+            pm = ls[1]
+            ph = float(ls[2])
+            fn = os.path.join(mydir, ' '.join(ls[3:]))
+     
+            if pm != phase_mode:
+                continue
+
+            if g in phases_at_gap:
+               phases_at_gap[g].append([ph, fn])
+            else:
+                phases_at_gap[g] = [[ph, fn]]
+
+    new_mapping = []
+
+    for key in phases_at_gap:
+        #print(key)
+        #for asd in phases_at_gap[key]:
+        #    print(asd)
+        tmp_file_name = tmpdir + '/gap' + str(key) + '.dat'
+        new_mapping.append([key, tmp_file_name])
+
+        osr.clear_bfields()
+        osr.add_bfield_interpolated(mapping=phases_at_gap[key], iformat=iformat, parameter=phase, ofile=tmp_file_name)
+
+    osr.clear_bfields()
+    osr.add_bfield_interpolated(mapping=new_mapping, iformat=iformat, parameter=gap, ofile=ofile)
+
+    for pair in new_mapping:
+        os.remove(pair[1])
+
+    os.rmdir(tmpdir)
+            
+    return ofile
+
 
 
 
