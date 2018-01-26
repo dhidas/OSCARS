@@ -70,7 +70,7 @@ def fit_spectrum_gaussian (spectrum, xranges=[], n=None, figsize=None, quiet=Tru
         XP = [s[0] for s in spectrum]
         YP = [s[1] for s in spectrum]
 
-        
+
         for i in range(n):
             amplitude_guess = max(YP)
             x_guess = XP[YP.index(amplitude_guess)]
