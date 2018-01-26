@@ -119,9 +119,11 @@ def read_file_list2(ifile, gap=None, phase_mode=None, phase=None, idir=None):
 
 
 
-def read_file_list_interpolate_2d(ifile, iformat, gap=None, phase_mode=None, phase=None, idir=None, tmpdir=None, ofile=None):
+def read_file_list_interpolate_2d(ifile, iformat, ofile, gap, phase_mode, phase, idir=None, tmpdir=None):
     """
-    read a list of parameters and filenames from a file.  Interpolate across phases for each gap to get
+    read_file_list_interpolate_2d(ifile, iformat, ofile, gap, phase_mode, phase [, idir=None, tmpdir=None])
+
+    read a list of parameters and filenames from a file.  Interpolates across phases for each gap to get
     desired phase at each gap, then Interpolate across gaps to arrive at gap and phase, for a given mode
     
     The file format should be four columns separated by whitespace.
@@ -135,6 +137,9 @@ def read_file_list_interpolate_2d(ifile, iformat, gap=None, phase_mode=None, pha
     ifile : str
         Full path to file containing the list of parameters and filenames
 
+    iformat: str
+        Format of input file (see OSCARS formats elsewhere)
+
     gap : float
         Gap value of interest (must be exact match, not interpolated)
 
@@ -143,27 +148,34 @@ def read_file_list_interpolate_2d(ifile, iformat, gap=None, phase_mode=None, pha
 
     phase : float
         Phase value
-        
+
     idir : str
         Path to directory where the files are contained if not in the 'ifile' directory
         
+    tmpdir: str
+        Name of temp directory to store temporary files.  If not given OSCARS will create oen for you and delete it.
+        
+    ofile: str
+        Name of output file.  Output file is in the same units and format of input files
+        
     Returns
     -------
-    file_list : list
-        List of [gap, phase_mode, phase, filename]s
+    ofile_name : str
+        Name of the output file
     """
 
     if ofile is None:
         raise ValueError('Must specify output file as ofile')
 
     # Set temporary directory for interpolating results
+    tmpdir_actual = tmpdir
     if tmpdir is None:
-        tmpdir = '.OSCARS_tmp_' + str(uuid.uuid4())
+        tmpdir_actual = '.OSCARS_tmp_' + str(uuid.uuid4())
 
-    if os.path.exists(tmpdir):
+    if os.path.exists(tmpdir_actual):
         raise
 
-    os.makedirs(tmpdir)
+    os.makedirs(tmpdir_actual)
     
     # Directory where files are
     mydir = os.path.dirname(ifile)
@@ -176,7 +188,6 @@ def read_file_list_interpolate_2d(ifile, iformat, gap=None, phase_mode=None, pha
     # Store all phases that a gap has
     phases_at_gap = dict()
     
-    #print(mydir)
     # List we will return
     mylist=[]
     with open(ifile, 'r') as fi:
@@ -203,10 +214,7 @@ def read_file_list_interpolate_2d(ifile, iformat, gap=None, phase_mode=None, pha
     new_mapping = []
 
     for key in phases_at_gap:
-        #print(key)
-        #for asd in phases_at_gap[key]:
-        #    print(asd)
-        tmp_file_name = tmpdir + '/gap' + str(key) + '.dat'
+        tmp_file_name = tmpdir_actual + '/gap' + str(key) + '.dat'
         new_mapping.append([key, tmp_file_name])
 
         osr.clear_bfields()
@@ -218,7 +226,8 @@ def read_file_list_interpolate_2d(ifile, iformat, gap=None, phase_mode=None, pha
     for pair in new_mapping:
         os.remove(pair[1])
 
-    os.rmdir(tmpdir)
+    if tmpdir is None:
+        os.rmdir(tmpdir_actual)
             
     return ofile
 
