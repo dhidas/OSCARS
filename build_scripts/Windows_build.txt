@@ -1,0 +1,32 @@
+
+###*** CUDA Objects for the nvcc compiler ***###
+# For windows compilation need to switch to -compiler-options '/MD' flag as below
+# -CUDACFLAGS = -DCUDA -cudart static -std=c++11 -shared --compiler-options '-fPIC'
+# +CUDACFLAGS = -DCUDA -cudart static -std=c++11 -shared --compiler-options '/MD'
+# +#CUDACFLAGS = -DCUDA -cudart static -std=c++11 -shared --compiler-options '-fPIC'
+###*** CUDA Objects for the nvcc compiler ***###
+
+
+
+###*** py2.7 for windows is out because it doesn't support mutex locking ***###
+# source activate oscars_py2.7
+# export PATH=$PATH:/C/Program\ Files/Microsoft\ SDKs/Windows/v7.1/Bin/
+# make clean
+# make
+# python setup.py bdist_wheel upload -r pypi
+###*** py2.7 for windows is out because it doesn't support mutex locking ***###
+
+
+source activate oscars_py3.6
+export PATH=$PATH:/C/Program\ Files\ \(x86\)/Microsoft\ Visual\ Studio\ 14.0/VC/bin/
+make clean
+make
+python setup.py bdist_wheel upload -r pypi
+
+
+
+source activate oscars_py3.5
+export PATH=$PATH:/C/Program\ Files\ \(x86\)/Microsoft\ Visual\ Studio\ 14.0/VC/bin/
+make clean
+make
+python setup.py bdist_wheel upload -r pypi

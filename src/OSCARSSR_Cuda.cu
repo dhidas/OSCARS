@@ -450,7 +450,7 @@ __global__ void OSCARSSR_Cuda_FluxGPU (double *t,
       result_precision = fabs((last_result - this_result) / last_result);
 
       // If below desired precision set as done
-      if ( ilevel > 8 && result_precision < *prec && MaxDPhase < PI ) {
+      if ( (ilevel > 8 && result_precision < *prec && MaxDPhase < PI) || (ilevel > 8 && MaxDPhase < PI && this_result == last_result) ) {
         done = true;
         result_level = ilevel;
       }
@@ -1539,7 +1539,7 @@ __global__ void OSCARSSR_Cuda_SpectrumGPU (double          *t,                  
       result_precision = fabs((last_result - this_result) / last_result);
 
       // If below desired precision set as done
-      if ( ilevel > 8 && result_precision < *prec && MaxDPhase < PI ) {
+      if ( (ilevel > 8 && result_precision < *prec && MaxDPhase < PI) || (ilevel > 8 && MaxDPhase < PI && this_result == last_result) ) {
         done = true;
         result_level = ilevel;
       }
@@ -2574,7 +2574,7 @@ __global__ void OSCARSSR_Cuda_PowerDensityGPU (double  *t,
       result_precision = fabs((last_result - this_result) / last_result);
 
       // If below desired precision set as done
-      if (ilevel > 8 && result_precision < *prec && BetaDiffMax < 2. / *gamma) {
+      if ( (ilevel > 8 && result_precision < *prec && BetaDiffMax < 2. / *gamma) || ilevel > 8 && BetaDiffMax < 2. / *gamma && this_result == last_result) {
         done = true;
         result_level = ilevel;
       } else if (ilevel > 8 && last_result == this_result) {

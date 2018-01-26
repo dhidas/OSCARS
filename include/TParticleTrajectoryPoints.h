@@ -48,8 +48,8 @@ class TParticleTrajectoryPoints
     void Reserve (size_t const);
     void ReverseArrays ();
 
-    void WriteToFile       (std::string const&) const;
-    void WriteToFileBinary (std::string const&) const;
+    void WriteToFile       (std::string const& FileName, std::string const& FormatIn = "default") const;
+    void WriteToFileBinary (std::string const& FileName, std::string const& FormatIn = "default") const;
 
     void ReadFromFile       (std::string const&);
     void ReadFromFileBinary (std::string const&);

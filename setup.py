@@ -28,8 +28,8 @@ with open('include/Version.h', 'r') as f:
 
 VERSION=v_major+'.'+v_minor+'.'+v_rev
 
-#os.environ["CC"] = "g++"
-#os.environ["CXX"] = "g++"
+#os.environ["CC"] = "nvcc"
+#os.environ["CXX"] = "nvcc"
 
 
 extra_compile_args=[]
@@ -90,6 +90,9 @@ elif sys.platform == 'win32':
 
     if os.path.exists('lib/OSCARSSR_Cuda.o'):
         extra_compile_args.append('/DCUDA')
+        libraries.append('cudart_static')
+        extra_objects_sr.append('lib/OSCARSSR_Cuda.o')
+        extra_objects_th.append('lib/OSCARSTH_Cuda.o')
     
 
 
