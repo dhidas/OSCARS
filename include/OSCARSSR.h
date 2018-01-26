@@ -50,7 +50,8 @@ class OSCARSSR
                                        TVector3D const& Rotations = TVector3D(0, 0, 0),
                                        TVector3D const& Translation = TVector3D(0, 0, 0),
                                        std::vector<double> const& Scaling = std::vector<double>(),
-                                       std::string const& Name = "");
+                                       std::string const& Name = "",
+                                       std::string const& OutFileName = "");
 
     void AddMagneticField (TField*);
 
@@ -160,6 +161,11 @@ class OSCARSSR
     void CalculateTrajectory ();
     void CalculateTrajectory (TParticleA&);
     TParticleTrajectoryPoints const& GetTrajectory ();
+    TParticleTrajectoryPoints& GetNewTrajectory ();
+    void WriteTrajectory        (std::string const& OutFileName, std::string const& OutFormat = "DEFAULT");
+    void WriteTrajectoryBinary  (std::string const& OutFileName, std::string const& OutFormat = "DEFAULT");
+    void ReadTrajectory         (std::string const& InFileName);
+    void ReadTrajectoryBinary   (std::string const& InFileName);
     void ClearTrajectory ();
 
     void SetNPointsTrajectory (size_t const);

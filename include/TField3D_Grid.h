@@ -38,6 +38,7 @@ class TField3D_Grid : public TField
                    TVector3D                             const& Translation = TVector3D(0, 0, 0),
                    std::vector<double>                   const& Scaling = std::vector<double>(),
                    std::string                           const& Name = "",
+                   std::string                           const& OutFileName = "",
                    char                                  const  CommentChar = '#');
 
     ~TField3D_Grid ();
@@ -99,6 +100,7 @@ class TField3D_Grid : public TField
                                         TVector3D                                    const& Rotations,
                                         TVector3D                                    const& Translation,
                                         std::vector<double>                          const& Scaling,
+                                        std::string                                  const& OutFileName = "",
                                         char                                         const  CommentChar = '#');
 
     void InterpolateFromFiles_SRW (std::vector<std::pair<double, std::string> > const& Mapping,

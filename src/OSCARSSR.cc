@@ -98,7 +98,8 @@ void OSCARSSR::AddMagneticFieldInterpolated (std::vector<std::pair<double, std::
                                              TVector3D const& Rotations,
                                              TVector3D const& Translation,
                                              std::vector<double> const& Scaling,
-                                             std::string const& Name)
+                                             std::string const& Name,
+                                             std::string const& OutFileName)
 {
   // Add a magnetic field from a file to the field container
 
@@ -111,7 +112,7 @@ void OSCARSSR::AddMagneticFieldInterpolated (std::vector<std::pair<double, std::
   if ( (FormatUpperCase == "OSCARS"  || FormatUpperCase == "SRW" || FormatUpperCase == "SPECTRA") ||
      (FormatUpperCase.size() > 8 && std::string(FormatUpperCase.begin(), FormatUpperCase.begin() + 8) == std::string("OSCARS1D")) ) {
 
-    this->fBFieldContainer.AddField( new TField3D_Grid(Mapping, Format, Parameter, Rotations, Translation, Scaling, Name) );
+    this->fBFieldContainer.AddField( new TField3D_Grid(Mapping, Format, Parameter, Rotations, Translation, Scaling, Name, OutFileName) );
 
   } else {
     throw std::invalid_argument("Incorrect format in format string");
@@ -936,6 +937,53 @@ TParticleTrajectoryPoints const& OSCARSSR::GetTrajectory ()
   // Get the trajectory for *the* current particle in fParticle
 
   return fParticle.GetTrajectory();
+}
+
+
+
+
+TParticleTrajectoryPoints& OSCARSSR::GetNewTrajectory ()
+{
+  // Get the trajectory for *the* current particle in fParticle
+
+  fParticle.ResetTrajectoryData();
+  return fParticle.GetTrajectory();
+}
+
+
+
+
+void OSCARSSR::WriteTrajectory (std::string const& OutFileName, std::string const& OutFormat)
+{
+  GetTrajectory().WriteToFile(OutFileName, OutFormat);
+  return;
+}
+
+
+
+
+void OSCARSSR::WriteTrajectoryBinary (std::string const& OutFileName, std::string const& OutFormat)
+{
+  GetTrajectory().WriteToFileBinary(OutFileName, OutFormat);
+  return;
+}
+
+
+
+
+void OSCARSSR::ReadTrajectory (std::string const& InFileName)
+{
+  GetNewTrajectory().ReadFromFile(InFileName);
+  return;
+}
+
+
+
+
+void OSCARSSR::ReadTrajectoryBinary (std::string const& InFileName)
+{
+  GetNewTrajectory().ReadFromFileBinary(InFileName);
+  return;
 }
 
 

@@ -1,3 +1,5 @@
+# NOT CURRENTLY USED.  Use the jupyter file
+#
 # This file is intended to create a docker image for running oscars for distribution
 #
 #
@@ -10,7 +12,7 @@
 
 FROM python:3
 
-RUN pip install oscars==1.37.1.dev3
+RUN pip install oscars
 RUN pip install numpy
 RUN pip install matplotlib
 RUN pip install ipython
