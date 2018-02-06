@@ -78,10 +78,10 @@ static PyObject* OSCARSSR_RemoveDriftVolume (OSCARSSRObject* self, PyObject* arg
 static PyObject* OSCARSSR_ClearDriftVolumes (OSCARSSRObject* self);
 static PyObject* OSCARSSR_PrintDriftVolumes (OSCARSSRObject* self);
 static PyObject* OSCARSSR_CorrectTrajectory (OSCARSSRObject* self);
-static PyObject* OSCARSSR_CalculateTrajectory (OSCARSSRObject* self);
+static PyObject* OSCARSSR_CalculateTrajectory (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSSR_GetTrajectory (OSCARSSRObject* self);
 static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
-static PyObject* OSCARSSR_CalculateTotalPower (OSCARSSRObject* self);
+static PyObject* OSCARSSR_CalculateTotalPower (OSCARSSRObject* self, PyObject* args, PyObject *keywds);
 static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject* args, PyObject *keywds);
 static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, PyObject* args, PyObject *keywds);
 static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, PyObject *keywds);

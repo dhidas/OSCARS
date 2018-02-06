@@ -1,1 +1,1 @@
-jupyter nbconvert --to html --execute *ipynb
+jupyter nbconvert --ExecutePreprocessor.timeout=600 --to html --execute *ipynb

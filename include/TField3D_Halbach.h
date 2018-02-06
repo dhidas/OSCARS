@@ -37,6 +37,8 @@ class TField3D_Halbach : public TField
     
     void Print (std::ostream&) const;
 
+    double GetField () const;
+
   private:
     double fField;
     double fPeriod;

@@ -72,6 +72,7 @@ TField3D_Grid::TField3D_Grid (std::vector<std::pair<double, std::string> > Mappi
                               TVector3D                             const& Translation,
                               std::vector<double>                   const& Scaling,
                               std::string                           const& Name,
+                              std::string                           const& OutFileName,
                               char                                  const  CommentChar)
 {
   // This one is for interpolated fields from a mapping vector and parameter value.
@@ -90,7 +91,7 @@ TField3D_Grid::TField3D_Grid (std::vector<std::pair<double, std::string> > Mappi
   if (format == "OSCARS") {
     this->InterpolateFromFiles(Mapping, Parameter, Rotations, Translation, Scaling);
   } else if (std::string(format.begin(), format.begin() + 8) == "OSCARS1D") {
-    this->InterpolateFromFiles_OSCARS1D(Mapping, Parameter, FileFormat, Rotations, Translation, Scaling);
+    this->InterpolateFromFiles_OSCARS1D(Mapping, Parameter, FileFormat, Rotations, Translation, Scaling, OutFileName);
   } else if (format == "SPECTRA") {
     //this->ReadFile_SPECTRA(InFileName, Rotations, Translation, CommentChar);
   } else if (format == "SRW") {
@@ -1916,6 +1917,7 @@ void TField3D_Grid::InterpolateFromFiles_OSCARS1D (std::vector<std::pair<double,
                                                    TVector3D                                    const& Rotations,
                                                    TVector3D                                    const& Translation,
                                                    std::vector<double>                          const& Scaling,
+                                                   std::string                                  const& OutFileName,
                                                    char                                         const  CommentChar)
 {
   // Get interpolated field based on input files
@@ -1932,8 +1934,7 @@ void TField3D_Grid::InterpolateFromFiles_OSCARS1D (std::vector<std::pair<double,
     InFiles.push_back(new std::ifstream(it->second));
 
     if (!InFiles.back()->is_open()) {
-      std::cerr << "ERROR: cannot open file" << std::endl;
-      //throw std::ifstream::failure("cannot open file for reading");
+      throw std::ifstream::failure("cannot open file for reading: " + it->second);
     }
   }
 
@@ -1965,8 +1966,7 @@ void TField3D_Grid::InterpolateFromFiles_OSCARS1D (std::vector<std::pair<double,
   while (s >> c) {
 
     if (index > 3) {
-      std::cerr << "ERROR: spatial or B-field dimensions are too large(index>3)" << std::endl;
-      throw std::out_of_range("spatial or B-field dimensions are too large(index>3)");
+      throw std::out_of_range("There are too many dimensions for OSCARS1D.  Check format string.");
     }
 
     // Check if it is XYZBxByBz and in which order
@@ -1991,8 +1991,7 @@ void TField3D_Grid::InterpolateFromFiles_OSCARS1D (std::vector<std::pair<double,
       Order[index] = 3;
       ++index;
     } else {
-      std::cerr << "ERROR: Incorrect format" << std::endl;
-      throw std::invalid_argument("only excepts X Y Z Bx By Bz");
+      throw std::invalid_argument("OSCARS1D format only excepts X Y Z Bx By Bz");
     }
   }
 
@@ -2001,8 +2000,7 @@ void TField3D_Grid::InterpolateFromFiles_OSCARS1D (std::vector<std::pair<double,
 
   // At the moment only support 1D irregular grid
   if (XDIM != 1) {
-    std::cerr << "ERROR: spatial or B-field dimensions are too large(>3)" << std::endl;
-    throw std::out_of_range("spatial or B-field dimensions are too large");
+    throw std::out_of_range("OSCARS1D format: spatial or B-field dimensions are too large");
   }
 
 
@@ -2017,9 +2015,17 @@ void TField3D_Grid::InterpolateFromFiles_OSCARS1D (std::vector<std::pair<double,
 
     // Check we did not hit an EOF
     if (InFiles[ifile]->eof()) {
-      std::cerr << "ERROR: bad input file" << std::endl;
-      throw std::ifstream::failure("error reading file.  Check format");
+      throw std::ifstream::failure("error reading file.  Check format: " + MyMapping[ifile].second);
     }
+
+    // If the first line is not a comment, that's okay, we'll reset the stream to the beginning
+    size_t const first = L.find_first_not_of(" \t");
+    if (first != std::string::npos && L[first] != CommentChar) {
+      (InFiles[ifile])->clear();
+      (InFiles[ifile])->seekg(0, std::ios::beg);
+    }
+
+
   }
 
 
@@ -2058,7 +2064,7 @@ void TField3D_Grid::InterpolateFromFiles_OSCARS1D (std::vector<std::pair<double,
       for (int i = 0; i < InputCount; ++i) {
         S >> Value[Order[i]];
         if (S.fail()) {
-          throw std::length_error("something is incorrect with data format or iformat string");
+          throw std::length_error("something is incorrect with data format or iformat string in file: " + MyMapping[ifile].second);
         }
       }
 
@@ -2090,6 +2096,20 @@ void TField3D_Grid::InterpolateFromFiles_OSCARS1D (std::vector<std::pair<double,
   InFiles.clear();
 
 
+  // If outfile is specified, print field to file
+  if (OutFileName != "") {
+    std::ofstream fo(OutFileName.c_str());
+    if (!fo.is_open()) {
+      throw std::ofstream::failure("cannot open output file: " + OutFileName);
+    }
+
+    for (std::vector<std::array<double, 4> >::iterator it = InputData.begin(); it != InputData.end(); ++it) {
+      fo << (*it)[0] << " " << (*it)[1] << " " << (*it)[2] << " " << (*it)[3] << std::endl;
+    }
+
+    fo.close();
+  }
+
   // Sort the field
   std::sort(InputData.begin(), InputData.end(), this->CompareField1D);
 
@@ -2098,8 +2118,7 @@ void TField3D_Grid::InterpolateFromFiles_OSCARS1D (std::vector<std::pair<double,
 
   // Check to see there are at least 2 data points
   if (InputData.size() < 2) {
-    std::cerr << "ERROR: not enough data points" << std::endl;
-    throw std::length_error("not enough data points");
+    throw std::length_error("OSCARS1D interpolation.  There are not enough data points (files)");
   }
 
   // Grab the first and last Z
@@ -2167,8 +2186,7 @@ void TField3D_Grid::InterpolateFromFiles_OSCARS1D (std::vector<std::pair<double,
   } else if (fHasZ) {
     fDIMX = kDIMX_Z;
   } else {
-    std::cerr << "ERROR: error in file header format" << std::endl;
-    throw std::out_of_range("invalid dimensions");
+    throw std::out_of_range("OSCARS1D format error in file header format.  invalid dimensions");
   }
 
   fXDIM = 0;
