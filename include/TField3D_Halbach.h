@@ -26,7 +26,15 @@ class TField3D_Halbach : public TField
 
     TVector3D GetF  (double const, double const, double const, double const T = 0) const;
     TVector3D GetF  (TVector3D const&, double const T = 0) const;
-
+   
+    double GetField() const;
+    double GetPeriod() const;
+    int GetNPeriods() const;
+    double GetGap() const;
+    double GetMagnetHeight() const;
+    double GetMagnetWidth() const;
+    int GetNPerPeriod() const;
+    
     void Print (std::ostream&) const;
 
     double GetField () const;
@@ -46,17 +54,18 @@ class TField3D_Halbach : public TField
 inline std::ostream& operator << (std::ostream& os, TField3D_Halbach const& o)
 {
   // For easy printing
-  os << "TField3D_Halbach" << "\n"
-     << "Name:           " << o.GetName() << "\n"
-     << "Field:          " << o.GetField() << "\n";
+  os << "TField3D_Halbach " << "\n"
+     << "Name             " << o.GetName() << "\n"
+     << "Field            " << o.GetField() << "\n"
+     << "Period           " << o.GetPeriod() << "\n"
+     << "NPeriods         " << o.GetNPeriods() << "\n"
+     << "Gap              " << o.GetGap() << "\n"
+     << "MagnetHeight     " << o.GetMagnetHeight() << "\n"
+     << "MagnetWidth      " << o.GetMagnetWidth() << "\n"
+     << "NPerPeriod       " << o.GetNPerPeriod() << "\n";
 
   return os;
 }
-
-
-
-
-
 
 
 

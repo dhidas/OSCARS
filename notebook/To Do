@@ -1,0 +1,8 @@
+Fix the hard-coded [0, 0, 5] point
+Make it d0*t0 + x0 instead, for instance
+
+Maybe try to use trajectory[i][2] to do the minimization more quickly.
+
+Maybe try to use add_bfield_uniform() instead of manually adding step functions.
+
+Figure out what is wrong with the SpectrumFits notebook

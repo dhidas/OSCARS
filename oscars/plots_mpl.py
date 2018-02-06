@@ -21,7 +21,6 @@ def plot_trajectory_position(trajectory, show=True, ofile='', axis='Z', figsize=
        :param ret: to return the plot or not
        :type  ret: bool
        """
-
     # Get coordinate lists
     X  = [item[1][0] for item in trajectory]
     Y  = [item[1][1] for item in trajectory]
