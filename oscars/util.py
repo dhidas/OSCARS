@@ -41,10 +41,10 @@ def read_file_list_with_header (ifile, idir=None):
     # List we will return
     mylist=[]
     with open(ifile, 'r') as fi:
-        iformat = fi.readline().rstrip()
-        rotations = list(map(float, fi.readline().split()))
-        translation = list(map(float, fi.readline().split()))
-        scale = list(map(float, fi.readline().split()))
+        iformat = fi.readline().rstrip().partition('#')[0]
+        rotations = list(map(float, fi.readline().partition('#')[0].split()))
+        translation = list(map(float, fi.readline().partition('#')[0].split()))
+        scale = list(map(float, fi.readline().partition('#')[0].split()))
 
         for l in fi:
             ls = l.split()

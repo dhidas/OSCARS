@@ -81,6 +81,18 @@ class bl:
 
                 return
             elif beamline == 'SST' and device == 'EPU60':
+                print('Setting up SST EPU60')
+
+                # Setup beam
+                self.osr.set_particle_beam(beam='NSLSII', x0=[0, 0, -1])
+                self.osr.set_ctstartstop(0, 2)
+
+                self.phase_mode = 'planar'
+                self.lut1d = oscars.lut.lut1d(self.device_path + '/lut/' + self.phase_mode + '/lut1d.txt')
+                self.bfield_lut1d_file = self.device_path + '/bfield/' + self.phase_mode + '/file_list.txt'
+
+                self.spectrum_range = [10, 3000]
+
                 pass
             else:
               raise  ValueError('beamline and/or device not recognized: ' + str(beamline) + ' ' + str(device))
@@ -109,9 +121,11 @@ class bl:
     def summary (self):
         """Print some summary information and plots"""
 
-        self.lut1d.get_gaps(show=True)
+        if self.lut1d is not None:
+            self.lut1d.get_gaps(show=True)
+
         oscars.plots_mpl.plot_bfield(self.osr)
         oscars.plots_mpl.plot_trajectory_position(self.osr.calculate_trajectory())
-        oscars.plots_mpl.plot_spectrum(self.osr.calculate_spectrum(obs=[0, 0, 30], energy_range_eV=self.spectrum_range))
+        oscars.plots_mpl.plot_spectrum(self.osr.calculate_spectrum(obs=[0, 0, 30], energy_range_eV=self.spectrum_range), figsize=[16, 4])
 
         return

@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import oscars.plots_mpl
 
 from scipy.optimize import curve_fit, minimize
 import numpy as np
@@ -39,6 +40,18 @@ def find_harmonics (spectrum, first=None, xwidth=50, parity='all', figsize=None,
 
     #fits = fit_spectrum_gaussian(spectrum, xranges=xranges, figsize=figsize, quiet=quiet, show=show, ofile=ofile)
     fits = find_peaks_parabola(spectrum, xranges)
+
+    make_plot = show or ofile
+
+    if make_plot:
+        plt = oscars.plots_mpl.plot_spectrum(spectrum, figsize=figsize, show=False, ret=True)
+        for fit in fits:
+            plt.axvline(x=fit[1], linestyle='dashed')
+        plt.show()
+
+        
+
+
     return fits
 
 
@@ -67,14 +80,48 @@ def find_all_harmonics (spectrum, first=None, xwidth=50, figsize=None, quiet=Tru
 
 
 
-def find_first_harmonic (spectrum, quiet=True):
+def find_first_harmonic (spectrum, last_fit=None, quiet=True):
+    """Find the first harmonic of a spectrum"""
+    
+    if len(spectrum) == 0:
+        return last_fit
+
+    # Just try finding one!
+    try:
+        #this_fit = fit_spectrum_gaussian(spectrum, n=1, quiet=quiet, show=False)[0]
+        returned_fits = find_peaks_parabola(spectrum)
+        if len(returned_fits) == 1:
+            this_fit = returned_fits[0]
+        else:
+            raise ValueError('did not get a fit returned')
+    except ValueError:
+        Y = [s[1] for s in spectrum]
+        X = [s[0] for s in spectrum]
+        ymax = max(Y)
+        ind = Y.index(ymax)
+        if last_fit is not None:
+            return last_fit
+        return [ymax, X[ind], 0]
+
+    if last_fit is not None:
+        if this_fit[0] < last_fit[0] * 0.10:
+            return last_fit
+
+    cutoff = this_fit[1] - 5*this_fit[2]
+    new_spectrum = [s for s in spectrum if s[0] < cutoff]
+    return find_first_harmonic(new_spectrum, this_fit)
+
+
+
+
+
+def find_first_harmonic_old (spectrum, quiet=True):
     """Find the first harmonic of a spectrum"""
     
     # Just try finding one!
     try:
         fit_1 = fit_spectrum_gaussian(spectrum, n=1, quiet=quiet, show=False)[0]
     except ValueError:
-        print('failed 1 fit')
         Y = [s[1] for s in spectrum]
         X = [s[0] for s in spectrum]
         ymax = max(Y)

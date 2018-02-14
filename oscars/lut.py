@@ -6,7 +6,6 @@ class lut1d:
     """Class for 1D lookup tables for insertion devices as a function of gap"""
 
     def __init__(self, ifile=None, name=None):
-        print('init called')
         self.name = name
         self.splines_gap_vs_energy = dict()
         self.splines_flux_vs_energy = dict()
@@ -20,7 +19,6 @@ class lut1d:
         
     def read_file(self, ifile):
         """read a file and setup data accordingly"""
-        print('read called')
         
         with open(ifile) as fi:
             for line in fi:
@@ -65,12 +63,16 @@ class lut1d:
 
         return
 
+
+
     def get_gaps (self,
-                  energy=0,
+                  energy_eV=0,
                   show=False,
                   ofile=None,
                   name='',
                   harmonic_range=None,
+                  odd=True,
+                  even=False,
                   plots=['gap', 'flux'],
                   xscale='linear',
                   yscale='linear',
@@ -84,19 +86,25 @@ class lut1d:
         # Grab the harmonics which cover the range
         harmonic_list = []
         for harmonic in self.energy_range:
+            # Check for odd even
+            if harmonic % 2 and not odd:
+                continue
+            if harmonic % 2 == 0 and not even:
+                continue
+
             # Check input harmonic range and make sure this is within the range
-            if energy == 0 or (harmonic_range is not None and (harmonic < harmonic_range[0] or harmonic > harmonic_range[1])):
+            if energy_eV == 0 or (harmonic_range is not None and (harmonic < harmonic_range[0] or harmonic > harmonic_range[1])):
                 continue
                 
-            if energy >= self.energy_range[harmonic][0] and energy <= self.energy_range[harmonic][1]:
+            if energy_eV >= self.energy_range[harmonic][0] and energy_eV <= self.energy_range[harmonic][1]:
                 harmonic_list.append(harmonic)
 
         # Get results fro spline and add to list
         gap_list = []
         for harmonic in harmonic_list:
             gap_list.append([harmonic,
-                             float(self.splines_gap_vs_energy[harmonic](energy)),
-                             float(self.splines_flux_vs_energy[harmonic](energy))])
+                             float(self.splines_gap_vs_energy[harmonic](energy_eV)),
+                             float(self.splines_flux_vs_energy[harmonic](energy_eV))])
             
         # Sort list in order of decreasing flux (highest flux first)
         gap_list.sort(key=lambda x: -x[2])
@@ -127,6 +135,12 @@ class lut1d:
  
                 # Loop over harmonics
                 for harmonic in self.energy_range:
+                    # Check for odd even
+                    if harmonic % 2 and not odd:
+                        continue
+                    if harmonic % 2 == 0 and not even:
+                        continue
+
                     # Get a new color for this marmonic
                     color = next(ax._get_lines.prop_cycler)['color']
 
@@ -143,17 +157,17 @@ class lut1d:
                                        self.energy_range[harmonic][-1],
                                        1000,
                                        endpoint=True)
-                    plt.plot(xnew, self.splines_gap_vs_energy[harmonic](xnew), color=color, label=str(harmonic))
+                    plt.plot(xnew, self.splines_gap_vs_energy[harmonic](xnew), color=color, label=str(harmonic), linestyle=['-', '--'][(harmonic+1)%2])
 
                 # Legend for harmonics
                 legend1 = plt.legend(title='Harmonic', ncol=2, prop={'size': 6}, loc='upper right')
                 plt.gca().add_artist(legend1)
 
                 # Plot a line repesenting the energy, and gap found
-                if energy != 0:
-                    le = plt.axvline(x=energy, linestyle='--', linewidth=1, label=str(energy)+' [eV]')
+                if energy_eV != 0:
+                    le = plt.axvline(x=energy_eV, linestyle='--', linewidth=1, label=str(energy_eV)+' [eV]')
                     lg = plt.axhline(y=gap_list[0][1], linestyle='-.', linewidth=1, label=str(gap_list[0][1]) + ' [mm]')
-                    plt.legend([le, lg], [str(energy)+' [eV]', str(round(gap_list[0][1], 3)) + ' [mm]'], loc='upper left')
+                    plt.legend([le, lg], [str(energy_eV)+' [eV]', str(round(gap_list[0][1], 3)) + ' [mm]'], loc='upper left')
 
                 # If plot limits defined use it
                 if xlim is not None:
@@ -186,6 +200,11 @@ class lut1d:
 
                 # Loop over harmonics
                 for harmonic in self.energy_range:
+                    # Check for odd even
+                    if harmonic % 2 and not odd:
+                        continue
+                    if harmonic % 2 == 0 and not even:
+                        continue
                     # Get a new color for this marmonic
                     color = next(ax._get_lines.prop_cycler)['color']
 
@@ -202,17 +221,17 @@ class lut1d:
                                        self.energy_range[harmonic][-1],
                                        1000,
                                        endpoint=True)
-                    plt.plot(xnew, self.splines_flux_vs_energy[harmonic](xnew), color=color, label=str(harmonic))
+                    plt.plot(xnew, self.splines_flux_vs_energy[harmonic](xnew), color=color, label=str(harmonic), linestyle=['-', '--'][(harmonic+1)%2])
 
                 # Legend for harmonics
                 legend1 = plt.legend(title='Harmonic', ncol=2, prop={'size': 6}, loc='upper right')
                 plt.gca().add_artist(legend1)
 
                 # Plot a line repesenting the energy, and flux found
-                if energy != 0:
-                    le = plt.axvline(x=energy, linestyle='--', linewidth=1)
+                if energy_eV != 0:
+                    le = plt.axvline(x=energy_eV, linestyle='--', linewidth=1)
                     lf = plt.axhline(y=gap_list[0][2], linestyle='-.', linewidth=1)
-                    plt.legend([le, lf], [str(energy)+' [eV]', "{:1.1e}".format(gap_list[0][2]) + ' [a.u.]'], loc='upper left')
+                    plt.legend([le, lf], [str(energy_eV)+' [eV]', "{:1.1e}".format(gap_list[0][2]) + ' [a.u.]'], loc='upper left')
 
                 # If plot limits defined use it
                 if xlim is not None:
