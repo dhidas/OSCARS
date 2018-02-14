@@ -198,5 +198,5 @@ setup(
   package_data = {'' : ['LICENSE.txt']},
   #package_dir = {'oscars': 'python'},
   #include_package_data=True,
-  py_modules = ['oscars.plots_mpl', 'oscars.plots3d_mpl', 'oscars.parametric_surfaces', 'oscars.util', 'oscars.fit', 'oscars.beamline']
+  py_modules = ['oscars.plots_mpl', 'oscars.plots3d_mpl', 'oscars.parametric_surfaces', 'oscars.util', 'oscars.fit', 'oscars.bl', 'oscars.lut']
 )

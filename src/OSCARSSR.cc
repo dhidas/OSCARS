@@ -875,6 +875,9 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
       x[4] += DeltaT * x[5];
     } else {
       // Add this point to the trajectory
+      if (i == 0) {
+        (this->*fDerivativesFunction)(t, x, dxdt, P);
+      }
       ParticleTrajectory.AddPoint(x[0], x[2], x[4], x[1] / TOSCARSSR::C(), x[3] / TOSCARSSR::C(), x[5] / TOSCARSSR::C(), dxdt[1] / TOSCARSSR::C(), dxdt[3] / TOSCARSSR::C(), dxdt[5] / TOSCARSSR::C(), t);
 
       // Propogate
@@ -1278,6 +1281,7 @@ void OSCARSSR::CalculateSpectrum (TVector3D const& ObservationPoint,
     }
   }
 
+
   // Number of threads to possibly use
   int const NThreadsToUse = NThreads < 1 ? fNThreadsGlobal : NThreads;
   if (NThreadsToUse <= 0) {
@@ -1428,6 +1432,18 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
   if (Particle.GetType() == "") {
     throw std::out_of_range("no particle defined");
   }
+
+  // Calculate trajectory if it doesn't exist
+  if (Particle.GetTrajectory().GetNPoints() == 0) {
+    this->CalculateTrajectory(Particle);
+  }
+
+  // Calculate trajectory if it doesn't exist
+  if (Particle.GetTrajectory().GetNPoints() == 0) {
+    this->CalculateTrajectory(Particle);
+  }
+
+
 
   // Check you are not requesting a level above the maximum
   if (MaxLevel > TParticleA::kMaxTrajectoryLevel) {
@@ -2512,6 +2528,10 @@ double OSCARSSR::CalculateTotalPower (TParticleA& Particle,
     throw std::out_of_range("no particle defined");
   }
 
+  // Calculate trajectory if it doesn't exist
+  if (Particle.GetTrajectory().GetNPoints() == 0) {
+    this->CalculateTrajectory(Particle);
+  }
 
   // Check you are not requesting a level above the maximum
   if (MaxLevel > TParticleA::kMaxTrajectoryLevel) {

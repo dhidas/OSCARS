@@ -4,6 +4,61 @@ import numpy as np
 import uuid
 import oscars.sr
 
+def read_file_list_with_header (ifile, idir=None):
+    """
+    read a list of parameters and filenames from a file.
+    
+    The file shal have a header of 4 lines:
+        iformat
+        rotations x y z
+        translation x y z
+        scale
+
+    The file format should be two columns separated by whitespace.
+    In the first column is the parameter value as a floating point number
+    and in the second column the file name.  Whitespace in the name is
+    unforgivably wrong, but technically allowed.
+    
+    Parameters
+    ----------
+    ifile : str
+        Full path to file containing the list of parameters and filenames
+        
+    idir : str
+        Path to directory where the files are contained if not in the 'ifile' directory
+        
+    Returns
+    -------
+    file_list : list
+        List of [parameter, filename]s
+    """
+    
+    # Directory where files are
+    mydir = os.path.dirname(ifile)
+    if idir is not None:
+        mydir = idir
+    
+    # List we will return
+    mylist=[]
+    with open(ifile, 'r') as fi:
+        iformat = fi.readline().rstrip()
+        rotations = list(map(float, fi.readline().split()))
+        translation = list(map(float, fi.readline().split()))
+        scale = list(map(float, fi.readline().split()))
+
+        for l in fi:
+            ls = l.split()
+            pv = float(ls[0])
+            fn = os.path.join(mydir, ' '.join(ls[1:]))
+            
+            mylist.append([pv, fn])
+            
+    return [mylist, iformat, rotations, translation, scale]
+
+
+
+
+
 def read_file_list(ifile, idir=None):
     """
     read a list of parameters and filenames from a file.

@@ -1,3 +1,6 @@
+from __future__ import print_function
+
+
 from scipy.optimize import curve_fit, minimize
 import numpy as np
 import warnings
@@ -9,7 +12,255 @@ except ImportError:
 
 
 
-def fit_spectrum_gaussian (spectrum, xranges=[], n=None, figsize=None, quiet=True):
+
+def find_harmonics (spectrum, first=None, xwidth=50, parity='all', figsize=None, quiet=True, ofile=None, show=True):
+
+    if first is None:
+        first = find_first_harmonic(spectrum, quiet=True)
+
+    xvalues = []
+    if parity == 'all':
+        xvalues = np.arange(first[1], spectrum[-1][0], first[1], dtype=float)
+    elif parity == 'odd':
+        xvalues = np.arange(first[1], spectrum[-1][0], 2*first[1], dtype=float)
+    elif parity == 'even':
+        xvalues = np.arange(2*first[1], spectrum[-1][0], 2*first[1], dtype=float)
+
+
+    xranges=[]
+    for x in xvalues:
+        start = x - xwidth
+        stop = x + xwidth
+        if start < spectrum[0][0]:
+            start = spectrum[0][0]
+        if stop > spectrum[-1][0]:
+            stop = spectrum[-1][0]
+        xranges.append([start, stop])
+
+    #fits = fit_spectrum_gaussian(spectrum, xranges=xranges, figsize=figsize, quiet=quiet, show=show, ofile=ofile)
+    fits = find_peaks_parabola(spectrum, xranges)
+    return fits
+
+
+
+
+
+def find_odd_harmonics (spectrum, first=None, xwidth=50, figsize=None, quiet=True, ofile=None, show=True):
+
+    return find_harmonics(spectrum=spectrum, first=first, xwidth=xwidth, parity='odd', figsize=figsize, quiet=quiet, ofile=ofile, show=show)
+
+
+def find_even_harmonics (spectrum, first=None, xwidth=50, figsize=None, quiet=True, ofile=None, show=True):
+
+    return find_harmonics(spectrum=spectrum, first=first, xwidth=xwidth, parity='even', figsize=figsize, quiet=quiet, ofile=ofile, show=show)
+
+def find_all_harmonics (spectrum, first=None, xwidth=50, figsize=None, quiet=True, ofile=None, show=True):
+
+    return find_harmonics(spectrum=spectrum, first=first, xwidth=xwidth, parity='all', figsize=figsize, quiet=quiet, ofile=ofile, show=show)
+
+
+
+
+
+
+
+
+
+
+def find_first_harmonic (spectrum, quiet=True):
+    """Find the first harmonic of a spectrum"""
+    
+    # Just try finding one!
+    try:
+        fit_1 = fit_spectrum_gaussian(spectrum, n=1, quiet=quiet, show=False)[0]
+    except ValueError:
+        print('failed 1 fit')
+        Y = [s[1] for s in spectrum]
+        X = [s[0] for s in spectrum]
+        ymax = max(Y)
+        ind = Y.index(ymax)
+        return [ymax, X[ind], 0]
+ 
+    # I guess we found one good peak, so let's try dividing the energy and finding lower ones
+    # until we can't reasonably do it anymore
+    last_amplitude = fit_1[0]
+    last_energy = fit_1[1]
+    last_sigma = fit_1[2]
+
+    is_fit_bad = False
+    last_fit_bad = False
+    myfit = []
+
+    for ifit in range(1, 51):
+        try:
+            myfit = fit_spectrum_gaussian(spectrum, xranges=[[fit_1[1] * 0.9 / ifit, fit_1[1] * 1.1 / ifit]], quiet=quiet, show=False)
+        except:
+            myfit = []
+            if_fit_bad = True
+
+        if not quiet:
+            print('myfit for ifit=', ifit, myfit)
+
+        if is_fit_bad is False and len(myfit) != 0 and myfit[0][0] > last_amplitude * 0.01 and myfit[0][2] < last_sigma * 1.5:
+            last_amplitude = myfit[0][0]
+            last_energy = myfit[0][1]
+            last_sigma = myfit[0][2]
+            last_fit_bad = False
+        else:
+            if last_fit_bad:
+                return [last_amplitude, last_energy, last_sigma]
+
+            last_fit_bad = True
+
+    raise RuntimeError('Could not find first harmonic')
+
+    return
+
+
+
+
+
+def find_peaks_parabola (spectrum, xranges=None):
+    """
+    Fit the highest point and it's left and right neighbors with a parabola
+    to estimate the actual peak.
+    
+    Parameters
+    ----------
+    spectrum : list of lists
+        oscars.sr spectrum-like object: [[en0, flux0], [en1, flux1], ...]
+
+    xranges : list of lists
+        ranges to search in, eg: [[90, 110], [290, 310], ...].  Can be None.
+
+    Returns
+    -------
+    peaks - a list of lists, each list as such: [flux, energy, 0] (where the
+    last is typically sigma in gaussian fits)
+    """
+    harmonics = []
+    if xranges is None:
+        xranges = [[spectrum[0][0], spectrum[-1][0]]]
+    for i in range(len(xranges)):
+        xr = xranges[i]
+        XP = [s[0] for s in spectrum if s[0] >= xr[0] and s[0] <= xr[1]]
+        YP = [s[1] for s in spectrum if s[0] >= xr[0] and s[0] <= xr[1]]
+    
+        ymax = max(YP)
+        ind = YP.index(ymax)
+        if ind == 0 or ind == len(YP)-1:
+            #raise IndexError('Maximum Y found at edge of range:', xranges[i])
+            continue
+        x1 = XP[ind-1]
+        x2 = XP[ind]
+        x3 = XP[ind+1]
+        y1 = YP[ind-1]
+        y2 = YP[ind]
+        y3 = YP[ind+1]
+        
+        denom = (x1 - x2)*(x1 - x3)*(x2 - x3)
+        A = (x3 * (y2 - y1) + x2 * (y1 - y3) + x1 * (y3 - y2)) / denom
+        B = (x3*x3 * (y1 - y2) + x2*x2 * (y3 - y1) + x1*x1 * (y2 - y3)) / denom
+        C = (x2 * x3 * (x2 - x3) * y1 + x3 * x1 * (x3 - x1) * y2 + x1 * x2 * (x1 - x2) * y3) / denom
+
+        xx = -B / (2 * A)
+        yy = A * xx * xx + B * xx + C
+        
+
+        x_up = -1
+        x_down = -1
+        for ip in range(ind, len(XP)):
+            if YP[ip] < ymax / 2 and x_up < 0:
+                x_up = (ymax / 2 - YP[ip-1]) * (XP[ip] - XP[ip-1]) / (YP[ip] - YP[ip-1]) + XP[ip-1]
+
+        for ip in range(ind, 0, -1):
+            if YP[ip] < ymax / 2 and x_down < 0:
+                x_down = (ymax / 2 - YP[ip]) * (XP[ip+1] - XP[ip]) / (YP[ip+1] - YP[ip]) + XP[ip]
+
+        fwhm = 0 if x_up < 0 or x_down < 0 else x_up - x_down
+
+        harmonics.append([yy, xx, fwhm])
+        
+    return harmonics
+
+
+
+
+def fit_spectrum_parabolic_gaussian (spectrum, xranges=[], n=None, figsize=None, quiet=True, show=True, ofile=None):
+
+    # If no number is specified and xranges is empty use the whole range
+    if n is None and len(xranges) == 0:
+        xranges=[]
+        xranges.append([spectrum[0][0], spectrum[-1][0]])
+
+    # Sigma to remove from spectrum when peak is found, initial width guess
+    nsigma_rm = 10.
+    sigma_guess = 10
+
+    # Not quiet
+    nq = not quiet
+
+
+    # X and Y data from spectrum
+    X = [s[0] for s in spectrum]
+    Y = [s[1] for s in spectrum]
+
+    # Gaussian function
+    def func(x, a, x0, sigma):
+        return a*np.exp(-(x-x0)**2/(2*sigma**2))
+
+    # Make Plot or not
+    mp = show or (ofile is not None)
+
+    # If make plot configure it
+    if mp:
+        plt.figure(1, figsize=figsize)
+        plt.plot(X, Y, marker='.')
+        plt.ylim(0, plt.ylim()[1])
+        plt.xlim(X[0], X[-1])
+
+    # Fit results we will return
+    fit_results = []
+
+    # If n is not specified use the xranges ranges ranges ranges (just kidding about the last two)
+    if n is None:
+        # Loop over the ranges in xranges
+        for xr in xranges:
+
+            # X and Y points in this range
+            XP = [s[0] for s in spectrum if s[0] >= xr[0] and s[0] <= xr[1]]
+            YP = [s[1] for s in spectrum if s[0] >= xr[0] and s[0] <= xr[1]]
+
+            # Guess that the peak is at the maximum point
+            amplitude_guess = max(YP)
+            x_guess = XP[YP.index(amplitude_guess)]
+
+            # Find peak using parabola
+            #fit = find_peaks_parabola(spectrum, 
+            try:
+                popt, pcov = curve_fit(func, XP, YP, p0=[amplitude_guess, x_guess, sigma_guess])
+                if popt[1] >= xr[0] and popt[1] <= xr[1]:
+                    fit_results.append(list(popt))
+            except RuntimeError:
+                pass
+
+    else:
+        pass
+
+
+
+
+
+
+
+    return
+
+
+
+
+
+
+def fit_spectrum_gaussian (spectrum, xranges=[], n=None, figsize=None, quiet=True, show=True, ofile=None):
     """Fit multiple gaussians in ranges given to spectrum
 
     """
@@ -31,11 +282,12 @@ def fit_spectrum_gaussian (spectrum, xranges=[], n=None, figsize=None, quiet=Tru
     def func(x, a, x0, sigma):
         return a*np.exp(-(x-x0)**2/(2*sigma**2))
 
+    mp = show or (ofile is not None)
 
-    if nq: plt.figure(1, figsize=figsize)
-    if nq: plt.plot(X, Y, marker='.')
-    if nq: plt.ylim(0, plt.ylim()[1])
-    if nq: plt.xlim(X[0], X[-1])
+    if mp: plt.figure(1, figsize=figsize)
+    if mp: plt.plot(X, Y, marker='.')
+    if mp: plt.ylim(0, plt.ylim()[1])
+    if mp: plt.xlim(X[0], X[-1])
 
 
     fit_results = []
@@ -56,15 +308,6 @@ def fit_spectrum_gaussian (spectrum, xranges=[], n=None, figsize=None, quiet=Tru
                     fit_results.append(list(popt))
             except RuntimeError:
                 pass
-                #popt = [amplitude_guess, x_guess, 10]
-                #max_s = 0
-                #max_x = 0
-                #for ix in range(len(XP)):
-                #    if XP[i] >= xr[0] and XP[i] <= xr[1] and YP[i] > max_s:
-                #        max_s = YP[i]
-                #        max_x = XP[i]
-                #if max_s != 0:
-                #    fit_results.append([max_s, max_x, 10])
 
     else:
         XP = [s[0] for s in spectrum]
@@ -103,13 +346,15 @@ def fit_spectrum_gaussian (spectrum, xranges=[], n=None, figsize=None, quiet=Tru
         ym = func(xp, popt[0], popt[1], popt[2])
 
         label = str(round(popt[1], 1)) + ' eV, $\\sigma = $' + str(round(popt[2], 2))
-        if nq:
+        if mp:
             p = plt.plot(xp, ym, linestyle='dashed', label=label)
             y0 = abs(plt.ylim()[0]) / (plt.ylim()[1] - plt.ylim()[0])
             plt.axvline(x=popt[1], ymin=y0, ymax=y0 + popt[0] / (plt.ylim()[1] - plt.ylim()[0]), linestyle='dashed', color=p[0].get_color())
 
-    if nq: plt.legend()
-    if nq: plt.show()
+    if mp: plt.legend()
+    if ofile is not None:
+        plt.savefig(ofile, bbox_inches='tight')
+    if show: plt.show()
     
     return fit_results
 
