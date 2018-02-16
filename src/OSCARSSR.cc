@@ -107,6 +107,15 @@ void OSCARSSR::AddMagneticFieldInterpolated (std::vector<std::pair<double, std::
   std::string FormatUpperCase = Format;
   std::transform(FormatUpperCase.begin(), FormatUpperCase.end(), FormatUpperCase.begin(), ::toupper);
 
+  // Check that we are interpolating and not extrapolating.
+  std::vector<double> VectorOfParameters;
+  for (std::vector<std::pair<double, std::string> >::const_iterator it = Mapping.begin(); it != Mapping.end(); ++it) {
+    VectorOfParameters.push_back(it->first);
+  }
+  std::sort(VectorOfParameters.begin(), VectorOfParameters.end());
+  if (Parameter < VectorOfParameters.front() || Parameter > VectorOfParameters.back()) {
+    throw std::invalid_argument("parameter is outside of the mapping given.  This function does not allow for extrapolation.");
+  }
 
   // Check that the format name is correct
   if ( (FormatUpperCase == "OSCARS"  || FormatUpperCase == "SRW" || FormatUpperCase == "SPECTRA") ||
