@@ -1,7 +1,10 @@
+from __future__ import print_function
+
 import oscars.sr
 import oscars.th
 import oscars.lut
 import oscars.util
+import oscars.fit
 import oscars.plots_mpl
 
 import warnings
@@ -12,7 +15,7 @@ import os
 class bl(oscars.lut.lut1d):
     """Class for configuring beamlines with oscars"""
 
-    def __init__ (self, facility, beamline, device, base_path=None, gpu=1, nthreads=8):
+    def __init__ (self, facility, beamline, device, current=None, base_path=None, gpu=1, nthreads=8):
         oscars.lut.lut1d.__init__(self)
 
         self.facility = facility
@@ -48,10 +51,6 @@ class bl(oscars.lut.lut1d):
         self.config.read(os.path.join(self.base_path, 'Facilities', facility, beamline, 'config.ini'))
         self.config.read(os.path.join(self.base_path, 'Facilities', facility, beamline, device, 'config.ini'))
 
-        for section in self.config.sections():
-            print(section)
-            for key in self.config[section]: print(' ', key, self.config[section][key])
-
         # Beamline and Device path
         self.beamline_path = os.path.join(self.base_path, 'Facilities', facility, beamline)
         self.device_path = os.path.join(self.beamline_path, device)
@@ -59,36 +58,39 @@ class bl(oscars.lut.lut1d):
 
         # Setup beam
         if 'beam' in self.config:
-            b = self.config['beam'] # Beam config
+            c = self.config['beam'] # Beam config
             a = dict()              # kwargs
 
-            if 'type' in b: a['type'] = b['type']
-            if 'name' in b: a['name'] = b['name']
-            if 'energy_GeV' in b: a['energy_GeV'] = float(b['energy_GeV'])
-            if 'd0' in b: a['d0'] = list(map(float, b['d0'].split()))
-            if 'x0' in b: a['x0'] = list(map(float, b['x0'].split()))
-            if 'beam' in b: a['beam'] = b['beam']
-            if 'sigma_energy_GeV' in b: a['sigma_energy_GeV'] = float(b['sigma_energy_GeV'])
-            if 't0' in b: a['t0'] = float(b['t0'])
-            if 'current' in b: a['current'] = float(b['current'])
-            if 'weight' in b: a['weight'] = float(b['weight'])
-            if 'rotations' in b: a['rotations'] = list(map(float, b['rotations'].split()))
-            if 'translation' in b: a['translation'] = list(map(float, b['translation'].split()))
-            if 'horizontal_direction' in b: a['horizontal_direction'] = list(map(float, b['horizontal_direction'].split()))
-            if 'beta' in b: a['beta'] = list(map(float, b['beta'].split()))
-            if 'alpha' in b: a['alpha'] = list(map(float, b['alpha'].split()))
-            if 'gamma' in b: a['gamma'] = list(map(float, b['gamma'].split()))
-            if 'emittance' in b: a['emittance'] = list(map(float, b['emittance'].split()))
-            if 'eta' in b: a['eta'] = list(map(float, b['eta'].split()))
-            if 'lattice_reference' in b: a['lattice_reference'] = list(map(float, b['lattice_reference'].split()))
-            if 'mass' in b: a['mass'] = float(b['mass'])
-            if 'charge' in b: a['charge'] = float(b['charge'])
+            if 'type' in c: a['type'] = c['type']
+            if 'name' in c: a['name'] = c['name']
+            if 'energy_GeV' in c: a['energy_GeV'] = float(c['energy_GeV'])
+            if 'd0' in c: a['d0'] = list(map(float, c['d0'].split()))
+            if 'x0' in c: a['x0'] = list(map(float, c['x0'].split()))
+            if 'beam' in c: a['beam'] = c['beam']
+            if 'sigma_energy_GeV' in c: a['sigma_energy_GeV'] = float(c['sigma_energy_GeV'])
+            if 't0' in c: a['t0'] = float(c['t0'])
+            if current is None:
+                if 'current' in c: a['current'] = float(c['current'])
+            else:
+                a['current'] = current
+            if 'weight' in c: a['weight'] = float(c['weight'])
+            if 'rotations' in c: a['rotations'] = list(map(float, c['rotations'].split()))
+            if 'translation' in c: a['translation'] = list(map(float, c['translation'].split()))
+            if 'horizontal_direction' in c: a['horizontal_direction'] = list(map(float, c['horizontal_direction'].split()))
+            if 'beta' in c: a['beta'] = list(map(float, c['beta'].split()))
+            if 'alpha' in c: a['alpha'] = list(map(float, c['alpha'].split()))
+            if 'gamma' in c: a['gamma'] = list(map(float, c['gamma'].split()))
+            if 'emittance' in c: a['emittance'] = list(map(float, c['emittance'].split()))
+            if 'eta' in c: a['eta'] = list(map(float, c['eta'].split()))
+            if 'lattice_reference' in c: a['lattice_reference'] = list(map(float, c['lattice_reference'].split()))
+            if 'mass' in c: a['mass'] = float(c['mass'])
+            if 'charge' in c: a['charge'] = float(c['charge'])
 
             self.osr.set_particle_beam(**a)
 
-            if 'ctstartstop' in b:
-                print('ctstartstop:', b['ctstartstop'])
-                ctstartstop = list(map(float, b['ctstartstop'].split()))
+            if 'ctstartstop' in c:
+                print('ctstartstop:', c['ctstartstop'])
+                ctstartstop = list(map(float, c['ctstartstop'].split()))
                 self.osr.set_ctstartstop(ctstartstop[0], ctstartstop[1])
 
         self.phase_mode = None
@@ -96,6 +98,9 @@ class bl(oscars.lut.lut1d):
             g = self.config['general']
             if 'name' in g: self.name = g['name']
             if 'default_mode' in g: self.phase_mode = g['default_mode']
+        else:
+            self.phase_mode = 'planar'
+
 
         # Find all modes from directory
         self.modes = []
@@ -130,36 +135,124 @@ class bl(oscars.lut.lut1d):
         # Setup spectrum arguments
         self.spectrum_kwargs= None
         if 'spectrum' in self.config:
-            b = self.config['spectrum'] # Spectrum config
+            c = self.config['spectrum'] # Spectrum config
             a = dict()                  # kwargs
 
-            if 'obs' in b: a['obs'] = list(map(float, b['obs'].split()))
-            print('obsobsobs', a['obs'])
-            if 'npoints' in b: a['npoints'] = int(b['npoints'])
-            if 'energy_range_eV' in b: a['energy_range_eV'] = list(map(float, b['energy_range_eV'].split()))
-            if 'points_eV' in b: a['points_eV'] = list(map(float, b['points_eV'].split()))
-            if 'polarization' in b: a['polarization'] = b['polarization']
-            if 'horizontal_direction' in b: a['horizontal_direction'] = list(map(float, b['horizontal_direction'].split()))
-            if 'vertical_direction' in b: a['vertical_direction'] = list(map(float, b['vertical_direction'].split()))
-            if 'precision' in b: a['precision'] = float(b['precision'])
-            if 'max_level' in b: a['max_level'] = int(b['max_level'])
-            if 'max_level_extended' in b: a['max_level_extended'] = int(b['max_level_extended'])
-            if 'angle' in b: a['angle'] = float(b['angle'])
-            if 'nparticles' in b: a['nparticles'] = int(b['nparticles'])
-            if 'nthreads' in b: a['nthreads'] = int(b['nthreads'])
-            if 'gpu' in b: a['gpu'] = int(b['gpu'])
-            if 'ngpu' in b:
-                a['ngpu'] = list(map(int, b['ngpu'].split()))
+            if 'obs' in c: a['obs'] = list(map(float, c['obs'].split()))
+            if 'npoints' in c: a['npoints'] = int(c['npoints'])
+            if 'energy_range_eV' in c: a['energy_range_eV'] = list(map(float, c['energy_range_eV'].split()))
+            if 'points_eV' in c: a['points_eV'] = list(map(float, c['points_eV'].split()))
+            if 'polarization' in c: a['polarization'] = c['polarization']
+            if 'horizontal_direction' in c: a['horizontal_direction'] = list(map(float, c['horizontal_direction'].split()))
+            if 'vertical_direction' in c: a['vertical_direction'] = list(map(float, c['vertical_direction'].split()))
+            if 'precision' in c: a['precision'] = float(c['precision'])
+            if 'max_level' in c: a['max_level'] = int(c['max_level'])
+            if 'max_level_extended' in c: a['max_level_extended'] = int(c['max_level_extended'])
+            if 'angle' in c: a['angle'] = float(c['angle'])
+            if 'nparticles' in c: a['nparticles'] = int(c['nparticles'])
+            if 'nthreads' in c: a['nthreads'] = int(c['nthreads'])
+            if 'gpu' in c: a['gpu'] = int(c['gpu'])
+            if 'ngpu' in c:
+                a['ngpu'] = list(map(int, c['ngpu'].split()))
                 if len(a[ngpu]) == 1: a['ngpu'] = a['ngpu'][0]
-            if 'quantity' in b: a['quantity'] = b['quantity']
-            if 'ofile' in b: a['ofile'] = b['ofile']
-            if 'bofile' in b: a['bofile'] = b['bofile']
+            if 'quantity' in c: a['quantity'] = c['quantity']
+            if 'ofile' in c: a['ofile'] = c['ofile']
+            if 'bofile' in c: a['bofile'] = c['bofile']
 
             self.spectrum_kwargs = a
 
 
+        # Setup flux arguments
+        self.flux_kwargs= None
+        if 'flux' in self.config:
+            c = self.config['flux'] # Flux config
+            a = dict()              # kwargs
+
+            if 'energy_eV' in c: a['energy_eV'] = float(c['energy_eV'])
+            if 'npoints' in c: a['npoints'] = list(map(int, c['npoints'].split()))
+            if 'plane' in c: a['plane'] = c['plane']
+            if 'normal' in c: a['normal'] = int(c['normal'])
+            if 'dim' in c: a['dim'] = int(c['dim'])
+            if 'width' in c: a['width'] = list(map(float, c['width'].split()))
+            if 'rotations' in c: a['rotations'] = list(map(float, c['rotations'].split()))
+            if 'translation' in c: a['translation'] = list(map(float, c['translation'].split()))
+            if 'x0x1x2' in c:
+                v = c['x0x1x2'].split(',')
+                if len(v) != 3:
+                    warnings.warn('x0x1x2 does not contain 3 vectors.  Check input format')
+                else:
+                    x0x1x2 = [ list(map(float, v[0])), list(map(float, v[1])), list(map(float, v[2])) ]
+                    a['x0x1x2'] = x0x1x2
+            if 'polarization' in c: a['polarization'] = c['polarization']
+            if 'angle' in c: a['angle'] = float(c['angle'])
+            if 'horizontal_direction' in c: a['horizontal_direction'] = list(map(float, c['horizontal_direction'].split()))
+            if 'vertical_direction' in c: a['vertical_direction'] = list(map(float, c['vertical_direction'].split()))
+            if 'nparticles' in c: a['nparticles'] = int(c['nparticles'])
+            if 'nthreads' in c: a['nthreads'] = int(c['nthreads'])
+            if 'gpu' in c: a['gpu'] = int(c['gpu'])
+            if 'ngpu' in c:
+                a['ngpu'] = list(map(int, c['ngpu'].split()))
+                if len(a[ngpu]) == 1: a['ngpu'] = a['ngpu'][0]
+            if 'precision' in c: a['precision'] = float(c['precision'])
+            if 'max_level' in c: a['max_level'] = int(c['max_level'])
+            if 'max_level_extended' in c: a['max_level_extended'] = int(c['max_level_extended'])
+            if 'quantity' in c: a['quantity'] = c['quantity']
+            if 'ofile' in c: a['ofile'] = c['ofile']
+            if 'bofile' in c: a['bofile'] = c['bofile']
+
+            self.flux_kwargs = a
+
+        # Setup flux arguments
+        self.power_density_kwargs= None
+        if 'power_density' in self.config:
+            c = self.config['power_density']    # Flux config
+            a = dict()                          # kwargs
+
+            if 'npoints' in c: a['npoints'] = list(map(int, c['npoints'].split()))
+            if 'plane' in c: a['plane'] = c['plane']
+            if 'width' in c: a['width'] = list(map(float, c['width'].split()))
+            if 'x0x1x2' in c:
+                v = c['x0x1x2'].split(',')
+                if len(v) != 3:
+                    warnings.warn('x0x1x2 does not contain 3 vectors.  Check input format')
+                else:
+                    x0x1x2 = [ list(map(float, v[0])), list(map(float, v[1])), list(map(float, v[2])) ]
+                    a['x0x1x2'] = x0x1x2
+            if 'rotations' in c: a['rotations'] = list(map(float, c['rotations'].split()))
+            if 'translation' in c: a['translation'] = list(map(float, c['translation'].split()))
+            if 'ofile' in c: a['ofile'] = c['ofile']
+            if 'bofile' in c: a['bofile'] = c['bofile']
+            if 'normal' in c: a['normal'] = int(c['normal'])
+            if 'nparticles' in c: a['nparticles'] = int(c['nparticles'])
+            if 'gpu' in c: a['gpu'] = int(c['gpu'])
+            if 'ngpu' in c:
+                a['ngpu'] = list(map(int, c['ngpu'].split()))
+                if len(a[ngpu]) == 1: a['ngpu'] = a['ngpu'][0]
+            if 'nthreads' in c: a['nthreads'] = int(c['nthreads'])
+            if 'precision' in c: a['precision'] = float(c['precision'])
+            if 'max_level' in c: a['max_level'] = int(c['max_level'])
+            if 'max_level_extended' in c: a['max_level_extended'] = int(c['max_level_extended'])
+            if 'dim' in c: a['dim'] = int(c['dim'])
+            if 'quantity' in c: a['quantity'] = c['quantity']
+
+            self.power_density_kwargs = a
+
+
+
         return
 
+    def info (self):
+        """Print info about this beamline setup"""
+
+        print('***BEGIN CONFIG***')
+        for section in self.config.sections():
+            print(section)
+            for key in self.config[section]: print(' ', key, self.config[section][key])
+        print('***END CONFIG***')
+        print('')
+        print('***BEGIN OSCARS CONFIG***')
+        self.osr.print_all()
+        print('***END OSCARS CONFIG***')
 
 
 
@@ -198,6 +291,93 @@ class bl(oscars.lut.lut1d):
 
 
 
+
+    def bfield (self, gap=None, **kwargs):
+        """Calculate the flux"""
+
+        if gap is not None:
+            self.set_gap(gap)
+
+        if self.gap is None:
+            raise RuntimeError('gap is not set.  try set_gap() first')
+
+        oscars.plots_mpl.plot_bfield(self.osr)
+
+        return
+
+
+    def trajectory (self, gap=None, **kwargs):
+        """Calculate the flux"""
+
+        if gap is not None:
+            self.set_gap(gap)
+
+        if self.gap is None:
+            raise RuntimeError('gap is not set.  try set_gap() first')
+
+        self.osr.set_new_particle(particle='ideal')
+
+        trajectory = self.osr.calculate_trajectory()
+        oscars.plots_mpl.plot_trajectory_position(trajectory)
+
+        return
+
+
+    def spectrum (self, gap=None, **kwargs):
+        """Calculate the spectrum"""
+
+        if gap is not None:
+            self.set_gap(gap)
+
+        if self.gap is None:
+            raise RuntimeError('gap is not set.  try set_gap() first')
+
+        newargs = self.spectrum_kwargs.copy()
+
+        for key in kwargs:
+            newargs[key] = kwargs[key]
+
+        if 'nparticles' in newargs:
+            if newargs['nparticles'] <= 1:
+                self.osr.set_new_particle(particle='ideal')
+        else:
+            self.osr.set_new_particle(particle='ideal')
+
+        spectrum = self.osr.calculate_spectrum(**newargs)
+        oscars.plots_mpl.plot_spectrum(spectrum, figsize=[16, 4])
+
+        return
+
+
+
+
+
+    def flux (self, gap=None, **kwargs):
+        """Calculate the flux"""
+
+        if gap is not None:
+            self.set_gap(gap)
+
+        if self.gap is None:
+            raise RuntimeError('gap is not set.  try set_gap() first')
+
+        newargs = self.flux_kwargs.copy()
+
+        for key in kwargs:
+            newargs[key] = kwargs[key]
+
+        if 'nparticles' in newargs:
+            if newargs['nparticles'] <= 1:
+                self.osr.set_new_particle(particle='ideal')
+        else:
+            self.osr.set_new_particle(particle='ideal')
+
+        flux = self.osr.calculate_flux_rectangle(**newargs)
+        oscars.plots_mpl.plot_flux(flux)
+
+        return
+
+
     def set_gap (self, gap):
         """Set the gap for a device.  Sets basic magnetic field data"""
 
@@ -209,6 +389,34 @@ class bl(oscars.lut.lut1d):
         self.osr.set_new_particle()
 
         self.gap = gap
+
+        return
+
+
+
+
+    def power_density (self, gap=None, **kwargs):
+        """Calculate the power_density"""
+
+        if gap is not None:
+            self.set_gap(gap)
+
+        if self.gap is None:
+            raise RuntimeError('gap is not set.  try set_gap() first')
+
+        newargs = self.power_density_kwargs.copy()
+
+        for key in kwargs:
+            newargs[key] = kwargs[key]
+
+        if 'nparticles' in newargs:
+            if newargs['nparticles'] <= 1:
+                self.osr.set_new_particle(particle='ideal')
+        else:
+            self.osr.set_new_particle(particle='ideal')
+
+        power_density = self.osr.calculate_power_density_rectangle(**newargs)
+        oscars.plots_mpl.plot_power_density(power_density)
 
         return
 
@@ -227,8 +435,19 @@ class bl(oscars.lut.lut1d):
             self.get_gaps(show=True, gap=self.gap)
 
         if self.gap is not None:
-            oscars.plots_mpl.plot_bfield(self.osr)
-            oscars.plots_mpl.plot_trajectory_position(self.osr.calculate_trajectory())
-            oscars.plots_mpl.plot_spectrum(self.osr.calculate_spectrum(**self.spectrum_kwargs), figsize=[16, 4])
+
+            self.osr.set_new_particle(particle='ideal')
+            spectrum = self.osr.calculate_spectrum(**self.spectrum_kwargs)
+
+            if 'energy_eV' not in self.flux_kwargs:
+                self.flux_kwargs['energy_eV'] = oscars.fit.find_first_harmonic(spectrum)[1]
+
+            oscars.plots_mpl.plot_spectrum(spectrum, figsize=[16, 4], axvlines=[self.flux_kwargs['energy_eV']])
+
+            oscars.plots_mpl.plot_flux(self.osr.calculate_flux_rectangle(**self.flux_kwargs))
+
+            oscars.plots_mpl.plot_power_density(self.osr.calculate_power_density_rectangle(**self.power_density_kwargs))
+
+            print('Estimated total power radiated:', round(self.osr.calculate_total_power(), 3), '[W]')
 
         return
