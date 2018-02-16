@@ -13,9 +13,43 @@ import os
 
 
 class bl(oscars.lut.lut1d):
-    """Class for configuring beamlines with oscars"""
+    """Class for configuring beamlines with oscars
+
+    Setup a known beamline.  Load magnetic field data tables if known, setup
+    beam parameters, load summary tables.
+    
+    Parameters
+    ----------
+    facility : str
+        Name of the facility.  See below for currently supported.
+    
+    beamline : str
+        Name of beamline.  See below for currently supported.
+    
+    device : str
+        Name of device.  See below for currently supported.
+
+    current : float
+        The current in [mA].  Not needed if specified in config.ini files
+
+    base_path : str - optional
+        Path to the oscars beamline data directory
+    
+    
+    Currently Supported - facility beamline
+        NSLSII
+            SST
+                U42
+                EPU60
+    
+    Returns
+    -------
+    None
+    """
+
 
     def __init__ (self, facility, beamline, device, current=None, base_path=None, gpu=1, nthreads=8):
+
         oscars.lut.lut1d.__init__(self)
 
         self.facility = facility
@@ -256,44 +290,22 @@ class bl(oscars.lut.lut1d):
 
 
 
-    def setup_beamline (self, facility, beamline, device):
-        """
-        Setup a known beamline.  Load magnetic field data tables if known, setup
-        beam parameters, load summary tables.
-    
-        Parameters
-        ----------
-        facility : str
-            Name of the facility.  See below for currently supported.
-    
-        beamline : str
-            Name of beamline.  See below for currently supported.
-    
-        device : str
-            Name of device.  See below for currently supported.
-    
-        osr : oscars.sr object
-            oscars.sr object to load
-    
-        oth : oscars.th object
-            oscars.th object to load
-    
-        Currently Supported - facility beamline
-            NSLSII SST U42
-    
-        Returns
-        -------
-        None
-        """
-
-        return   
-
 
 
 
 
     def bfield (self, gap=None, **kwargs):
-        """Calculate the flux"""
+        """Plot the magnetic field.
+
+        Parameters
+        ----------
+        gap : str
+            Gap of device - optional
+
+        Returns
+        -------
+        None
+        """
 
         if gap is not None:
             self.set_gap(gap)
@@ -307,7 +319,17 @@ class bl(oscars.lut.lut1d):
 
 
     def trajectory (self, gap=None, **kwargs):
-        """Calculate the flux"""
+        """Plot the trajectory
+
+        Parameters
+        ----------
+        gap : str
+            Gap of device - optional
+
+        Returns
+        -------
+        None
+        """
 
         if gap is not None:
             self.set_gap(gap)
@@ -324,7 +346,20 @@ class bl(oscars.lut.lut1d):
 
 
     def spectrum (self, gap=None, **kwargs):
-        """Calculate the spectrum"""
+        """Calculate and plot spectrum
+        
+        Parameters
+        ----------
+        gap : str
+            Gap of device - optional
+
+        All other parameters can be found in the function:
+            oscars.sr.calculate_spectrum()
+
+        Returns
+        -------
+        None
+        """
 
         if gap is not None:
             self.set_gap(gap)
@@ -353,7 +388,20 @@ class bl(oscars.lut.lut1d):
 
 
     def flux (self, gap=None, **kwargs):
-        """Calculate the flux"""
+        """Calculate the flux
+        
+        Parameters
+        ----------
+        gap : str
+            Gap of device - optional
+
+        All other parameters can be found in the function:
+            oscars.sr.calculate_flux_rectangle()
+
+        Returns
+        -------
+        None
+        """
 
         if gap is not None:
             self.set_gap(gap)
@@ -396,7 +444,20 @@ class bl(oscars.lut.lut1d):
 
 
     def power_density (self, gap=None, **kwargs):
-        """Calculate the power_density"""
+        """Calculate the power_density
+        
+        Parameters
+        ----------
+        gap : str
+            Gap of device - optional
+
+        All other parameters can be found in the function:
+            oscars.sr.calculate_power_density_rectangle()
+
+        Returns
+        -------
+        None
+        """
 
         if gap is not None:
             self.set_gap(gap)
@@ -423,7 +484,17 @@ class bl(oscars.lut.lut1d):
 
 
     def summary (self, gap=None):
-        """Print some summary information and plots"""
+        """Print some summary information and plots
+        
+        Parameters
+        ----------
+        gap : str
+            Gap of device - optional
+
+        Returns
+        -------
+        None
+        """
 
         if gap is not None:
             try:
