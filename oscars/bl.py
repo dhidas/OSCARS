@@ -123,7 +123,6 @@ class bl(oscars.lut.lut1d):
             self.osr.set_particle_beam(**a)
 
             if 'ctstartstop' in c:
-                print('ctstartstop:', c['ctstartstop'])
                 ctstartstop = list(map(float, c['ctstartstop'].split()))
                 self.osr.set_ctstartstop(ctstartstop[0], ctstartstop[1])
 
@@ -440,6 +439,28 @@ class bl(oscars.lut.lut1d):
 
         return
 
+
+
+    def total_power (self, gap=None):
+        """Calculate the total power
+        
+        Parameters
+        ----------
+        gap : str
+            Gap of device - optional
+
+        Returns
+        -------
+        Estimate of the total power in [W]
+        """
+
+        if gap is not None:
+            self.set_gap(gap)
+
+        if self.gap is None:
+            raise RuntimeError('gap is not set.  try set_gap() first')
+
+        return self.osr.calculate_total_power()
 
 
 
