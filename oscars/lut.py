@@ -82,7 +82,59 @@ class lut1d:
                   flux_ylim=None,
                   grid=False
                  ):
-        """Get the gaps at which to find the given energy"""
+        """Get the gaps at which to find the given energy
+
+        Parameters
+        ----------
+        facility : str
+            Name of the facility.  See below for currently supported.
+
+        energy_eV : float
+            Energy at which to find gaps and flux
+
+        gap : float
+            If you want to draw a line on the plot for a specific gap (does not change calculation)
+
+        show : bool
+            Set to true if you want to produce a plot
+
+        ofile : str
+            Name of the output file for the plot
+
+        name : str
+            Name for adding to plot
+
+        harmonic_range : list[int, int]
+            List containing the min and max harmonic to consider
+
+        odd : bool
+            Set to true if you want to see odd harmonics (default)
+
+        even : bool
+            Set to true if you want to see even harmonics (default is False)
+
+        plots : list of str
+            Can contain 'gap' and/or 'flux' depending on which (or both) plots you want to make.  both set as default.
+
+        xscale : str
+            Set the xscale to 'log' or 'linear'
+
+        yscale : str
+            Set the yscale to 'log' or 'linear'
+
+        xlim : list[float, float]
+            Range of the x-axis on the plot
+
+        gap_ylim : list[float, float]
+            Range of y-axis on the gap plot
+
+        flux_ylim : list[float, float]
+            Range of y-axis on the flux plot
+
+        grid : bool
+            Show gridlines or not (default not)
+
+        """
         
         # Grab the harmonics which cover the range
         harmonic_list = []
