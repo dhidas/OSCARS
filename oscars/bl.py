@@ -76,7 +76,7 @@ class bl(oscars.lut.lut1d):
         if base_path is not None:
             self.base_path = base_path
         else:
-            self.base_path = '/Users/dhidas/OSCARSDATA'
+            self.base_path = os.path.join(os.sep, 'Users', 'dhidas', 'OSCARSDATA')
 
         # Read configuration file in order of precidence
         self.config = configparser.ConfigParser()
