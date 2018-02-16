@@ -6,6 +6,8 @@ dependencies:
   - python=3.6*
   - matplotlib
   - jupyter
+  - scipy
+  - numpy
   - gcc
   - mpi4py
   - sphinx
