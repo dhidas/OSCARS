@@ -12,12 +12,12 @@ class lut1d:
         self.energy_range = dict()
         
         if ifile is not None:
-            self.read_file(ifile)
+            self.read_file_lut1d(ifile)
             
         return
 
         
-    def read_file(self, ifile):
+    def read_file_lut1d(self, ifile):
         """read a file and setup data accordingly"""
         
         with open(ifile) as fi:
@@ -67,6 +67,7 @@ class lut1d:
 
     def get_gaps (self,
                   energy_eV=0,
+                  gap=None,
                   show=False,
                   ofile=None,
                   name='',
@@ -179,6 +180,9 @@ class lut1d:
                 if grid:
                     plt.grid()
 
+                # Draw gap-only line
+                if gap is not None:
+                    plt.axhline(y=gap, linestyle='--', linewidth=1, color='tab:green')
 
             
             # Second plot flux vs energy
