@@ -529,7 +529,7 @@ class bl(oscars.lut.lut1d):
             except:
                 warnings.warn('could not set gap to that value.  likely it is outside of the interpolation range')
 
-        if self.has_lut1d is not None:
+        if self.has_lut1d:
             self.get_gaps(show=True, gap=self.gap)
 
         if self.gap is not None:
@@ -537,12 +537,13 @@ class bl(oscars.lut.lut1d):
             self.osr.set_new_particle(particle='ideal')
             spectrum = self.osr.calculate_spectrum(**self.spectrum_kwargs)
 
+            tmp_flux_kwargs = self.flux_kwargs.copy()
             if 'energy_eV' not in self.flux_kwargs:
-                self.flux_kwargs['energy_eV'] = oscars.fit.find_first_harmonic(spectrum)[1]
+                tmp_flux_kwargs['energy_eV'] = oscars.fit.find_first_harmonic(spectrum)[1]
 
-            oscars.plots_mpl.plot_spectrum(spectrum, figsize=[16, 4], axvlines=[self.flux_kwargs['energy_eV']])
+            oscars.plots_mpl.plot_spectrum(spectrum, figsize=[16, 4], axvlines=[tmp_flux_kwargs['energy_eV']])
 
-            oscars.plots_mpl.plot_flux(self.osr.calculate_flux_rectangle(**self.flux_kwargs))
+            oscars.plots_mpl.plot_flux(self.osr.calculate_flux_rectangle(**tmp_flux_kwargs))
 
             oscars.plots_mpl.plot_power_density(self.osr.calculate_power_density_rectangle(**self.power_density_kwargs))
 
