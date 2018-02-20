@@ -129,7 +129,13 @@ class bl(oscars.lut.lut1d):
         self.phase_mode = None
         if 'general' in self.config:
             g = self.config['general']
-            if 'name' in g: self.name = g['name'] else self.name = self.device
+
+            # Try to grab name
+            if 'name' in g:
+                self.name = g['name']
+            else:
+                self.name = self.device
+
             if 'default_mode' in g: self.phase_mode = g['default_mode']
         else:
             self.phase_mode = 'planar'
