@@ -276,9 +276,54 @@ class bl(oscars.lut.lut1d):
 
             self.power_density_kwargs = a
 
+        return
+
+
+
+
+    def list (self):
+        """List facilities and beamlines"""
+
+        fstring = '    {:12} {:12}     {}'
+
+        print(fstring.format('Beamline', 'Device', 'Modes'))
+        print(fstring.format('--------', '------', '-----'))
+        print('')
+        for facility_name in os.listdir(os.path.join(self.base_path, 'Facilities')):
+            facility_path = os.path.join(self.base_path, 'Facilities', facility_name)
+            if os.path.isdir(facility_path):
+                print(facility_name)
+
+                for beamline_name in os.listdir(facility_path):
+                    beamline_path = os.path.join(facility_path, beamline_name)
+                    if os.path.isdir(beamline_path):
+                        #print('    Beamline:', beamline_name)
+
+                        for device_name in os.listdir(beamline_path):
+                            device_path = os.path.join(beamline_path, device_name)
+                            if os.path.isdir(device_path):
+                                #print('        Device:', device_name)
+
+                                modes = []
+                                try:
+                                    for mode_name in os.listdir(os.path.join(device_path, 'bfield')):
+                                        mode_path = os.path.join(device_path, 'bfield', mode_name)
+                                        if os.path.isdir(mode_path):
+                                            modes.append(mode_name)
+                                except:
+                                    warnings.warn('No bfields found for device: ' + device_name)
+                                print(fstring.format(beamline_name, device_name, ' '.join(modes)))
+
+
+
 
 
         return
+
+
+
+
+
 
     def info (self):
         """Print info about this beamline setup"""
