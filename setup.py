@@ -28,8 +28,8 @@ with open('include/Version.h', 'r') as f:
 
 VERSION=v_major+'.'+v_minor+'.'+v_rev
 
-#os.environ["CC"] = "g++"
-#os.environ["CXX"] = "g++"
+#os.environ["CC"] = "nvcc"
+#os.environ["CXX"] = "nvcc"
 
 
 extra_compile_args=[]
@@ -90,6 +90,9 @@ elif sys.platform == 'win32':
 
     if os.path.exists('lib/OSCARSSR_Cuda.o'):
         extra_compile_args.append('/DCUDA')
+        libraries.append('cudart_static')
+        extra_objects_sr.append('lib/OSCARSSR_Cuda.o')
+        extra_objects_th.append('lib/OSCARSTH_Cuda.o')
     
 
 
@@ -104,6 +107,7 @@ moduleOSCARSSR = Extension('oscars.sr',
                                  'src/TField3D_Gaussian.cc',
                                  'src/TFieldContainer.cc',
                                  'src/TField3D_IdealUndulator.cc',
+                                 'src/TField3D_Halbach.cc',
                                  'src/TField3D_UniformBox.cc',
                                  'src/TFieldPythonFunction.cc',
                                  'src/TParticleA.cc',
@@ -146,6 +150,7 @@ moduleOSCARSTH = Extension('oscars.th',
                                  'src/TField3D_Gaussian.cc',
                                  'src/TFieldContainer.cc',
                                  'src/TField3D_IdealUndulator.cc',
+                                 'src/TField3D_Halbach.cc',
                                  'src/TField3D_UniformBox.cc',
                                  'src/TFieldPythonFunction.cc',
                                  'src/TParticleA.cc',

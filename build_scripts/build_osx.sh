@@ -26,4 +26,5 @@ deactivate
 
 source ~/venv/py3.6/bin/activate
 twine upload -r pypi wheelhouse/*macosx*whl
+python setup.py sdist upload -r pypi
 deactivate

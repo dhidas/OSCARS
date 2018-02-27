@@ -77,7 +77,7 @@ void TTriangle3DContainer::ReadSTLFile (std::string const& FileName,
   // Open the input file
   std::ifstream fi(FileName.c_str(), std::ios::binary);
   if (!fi.is_open()) {
-    throw std::ifstream::failure("cannot open file");
+    throw std::ifstream::failure("input file cannot be opened");
   }
 
   char H[80];
@@ -124,7 +124,7 @@ void TTriangle3DContainer::WriteSTLFile (std::string const& FileName)
   std::ofstream fi(FileName.c_str(), std::ios::binary);
   if (!fi.is_open()) {
     std::cout << "file not open" << std::endl;
-    throw;
+    throw std::ofstream::failure("output file cannot be opened");
   }
 
   char H[80];

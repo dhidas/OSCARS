@@ -85,7 +85,7 @@ void TSpectrumContainer::Init (size_t const N, double const EFirst, double const
   }
 
   fNotConverged.clear();
-  fNotConverged.resize(fSpectrumPoints.size() / (8 * sizeof(int)), 0);
+  fNotConverged.resize(fSpectrumPoints.size() / (8 * sizeof(int)) + 1, 0);
 
   return;
 }
@@ -109,7 +109,7 @@ void TSpectrumContainer::Init (std::vector<double> const& V)
   }
 
   fNotConverged.clear();
-  fNotConverged.resize(fSpectrumPoints.size() / (8 * sizeof(int)), 0);
+  fNotConverged.resize(fSpectrumPoints.size() / (8 * sizeof(int)) + 1, 0);
 
   return;
 }
@@ -194,7 +194,7 @@ void TSpectrumContainer::SetNotConverged (size_t const i)
 
   size_t const VectorIndex = i / (8 * sizeof(int));
   if (VectorIndex >= fNotConverged.size()) {
-    throw;
+    throw std::length_error("not enough elements in fNotConverged");
   }
 
   int const Bit = (0x1 << (i % (8 * sizeof(int))));

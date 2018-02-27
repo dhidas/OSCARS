@@ -84,7 +84,7 @@ def power_density_3d(srs, surface,
         ax.set_ylim(zlim[0], zlim[1])
 
 
-    ax.plot_surface(X2, Z2, Y2, facecolors=cm.viridis(colors), rstride=1, cstride=1, alpha=alpha, linewidth=0)
+    ax.plot_surface(np.asarray(X2), np.asarray(Z2), np.asarray(Y2), facecolors=cm.viridis(colors), rstride=1, cstride=1, alpha=alpha, linewidth=0)
     ax.invert_xaxis()
 
     if axis is not None:
@@ -171,7 +171,7 @@ def power_density_3ds(srs, surface, ax,
 
 
     #ax.invert_xaxis()
-    return ax.plot_surface(X2, Z2, Y2, facecolors=cm.viridis(colors), rstride=1, cstride=1, alpha=alpha)
+    return ax.plot_surface(np.asarray(X2), np.asarray(Z2), np.asarray(Y2), facecolors=cm.viridis(colors), rstride=1, cstride=1, alpha=alpha)
 
 
 
@@ -325,7 +325,7 @@ def plot_surface(surface, xlim=None, ylim=None, zlim=None, alpha=0.5, **kwargs):
         ax.set_ylim(zlim[0], zlim[1])
 
 
-    ax.plot_surface(X2, Z2, Y2, rstride=1, cstride=1, alpha=alpha, **kwargs)
+    ax.plot_surface(np.asarray(X2), np.asarray(Z2), np.asarray(Y2), rstride=1, cstride=1, alpha=0.5, **kwargs)
     ax.invert_xaxis()
 
     plt.show()
@@ -389,12 +389,7 @@ def get_surface_points (surface=None, surfaces=None, translation=None):
 
     return points
 
-
-
-
-
-
-def plot_power_density_scatter (V, s=10, figsize=None):
+def plot_power_density_scatter (V, s=10, title='Power Density [$W/mm^2$]', figsize=None, bbox_inches='tight', alpha=1, transparent=True, ofile=None, colorbar=True):
 
     if len(V) == 0:
         return
@@ -415,15 +410,27 @@ def plot_power_density_scatter (V, s=10, figsize=None):
 
     Cen3D = plt.figure(figsize=figsize)
     ax = Cen3D.add_subplot(111, projection='3d')
+    plt.title(title)
 
-    ax.scatter(X, Z, Y, c=C, s=s, alpha=1)
+    ax.scatter(X, Z, Y, c=C, s=s, alpha=alpha)
     ax.invert_xaxis()
 
     ax.set_xlabel('X [m]')
     ax.set_ylabel('Z [m]')
     ax.set_zlabel('Y [m]')
+
+    m = cm.ScalarMappable()
+    m.set_array(P)
+    if colorbar is True:
+        plt.colorbar(m, format='%.0e')
+        #plt.colorbar(m, format=r'%3.1f')
+
+    if ofile is not None:
+        plt.savefig(ofile, bbox_inches=bbox_inches, transparent=transparent)
+
     plt.show()
 
+    return
 
 
 
@@ -433,9 +440,13 @@ def plot_power_density_scatter (V, s=10, figsize=None):
 
 
 
-def plot_power_density_stl (P, title='Power Density [$W/mm^2$]', elev=30, azim=30, alpha=0.8, bbox_inches='tight', transparent=True, ofile=None):
+def plot_power_density_stl (P, title='Power Density [$W/mm^2$]', elev=30, azim=30, alpha=0.8, bbox_inches='tight', xlim=None, ylim=None, zlim=None, transparent=True, ofile=None, colorbar=True, mymax=None):
 
     pmax = max([p[1] for p in P])
+    if mymax is not None:
+        pmax = mymax
+
+    print(pmax)
 
     m = cm.ScalarMappable(cm.viridis)
 
@@ -470,9 +481,20 @@ def plot_power_density_stl (P, title='Power Density [$W/mm^2$]', elev=30, azim=3
     ax.set_xlim([xmin, xmax])
     ax.set_ylim([ymin, ymax])
     ax.set_zlim([zmin, zmax])
+    if xlim is not None:
+        ax.set_xlim(xlim[0], xlim[1])
+    if ylim is not None:
+        ax.set_zlim(ylim[0], ylim[1])
+    if zlim is not None:
+        ax.set_ylim(zlim[0], zlim[1])
+
     ax.set_xlabel('X [m]')
     ax.set_ylabel('Z [m]')
     ax.set_zlabel('Y [m]')
+
+    if colorbar is True:
+        plt.colorbar(m, format='%.0e')
+        #plt.colorbar(m, format=r'%3.1f')
 
     if ofile is not None:
         plt.savefig(ofile, bbox_inches=bbox_inches, transparent=transparent)
