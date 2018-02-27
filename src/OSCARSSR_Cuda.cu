@@ -21,7 +21,7 @@
 #include "TSpectrumContainer.h"
 
 
-#define NTHREADS_PER_BLOCK 64
+#define NTHREADS_PER_BLOCK 32
 #define PI 3.14159265358979323846
 
 
@@ -1619,7 +1619,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   }
 
   // Number of levels to calculate and pre-upload
-  int const NLevelsPreComputed = 0;
+  int const NLevelsPreComputed = 11;
 
   // Number of pre-conputed trajectory points
   int const NTPreComputed = TParticleTrajectoryInterpolated::GetNPointsInclusiveToLevel(NLevelsPreComputed);

@@ -9,7 +9,7 @@ from oscars.plots_mpl import *
 import time
 
 # Create a new OSCARS object
-osr = oscars.sr.sr(gpu=1, nthreads=16)
+osr = oscars.sr.sr(gpu=0, nthreads=16)
 
 # Clear any existing fields (just good habit in notebook style) and add an undulator field
 osr.clear_bfields()
