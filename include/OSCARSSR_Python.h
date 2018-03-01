@@ -97,6 +97,10 @@ static PyObject* OSCARSSR_GetPowerDensity (OSCARSSRObject* self);
 static PyObject* OSCARSSR_CalculateElectricFieldTimeDomain (OSCARSSRObject* self, PyObject* args, PyObject *keywds);
 static PyObject* OSCARSSR_PrintGPU (OSCARSSRObject* self);
 static PyObject* OSCARSSR_PrintAll (OSCARSSRObject* self);
+static PyObject* OSCARSSR_COUT (OSCARSSRObject* self, PyObject* args, PyObject *keywds);
+static PyObject* OSCARSSR_CERR (OSCARSSRObject* self, PyObject* args, PyObject *keywds);
+
+
 static PyObject* OSCARSSR_Fake (OSCARSSRObject* self, PyObject* args, PyObject *keywds);
 static PyObject* OSCARSSR_GetT3DScalarAsList (T3DScalarContainer const& C);
 

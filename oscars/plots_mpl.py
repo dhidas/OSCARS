@@ -392,7 +392,7 @@ def plot_flux(V, title='Flux [$\gamma / mm^2 / 0.1\%bw / s$]', xlabel='X1 Axis [
     return
 
 
-def plot_spectrum(S, log=False, show=True, ofile='', title='Spectrum', xlabel='Energy [eV]', ylabel='$\gamma / mm^2 / 0.1\%bw / s$', figsize=None, ylim=None, xlim=None, transparent=True, ret=False, xticks=None, **kwargs):
+def plot_spectrum(S, log=False, show=True, ofile='', title='Spectrum', xlabel='Energy [eV]', ylabel='$\gamma / mm^2 / 0.1\%bw / s$', figsize=None, ylim=None, xlim=None, transparent=True, ret=False, xticks=None, axhlines=None, axvlines=None, **kwargs):
     """Plot the spectrum"""
 
     # Size and limits
@@ -411,6 +411,13 @@ def plot_spectrum(S, log=False, show=True, ofile='', title='Spectrum', xlabel='E
 
     if xticks is not None:
         plt.xticks(xticks)
+
+    if axvlines is not None:
+        for line in axvlines:
+            plt.axvline(x=line, color='red', linestyle='--')
+    if axhlines is not None:
+        for line in axhlines:
+            plt.axhline(y=line, color='green', linestyle='--')
 
     if ofile != '':
         plt.savefig(ofile, bbox_inches='tight', transparent=transparent)

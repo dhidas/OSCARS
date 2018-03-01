@@ -130,7 +130,7 @@ void TParticleTrajectoryInterpolated::FillTParticleTrajectoryPointsLevel (TParti
   // Fill a TParticleTrajectoryPoints object with trajectory points from this interpolation
 
   if (fTStop <= fTStart) {
-    throw;
+    throw std::logic_error("TParticleTrajectoryInterpolated::FillTParticleTrajectoryPointsLevel throwing because fTStop <= fTStart.  Internal logic error.  Please report this.");
   }
 
   // Level checking

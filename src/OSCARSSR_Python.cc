@@ -7951,6 +7951,89 @@ static PyObject* OSCARSSR_PrintAll (OSCARSSRObject* self)
 
 
 
+const char* DOC_OSCARSSR_COUT = R"docstring(
+cout(out)
+
+Print input to std::cout (mostly useful for debugging)
+
+Parameters
+----------
+out : str
+    Any string you want to output
+
+Returns
+-------
+None
+)docstring";
+static PyObject* OSCARSSR_COUT (OSCARSSRObject* self, PyObject* args, PyObject *keywds)
+{
+  char const* Out = "";
+  static const char *kwlist[] = {"out",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char **>(kwlist),
+                                   &Out)) {
+    return NULL;
+  }
+
+  std::cout << Out << std::endl;
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
+
+
+const char* DOC_OSCARSSR_CERR = R"docstring(
+cout(out)
+
+Print input to std::cerr (mostly useful for debugging)
+
+Parameters
+----------
+out : str
+    Any string you want to output
+
+Returns
+-------
+None
+)docstring";
+static PyObject* OSCARSSR_CERR (OSCARSSRObject* self, PyObject* args, PyObject *keywds)
+{
+  char const* Out = "";
+  static const char *kwlist[] = {"out",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char **>(kwlist),
+                                   &Out)) {
+    return NULL;
+  }
+
+  std::cerr << Out << std::endl;
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -8067,6 +8150,8 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   {"print_gpu",                         (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_PrintGPU},
 
   {"print_all",                         (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_PrintAll},
+  {"cout",                              (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_COUT},
+  {"cerr",                              (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CERR},
 
   {NULL, NULL, 0, NULL}  /* Sentinel */
 };
@@ -8172,9 +8257,11 @@ static PyMethodDef OSCARSSR_methods[] = {
 
   {"calculate_efield_vs_time",          (PyCFunction) OSCARSSR_CalculateElectricFieldTimeDomain,METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateElectricFieldTimeDomain},
 
-  {"print_gpu",                         (PyCFunction) OSCARSSR_PrintGPU,                           METH_NOARGS,                  DOC_OSCARSSR_PrintGPU},
+  {"print_gpu",                         (PyCFunction) OSCARSSR_PrintGPU,                        METH_NOARGS,                  DOC_OSCARSSR_PrintGPU},
 
-  {"print_all",                         (PyCFunction) OSCARSSR_PrintAll,                           METH_NOARGS,                  DOC_OSCARSSR_PrintAll},
+  {"print_all",                         (PyCFunction) OSCARSSR_PrintAll,                        METH_NOARGS,                  DOC_OSCARSSR_PrintAll},
+  {"cout",                              (PyCFunction) OSCARSSR_COUT,                            METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_COUT},
+  {"cerr",                              (PyCFunction) OSCARSSR_CERR,                            METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CERR},
 
   {NULL, NULL, 0, NULL}  /* Sentinel */
 };

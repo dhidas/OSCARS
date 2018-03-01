@@ -48,6 +48,7 @@ template <class T> class TSpline1D3
     {
       fX.clear();
       fY.clear();
+      fYPP.clear();
 
       if (X.size() != Y.size()) {
         throw;
@@ -65,6 +66,9 @@ template <class T> class TSpline1D3
 
     void Set (double const* X, T const* Y, int const N)
     {
+      fX.clear();
+      fY.clear();
+      fYPP.clear();
       if (N <= 0) {
         throw;
       }
