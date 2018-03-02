@@ -1,5 +1,7 @@
 #include "TField3D_Quadrupole.h"
 
+#include "TOSCARSSR.h"
+
 #include <cmath>
 
 TField3D_Quadrupole::TField3D_Quadrupole (std::string const& Name)
@@ -18,7 +20,10 @@ TField3D_Quadrupole::TField3D_Quadrupole (double const K,
                                           double const Width,
                                           TVector3D const& Rotations,
                                           TVector3D const& Translation,
-                                          std::string const& Name = "") {
+                                          double    const  Frequency,
+                                          double    const  FrequencyPhase,
+                                          double    const  TimeOffset,
+                                          std::string const& Name) {
   // Constructor
 
   // Set the name and default scale factors
@@ -29,6 +34,10 @@ TField3D_Quadrupole::TField3D_Quadrupole (double const K,
   fWidth = Width;
   fRotations = Rotations;
   fTranslation = Translation;
+
+  fFrequency = Frequency;
+  fFrequencyPhase = FrequencyPhase;
+  fTimeOffset = TimeOffset;
 }
 
 
@@ -65,13 +74,44 @@ TVector3D TField3D_Quadrupole::GetF (TVector3D const& X, double const T) const
 
   TVector3D Ret(fK * P.GetY(), fK * P.GetX(), 0);
   Ret.RotateSelfXYZ(fRotations);
-  return Ret;
+  if (fFrequency == 0) {
+    // It has no time dependence
+    return Ret;
+  }
+  return Ret * cos(TOSCARSSR::TwoPi() * fFrequency * (T + fTimeOffset) + fFrequencyPhase);
 }
 
 
 
 
 
+
+
+
+
+double TField3D_Quadrupole::GetFrequency () const
+{
+  // Return the frequency
+  return fFrequency;
+}
+
+
+
+
+double TField3D_Quadrupole::GetFrequencyPhase () const
+{
+  // Return the frequency
+  return fFrequencyPhase;
+}
+
+
+
+
+double TField3D_Quadrupole::GetTimeOffset () const
+{
+  // Return the time offset for the frequency
+  return fTimeOffset;
+}
 
 
 

@@ -42,6 +42,9 @@ class OSCARSSR
                            TVector3D const& R = TVector3D(0, 0, 0),
                            TVector3D const& D = TVector3D(0, 0, 0),
                            std::vector<double> const& S = std::vector<double>(),
+                           double const Frequency = 0,
+                           double const FrequencyPhase = 0,
+                           double const TimeOffset = 0,
                            std::string const& Name = "");
 
     void AddMagneticFieldInterpolated (std::vector<std::pair<double, std::string> > const& Mapping,
@@ -50,6 +53,9 @@ class OSCARSSR
                                        TVector3D const& Rotations = TVector3D(0, 0, 0),
                                        TVector3D const& Translation = TVector3D(0, 0, 0),
                                        std::vector<double> const& Scaling = std::vector<double>(),
+                                       double const Frequency = 0,
+                                       double const FrequencyPhase = 0,
+                                       double const TimeOffset = 0,
                                        std::string const& Name = "",
                                        std::string const& OutFileName = "");
 
@@ -64,6 +70,9 @@ class OSCARSSR
                            TVector3D const& Rotations = TVector3D(0, 0, 0),
                            TVector3D const& Translation = TVector3D(0, 0, 0),
                            std::vector<double> const& Scaling = std::vector<double>(),
+                           double const Frequency = 0,
+                           double const FrequencyPhase = 0,
+                           double const TimeOffset = 0,
                            std::string const& Name = "");
 
     void AddElectricFieldInterpolated (std::vector<std::pair<double, std::string> > const& Mapping,
@@ -72,6 +81,9 @@ class OSCARSSR
                                        TVector3D const& Rotations = TVector3D(0, 0, 0),
                                        TVector3D const& Translation = TVector3D(0, 0, 0),
                                        std::vector<double> const& Scaling = std::vector<double>(),
+                                       double const Frequency = 0,
+                                       double const FrequencyPhase = 0,
+                                       double const TimeOffset = 0,
                                        std::string const& Name = "");
 
     void AddElectricField (TField*);
@@ -157,7 +169,6 @@ class OSCARSSR
     void ClearDriftVolumes ();
 
     // Functions related to Trajectory
-    void CorrectTrajectory ();
     void CalculateTrajectory ();
     void CalculateTrajectory (TParticleA&);
     TParticleTrajectoryPoints const& GetTrajectory ();

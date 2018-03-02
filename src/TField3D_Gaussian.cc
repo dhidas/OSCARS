@@ -26,6 +26,9 @@ TField3D_Gaussian::TField3D_Gaussian (TVector3D const& PeakField,
                                       TVector3D const& Center,
                                       TVector3D const& Sigma,
                                       TVector3D const& Rotations,
+                                      double    const  Frequency,
+                                      double    const  FrequencyPhase,
+                                      double    const  TimeOffset,
                                       std::string const& Name)
 {
   // Constructor you should use.. just a suggestion...
@@ -40,6 +43,10 @@ TField3D_Gaussian::TField3D_Gaussian (TVector3D const& PeakField,
   fCenter = Center;
   fSigma = Sigma;
   fRotated = Rotations;
+
+  fFrequency = Frequency;
+  fFrequencyPhase = FrequencyPhase;
+  fTimeOffset = TimeOffset;
 
   fIgnoreAxisX = false;
   fIgnoreAxisY = false;
@@ -67,7 +74,7 @@ TField3D_Gaussian::~TField3D_Gaussian ()
 
 TVector3D TField3D_Gaussian::GetF (double const X, double const Y, double const Z, double const T) const
 {
-  return this->GetF(TVector3D(X, Y, Z));
+  return this->GetF(TVector3D(X, Y, Z), T);
 }
 
 
@@ -97,7 +104,11 @@ TVector3D TField3D_Gaussian::GetF (TVector3D const& X, double const T) const
     Fraction *= exp(-pow((RX.GetZ()) / fSigma.GetZ(), 2) / 2.);
   }
 
-  return Fraction * fPeakField;
+  if (fFrequency == 0) {
+    // It has no time dependence
+    return Fraction * fPeakField;
+  }
+  return Fraction * fPeakField * cos(TOSCARSSR::TwoPi() * fFrequency * (T + fTimeOffset) + fFrequencyPhase);
 }
 
 
@@ -134,6 +145,33 @@ TVector3D const& TField3D_Gaussian::GetSigma () const
 TVector3D const& TField3D_Gaussian::GetRotations () const
 {
   return fRotated;
+}
+
+
+
+
+double TField3D_Gaussian::GetFrequency () const
+{
+  // Return the frequency
+  return fFrequency;
+}
+
+
+
+
+double TField3D_Gaussian::GetFrequencyPhase () const
+{
+  // Return the frequency phase
+  return fFrequencyPhase;
+}
+
+
+
+
+double TField3D_Gaussian::GetTimeOffset () const
+{
+  // Return the time offset
+  return fTimeOffset;
 }
 
 

@@ -19,12 +19,18 @@ class TField3D_UniformBox : public TField
     TField3D_UniformBox (double      const  Fx,
                          double      const  Fy,
                          double      const  Fz,
-                         std::string const& Name);
+                         double      const  Frequency = 0,
+                         double      const  FrequencyPhase = 0,
+                         double      const  TimeOffset = 0,
+                         std::string const& Name = "");
 
     TField3D_UniformBox (TVector3D   const& Field,
                          TVector3D   const& Width = TVector3D(0, 0, 0),
                          TVector3D   const& Center = TVector3D(0, 0, 0),
                          TVector3D   const& Rotations = TVector3D(0, 0, 0),
+                         double      const  Frequency = 0,
+                         double      const  FrequencyPhase = 0,
+                         double      const  TimeOffset = 0,
                          std::string const& Name = "");
 
     ~TField3D_UniformBox ();
@@ -37,6 +43,10 @@ class TField3D_UniformBox : public TField
     TVector3D GetRotated () const;
     TVector3D GetCenter () const;
 
+    double    GetFrequency () const;
+    double    GetFrequencyPhase () const;
+    double    GetTimeOffset () const;
+
     void Print (std::ostream& os) const;
 
   private:
@@ -44,6 +54,10 @@ class TField3D_UniformBox : public TField
     TVector3D fWidth;
     TVector3D fRotated;
     TVector3D fCenter;
+    double    fFrequency;
+    double    fFrequencyPhase;
+    double    fTimeOffset;
+
 
     bool fIgnoreAxisX;
     bool fIgnoreAxisY;
@@ -62,7 +76,10 @@ inline std::ostream& operator << (std::ostream& os, TField3D_UniformBox const& o
      << "Field               " << o.GetField() << "\n"
      << "Width               " << o.GetWidth() << "\n"
      << "Rotations           " << o.GetRotated() << "\n"
-     << "Center              " << o.GetCenter() << "\n";
+     << "Center              " << o.GetCenter() << "\n"
+     << "Frequency           " << o.GetFrequency() << "\n"
+     << "FrequencyPhase      " << o.GetFrequency() << "\n"
+     << "TimeOffset          " << o.GetTimeOffset() << "\n";
 
   return os;
 }

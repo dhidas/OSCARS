@@ -28,6 +28,9 @@ class TField3D_Grid : public TField
                    TVector3D           const& Rotations = TVector3D(0, 0, 0),
                    TVector3D           const& Translation = TVector3D(0, 0, 0),
                    std::vector<double> const& Scaling = std::vector<double>(),
+                   double              const  Frequency = 0,
+                   double              const  FrequencyPhase = 0,
+                   double              const  TimeOffset = 0,
                    std::string         const& Name = "",
                    char                const  CommentChar = '#');
 
@@ -37,6 +40,9 @@ class TField3D_Grid : public TField
                    TVector3D                             const& Rotations = TVector3D(0, 0, 0),
                    TVector3D                             const& Translation = TVector3D(0, 0, 0),
                    std::vector<double>                   const& Scaling = std::vector<double>(),
+                   double                                const  Frequency = 0,
+                   double                                const  FrequencyPhase = 0,
+                   double                                const  TimeOffset = 0,
                    std::string                           const& Name = "",
                    std::string                           const& OutFileName = "",
                    char                                  const  CommentChar = '#');
@@ -130,6 +136,10 @@ class TField3D_Grid : public TField
     double GetYStep () const;
     double GetZStep () const;
 
+    double GetFrequency () const;
+    double GetFrequencyPhase () const;
+    double GetTimeOffset () const;
+
     void Print (std::ostream& os) const;
 
 
@@ -172,6 +182,11 @@ class TField3D_Grid : public TField
     TVector3D fRotated;
     TVector3D fTranslation;
 
+    // Time dependence
+    double fFrequency;
+    double fFrequencyPhase;
+    double fTimeOffset;
+
     // Field data
     std::vector<TVector3D> fData;
 
@@ -184,14 +199,17 @@ class TField3D_Grid : public TField
 inline std::ostream& operator << (std::ostream& os, TField3D_Grid const& o)
 {
   // For easy printing
-  os << "TField3D_Grid " << "\n"
-     << "Name          " << o.GetName()   << "\n"
-     << "XRange        " << o.GetXRange() << "\n"
-     << "YRange        " << o.GetYRange() << "\n"
-     << "ZRange        " << o.GetZRange() << "\n"
-     << "XStep         " << o.GetXStep()  << "\n"
-     << "YStep         " << o.GetYStep()  << "\n"
-     << "ZStep         " << o.GetZStep()  << "\n";
+  os << "TField3D_Grid  " << "\n"
+     << "Name           " << o.GetName()   << "\n"
+     << "XRange         " << o.GetXRange() << "\n"
+     << "YRange         " << o.GetYRange() << "\n"
+     << "ZRange         " << o.GetZRange() << "\n"
+     << "XStep          " << o.GetXStep()  << "\n"
+     << "YStep          " << o.GetYStep()  << "\n"
+     << "ZStep          " << o.GetZStep()  << "\n"
+     << "Frequency      " << o.GetFrequency() << "\n"
+     << "FrequencyPhase " << o.GetFrequencyPhase() << "\n"
+     << "TimeOffset     " << o.GetTimeOffset() << "\n";
 
   return os;
 }

@@ -9,12 +9,16 @@
 ////////////////////////////////////////////////////////////////////
 
 #include "TField3D_UniformBox.h"
+#include "TOSCARSSR.h"
 
 #include <cmath>
 
 TField3D_UniformBox::TField3D_UniformBox (double      const  Fx,
                                           double      const  Fy,
                                           double      const  Fz,
+                                          double      const  Frequency,
+                                          double      const  FrequencyPhase,
+                                          double      const  TimeOffset,
                                           std::string const& Name)
 {
   // Set the name and default scale factors
@@ -26,6 +30,10 @@ TField3D_UniformBox::TField3D_UniformBox (double      const  Fx,
   fCenter = TVector3D(0, 0, 0);
   fRotated = TVector3D(0, 0, 0);
 
+  fFrequency = Frequency;
+  fFrequencyPhase = FrequencyPhase;
+  fTimeOffset = TimeOffset;
+
   fIgnoreAxisX = true;
   fIgnoreAxisY = true;
   fIgnoreAxisZ = true;
@@ -33,11 +41,13 @@ TField3D_UniformBox::TField3D_UniformBox (double      const  Fx,
 
 
 
-
 TField3D_UniformBox::TField3D_UniformBox (TVector3D   const& Field,
                                           TVector3D   const& Width,
                                           TVector3D   const& Center,
                                           TVector3D   const& Rotations,
+                                          double      const  Frequency,
+                                          double      const  FrequencyPhase,
+                                          double      const  TimeOffset,
                                           std::string const& Name)
 {
   // Set the name and default scale factors
@@ -50,6 +60,10 @@ TField3D_UniformBox::TField3D_UniformBox (TVector3D   const& Field,
   fWidth  = Width;
   fCenter = Center;
   fRotated = Rotations;
+
+  fFrequency = Frequency;
+  fFrequencyPhase = FrequencyPhase;
+  fTimeOffset = TimeOffset;
 
   fIgnoreAxisX = false;
   fIgnoreAxisY = false;
@@ -75,7 +89,7 @@ TField3D_UniformBox::~TField3D_UniformBox ()
 
 TVector3D TField3D_UniformBox::GetF (double const X, double const Y, double const Z, double const T) const
 {
-  return this->GetF(TVector3D(X, Y, Z));
+  return this->GetF(TVector3D(X, Y, Z), T);
 }
 
 
@@ -98,7 +112,11 @@ TVector3D TField3D_UniformBox::GetF (TVector3D const& X, double const T) const
     return TVector3D(0, 0, 0);
   }
 
-  return fField;
+  if (fFrequency == 0) {
+    // It has no time dependence
+    return fField;
+  }
+  return fField * cos(TOSCARSSR::TwoPi() * fFrequency * (T + fTimeOffset) + fFrequencyPhase);
 }
 
 
@@ -135,6 +153,33 @@ TVector3D TField3D_UniformBox::GetCenter () const
 {
   // Return the Center postion
   return fCenter;
+}
+
+
+
+
+double TField3D_UniformBox::GetFrequency () const
+{
+  // Return the frequency
+  return fFrequency;
+}
+
+
+
+
+double TField3D_UniformBox::GetFrequencyPhase () const
+{
+  // Return the frequency
+  return fFrequencyPhase;
+}
+
+
+
+
+double TField3D_UniformBox::GetTimeOffset () const
+{
+  // Return the time offset for the frequency
+  return fTimeOffset;
 }
 
 

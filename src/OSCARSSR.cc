@@ -63,6 +63,9 @@ void OSCARSSR::AddMagneticField (std::string const FileName,
                                  TVector3D const& Rotations,
                                  TVector3D const& Translation,
                                  std::vector<double> const& Scaling,
+                                 double const Frequency,
+                                 double const FrequencyPhase,
+                                 double const TimeOffset,
                                  std::string const& Name)
 {
   // Add a magnetic field from a file to the field container
@@ -75,7 +78,7 @@ void OSCARSSR::AddMagneticField (std::string const FileName,
   if ( (FormatUpperCase == "OSCARS" || FormatUpperCase == "SRW" || FormatUpperCase == "SPECTRA") || FormatUpperCase == "BINARY" ||
        (FormatUpperCase.size() > 8 && std::string(FormatUpperCase.begin(), FormatUpperCase.begin() + 8) == std::string("OSCARS1D"))) {
 
-    this->fBFieldContainer.AddField( new TField3D_Grid(FileName, Format, Rotations, Translation, Scaling, Name) );
+    this->fBFieldContainer.AddField( new TField3D_Grid(FileName, Format, Rotations, Translation, Scaling, Frequency, FrequencyPhase, TimeOffset, Name) );
 
   } else {
     throw std::invalid_argument("Incorrect format in format string");
@@ -98,6 +101,9 @@ void OSCARSSR::AddMagneticFieldInterpolated (std::vector<std::pair<double, std::
                                              TVector3D const& Rotations,
                                              TVector3D const& Translation,
                                              std::vector<double> const& Scaling,
+                                             double const Frequency,
+                                             double const FrequencyPhase,
+                                             double const TimeOffset,
                                              std::string const& Name,
                                              std::string const& OutFileName)
 {
@@ -121,7 +127,7 @@ void OSCARSSR::AddMagneticFieldInterpolated (std::vector<std::pair<double, std::
   if ( (FormatUpperCase == "OSCARS"  || FormatUpperCase == "SRW" || FormatUpperCase == "SPECTRA") ||
      (FormatUpperCase.size() > 8 && std::string(FormatUpperCase.begin(), FormatUpperCase.begin() + 8) == std::string("OSCARS1D")) ) {
 
-    this->fBFieldContainer.AddField( new TField3D_Grid(Mapping, Format, Parameter, Rotations, Translation, Scaling, Name, OutFileName) );
+    this->fBFieldContainer.AddField( new TField3D_Grid(Mapping, Format, Parameter, Rotations, Translation, Scaling, Frequency, FrequencyPhase, TimeOffset, Name, OutFileName) );
 
   } else {
     throw std::invalid_argument("Incorrect format in format string");
@@ -212,10 +218,13 @@ void OSCARSSR::AddElectricField (std::string const FileName,
                                  TVector3D const& Rotations,
                                  TVector3D const& Translation,
                                  std::vector<double> const& Scaling,
+                                 double const Frequency,
+                                 double const FrequencyPhase,
+                                 double const TimeOffset,
                                  std::string const& Name)
 {
   // Add a electric field from a file to the field container
-  this->fEFieldContainer.AddField( new TField3D_Grid(FileName, Format, Rotations, Translation, Scaling, Name) );
+  this->fEFieldContainer.AddField( new TField3D_Grid(FileName, Format, Rotations, Translation, Scaling, Frequency, FrequencyPhase, TimeOffset, Name) );
 
   // Set the derivs function accordingly
   this->SetDerivativesFunction();
@@ -235,6 +244,9 @@ void OSCARSSR::AddElectricFieldInterpolated (std::vector<std::pair<double, std::
                                              TVector3D const& Rotations,
                                              TVector3D const& Translation,
                                              std::vector<double> const& Scaling,
+                                             double const Frequency,
+                                             double const FrequencyPhase,
+                                             double const TimeOffset,
                                              std::string const& Name)
 {
   // Add an electric field from a file to the field container
@@ -247,7 +259,7 @@ void OSCARSSR::AddElectricFieldInterpolated (std::vector<std::pair<double, std::
   if ( (FormatUpperCase == "OSCARS"  || FormatUpperCase == "SRW" || FormatUpperCase == "SPECTRA") ||
      (FormatUpperCase.size() > 8 && std::string(FormatUpperCase.begin(), FormatUpperCase.begin() + 8) == std::string("OSCARS1D")) ) {
 
-    this->fEFieldContainer.AddField( new TField3D_Grid(Mapping, Format, Parameter, Rotations, Translation, Scaling, Name) );
+    this->fEFieldContainer.AddField( new TField3D_Grid(Mapping, Format, Parameter, Rotations, Translation, Scaling, Frequency, FrequencyPhase, TimeOffset, Name) );
 
   } else {
     throw std::invalid_argument("Incorrect format in format string");
@@ -744,54 +756,6 @@ double OSCARSSR::GetRandomNormal () const
 double OSCARSSR::GetRandomUniform () const
 {
   return gRandomA->Uniform();
-}
-
-
-
-
-void OSCARSSR::CorrectTrajectory ()
-{
-  // Correct the ideal trajectory so that the position and direction at
-  // a specified point is as close as possible to the specified values
-
-  TVector3D Direction(0, 0, 1);
-  TVector3D ExitPoint(0, 0, 2);
-
-  TVector3D V0 = Direction.Perp();
-  TVector3D V1 = Direction.Cross(V0);
-
-  TParticleTrajectoryPoints& ParticleTrajectory = fParticle.GetTrajectory();
-
-  // Closest approach to point and direction
-  double MinimumDistance2;
-  size_t MinimumDistanceIndex = 0;
-  for (size_t i = 0; i != ParticleTrajectory.GetNPoints(); ++i) {
-    double const Distance2 = (ParticleTrajectory.GetX(i) - ExitPoint).Mag2();
-
-    if (i == 0) {
-      MinimumDistance2 = Distance2;
-    }
-
-    if (Distance2 < MinimumDistance2) {
-      MinimumDistance2 = Distance2;
-      MinimumDistanceIndex = i;
-    }
-  }
-  std::cout << "MinimumDistance " << sqrt(MinimumDistance2) << std::endl;
-
-  this->AddMagneticField(new TField3D_Gaussian(TVector3D(0, 0.0001, 0),
-                                               TVector3D(0, 0, -1.8),
-                                               TVector3D(0, 0, 0.010),
-                                               TVector3D(0, 0, 0),
-                                               "_autocorrector_entry"));
-
-  this->AddMagneticField(new TField3D_Gaussian(TVector3D(0, 0.0001, 0),
-                                               TVector3D(0, 0, +1.8),
-                                               TVector3D(0, 0, 0.010),
-                                               TVector3D(0, 0, 0),
-                                               "_autocorrector_exit"));
-
-  return;
 }
 
 

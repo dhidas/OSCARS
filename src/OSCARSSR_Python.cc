@@ -538,7 +538,7 @@ static PyObject* OSCARSSR_SetNPointsPerMeterTrajectory (OSCARSSRObject* self, Py
 
 
 const char* DOC_OSCARSSR_AddMagneticField = R"docstring(
-add_bfield_file([, ifile, bifile, iformat, rotations, translation, scale, name])
+add_bfield_file([, ifile, bifile, iformat, rotations, translation, scale, frequency, frequency_phase, time_offset, name])
 
 Add a magnetic field from a text file *ifile* according to the format *iformat*.
 
@@ -576,6 +576,15 @@ translation : list, optional
 scale : list, optional
     List of scale factors to be used for multiplying the inputs in the order of iformat (equal in length or less than the number of input parameters)
 
+frequency : float
+    Frequency in [Hz] where the ampliture is multiplied by cos(2 pi frequency (t + time_offset) + frequency_phase).  Default is 0, for no frequency dependence
+
+frequency_phase: float
+    The phase offset for a time varying field.  Only used if frequency is non-zero.  See frequency input for more.
+
+time_offset: float
+    The time for a time varying field.  Only used if frequency is non-zero.  See frequency input for more.
+
 name : str
     Name of this magnetic field
 
@@ -602,6 +611,9 @@ static PyObject* OSCARSSR_AddMagneticField (OSCARSSRObject* self, PyObject* args
   PyObject*   List_Rotations   = PyList_New(0);
   PyObject*   List_Translation = PyList_New(0);
   PyObject*   List_Scaling     = PyList_New(0);
+  double      Frequency        = 0;
+  double      FrequencyPhase   = 0;
+  double      TimeOffset       = 0;
   char const* Name             = "";
 
   TVector3D Rotations(0, 0, 0);
@@ -616,10 +628,13 @@ static PyObject* OSCARSSR_AddMagneticField (OSCARSSRObject* self, PyObject* args
                                  "rotations",
                                  "translation",
                                  "scale",
+                                 "frequency",
+                                 "frequency_phase",
+                                 "time_offset",
                                  "name",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sssOOOs",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sssOOOddds",
                                    const_cast<char **>(kwlist),
                                    &FileNameText,
                                    &FileNameBinary,
@@ -627,6 +642,9 @@ static PyObject* OSCARSSR_AddMagneticField (OSCARSSRObject* self, PyObject* args
                                    &List_Rotations,
                                    &List_Translation,
                                    &List_Scaling,
+                                   &Frequency,
+                                   &FrequencyPhase,
+                                   &TimeOffset,
                                    &Name)) {
     return NULL;
   }
@@ -678,9 +696,9 @@ static PyObject* OSCARSSR_AddMagneticField (OSCARSSRObject* self, PyObject* args
   // Add the magnetic field to the OSCARSSR object
   try {
     if (std::strlen(FileNameBinary) != 0) {
-      self->obj->AddMagneticField(FileNameBinary, "BINARY", Rotations, Translation, Scaling, Name);
+      self->obj->AddMagneticField(FileNameBinary, "BINARY", Rotations, Translation, Scaling, Frequency, FrequencyPhase, TimeOffset, Name);
     } else {
-      self->obj->AddMagneticField(FileNameText, FileFormat, Rotations, Translation, Scaling, Name);
+      self->obj->AddMagneticField(FileNameText, FileFormat, Rotations, Translation, Scaling, Frequency, FrequencyPhase, TimeOffset, Name);
     }
   } catch (...) {
     PyErr_SetString(PyExc_ValueError, "Could not import magnetic field.  Check 'ifile' and 'iformat' are correct");
@@ -699,7 +717,7 @@ static PyObject* OSCARSSR_AddMagneticField (OSCARSSRObject* self, PyObject* args
 
 
 const char* DOC_OSCARSSR_AddMagneticFieldInterpolated = R"docstring(
-add_bfield_interpolated(mapping, iformat, parameter [, rotations, translation, scale, name])
+add_bfield_interpolated(mapping, iformat, parameter [, rotations, translation, scale, frequency, frequency_phase, time_offset, name])
 
 Add field given a paramater and a mapping between known parameters and field data files where the field is interpolated from the known data points.
 
@@ -722,6 +740,15 @@ translation : list, optional
 
 scale : list, optional
     List of scale factors to be used for multiplying the inputs in the order of iformat (equal in length or less than the number of input parameters)
+
+frequency : float
+    Frequency in [Hz] where the ampliture is multiplied by cos(2 pi frequency (t + time_offset) + frequency_phase).  Default is 0, for no frequency dependence
+
+frequency_phase: float
+    The phase offset for a time varying field.  Only used if frequency is non-zero.  See frequency input for more.
+
+time_offset: float
+    The time for a time varying field.  Only used if frequency is non-zero.  See frequency input for more.
 
 name : str
     Name of this magnetic field
@@ -754,6 +781,9 @@ static PyObject* OSCARSSR_AddMagneticFieldInterpolated (OSCARSSRObject* self, Py
   PyObject*   List_Rotations   = PyList_New(0);
   PyObject*   List_Translation = PyList_New(0);
   PyObject*   List_Scaling     = PyList_New(0);
+  double      Frequency        = 0;
+  double      FrequencyPhase   = 0;
+  double      TimeOffset       = 0;
   char const* Name             = "";
   char const* OutFileName      = "";
 
@@ -771,11 +801,14 @@ static PyObject* OSCARSSR_AddMagneticFieldInterpolated (OSCARSSRObject* self, Py
                                  "rotations",
                                  "translation",
                                  "scale",
+                                 "frequency",
+                                 "frequency_phase",
+                                 "time_offset",
                                  "name",
                                  "ofile",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "Osd|OOOss",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "Osd|OOOdddss",
                                    const_cast<char **>(kwlist),
                                    &List_Mapping,
                                    &FileFormat,
@@ -783,6 +816,9 @@ static PyObject* OSCARSSR_AddMagneticFieldInterpolated (OSCARSSRObject* self, Py
                                    &List_Rotations,
                                    &List_Translation,
                                    &List_Scaling,
+                                   &Frequency,
+                                   &FrequencyPhase,
+                                   &TimeOffset,
                                    &Name,
                                    &OutFileName)) {
     return NULL;
@@ -849,7 +885,7 @@ static PyObject* OSCARSSR_AddMagneticFieldInterpolated (OSCARSSRObject* self, Py
 
   // Add the magnetic field to the OSCARSSR object
   try {
-    self->obj->AddMagneticFieldInterpolated(Mapping, FileFormat, Parameter, Rotations, Translation, Scaling, Name, OutFileName);
+    self->obj->AddMagneticFieldInterpolated(Mapping, FileFormat, Parameter, Rotations, Translation, Scaling, Frequency, FrequencyPhase, TimeOffset, Name, OutFileName);
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -879,7 +915,7 @@ static PyObject* OSCARSSR_AddMagneticFieldInterpolated (OSCARSSRObject* self, Py
 
 
 const char* DOC_OSCARSSR_AddMagneticFieldFunction = R"docstring(
-add_bfield_function(func [, name])
+add_bfield_function(func [, rotations, translation, time_offset, name])
 
 Adds field in the form of a user defined python function.  The input for this function must be (x, y, z, t) and return [Fx, Fy, Fz]
 
@@ -888,6 +924,15 @@ Parameters
 
 function : func
     A python function with input [x, y, z, t] and return of [Fx, Fy, Fz]
+
+rotations : list, optional
+    3-element list representing rotations around x, y, and z axes: [:math:`\theta_x, \theta_y, \theta_z`]
+
+translation : list, optional
+    3-element list representing a translation in space [x, y, z]
+
+time_offset : float
+    Added to the time before calling the python function to get the field value
 
 name : str
     Name of this field
@@ -912,17 +957,29 @@ static PyObject* OSCARSSR_AddMagneticFieldFunction (OSCARSSRObject* self, PyObje
   // Add a python function as a magnetic field object
 
   // Variables for function and name
-  PyObject* Function;
+  PyObject*   Function;
+  PyObject*   List_Rotations   = 0x0;
+  PyObject*   List_Translation = 0x0;
+  double      TimeOffset       = 0;
   char const* Name = "";
+
+  TVector3D Rotations(0, 0, 0);
+  TVector3D Translation(0, 0, 0);
 
   // Input variables and parsing
   static const char *kwlist[] = {"function",
+                                 "rotations",
+                                 "translation",
+                                 "time_offset",
                                  "name",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|s",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOds",
                                    const_cast<char **>(kwlist),
                                    &Function,
+                                   &List_Rotations,
+                                   &List_Translation,
+                                   &TimeOffset,
                                    &Name)) {
     return NULL;
   }
@@ -930,9 +987,31 @@ static PyObject* OSCARSSR_AddMagneticFieldFunction (OSCARSSRObject* self, PyObje
   // Increment ref to function for python
   Py_INCREF(Function);
 
+
+  // Check for Rotations in the input
+  if (List_Rotations != 0x0) {
+    try {
+      Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
+      return NULL;
+    }
+  }
+
+
+  // Check for Translation in the input
+  if (List_Translation != 0x0) {
+    try {
+      Translation = OSCARSPY::ListAsTVector3D(List_Translation);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
+      return NULL;
+    }
+  }
+
   // Add the function as a field to the OSCARSSR object
   try {
-    self->obj->AddMagneticField( (TField*) new TFieldPythonFunction(Function, Name));
+    self->obj->AddMagneticField( (TField*) new TFieldPythonFunction(Function, Rotations, Translation, TimeOffset, Name));
   } catch (std::invalid_argument e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -953,7 +1032,7 @@ static PyObject* OSCARSSR_AddMagneticFieldFunction (OSCARSSRObject* self, PyObje
 
 
 const char* DOC_OSCARSSR_AddMagneticFieldGaussian = R"docstring(
-add_bfield_gaussian(bfield, sigma [, rotations, translation, name])
+add_bfield_gaussian(bfield, sigma [, rotations, translation, frequency, frequency_phase, time_offset, name])
 
 Add a gaussian field in 3D with the peak field magnitude and direction given by *bfield*, centered about a point with a given sigma in each coordinate.  If any component of *sigma* is less than or equal to zero it is ignored (ie. spatial extent is infinite).
 
@@ -973,6 +1052,15 @@ rotations : list, optional
 
 translation : list, optional
     3-element list representing a translation in space [x, y, z]
+
+frequency : float
+    Frequency in [Hz] where the ampliture is multiplied by cos(2 pi frequency (t + time_offset) + frequency_phase).  Default is 0, for no frequency dependence
+
+frequency_phase: float
+    The phase offset for a time varying field.  Only used if frequency is non-zero.  See frequency input for more.
+
+time_offset: float
+    The time for a time varying field.  Only used if frequency is non-zero.  See frequency input for more.
 
 name : str
     Name of this field
@@ -1000,6 +1088,9 @@ static PyObject* OSCARSSR_AddMagneticFieldGaussian (OSCARSSRObject* self, PyObje
   PyObject* List_Translation  = PyList_New(0);
   PyObject* List_Rotations    = PyList_New(0);
   PyObject* List_Sigma        = PyList_New(0);
+  double      Frequency        = 0;
+  double      FrequencyPhase   = 0;
+  double      TimeOffset       = 0;
   const char* Name            = "";
 
   TVector3D BField(0, 0, 0);
@@ -1013,15 +1104,21 @@ static PyObject* OSCARSSR_AddMagneticFieldGaussian (OSCARSSRObject* self, PyObje
                                  "sigma",
                                  "rotations",
                                  "translation",
+                                 "frequency",
+                                 "frequency_phase",
+                                 "time_offset",
                                  "name",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OO|OOs",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OO|OOddds",
                                    const_cast<char **>(kwlist),
                                    &List_BField,
                                    &List_Sigma,
                                    &List_Rotations,
                                    &List_Translation,
+                                   &Frequency,
+                                   &FrequencyPhase,
+                                   &TimeOffset,
                                    &Name)) {
     return NULL;
   }
@@ -1071,7 +1168,7 @@ static PyObject* OSCARSSR_AddMagneticFieldGaussian (OSCARSSRObject* self, PyObje
   }
 
   // Add field
-  self->obj->AddMagneticField( (TField*) new TField3D_Gaussian(BField, Translation, Sigma, Rotations, Name));
+  self->obj->AddMagneticField( (TField*) new TField3D_Gaussian(BField, Translation, Sigma, Rotations, Frequency, FrequencyPhase, TimeOffset, Name));
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -1085,7 +1182,7 @@ static PyObject* OSCARSSR_AddMagneticFieldGaussian (OSCARSSRObject* self, PyObje
 
 
 const char* DOC_OSCARSSR_AddMagneticFieldUniform = R"docstring(
-add_bfield_uniform(bfield [, width, rotations, translation, name])
+add_bfield_uniform(bfield [, width, rotations, translation, frequency, frequency_phase, time_offset, name])
 
 Add a uniform field in a given range or for all space.  The *bfield* is given as a 3D vector representing the field magnitude and direction.  *width* is an optional parameters, if not present the field permeates all space.  If a component of the 3D list *width* is less than or equal to zero, that coordinate will be ignored when calculating the field.
 
@@ -1102,6 +1199,15 @@ rotations : list, optional
 
 translation : list, optional
     3-element list representing a translation in space [x, y, z]
+
+frequency : float
+    Frequency in [Hz] where the ampliture is multiplied by cos(2 pi frequency (t + time_offset) + frequency_phase).  Default is 0, for no frequency dependence
+
+frequency_phase: float
+    The phase offset for a time varying field.  Only used if frequency is non-zero.  See frequency input for more.
+
+time_offset: float
+    The time for a time varying field.  Only used if frequency is non-zero.  See frequency input for more.
 
 name : str
     Name of this field
@@ -1133,6 +1239,9 @@ static PyObject* OSCARSSR_AddMagneticFieldUniform (OSCARSSRObject* self, PyObjec
   PyObject*   List_Translation = PyList_New(0);
   PyObject*   List_Rotations   = PyList_New(0);
   PyObject*   List_Width       = PyList_New(0);
+  double      Frequency        = 0;
+  double      FrequencyPhase   = 0;
+  double      TimeOffset       = 0;
   char const* Name             = "";
 
   TVector3D Field(0, 0, 0);
@@ -1146,15 +1255,21 @@ static PyObject* OSCARSSR_AddMagneticFieldUniform (OSCARSSRObject* self, PyObjec
                                  "width",
                                  "rotations",
                                  "translation",
+                                 "frequency",
+                                 "frequency_phase",
+                                 "time_offset",
                                  "name",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOOs",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOOddds",
                                    const_cast<char **>(kwlist),
                                    &List_Field,
                                    &List_Width,
                                    &List_Rotations,
                                    &List_Translation,
+                                   &Frequency,
+                                   &FrequencyPhase,
+                                   &TimeOffset,
                                    &Name
                                    )) {
     return NULL;
@@ -1206,7 +1321,7 @@ static PyObject* OSCARSSR_AddMagneticFieldUniform (OSCARSSRObject* self, PyObjec
   }
 
   // Add the field
-  self->obj->AddMagneticField((TField*) new TField3D_UniformBox(Field, Width, Translation, Rotations, Name));
+  self->obj->AddMagneticField((TField*) new TField3D_UniformBox(Field, Width, Translation, Rotations, Frequency, FrequencyPhase, TimeOffset, Name));
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -1217,7 +1332,7 @@ static PyObject* OSCARSSR_AddMagneticFieldUniform (OSCARSSRObject* self, PyObjec
 
 
 const char* DOC_OSCARSSR_AddMagneticFieldIdealUndulator = R"docstring(
-add_bfield_undulator(bfield, period, nperiods [, phase, rotations, translation, taper, name])
+add_bfield_undulator(bfield, period, nperiods [, phase, rotations, translation, taper, frequency, frequency_phase, time_offset, name])
 
 Adds an ideal sinusoidal undulator field with a given maximum bfield amplitude, period, and number of periods.  Optionally one can specify the phase offset (in [rad]), rotations and translation.  The number of periods given is the full number of fields not counting the terminating fields.
 
@@ -1244,6 +1359,15 @@ translation : list, optional
 taper : float
     The fractional change of the bfield per meter along the magnetic axis
 
+frequency : float
+    Frequency in [Hz] where the ampliture is multiplied by cos(2 pi frequency (t + time_offset) + frequency_phase).  Default is 0, for no frequency dependence
+
+frequency_phase: float
+    The phase offset for a time varying field.  Only used if frequency is non-zero.  See frequency input for more.
+
+time_offset: float
+    The time for a time varying field.  Only used if frequency is non-zero.  See frequency input for more.
+
 name : str
     Name of this field
 
@@ -1269,6 +1393,9 @@ static PyObject* OSCARSSR_AddMagneticFieldIdealUndulator (OSCARSSRObject* self, 
   int         NPeriods         = 0;
   double      Phase            = 0;
   double      Taper            = 0;
+  double      Frequency        = 0;
+  double      FrequencyPhase   = 0;
+  double      TimeOffset       = 0;
   char const* Name             = "";
 
   TVector3D Field(0, 0, 0);
@@ -1284,10 +1411,13 @@ static PyObject* OSCARSSR_AddMagneticFieldIdealUndulator (OSCARSSRObject* self, 
                                  "rotations",
                                  "translation",
                                  "taper",
+                                 "frequency",
+                                 "frequency_phase",
+                                 "time_offset",
                                  "name",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOi|dOOds",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOi|dOOdddds",
                                    const_cast<char **>(kwlist),
                                    &List_Field,
                                    &List_Period,
@@ -1296,6 +1426,9 @@ static PyObject* OSCARSSR_AddMagneticFieldIdealUndulator (OSCARSSRObject* self, 
                                    &List_Rotations,
                                    &List_Translation,
                                    &Taper,
+                                   &Frequency,
+                                   &FrequencyPhase,
+                                   &TimeOffset,
                                    &Name
                                    )) {
     return NULL;
@@ -1352,7 +1485,7 @@ static PyObject* OSCARSSR_AddMagneticFieldIdealUndulator (OSCARSSRObject* self, 
 
 
   // Add field
-  self->obj->AddMagneticField( (TField*) new TField3D_IdealUndulator(Field, Period, NPeriods, Translation, Phase, Taper, Name));
+  self->obj->AddMagneticField( (TField*) new TField3D_IdealUndulator(Field, Period, NPeriods, Translation, Phase, Taper, Frequency, FrequencyPhase, TimeOffset, Name));
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -1487,7 +1620,7 @@ static PyObject* OSCARSSR_AddMagneticFieldHalbach (OSCARSSRObject* self, PyObjec
 
 
 const char* DOC_OSCARSSR_AddMagneticFieldQuadrupole = R"docstring(
-add_bfield_quadrupole(K, width [, rotations, translation, name])
+add_bfield_quadrupole(K, width [, rotations, translation, frequency, frequency_phase, time_offset, name])
 
 Adds a quadrupole field in a given volume according to:
 
@@ -1515,6 +1648,15 @@ rotations : list, optional
 translation : list, optional
     3-element list representing a translation in space [x, y, z]
 
+frequency : float
+    Frequency in [Hz] where the ampliture is multiplied by cos(2 pi frequency (t + time_offset) + frequency_phase).  Default is 0, for no frequency dependence
+
+frequency_phase: float
+    The phase offset for a time varying field.  Only used if frequency is non-zero.  See frequency input for more.
+
+time_offset: float
+    The time for a time varying field.  Only used if frequency is non-zero.  See frequency input for more.
+
 name : str
     Name of this field
 
@@ -1532,6 +1674,9 @@ static PyObject* OSCARSSR_AddMagneticFieldQuadrupole (OSCARSSRObject* self, PyOb
   double Width = 0;
   PyObject*   List_Rotations   = PyList_New(0);
   PyObject*   List_Translation = PyList_New(0);
+  double      Frequency        = 0;
+  double      FrequencyPhase   = 0;
+  double      TimeOffset       = 0;
   char const* Name             = "";
 
   TVector3D Rotations(0, 0, 0);
@@ -1542,15 +1687,21 @@ static PyObject* OSCARSSR_AddMagneticFieldQuadrupole (OSCARSSRObject* self, PyOb
                                  "width",
                                  "rotations",
                                  "translation",
+                                 "frequency",
+                                 "frequency_phase",
+                                 "time_offset",
                                  "name",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dd|OOs",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dd|OOddds",
                                    const_cast<char **>(kwlist),
                                    &K,
                                    &Width,
                                    &List_Rotations,
                                    &List_Translation,
+                                   &Frequency,
+                                   &FrequencyPhase,
+                                   &TimeOffset,
                                    &Name
                                    )) {
     return NULL;
@@ -1584,7 +1735,7 @@ static PyObject* OSCARSSR_AddMagneticFieldQuadrupole (OSCARSSRObject* self, PyOb
   }
 
   // Add field
-  self->obj->AddMagneticField( (TField*) new TField3D_Quadrupole(K, Width, Rotations, Translation, Name));
+  self->obj->AddMagneticField( (TField*) new TField3D_Quadrupole(K, Width, Rotations, Translation, Frequency, FrequencyPhase, TimeOffset, Name));
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -1768,7 +1919,7 @@ static PyObject* OSCARSSR_PrintMagneticFields (OSCARSSRObject* self)
 
 
 const char* DOC_OSCARSSR_AddElectricField = R"docstring(
-add_efield_file(ifile, iformat [, rotations, translation, scale, name])
+add_efield_file(ifile, iformat [, rotations, translation, scale, frequency, frequency_phase, time_offset, name])
 
 Add a electric field from a text file *ifile* according to the format *iformat*.
 
@@ -1803,6 +1954,15 @@ translation : list, optional
 scale : list, optional
     List of scale factors to be used for multiplying the inputs in the order of iformat (equal in length or less than the number of input parameters)
 
+frequency : float
+    Frequency in [Hz] where the ampliture is multiplied by cos(2 pi frequency (t + time_offset) + frequency_phase).  Default is 0, for no frequency dependence
+
+frequency_phase: float
+    The phase offset for a time varying field.  Only used if frequency is non-zero.  See frequency input for more.
+
+time_offset: float
+    The time for a time varying field.  Only used if frequency is non-zero.  See frequency input for more.
+
 name : str
     Name of this field
 
@@ -1828,6 +1988,9 @@ static PyObject* OSCARSSR_AddElectricField (OSCARSSRObject* self, PyObject* args
   PyObject*   List_Rotations   = PyList_New(0);
   PyObject*   List_Translation = PyList_New(0);
   PyObject*   List_Scaling     = PyList_New(0);
+  double      Frequency        = 0;
+  double      FrequencyPhase   = 0;
+  double      TimeOffset       = 0;
   char const* Name             = "";
 
   TVector3D Rotations(0, 0, 0);
@@ -1841,16 +2004,22 @@ static PyObject* OSCARSSR_AddElectricField (OSCARSSRObject* self, PyObject* args
                                  "rotations",
                                  "translation",
                                  "scale",
+                                 "frequency",
+                                 "frequency_phase",
+                                 "time_offset",
                                  "name",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ss|OOOs",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "ss|OOOddds",
                                    const_cast<char **>(kwlist),
                                    &FileName,
                                    &FileFormat,
                                    &List_Rotations,
                                    &List_Translation,
                                    &List_Scaling,
+                                   &Frequency,
+                                   &FrequencyPhase,
+                                   &TimeOffset,
                                    &Name)) {
     return NULL;
   }
@@ -1896,7 +2065,7 @@ static PyObject* OSCARSSR_AddElectricField (OSCARSSRObject* self, PyObject* args
 
   // Add the magnetic field to the OSCARSSR object
   try {
-    self->obj->AddElectricField(FileName, FileFormat, Rotations, Translation, Scaling, Name);
+    self->obj->AddElectricField(FileName, FileFormat, Rotations, Translation, Scaling, Frequency, FrequencyPhase, TimeOffset, Name);
   } catch (...) {
     PyErr_SetString(PyExc_ValueError, "Could not import electric field.  Check 'ifile' and 'iformat' are correct");
     return NULL;
@@ -1914,7 +2083,7 @@ static PyObject* OSCARSSR_AddElectricField (OSCARSSRObject* self, PyObject* args
 
 
 const char* DOC_OSCARSSR_AddElectricFieldInterpolated = R"docstring(
-add_efield_interpolated(mapping, iformat, parameter [, rotations, translation, scale, name])
+add_efield_interpolated(mapping, iformat, parameter [, rotations, translation, scale, frequency, frequency_phase, time_offset, name])
 
 Add field given a paramater and a mapping between known parameters and field data files where the field is interpolated from the known data points.
 
@@ -1937,6 +2106,15 @@ translation : list, optional
 
 scale : list, optional
     List of scale factors to be used for multiplying the inputs in the order of iformat (equal in length or less than the number of input parameters)
+
+frequency : float
+    Frequency in [Hz] where the ampliture is multiplied by cos(2 pi frequency (t + time_offset) + frequency_phase).  Default is 0, for no frequency dependence
+
+frequency_phase: float
+    The phase offset for a time varying field.  Only used if frequency is non-zero.  See frequency input for more.
+
+time_offset: float
+    The time for a time varying field.  Only used if frequency is non-zero.  See frequency input for more.
 
 name : str
     Name of this field
@@ -1961,6 +2139,9 @@ static PyObject* OSCARSSR_AddElectricFieldInterpolated (OSCARSSRObject* self, Py
   PyObject*   List_Rotations   = PyList_New(0);
   PyObject*   List_Translation = PyList_New(0);
   PyObject*   List_Scaling     = PyList_New(0);
+  double      Frequency        = 0;
+  double      FrequencyPhase   = 0;
+  double      TimeOffset       = 0;
   char const* Name             = "";
 
   TVector3D Rotations(0, 0, 0);
@@ -1977,10 +2158,13 @@ static PyObject* OSCARSSR_AddElectricFieldInterpolated (OSCARSSRObject* self, Py
                                  "rotations",
                                  "translation",
                                  "scale",
+                                 "frequency",
+                                 "frequency_phase",
+                                 "time_offset",
                                  "name",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "Osd|OOOs",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "Osd|OOOddds",
                                    const_cast<char **>(kwlist),
                                    &List_Mapping,
                                    &FileFormat,
@@ -1988,6 +2172,9 @@ static PyObject* OSCARSSR_AddElectricFieldInterpolated (OSCARSSRObject* self, Py
                                    &List_Rotations,
                                    &List_Translation,
                                    &List_Scaling,
+                                   &Frequency,
+                                   &FrequencyPhase,
+                                   &TimeOffset,
                                    &Name)) {
     return NULL;
   }
@@ -2053,7 +2240,7 @@ static PyObject* OSCARSSR_AddElectricFieldInterpolated (OSCARSSRObject* self, Py
 
   // Add the magnetic field to the OSCARSSR object
   try {
-    self->obj->AddElectricFieldInterpolated(Mapping, FileFormat, Parameter, Rotations, Translation, Scaling, Name);
+    self->obj->AddElectricFieldInterpolated(Mapping, FileFormat, Parameter, Rotations, Translation, Scaling, Frequency, FrequencyPhase, TimeOffset, Name);
   } catch (...) {
     PyErr_SetString(PyExc_ValueError, "Could not import magnetic field.  Check filenames and 'iformat' are correct");
     return NULL;
@@ -2071,7 +2258,7 @@ static PyObject* OSCARSSR_AddElectricFieldInterpolated (OSCARSSRObject* self, Py
 
 
 const char* DOC_OSCARSSR_AddElectricFieldFunction = R"docstring(
-add_efield_function(func [, name])
+add_efield_function(func [, rotations, translation, time_offset, name])
 
 Adds field in the form of a user defined python function.  The input for this function must be (x, y, z, t) and return [Fx, Fy, Fz]
 
@@ -2080,6 +2267,15 @@ Parameters
 
 function : func
     A python function with input [x, y, z, t] and return of [Fx, Fy, Fz]
+
+rotations : list, optional
+    3-element list representing rotations around x, y, and z axes: [:math:`\theta_x, \theta_y, \theta_z`]
+
+translation : list, optional
+    3-element list representing a translation in space [x, y, z]
+
+time_offset : float
+    Added to the time before calling the python function to get the field value
 
 name : str
     Name of this field
@@ -2105,16 +2301,28 @@ static PyObject* OSCARSSR_AddElectricFieldFunction (OSCARSSRObject* self, PyObje
 
   // Variables for function and name
   PyObject* Function;
+  PyObject*   List_Rotations   = 0x0;
+  PyObject*   List_Translation = 0x0;
+  double      TimeOffset       = 0;
   char const* Name = "";
+
+  TVector3D Rotations(0, 0, 0);
+  TVector3D Translation(0, 0, 0);
 
   // Input variables and parsing
   static const char *kwlist[] = {"function",
+                                 "rotations",
+                                 "translation",
+                                 "time_offset",
                                  "name",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|s",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOds",
                                    const_cast<char **>(kwlist),
                                    &Function,
+                                   &List_Rotations,
+                                   &List_Translation,
+                                   &TimeOffset,
                                    &Name)) {
     return NULL;
   }
@@ -2123,9 +2331,30 @@ static PyObject* OSCARSSR_AddElectricFieldFunction (OSCARSSRObject* self, PyObje
   // Increment ref to function for python
   Py_INCREF(Function);
 
+  // Check for Rotations in the input
+  if (List_Rotations != 0x0) {
+    try {
+      Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
+      return NULL;
+    }
+  }
+
+
+  // Check for Translation in the input
+  if (List_Translation != 0x0) {
+    try {
+      Translation = OSCARSPY::ListAsTVector3D(List_Translation);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
+      return NULL;
+    }
+  }
+
   // Add the function as a field to the OSCARSSR object
   try {
-    self->obj->AddElectricField( (TField*) new TFieldPythonFunction(Function, Name));
+    self->obj->AddElectricField( (TField*) new TFieldPythonFunction(Function, Rotations, Translation, TimeOffset, Name));
   } catch (std::invalid_argument e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -2146,7 +2375,7 @@ static PyObject* OSCARSSR_AddElectricFieldFunction (OSCARSSRObject* self, PyObje
 
 
 const char* DOC_OSCARSSR_AddElectricFieldGaussian = R"docstring(
-add_efield_gaussian(efield, sigma [, rotations, translation])
+add_efield_gaussian(efield, sigma [, rotations, translation, Frequency, FrequencyPhase, TimeOffset, name])
 
 Add a gaussian field in 3D with the peak field magnitude and direction given by *efield*, centered about a point with a given sigma in each coordinate.  If any component of *sigma* is less than or equal to zero it is ignored (ie. spatial extent is infinite).
 
@@ -2165,6 +2394,18 @@ rotations : list, optional
 
 translation : list, optional
     3-element list representing a translation in space [x, y, z]
+
+frequency : float
+    Frequency in [Hz] where the ampliture is multiplied by cos(2 pi frequency (t + time_offset) + frequency_phase).  Default is 0, for no frequency dependence
+
+frequency_phase: float
+    The phase offset for a time varying field.  Only used if frequency is non-zero.  See frequency input for more.
+
+time_offset: float
+    The time for a time varying field.  Only used if frequency is non-zero.  See frequency input for more.
+
+name : str
+    Name of this field
 
 Returns
 -------
@@ -2189,6 +2430,9 @@ static PyObject* OSCARSSR_AddElectricFieldGaussian (OSCARSSRObject* self, PyObje
   PyObject* List_Translation  = PyList_New(0);
   PyObject* List_Rotations    = PyList_New(0);
   PyObject* List_Sigma        = PyList_New(0);
+  double      Frequency        = 0;
+  double      FrequencyPhase   = 0;
+  double      TimeOffset       = 0;
   const char* Name            = "";
 
   TVector3D Field(0, 0, 0);
@@ -2202,15 +2446,21 @@ static PyObject* OSCARSSR_AddElectricFieldGaussian (OSCARSSRObject* self, PyObje
                                  "sigma",
                                  "rotations",
                                  "translation",
+                                 "frequency",
+                                 "frequency_phase",
+                                 "time_offset",
                                  "name",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OO|OOs",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OO|OOddds",
                                    const_cast<char **>(kwlist),
                                    &List_Field,
                                    &List_Sigma,
                                    &List_Rotations,
                                    &List_Translation,
+                                   &Frequency,
+                                   &FrequencyPhase,
+                                   &TimeOffset,
                                    &Name)) {
     return NULL;
   }
@@ -2260,7 +2510,7 @@ static PyObject* OSCARSSR_AddElectricFieldGaussian (OSCARSSRObject* self, PyObje
   }
 
   // Add field
-  self->obj->AddElectricField( (TField*) new TField3D_Gaussian(Field, Translation, Sigma, Rotations, Name));
+  self->obj->AddElectricField( (TField*) new TField3D_Gaussian(Field, Translation, Sigma, Rotations, Frequency, FrequencyPhase, TimeOffset, Name));
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -2274,7 +2524,7 @@ static PyObject* OSCARSSR_AddElectricFieldGaussian (OSCARSSRObject* self, PyObje
 
 
 const char* DOC_OSCARSSR_AddElectricFieldUniform = R"docstring(
-add_efield_uniform(efield [, width, rotations, translation, name])
+add_efield_uniform(efield [, width, rotations, translation, frequency, frequency_phase, time_offset, name])
 
 Add a uniform field in a given range or for all space.  The *efield* is given as a 3D vector representing the field magnitude and direction.  *width* is an optional parameters, if not present the field permeates all space.  If a component of the 3D list *width* is less than or equal to zero, that coordinate will be ignored when calculating the field.
 
@@ -2291,6 +2541,15 @@ rotations : list, optional
 
 translation : list, optional
     3-element list representing a translation in space [x, y, z]
+
+frequency : float
+    Frequency in [Hz] where the ampliture is multiplied by cos(2 pi frequency (t + time_offset) + frequency_phase).  Default is 0, for no frequency dependence
+
+frequency_phase: float
+    The phase offset for a time varying field.  Only used if frequency is non-zero.  See frequency input for more.
+
+time_offset: float
+    The time for a time varying field.  Only used if frequency is non-zero.  See frequency input for more.
 
 name : str
     Name of this field
@@ -2312,6 +2571,10 @@ Add a field of 0.0005 [V/m] in the Y-direction with a width in the Z-direction o
 Add a field of 1 [V/m] in the X-direction in a volume of dimensions 1m x 1m x 1m.
 
     >>> osr.add_efield_uniform(efield=[1, 0, 0], width=[1, 1, 1])
+
+Add a field of 1 [V/m] in the X-direction in a volume of dimensions 1m x 1m x 1m with a frequency of 10 [MHz] and phase offset of pi.
+
+    >>> osr.add_efield_uniform(efield=[1, 0, 0], width=[1, 1, 1], frequency=10e9, frequency_phase=osr.pi())
 )docstring";
 static PyObject* OSCARSSR_AddElectricFieldUniform (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
 {
@@ -2322,6 +2585,9 @@ static PyObject* OSCARSSR_AddElectricFieldUniform (OSCARSSRObject* self, PyObjec
   PyObject*   List_Translation = PyList_New(0);
   PyObject*   List_Rotations   = PyList_New(0);
   PyObject*   List_Width       = PyList_New(0);
+  double      Frequency        = 0;
+  double      FrequencyPhase   = 0;
+  double      TimeOffset       = 0;
   char const* Name             = "";
 
   TVector3D Field(0, 0, 0);
@@ -2335,15 +2601,21 @@ static PyObject* OSCARSSR_AddElectricFieldUniform (OSCARSSRObject* self, PyObjec
                                  "width",
                                  "rotations",
                                  "translation",
+                                 "frequency",
+                                 "frequency_phase",
+                                 "time_offset",
                                  "name",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOOs",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOOddds",
                                    const_cast<char **>(kwlist),
                                    &List_Field,
                                    &List_Width,
                                    &List_Rotations,
                                    &List_Translation,
+                                   &Frequency,
+                                   &FrequencyPhase,
+                                   &TimeOffset,
                                    &Name
                                    )) {
     return NULL;
@@ -2395,7 +2667,7 @@ static PyObject* OSCARSSR_AddElectricFieldUniform (OSCARSSRObject* self, PyObjec
   }
 
   // Add the field
-  self->obj->AddElectricField((TField*) new TField3D_UniformBox(Field, Width, Translation, Rotations, Name));
+  self->obj->AddElectricField((TField*) new TField3D_UniformBox(Field, Width, Translation, Rotations, Frequency, FrequencyPhase, TimeOffset, Name));
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -2412,7 +2684,7 @@ static PyObject* OSCARSSR_AddElectricFieldUniform (OSCARSSRObject* self, PyObjec
 
 
 const char* DOC_OSCARSSR_AddElectricFieldIdealUndulator = R"docstring(
-add_efield_undulator(efield, period, nperiods [, phase, rotations, translation, taper])
+add_efield_undulator(efield, period, nperiods [, phase, rotations, translation, taper, frequency, frequency_phase, time_offset, name])
 
 Adds an ideal sinusoidal undulator field with a given maximum efield amplitude, period, and number of periods.  Optionally one can specify the phase offset (in [rad]), rotations and translation.  The number of periods given is the full number of fields not counting the terminating fields.
 
@@ -2439,6 +2711,15 @@ translation : list, optional
 taper : float
     The fractional change of the efield per meter along the magnetic axis
 
+frequency : float
+    Frequency in [Hz] where the ampliture is multiplied by cos(2 pi frequency (t + time_offset) + frequency_phase).  Default is 0, for no frequency dependence
+
+frequency_phase: float
+    The phase offset for a time varying field.  Only used if frequency is non-zero.  See frequency input for more.
+
+time_offset: float
+    The time for a time varying field.  Only used if frequency is non-zero.  See frequency input for more.
+
 name : str
     Name of this field
 
@@ -2464,6 +2745,9 @@ static PyObject* OSCARSSR_AddElectricFieldIdealUndulator (OSCARSSRObject* self, 
   int         NPeriods         = 0;
   double      Phase            = 0;
   double      Taper            = 0;
+  double      Frequency        = 0;
+  double      FrequencyPhase   = 0;
+  double      TimeOffset       = 0;
   char const* Name             = "";
 
   TVector3D Field(0, 0, 0);
@@ -2479,10 +2763,13 @@ static PyObject* OSCARSSR_AddElectricFieldIdealUndulator (OSCARSSRObject* self, 
                                  "rotations",
                                  "translation",
                                  "taper",
+                                 "frequency",
+                                 "frequency_phase",
+                                 "time_offset",
                                  "name",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOi|dOOds",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOi|dOOdddds",
                                    const_cast<char **>(kwlist),
                                    &List_Field,
                                    &List_Period,
@@ -2491,6 +2778,9 @@ static PyObject* OSCARSSR_AddElectricFieldIdealUndulator (OSCARSSRObject* self, 
                                    &List_Rotations,
                                    &List_Translation,
                                    &Taper,
+                                   &Frequency,
+                                   &FrequencyPhase,
+                                   &TimeOffset,
                                    &Name
                                    )) {
     return NULL;
@@ -2547,7 +2837,7 @@ static PyObject* OSCARSSR_AddElectricFieldIdealUndulator (OSCARSSRObject* self, 
 
 
   // Add field
-  self->obj->AddElectricField( (TField*) new TField3D_IdealUndulator(Field, Period, NPeriods, Translation, Phase, Taper, Name));
+  self->obj->AddElectricField( (TField*) new TField3D_IdealUndulator(Field, Period, NPeriods, Translation, Phase, Taper, Frequency, FrequencyPhase, TimeOffset, Name));
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -4266,40 +4556,6 @@ static PyObject* OSCARSSR_PrintDriftVolumes (OSCARSSRObject* self)
 
 
 
-
-
-
-
-
-const char* DOC_OSCARSSR_CorrectTrajectory= R"docstring(
-correct_trajectory()
-
-Correct the trajectory to desired position and direction and specified point based on corrector kicks at specified locations.
-
-This function will add magnetic fields to the sr object with names that begin with an underscore.
-
-Parameters
-----------
-None
-
-Returns
--------
-trajectory : list
-    A list of points of the form [[[x, y, z], [Beta_x, Beta_y, Beta_z]], ...]
-)docstring";
-static PyObject* OSCARSSR_CorrectTrajectory (OSCARSSRObject* self)
-{
-  // Get the CTStop variable from OSCARSSR
-
-  try {
-    self->obj->CorrectTrajectory();
-  } catch (...) {
-    // UPDATE: Do I need t catch something?
-    throw;
-  }
-  // Return the trajectory
-  return OSCARSSR_GetTrajectory(self);
-}
 
 
 
@@ -8075,7 +8331,7 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   {"add_bfield_gaussian",               (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldGaussian},
   {"add_bfield_uniform",                (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldUniform},
   {"add_bfield_undulator",              (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldIdealUndulator},
-  {"add_bfield_halbach",                (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldHalbach},
+  //{"add_bfield_halbach",                (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldHalbach},
   {"add_bfield_quadrupole",             (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldQuadrupole},
   {"remove_bfield",                     (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_RemoveMagneticField},
   {"get_bfield",                        (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetBField},
@@ -8116,7 +8372,6 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   {"clear_drifts",                      (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_ClearDriftVolumes},
   {"print_drifts",                      (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_PrintDriftVolumes},
 
-  //{"correct_trajectory",                (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_CorrectTrajectory},
   {"calculate_trajectory",              (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateTrajectory},
   {"get_trajectory",                    (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_GetTrajectory},
   {"set_trajectory",                    (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_SetTrajectory},
@@ -8185,7 +8440,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"add_bfield_gaussian",               (PyCFunction) OSCARSSR_AddMagneticFieldGaussian,        METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldGaussian},
   {"add_bfield_uniform",                (PyCFunction) OSCARSSR_AddMagneticFieldUniform,         METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldUniform},
   {"add_bfield_undulator",              (PyCFunction) OSCARSSR_AddMagneticFieldIdealUndulator,  METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldIdealUndulator},
-  {"add_bfield_halbach",                (PyCFunction) OSCARSSR_AddMagneticFieldHalbach,         METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldHalbach},
+  //{"add_bfield_halbach",                (PyCFunction) OSCARSSR_AddMagneticFieldHalbach,         METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldHalbach},
   {"add_bfield_quadrupole",             (PyCFunction) OSCARSSR_AddMagneticFieldQuadrupole,      METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldQuadrupole},
   {"remove_bfield",                     (PyCFunction) OSCARSSR_RemoveMagneticField,             METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_RemoveMagneticField},
   {"get_bfield",                        (PyCFunction) OSCARSSR_GetBField,                       METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetBField},
@@ -8226,7 +8481,6 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"clear_drifts",                      (PyCFunction) OSCARSSR_ClearDriftVolumes,               METH_NOARGS,                  DOC_OSCARSSR_ClearDriftVolumes},
   {"print_drifts",                      (PyCFunction) OSCARSSR_PrintDriftVolumes,               METH_NOARGS,                  DOC_OSCARSSR_PrintDriftVolumes},
                                                                                           
-  //{"correct_trajectory",                (PyCFunction) OSCARSSR_CorrectTrajectory,               METH_NOARGS,                  DOC_OSCARSSR_CorrectTrajectory},
   {"calculate_trajectory",              (PyCFunction) OSCARSSR_CalculateTrajectory,             METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateTrajectory},
   {"get_trajectory",                    (PyCFunction) OSCARSSR_GetTrajectory,                   METH_NOARGS,                  DOC_OSCARSSR_GetTrajectory},
   {"set_trajectory",                    (PyCFunction) OSCARSSR_SetTrajectory,                   METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_SetTrajectory},
