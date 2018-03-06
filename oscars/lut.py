@@ -65,6 +65,16 @@ class lut1d:
 
 
 
+    def summary (self, **kwargs):
+        """Show the summary plots for this lut1d.  See get_gaps() for arguments"""
+
+        kwargs['show'] = True
+        self.get_gaps(**kwargs)
+
+        return
+
+
+
     def get_gaps (self,
                   energy_eV=0,
                   gap=None,
