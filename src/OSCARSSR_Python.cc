@@ -7039,6 +7039,78 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
 
 
 
+const char* DOC_OSCARSSR_WriteSpectrum = R"docstring(
+write_spectrum([, ofile, bofile])
+
+Write spectrum to file.  Either ofile or bofile should be specified, or both, or neither if you really want
+
+Parameters
+----------
+ofile : str
+    The output file name
+
+bofile : str
+    The binary output file name
+
+Returns
+-------
+None
+)docstring";
+static PyObject* OSCARSSR_WriteSpectrum (OSCARSSRObject* self, PyObject* args, PyObject *keywds)
+{
+  // Write the internal spectrum out to a file
+
+  char const* OutFileNameText = "";
+  char const* OutFileNameBinary = "";
+
+
+  static const char *kwlist[] = {"ofile",
+                                 "bofile",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ss",
+                                   const_cast<char **>(kwlist),
+                                   &OutFileNameText,
+                                   &OutFileNameBinary)) {
+    return NULL;
+  }
+
+
+  // Container for flux average
+  TSpectrumContainer const& Container = self->obj->GetSpectrum();
+
+  // Text output
+  if (std::string(OutFileNameText) != "") {
+    try {
+      Container.WriteToFileText(OutFileNameText);
+    } catch (std::ifstream::failure e) {
+      PyErr_SetString(PyExc_ValueError, e.what());
+      return NULL;
+    }
+  }
+
+  // Binary output
+  if (std::string(OutFileNameBinary) != "") {
+    try {
+      Container.WriteToFileBinary(OutFileNameBinary);
+    } catch (std::ifstream::failure e) {
+      PyErr_SetString(PyExc_ValueError, e.what());
+      return NULL;
+    }
+  }
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
+
+
 const char* DOC_OSCARSSR_AverageSpectra = R"docstring(
 average_spectra([, ifiles, bifiles, ofile, bofile])
 
@@ -7142,12 +7214,22 @@ static PyObject* OSCARSSR_AverageSpectra (OSCARSSRObject* self, PyObject* args, 
 
   // Text output
   if (std::string(OutFileNameText) != "") {
-    Container.WriteToFileText(OutFileNameText);
+    try {
+      Container.WriteToFileText(OutFileNameText);
+    } catch (std::ifstream::failure e) {
+      PyErr_SetString(PyExc_ValueError, e.what());
+      return NULL;
+    }
   }
 
   // Binary output
   if (std::string(OutFileNameBinary) != "") {
-    Container.WriteToFileBinary(OutFileNameBinary);
+    try {
+      Container.WriteToFileBinary(OutFileNameBinary);
+    } catch (std::ifstream::failure e) {
+      PyErr_SetString(PyExc_ValueError, e.what());
+      return NULL;
+    }
   }
 
 
@@ -7982,6 +8064,7 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   //{"calculate_flux",                    (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateFlux},
   {"calculate_flux_rectangle",          (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateFluxRectangle},
 
+  {"write_spectrum",                    (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_WriteSpectrum},
   {"average_spectra",                   (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AverageSpectra},
   {"add_to_spectrum",                   (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddToSpectrum},
   {"get_spectrum",                      (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetSpectrum},
@@ -8091,6 +8174,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   //{"calculate_flux",                    (PyCFunction) OSCARSSR_CalculateFlux,                   METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateFlux},
   {"calculate_flux_rectangle",          (PyCFunction) OSCARSSR_CalculateFluxRectangle,          METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateFluxRectangle},
 
+  {"write_spectrum",                    (PyCFunction) OSCARSSR_WriteSpectrum,                   METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_WriteSpectrum},
   {"average_spectra",                   (PyCFunction) OSCARSSR_AverageSpectra,                  METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AverageSpectra},
   {"add_to_spectrum",                   (PyCFunction) OSCARSSR_AddToSpectrum,                   METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddToSpectrum},
   {"get_spectrum",                      (PyCFunction) OSCARSSR_GetSpectrum,                     METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetSpectrum},
