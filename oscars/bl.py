@@ -47,10 +47,19 @@ class bl(oscars.lut.lut1d):
     None
     """
 
-
-    def __init__ (self, facility, beamline, device, current=None, base_path=None, gpu=1, nthreads=8):
-
+    def __init__ (self, facility=None, beamline=None, device=None, current=None, base_path=None, gpu=1, nthreads=8):
         oscars.lut.lut1d.__init__(self)
+
+        # Set base path if defined, otherwise default
+        if base_path is not None:
+            self.base_path = base_path
+        else:
+            self.base_path = os.path.join(os.sep, 'Users', 'dhidas', 'OSCARSDATA')
+
+        if facility is None or beamline is None or device is None:
+            print('You can select from the available facility, beamline, and device list:')
+            self.list()
+            return
 
         self.facility = facility
         self.beamline = beamline
@@ -72,11 +81,6 @@ class bl(oscars.lut.lut1d):
 
         self.has_lut1d = False
         self.has_lut2d = False
-
-        if base_path is not None:
-            self.base_path = base_path
-        else:
-            self.base_path = os.path.join(os.sep, 'Users', 'dhidas', 'OSCARSDATA')
 
         # Read configuration file in order of precidence
         self.config = configparser.ConfigParser()
