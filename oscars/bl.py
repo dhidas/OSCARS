@@ -36,12 +36,6 @@ class bl(oscars.lut.lut1d):
         Path to the oscars beamline data directory
     
     
-    Currently Supported - facility beamline
-        NSLSII
-            SST
-                U42
-                EPU60
-    
     Returns
     -------
     None
@@ -76,7 +70,6 @@ class bl(oscars.lut.lut1d):
 
         self.bfield_mapping_1d_filename = None
         self.bfield_mapping_2d_filename = None
-        self.lut1d_filename = None
         self.lut2d_filename = None
 
         self.has_lut1d = False
@@ -279,6 +272,24 @@ class bl(oscars.lut.lut1d):
             if 'quantity' in c: a['quantity'] = c['quantity']
 
             self.power_density_kwargs = a
+
+        return
+
+
+    def load_lut1d (self, ifile):
+        """Load a specific lut1d file"""
+
+
+        if os.path.isfile(ifile):
+            try:
+                self.clear_lut1d()
+                self.read_file_lut1d(ifile)
+                self.lut1d_filename = ifile
+                self.has_lut1d = True
+            except:
+                raise IOError('Unable to load file.  Probably incorrect format or permissions: ' + ifile)
+        else:
+            raise IOError('file does not exist: ' + ifile)
 
         return
 
@@ -579,7 +590,7 @@ class bl(oscars.lut.lut1d):
                 warnings.warn('could not set gap to that value.  likely it is outside of the interpolation range')
 
         if self.has_lut1d:
-            self.get_gaps(show=True, gap=self.gap)
+            self.get_gaps(show=True, gap=self.gap, name=self.name)
 
         if self.gap is not None:
 
