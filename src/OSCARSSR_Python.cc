@@ -2993,8 +2993,6 @@ static PyObject* OSCARSSR_SetParticleBeam (OSCARSSRObject* self, PyObject* args,
     return ret;
   }
 
-  self->obj->SetNewParticle("", "ideal");
-
   return ret;
 }
 
@@ -3082,6 +3080,9 @@ mass : float
 charge : float
     Charge of a *custom* particle.  This is only used if *type* = 'custom'.  Must be non-zero.
 
+ctstartstop: [float, float]
+    Initial start and stop times for the calculation.  Not technically a beam parameter here, but the ability to set it in this function
+
 Returns
 -------
 None
@@ -3133,6 +3134,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   PyObject*   List_Emittance             = 0x0;
   PyObject*   List_Eta                   = 0x0;
   PyObject*   List_Lattice_Reference     = 0x0;
+  PyObject*   List_CTStartStop           = 0x0;
 
   TVector3D Position(0, 0, 0);
   TVector3D Direction(0, 0, 1);
@@ -3145,6 +3147,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   TVector2D Emittance(0, 0);
   TVector3D Lattice_Reference(0, 0, 0);
   TVector2D Eta(0, 0);
+  TVector2D CTStartStop(0, 0);
 
 
   // Input variables and parsing
@@ -3169,9 +3172,10 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
                                  "lattice_reference",
                                  "mass",
                                  "charge",
+                                 "ctstartstop",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ssdOOsddddOOOOOOOOOdd",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ssdOOsddddOOOOOOOOOddO",
                                    const_cast<char **>(kwlist),
                                    &Type,
                                    &Name,
@@ -3193,7 +3197,8 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
                                    &List_Eta,
                                    &List_Lattice_Reference,
                                    &Mass,
-                                   &Charge)) {
+                                   &Charge,
+                                   &List_CTStartStop)) {
     return NULL;
   }
 
@@ -3439,6 +3444,21 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
 
   // Should set weight on input
   //self->obj->GetParticleBeam(Name).SetWeight(Weight);
+
+
+  // If CTStartStop defined use it
+  if (List_CTStartStop != 0x0) {
+    try {
+      CTStartStop = OSCARSPY::ListAsTVector2D(List_CTStartStop);
+      self->obj->SetCTStartStop(CTStartStop[0], CTStartStop[1]);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'ctstartstop'");
+      return NULL;
+    }
+  }
+
+  // Set the initial particle as ideal
+  self->obj->SetNewParticle("", "ideal");
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
