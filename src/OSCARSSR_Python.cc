@@ -3429,8 +3429,6 @@ static PyObject* OSCARSSR_SetParticleBeam (OSCARSSRObject* self, PyObject* args,
     return ret;
   }
 
-  self->obj->SetNewParticle("", "ideal");
-
   return ret;
 }
 
@@ -3518,6 +3516,9 @@ mass : float
 charge : float
     Charge of a *custom* particle.  This is only used if *type* = 'custom'.  Must be non-zero.
 
+ctstartstop: [float, float]
+    Initial start and stop times for the calculation.  Not technically a beam parameter here, but the ability to set it in this function
+
 Returns
 -------
 None
@@ -3569,6 +3570,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   PyObject*   List_Emittance             = 0x0;
   PyObject*   List_Eta                   = 0x0;
   PyObject*   List_Lattice_Reference     = 0x0;
+  PyObject*   List_CTStartStop           = 0x0;
 
   TVector3D Position(0, 0, 0);
   TVector3D Direction(0, 0, 1);
@@ -3581,6 +3583,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   TVector2D Emittance(0, 0);
   TVector3D Lattice_Reference(0, 0, 0);
   TVector2D Eta(0, 0);
+  TVector2D CTStartStop(0, 0);
 
 
   // Input variables and parsing
@@ -3605,9 +3608,10 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
                                  "lattice_reference",
                                  "mass",
                                  "charge",
+                                 "ctstartstop",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ssdOOsddddOOOOOOOOOdd",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ssdOOsddddOOOOOOOOOddO",
                                    const_cast<char **>(kwlist),
                                    &Type,
                                    &Name,
@@ -3629,7 +3633,8 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
                                    &List_Eta,
                                    &List_Lattice_Reference,
                                    &Mass,
-                                   &Charge)) {
+                                   &Charge,
+                                   &List_CTStartStop)) {
     return NULL;
   }
 
@@ -3875,6 +3880,21 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
 
   // Should set weight on input
   //self->obj->GetParticleBeam(Name).SetWeight(Weight);
+
+
+  // If CTStartStop defined use it
+  if (List_CTStartStop != 0x0) {
+    try {
+      CTStartStop = OSCARSPY::ListAsTVector2D(List_CTStartStop);
+      self->obj->SetCTStartStop(CTStartStop[0], CTStartStop[1]);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'ctstartstop'");
+      return NULL;
+    }
+  }
+
+  // Set the initial particle as ideal
+  self->obj->SetNewParticle("", "ideal");
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -7444,6 +7464,78 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
 
 
 
+const char* DOC_OSCARSSR_WriteSpectrum = R"docstring(
+write_spectrum([, ofile, bofile])
+
+Write spectrum to file.  Either ofile or bofile should be specified, or both, or neither if you really want
+
+Parameters
+----------
+ofile : str
+    The output file name
+
+bofile : str
+    The binary output file name
+
+Returns
+-------
+None
+)docstring";
+static PyObject* OSCARSSR_WriteSpectrum (OSCARSSRObject* self, PyObject* args, PyObject *keywds)
+{
+  // Write the internal spectrum out to a file
+
+  char const* OutFileNameText = "";
+  char const* OutFileNameBinary = "";
+
+
+  static const char *kwlist[] = {"ofile",
+                                 "bofile",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ss",
+                                   const_cast<char **>(kwlist),
+                                   &OutFileNameText,
+                                   &OutFileNameBinary)) {
+    return NULL;
+  }
+
+
+  // Container for flux average
+  TSpectrumContainer const& Container = self->obj->GetSpectrum();
+
+  // Text output
+  if (std::string(OutFileNameText) != "") {
+    try {
+      Container.WriteToFileText(OutFileNameText);
+    } catch (std::ifstream::failure e) {
+      PyErr_SetString(PyExc_ValueError, e.what());
+      return NULL;
+    }
+  }
+
+  // Binary output
+  if (std::string(OutFileNameBinary) != "") {
+    try {
+      Container.WriteToFileBinary(OutFileNameBinary);
+    } catch (std::ifstream::failure e) {
+      PyErr_SetString(PyExc_ValueError, e.what());
+      return NULL;
+    }
+  }
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
+
+
 const char* DOC_OSCARSSR_AverageSpectra = R"docstring(
 average_spectra([, ifiles, bifiles, ofile, bofile])
 
@@ -7547,12 +7639,22 @@ static PyObject* OSCARSSR_AverageSpectra (OSCARSSRObject* self, PyObject* args, 
 
   // Text output
   if (std::string(OutFileNameText) != "") {
-    Container.WriteToFileText(OutFileNameText);
+    try {
+      Container.WriteToFileText(OutFileNameText);
+    } catch (std::ifstream::failure e) {
+      PyErr_SetString(PyExc_ValueError, e.what());
+      return NULL;
+    }
   }
 
   // Binary output
   if (std::string(OutFileNameBinary) != "") {
-    Container.WriteToFileBinary(OutFileNameBinary);
+    try {
+      Container.WriteToFileBinary(OutFileNameBinary);
+    } catch (std::ifstream::failure e) {
+      PyErr_SetString(PyExc_ValueError, e.what());
+      return NULL;
+    }
   }
 
 
@@ -8387,6 +8489,7 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   //{"calculate_flux",                    (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateFlux},
   {"calculate_flux_rectangle",          (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateFluxRectangle},
 
+  {"write_spectrum",                    (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_WriteSpectrum},
   {"average_spectra",                   (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AverageSpectra},
   {"add_to_spectrum",                   (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddToSpectrum},
   {"get_spectrum",                      (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetSpectrum},
@@ -8496,6 +8599,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   //{"calculate_flux",                    (PyCFunction) OSCARSSR_CalculateFlux,                   METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateFlux},
   {"calculate_flux_rectangle",          (PyCFunction) OSCARSSR_CalculateFluxRectangle,          METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateFluxRectangle},
 
+  {"write_spectrum",                    (PyCFunction) OSCARSSR_WriteSpectrum,                   METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_WriteSpectrum},
   {"average_spectra",                   (PyCFunction) OSCARSSR_AverageSpectra,                  METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AverageSpectra},
   {"add_to_spectrum",                   (PyCFunction) OSCARSSR_AddToSpectrum,                   METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddToSpectrum},
   {"get_spectrum",                      (PyCFunction) OSCARSSR_GetSpectrum,                     METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetSpectrum},

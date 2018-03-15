@@ -298,10 +298,32 @@ def scale_spectrum(s, c):
         
     return
 
-def add_spectra(spectra):
-    """Add spectra from list spectra and return new spectrum"""
+def add_spectra(spectra, weights=None):
+    """
+    Add spectra from list spectra and return new spectrum, optionally with weights
+
+    Parameters
+    ----------
+    spectra : list
+        A list of spectrums to add
+
+    weights : list[floats]
+        A list of floats to multiply the respective spectra by when adding
+
+    Returns
+    -------
+    spectrum : list
+        A spectrum in the form of a list of energy, flux pairs
+    """
     
+    if weights is not None:
+        if len(weights) != len(spectra):
+            raise IndexError('length of weights does not equal number of spectra')
+
+    # Copy 0th spectrum and weight it if requested
     spectrum=copy.deepcopy(spectra[0])
+    if weights is not None:
+        spectrum = [ [s[0], weights[0] * s[1]] for s in spectrum ]
 
     N = len(spectrum)
 
@@ -309,7 +331,10 @@ def add_spectra(spectra):
         if len(spectra[isp]) != N:
             raise ValueError('spectra do not have the same dimensions')
         for i in range(len(spectra[isp])):
-            spectrum[i][1] += spectra[isp][i][1]
+            if weights is None:
+                spectrum[i][1] += spectra[isp][i][1]
+            else:
+                spectrum[i][1] += spectra[isp][i][1] * weights[isp]
         
     return spectrum
 

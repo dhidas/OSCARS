@@ -6,20 +6,35 @@ class lut1d:
     """Class for 1D lookup tables for insertion devices as a function of gap"""
 
     def __init__(self, ifile=None, name=None):
+
+        self.lut1d_filename = ifile
         self.name = name
         self.splines_gap_vs_energy = dict()
         self.splines_flux_vs_energy = dict()
         self.energy_range = dict()
         
-        if ifile is not None:
-            self.read_file_lut1d(ifile)
+        if self.lut1d_filename is not None:
+            self.read_file_lut1d(self.lut1d_filename)
             
+        return
+
+
+    def clear (self):
+        """Clear some internal data"""
+
+        self.splines_gap_vs_energy = dict()
+        self.splines_flux_vs_energy = dict()
+        self.energy_range = dict()
+
         return
 
         
     def read_file_lut1d(self, ifile):
         """read a file and setup data accordingly"""
         
+        self.clear()
+        self.lut1d_filename = ifile
+
         with open(ifile) as fi:
             for line in fi:
                 ll = line.rstrip()
@@ -41,8 +56,12 @@ class lut1d:
                             break
 
                         fields = list(map(float, ll.split()))
-                        if len(fields) != 3:
+                        if not (len(fields) == 3 or len(fields) == 2):
                             raise ValueError('Error in format of line:' + line)
+
+                        # If table is without flux that's no problem, just add a zero
+                        if len(fields) == 2:
+                            fields.append(0)
                         all_fields.append(fields)
 
                     if len(all_fields) < 2:
@@ -60,6 +79,16 @@ class lut1d:
                     self.splines_gap_vs_energy[harmonic] = CubicSpline(energy, gap)
                     self.splines_flux_vs_energy[harmonic] = CubicSpline(energy, flux)
                     self.energy_range[harmonic] = [energy[0], energy[-1]]
+
+        return
+
+
+
+    def summary (self, **kwargs):
+        """Show the summary plots for this lut1d.  See get_gaps() for arguments"""
+
+        kwargs['show'] = True
+        self.get_gaps(**kwargs)
 
         return
 
@@ -135,6 +164,10 @@ class lut1d:
             Show gridlines or not (default not)
 
         """
+
+        # Set name for plot
+        if name == '' and self.name is not None:
+            name = self.name
         
         # Grab the harmonics which cover the range
         harmonic_list = []

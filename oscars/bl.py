@@ -36,21 +36,24 @@ class bl(oscars.lut.lut1d):
         Path to the oscars beamline data directory
     
     
-    Currently Supported - facility beamline
-        NSLSII
-            SST
-                U42
-                EPU60
-    
     Returns
     -------
     None
     """
 
-
-    def __init__ (self, facility, beamline, device, current=None, base_path=None, gpu=1, nthreads=8):
-
+    def __init__ (self, facility=None, beamline=None, device=None, current=None, base_path=None, gpu=1, nthreads=8):
         oscars.lut.lut1d.__init__(self)
+
+        # Set base path if defined, otherwise default
+        if base_path is not None:
+            self.base_path = base_path
+        else:
+            self.base_path = os.path.join(os.sep, 'Users', 'dhidas', 'OSCARSDATA')
+
+        if facility is None or beamline is None or device is None:
+            print('You can select from the available facility, beamline, and device list:')
+            self.list()
+            return
 
         self.facility = facility
         self.beamline = beamline
@@ -67,16 +70,10 @@ class bl(oscars.lut.lut1d):
 
         self.bfield_mapping_1d_filename = None
         self.bfield_mapping_2d_filename = None
-        self.lut1d_filename = None
         self.lut2d_filename = None
 
         self.has_lut1d = False
         self.has_lut2d = False
-
-        if base_path is not None:
-            self.base_path = base_path
-        else:
-            self.base_path = os.path.join(os.sep, 'Users', 'dhidas', 'OSCARSDATA')
 
         # Read configuration file in order of precidence
         self.config = configparser.ConfigParser()
@@ -275,6 +272,24 @@ class bl(oscars.lut.lut1d):
             if 'quantity' in c: a['quantity'] = c['quantity']
 
             self.power_density_kwargs = a
+
+        return
+
+
+    def load_lut1d (self, ifile):
+        """Load a specific lut1d file"""
+
+
+        if os.path.isfile(ifile):
+            try:
+                self.clear_lut1d()
+                self.read_file_lut1d(ifile)
+                self.lut1d_filename = ifile
+                self.has_lut1d = True
+            except:
+                raise IOError('Unable to load file.  Probably incorrect format or permissions: ' + ifile)
+        else:
+            raise IOError('file does not exist: ' + ifile)
 
         return
 
@@ -575,7 +590,7 @@ class bl(oscars.lut.lut1d):
                 warnings.warn('could not set gap to that value.  likely it is outside of the interpolation range')
 
         if self.has_lut1d:
-            self.get_gaps(show=True, gap=self.gap)
+            self.get_gaps(show=True, gap=self.gap, name=self.name)
 
         if self.gap is not None:
 
