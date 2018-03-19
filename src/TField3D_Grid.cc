@@ -118,7 +118,7 @@ TField3D_Grid::TField3D_Grid (std::vector<std::pair<double, std::string> > Mappi
     this->InterpolateFromFiles_SRW(Mapping, Parameter, Rotations, Translation, Scaling);
   } else if (format == "BINARY") {
     // UPDATE: Interpolated from binary
-    throw;
+    throw std::invalid_argument("Interpolation from BINARY not implemented yet");
   } else {
     std::cerr << "TField3D_Grid::TField3D_Grid format error format: " << FileFormat << std::endl;
     throw std::invalid_argument("incorrect format given");
@@ -169,7 +169,7 @@ TVector3D TField3D_Grid::GetF (TVector3D const& XIN, double const T) const
   if (fNZ > 1 && (X.GetZ() <= fZStart || X.GetZ() >= fZStop)) {
     return TVector3D(0, 0, 0);
   }
-      
+
   // Get index in each dimension relative to start and stop
   size_t const nx = fNX > 1 ? (X.GetX() - fXStart) / fXStep      : 0;
   double const dx = fNX > 1 ? (X.GetX() - fXStart) - nx * fXStep : 0;
@@ -216,18 +216,21 @@ TVector3D TField3D_Grid::GetF (TVector3D const& XIN, double const T) const
         size_t const i1 = nx + 1;
         Field = fData[i0] + dx * (fData[i1] - fData[i0]) / fXStep;
       }
+      break;
     case kDIMX_Y:
       {
         size_t const i0 = ny + 0;
         size_t const i1 = ny + 1;
         Field = fData[i0] + dy * (fData[i1] - fData[i0]) / fYStep;
       }
+      break;
     case kDIMX_Z:
       {
         size_t const i0 = nz + 0;
         size_t const i1 = nz + 1;
         Field = fData[i0] + dz * (fData[i1] - fData[i0]) / fZStep;
       }
+      break;
     case kDIMX_XY:
       {
         size_t const i00 = GetIndex(nx + 0, ny + 0, 0);
@@ -240,6 +243,7 @@ TVector3D TField3D_Grid::GetF (TVector3D const& XIN, double const T) const
 
         Field = v0 + dy * (v1 - v0) / fYStep;
       }
+      break;
     case kDIMX_XZ:
       {
         size_t const i00 = GetIndex(nx + 0, 0, nz + 0);
@@ -252,6 +256,7 @@ TVector3D TField3D_Grid::GetF (TVector3D const& XIN, double const T) const
 
         Field = v0 + dz * (v1 - v0) / fZStep;
       }
+      break;
     case kDIMX_YZ:
       {
         size_t const i00 = GetIndex(0, ny + 0, nz + 0);
@@ -1725,7 +1730,7 @@ void TField3D_Grid::InterpolateFromFiles (std::vector<std::pair<double, std::str
       std::getline(*(InFiles[i]), L);
       if (HeaderValues[ih] != GetHeaderValue(L)) {
         // UPDATE: throws
-        throw;
+        throw std::out_of_range("Header value is incorrect format");
       }
     }
   }

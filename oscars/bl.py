@@ -445,9 +445,6 @@ class bl(oscars.lut.lut1d):
         else:
             self.osr.set_new_particle(particle='ideal')
 
-        print(newargs)
-        self.osr.print_all()
-        return
         spectrum = self.osr.calculate_spectrum(**newargs)
         oscars.plots_mpl.plot_spectrum(spectrum, figsize=[16, 4])
 
@@ -504,7 +501,6 @@ class bl(oscars.lut.lut1d):
         self.osr.clear_bfields()
         mapping = oscars.util.read_file_list_with_header(self.bfield_mapping_1d_filename)
         self.osr.add_bfield_interpolated(mapping=mapping[0], iformat=mapping[1], rotations=mapping[2], translation=mapping[3], scale=mapping[4], parameter=gap)
-        self.osr.set_new_particle()
 
         self.gap = gap
 
