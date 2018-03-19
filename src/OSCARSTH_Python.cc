@@ -1766,15 +1766,6 @@ Returns
 [energy_eV, flux]s : list[[float, float], ...]
     Photon energy [eV] and flux [photons/s/0.1%bw/mrad^2] for the given parameters
 
-Examples
---------
-Get the harmonic peak spectrum for a undulator with a period of 0.050 [m] having 41 periods and a bfield ranging from 0.05 to 0.8 [T] from the 1st harmonic
-
-    >>> oth.undulator_flux_onaxis(period=0.050, nperiods=41, harmonic=1, bfield_range=[0.05, 0.8], npoints=1000)
-
-Get the photon energy and flux for a undulator with a period of 0.050 [m] having 41 periods and K value of 1.8674577 from the 1st harmonic
-
-    >>> oth.undulator_flux_onaxis(period=0.050, nperiods=41, harmonic=1, K=1.8674577)
 )docstring";
 static PyObject* OSCARSTH_WigglerFluxRectangle (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {

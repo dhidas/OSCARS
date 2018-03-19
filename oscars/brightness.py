@@ -233,7 +233,7 @@ class Synchrotron:
                     if i % 2 == 0:
                         continue
 
-                    br = self.oth.undulator_flux_onaxis(
+                    br = self.oth.undulator_flux(
                         K_range=d.k_range,
                         period=d.period,
                         nperiods=nperiods,
@@ -394,7 +394,8 @@ def plot_flux_all (experiments, energy_range_eV, figsize=None, ylim=None, ofile=
                 fl = exp.oth.dipole_spectrum(
                     bfield=d.bfield,
                     energy_range_eV=exp.energy_range_eV,
-                    npoints=d.npoints
+                    npoints=d.npoints,
+                    #angle_integrated=True
                 )
                 
                 x = [b[0] for b in fl]
@@ -424,7 +425,7 @@ def plot_flux_all (experiments, energy_range_eV, figsize=None, ylim=None, ofile=
                     if i % 2 == 0:
                         continue
 
-                    fl = exp.oth.undulator_flux_onaxis(
+                    fl = exp.oth.undulator_flux(
                         K_range=d.k_range,
                         period=d.period,
                         nperiods=nperiods,

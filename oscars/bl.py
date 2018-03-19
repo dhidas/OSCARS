@@ -440,9 +440,14 @@ class bl(oscars.lut.lut1d):
         if 'nparticles' in newargs:
             if newargs['nparticles'] <= 1:
                 self.osr.set_new_particle(particle='ideal')
+            else:
+                self.osr.set_new_particle()
         else:
             self.osr.set_new_particle(particle='ideal')
 
+        print(newargs)
+        self.osr.print_all()
+        return
         spectrum = self.osr.calculate_spectrum(**newargs)
         oscars.plots_mpl.plot_spectrum(spectrum, figsize=[16, 4])
 
