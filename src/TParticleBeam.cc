@@ -316,8 +316,8 @@ void TParticleBeam::SetTwissParametersAtX0 ()
   // Transform twiss parameters according to drift space.
 
   // Calculate distance to transform
-  double const D = (fTwissLatticeReference - fX0).Mag();
-  double const L = (fTwissLatticeReference - fX0).Dot(fU0) >= 0 ? D : -1. * D;
+  double const D = (fX0 - fTwissLatticeReference).Mag();
+  double const L = (fX0 - fTwissLatticeReference).Dot(fU0) >= 0 ? D : -1. * D;
 
   fTwissBetaX0 = fTwissBeta - 2 * L * fTwissAlpha + L * L * fTwissGamma;
   fTwissAlphaX0 = fTwissAlpha - L * fTwissGamma;
@@ -721,6 +721,11 @@ TParticleA TParticleBeam::GetNewParticle (std::string const& IdealOrRandom)
 }
 
 
+double normalCFD(double value)
+{
+   return 0.5 * erfc(-value * M_SQRT1_2);
+}
+
 
 
 
@@ -728,8 +733,9 @@ TParticleA TParticleBeam::GetNewParticle ()
 {
   // Intended to get you a new random particle based on the beam parameters
   // given.
+  // UPDATE: Could also take a python function
 
-  // UPDATE: not just below, but all
+  // Clear current trajectory
   this->GetTrajectory().Clear();
 
   // If this is a filament beam return the ideal case
@@ -737,62 +743,138 @@ TParticleA TParticleBeam::GetNewParticle ()
     return this->GetNewParticle("ideal");
   }
 
-  // UPDATE: Needs rand for twiss, or other beam configurations...
-  // UPDATE: Could also take a python function
+  // Constant PI
+  double const PI = TOSCARSSR::Pi();
 
-  double    ENew = fE0 + fSigmaEnergyGeV * gRandomA->Normal(); // correlated with BNew, not sure how to handle this yet
-  if (ENew < TOSCARSSR::kgToGeV(this->GetM())) {
-    std::cerr << "WARNING in TParticleBeam::GetNewParticle(): ENew < mc^2.  Setting to mc^2" << std::endl;
-    std::cerr << "  ENew fSigmaEnergyGeV: " << ENew << "  " << fSigmaEnergyGeV << std::endl;
-    ENew = TOSCARSSR::kgToGeV(this->GetM());
+  // The new particle to return
+  TParticleA NewParticle((TParticleA) *this);
+
+  // For a gaussian beam
+  if (this->GetBeamDistribution() == kBeamDistribution_Gaussian) {
+
+    // New energy
+    double ENew = fE0 + fSigmaEnergyGeV * gRandomA->Normal();
+    if (ENew < TOSCARSSR::kgToGeV(this->GetM())) {
+      std::cerr << "WARNING in TParticleBeam::GetNewParticle(): ENew < mc^2.  Setting to mc^2" << std::endl;
+      std::cerr << "  ENew fSigmaEnergyGeV: " << ENew << "  " << fSigmaEnergyGeV << std::endl;
+      ENew = TOSCARSSR::kgToGeV(this->GetM());
+    }
+
+    // Gamma and Beta magnitude from energy distribution
+    double const GammaE = ENew / TOSCARSSR::kgToGeV(this->GetM()) < 1 ? 1 : ENew / TOSCARSSR::kgToGeV(this->GetM());
+    double const Beta = GammaE != 1 ? sqrt(1.0 - 1.0 / (GammaE * GammaE)) : 0;
+
+
+    // For sampling
+    double const hSigX  = sqrt(fEmittance[0] *  fTwissBetaX0[0]);
+    double const hSigXP = sqrt(fEmittance[0] * fTwissGammaX0[0]);
+    double const hRho   = sqrt(1 - pow(fEmittance[0] / (hSigX * hSigXP), 2));
+
+    double const vSigX  = sqrt(fEmittance[1] *  fTwissBetaX0[1]);
+    double const vSigXP = sqrt(fEmittance[1] * fTwissGammaX0[1]);
+    double const vRho   = sqrt(1 - pow(fEmittance[1] / (vSigX * vSigXP), 2));
+
+
+    // Horizontal x and xp
+    double const hu  = gRandomA->Uniform();
+    double const hv  = gRandomA->Uniform();
+    double const hX  = hSigX * sqrt(-2 * log(hu)) * (sqrt(1 - hRho*hRho) * cos(2 * PI * hv) + hRho * sin(2 * PI * hv));
+    double const hXP = hSigXP * sqrt(-2 * log(hu)) * sin(2 * PI * hv);
+
+    // Vertical x and xp
+    double const vu  = gRandomA->Uniform();
+    double const vv  = gRandomA->Uniform();
+    double const vX  = vSigX * sqrt(-2 * log(vu)) * (sqrt(1 - vRho*vRho) * cos(2 * PI * vv) + vRho * sin(2 * PI * vv));
+    double const vXP = vSigXP * sqrt(-2 * log(vu)) * sin(2 * PI * vv);
+
+    // New X0 location for this particle
+    TVector3D XNew = this->GetX0();
+    XNew += fHorizontalDirection * hX;
+    XNew += fVerticalDirection   * vX;
+
+    // Beta vector from randomization and energy spread
+    TVector3D BetaNew = fHorizontalDirection.Cross(fVerticalDirection) * Beta;
+    BetaNew.RotateSelf(hXP, fVerticalDirection);
+    BetaNew.RotateSelf(vXP, fHorizontalDirection);
+
+    // Possibility to shift the time
+    double const TNew = fT0;
+
+    NewParticle.SetInitialParticleConditions(XNew, BetaNew, TNew);
+
+  } else if (this->GetBeamDistribution() == kBeamDistribution_KV) {
+    // We have a KV distribution - uniform within the ellipse
+
+    // New energy
+    double ENew = fE0 + fSigmaEnergyGeV * gRandomA->Normal();
+    if (ENew < TOSCARSSR::kgToGeV(this->GetM())) {
+      std::cerr << "WARNING in TParticleBeam::GetNewParticle(): ENew < mc^2.  Setting to mc^2" << std::endl;
+      std::cerr << "  ENew fSigmaEnergyGeV: " << ENew << "  " << fSigmaEnergyGeV << std::endl;
+      ENew = TOSCARSSR::kgToGeV(this->GetM());
+    }
+
+    // Gamma and Beta magnitude from energy distribution
+    double const GammaE = ENew / TOSCARSSR::kgToGeV(this->GetM()) < 1 ? 1 : ENew / TOSCARSSR::kgToGeV(this->GetM());
+    double const Beta = GammaE != 1 ? sqrt(1.0 - 1.0 / (GammaE * GammaE)) : 0;
+
+    double const hTheta = gRandomA->Uniform() * 2 * PI;
+    double const vTheta = gRandomA->Uniform() * 2 * PI;
+    
+    double const hAX = sqrt(fEmittance[0] * fTwissBetaX0[0]) * cos(hTheta);
+    double const vAX = sqrt(fEmittance[1] * fTwissBetaX0[1]) * cos(vTheta);
+
+    double const hAXP = -sqrt(fEmittance[0] / fTwissBetaX0[0]) * (fTwissAlphaX0[0] * cos(hTheta) + sin(hTheta));
+    double const vAXP = -sqrt(fEmittance[1] / fTwissBetaX0[1]) * (fTwissAlphaX0[1] * cos(vTheta) + sin(vTheta));
+    
+    double const hR = sqrt(hAX*hAX + hAXP*hAXP);
+    double const vR = sqrt(vAX*vAX + vAXP*vAXP);
+
+    double hRealTheta = atan(hAXP/hAX);
+    double vRealTheta = atan(vAXP/vAX);
+
+    if (hAX < 0 && hAXP > 0) {
+      hRealTheta += PI;
+    } else if (hAX < 0 && hAXP < 0) {
+      hRealTheta -= PI;
+    }
+    if (vAX < 0 && vAXP > 0) {
+      vRealTheta += PI;
+    } else if (vAX < 0 && vAXP < 0) {
+      vRealTheta -= PI;
+    }
+
+    double const hNewR = sqrt(gRandomA->Uniform()) * hR;
+    double const vNewR = sqrt(gRandomA->Uniform()) * vR;
+
+    double const hX = hNewR * cos(hRealTheta);
+    double const vX = vNewR * cos(vRealTheta);
+
+    double const hXP = hNewR * sin(hRealTheta);
+    double const vXP = vNewR * sin(vRealTheta);
+
+    // New X0 location for this particle
+    TVector3D XNew = this->GetX0();
+    XNew += fHorizontalDirection * hX;
+    XNew += fVerticalDirection   * vX;
+
+    // Beta vector from randomization and energy spread
+    TVector3D BetaNew = fHorizontalDirection.Cross(fVerticalDirection) * Beta;
+    BetaNew.RotateSelf(hXP, fVerticalDirection);
+    BetaNew.RotateSelf(vXP, fHorizontalDirection);
+
+    // Possibility to shift the time
+    double const TNew = fT0;
+
+    NewParticle.SetInitialParticleConditions(XNew, BetaNew, TNew);
+
   }
 
-  double const Gamma = ENew / TOSCARSSR::kgToGeV(this->GetM()) < 1 ? 1 : ENew / TOSCARSSR::kgToGeV(this->GetM());
-  double const Beta = Gamma != 1 ? sqrt(1.0 - 1.0 / (Gamma * Gamma)) : 0;
 
-  double const Ellipse_HA = sqrt(fEmittance[0] * (fTwissBetaX0[0] + fTwissGammaX0[0]));   // aa
-  double const Ellipse_VA = sqrt(fEmittance[1] * (fTwissBetaX0[1] + fTwissGammaX0[1]));
 
-  double const Ellipse_HB = fEmittance[0] / Ellipse_HA; // ba
-  double const Ellipse_VB = fEmittance[1] / Ellipse_VA;
-
-  double const Angle_H = 0.5*atan(2.*fTwissAlphaX0[0] / (fTwissGammaX0[0] - fTwissBetaX0[0]));  // myangle
-  double const Angle_V = 0.5*atan(2.*fTwissAlphaX0[1] / (fTwissGammaX0[1] - fTwissBetaX0[1]));
-
-  double const RHA = Ellipse_HA * gRandomA->Normal();
-  double const RHB = Ellipse_HB * gRandomA->Normal();
-  double const RVA = Ellipse_VA * gRandomA->Normal();
-  double const RVB = Ellipse_VB * gRandomA->Normal();
-
-  double const HOffset  = RHA * cos(Angle_H) - RHB * sin(Angle_H);
-  double const HPOffset = RHA * sin(Angle_H) + RHB * cos(Angle_H);
-
-  double const VOffset  = RVA * cos(Angle_V) - RVB * sin(Angle_V);
-  double const VPOffset = RVA * sin(Angle_V) + RVB * cos(Angle_V);
-
-  // New X0 location for this particle
-  TVector3D XNew = this->GetX0();
-  XNew += fHorizontalDirection * HOffset;
-  XNew += fVerticalDirection   * VOffset;
-
-  // Distance from t0 location to lattice midpoint
-
-  TVector3D BetaNew = this->GetU0() * Beta;
-
-  // UPDATE: Rotate about the horizontal and vertical beam axes (arbitrary)
-  BetaNew.RotateSelf(HPOffset, fVerticalDirection);
-  BetaNew.RotateSelf(VPOffset, fHorizontalDirection);
-
-  double    TNew = fT0;
-
-  TParticleA NewParticle((TParticleA) *this);
-  NewParticle.SetInitialParticleConditions(XNew, BetaNew, TNew);
 
 
   return NewParticle;
 }
-
-
 
 
 
@@ -802,6 +884,41 @@ void TParticleBeam::SetBeamDistribution (TParticleBeam_BeamDistribution const D)
   fBeamDistribution = D;
   return;
 }
+
+
+
+void TParticleBeam::SetBeamDistribution (std::string const& Name)
+{
+  // Set the beam distribution type
+  fBeamDistribution = this->GetBeamDistribution(Name);
+  return;
+}
+
+
+
+TParticleBeam::TParticleBeam_BeamDistribution TParticleBeam::GetBeamDistribution (std::string const& Name) const
+{
+  // Get the TParticleBeam_BeamDistribution for a named beam
+  
+  std::string L = Name;
+  std::transform(L.begin(), L.end(), L.begin(), ::tolower);
+
+  if (L == "") {
+    return kBeamDistribution_None;
+  } else if (L == "filament") {
+    return kBeamDistribution_Filament;
+  } else if (L == "gaussian") {
+    return kBeamDistribution_Gaussian;
+  } else if (L == "kv") {
+    return kBeamDistribution_KV;
+  } else {
+    throw std::invalid_argument(("Unknown beam distribution name: " + Name).c_str());
+  }
+
+  return kBeamDistribution_None;
+}
+
+
 
 
 

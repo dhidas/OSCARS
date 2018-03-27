@@ -3436,7 +3436,7 @@ static PyObject* OSCARSSR_SetParticleBeam (OSCARSSRObject* self, PyObject* args,
 
 
 const char* DOC_OSCARSSR_AddParticleBeam = R"docstring(
-add_particle_beam([, type, name, energy_GeV, d0, x0, beam, sigma_energy_GeV, t0, current, weight, rotations, translation, horizontal_direction, beta, alpha, gamma, emittance, eta, lattice_reference, mass, charge])
+add_particle_beam([, type, name, energy_GeV, d0, x0, beam, sigma_energy_GeV, t0, current, weight, rotations, translation, horizontal_direction, beta, alpha, gamma, emittance, eta, lattice_reference, mass, charge, ctstartstop, distribution])
 
 Add a particle beam to the OSCARS object with a name given by *name*.  There is no limit to the number of different particle beams one can add.  They are added with a *weight* which is by default 1.  The weight is used in random sampling when asking for a new particle, for example in oscars.sr.set_new_particle().  If the *beam* parameter is given you only need to specify *name* and *x0*.
 
@@ -3516,8 +3516,15 @@ mass : float
 charge : float
     Charge of a *custom* particle.  This is only used if *type* = 'custom'.  Must be non-zero.
 
-ctstartstop: [float, float]
+ctstartstop : [float, float]
     Initial start and stop times for the calculation.  Not technically a beam parameter here, but the ability to set it in this function
+
+distribution : str
+    Which particle beam distribution you want to use for non-zero emittance beams.
+    Choices are:
+        filament  (default if zero emittance)
+        gaussian  (default for non-zero emittance)
+        kv
 
 Returns
 -------
@@ -3571,6 +3578,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   PyObject*   List_Eta                   = 0x0;
   PyObject*   List_Lattice_Reference     = 0x0;
   PyObject*   List_CTStartStop           = 0x0;
+  char const* Distribution               = "";
 
   TVector3D Position(0, 0, 0);
   TVector3D Direction(0, 0, 1);
@@ -3609,9 +3617,10 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
                                  "mass",
                                  "charge",
                                  "ctstartstop",
+                                 "distribution",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ssdOOsddddOOOOOOOOOddO",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ssdOOsddddOOOOOOOOOddOs",
                                    const_cast<char **>(kwlist),
                                    &Type,
                                    &Name,
@@ -3634,7 +3643,8 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
                                    &List_Lattice_Reference,
                                    &Mass,
                                    &Charge,
-                                   &List_CTStartStop)) {
+                                   &List_CTStartStop,
+                                   &Distribution)) {
     return NULL;
   }
 
@@ -3780,6 +3790,16 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
     // Beam distribution to filament
     if (std::strlen(Beam) == 0) {
       ThisBeam->SetBeamDistribution(TParticleBeam::kBeamDistribution_Filament);
+    }
+  }
+
+
+  if (Distribution != "") {
+    try {
+      ThisBeam->SetBeamDistribution(Distribution);
+    } catch (std::invalid_argument e) {
+      PyErr_SetString(PyExc_ValueError, e.what());
+      return NULL;
     }
   }
 
