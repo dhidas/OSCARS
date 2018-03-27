@@ -123,6 +123,18 @@ class bl(oscars.lut.lut1d):
                 ctstartstop = list(map(float, c['ctstartstop'].split()))
                 self.osr.set_ctstartstop(ctstartstop[0], ctstartstop[1])
 
+
+        # Config bfield translation, etc
+        self.bfield_kwargs = None
+        if 'bfield' in self.config:
+            c = self.config['bfield'] # bfield config
+            a = dict()                # kwargs
+
+            if 'translation' in c: a['translation'] = list(map(float, c['translation'].split()))
+            if 'rotations' in c: raise ValueError('rotations keyword not allowed in config file, please remove')
+
+            self.bfield_kwargs = a
+
         self.phase_mode = None
         if 'general' in self.config:
             g = self.config['general']
@@ -500,7 +512,17 @@ class bl(oscars.lut.lut1d):
 
         self.osr.clear_bfields()
         mapping = oscars.util.read_file_list_with_header(self.bfield_mapping_1d_filename)
-        self.osr.add_bfield_interpolated(mapping=mapping[0], iformat=mapping[1], rotations=mapping[2], translation=mapping[3], scale=mapping[4], parameter=gap)
+
+        translation = mapping[3]
+        if 'translation' in self.bfield_kwargs:
+            t = self.bfield_kwargs['translation']
+            if len(t) != 3:
+                print('t:', t)
+                raise IndexError('translation input of incorrect length')
+            for i in range(3):
+                translation[i] += t[i]
+
+        self.osr.add_bfield_interpolated(mapping=mapping[0], iformat=mapping[1], rotations=mapping[2], translation=translation, scale=mapping[4], parameter=gap)
 
         self.gap = gap
 
