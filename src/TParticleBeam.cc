@@ -175,7 +175,7 @@ void TParticleBeam::SetPredefinedBeam (std::string const& Beam)
     this->SetEmittance(TVector2D(0.55e-9, 0.008e-9));
     this->SetTwissLatticeReference(TVector3D(0, 0, 0));
     this->SetTwissBetaAlpha(TVector2D(18, 3.1), TVector2D(0, 0));
-    this->SetSigmaEnergyGeV(3. * 0.001);
+    this->SetSigmaEnergyGeV(3. * 0.00089);
     this->SetVerticalDirection(TVector3D(0, 1, 0));
     this->SetBeamDistribution(kBeamDistribution_Gaussian);
 
@@ -194,7 +194,7 @@ void TParticleBeam::SetPredefinedBeam (std::string const& Beam)
     this->SetEmittance(TVector2D(0.55e-9, 0.008e-9));
     this->SetTwissLatticeReference(TVector3D(0, 0, 0));
     this->SetTwissBetaAlpha(TVector2D(1.5, 0.8), TVector2D(0, 0));
-    this->SetSigmaEnergyGeV(3. * 0.001);
+    this->SetSigmaEnergyGeV(3. * 0.00089);
     this->SetVerticalDirection(TVector3D(0, 1, 0));
     this->SetBeamDistribution(kBeamDistribution_Gaussian);
   } else {
