@@ -764,6 +764,9 @@ TParticleA TParticleBeam::GetNewParticle ()
     double const GammaE = ENew / TOSCARSSR::kgToGeV(this->GetM()) < 1 ? 1 : ENew / TOSCARSSR::kgToGeV(this->GetM());
     double const Beta = GammaE != 1 ? sqrt(1.0 - 1.0 / (GammaE * GammaE)) : 0;
 
+    // Converging or diverging
+    int const hConverge = fTwissAlphaX0[0] > 0 ? -1 : 1;
+    int const vConverge = fTwissAlphaX0[1] > 0 ? -1 : 1;
 
     // For sampling
     double const hSigX  = sqrt(fEmittance[0] *  fTwissBetaX0[0]);
@@ -779,13 +782,13 @@ TParticleA TParticleBeam::GetNewParticle ()
     double const hu  = gRandomA->Uniform();
     double const hv  = gRandomA->Uniform();
     double const hX  = hSigX * sqrt(-2 * log(hu)) * (sqrt(1 - hRho*hRho) * cos(2 * PI * hv) + hRho * sin(2 * PI * hv));
-    double const hXP = hSigXP * sqrt(-2 * log(hu)) * sin(2 * PI * hv);
+    double const hXP = hConverge * hSigXP * sqrt(-2 * log(hu)) * sin(2 * PI * hv);
 
     // Vertical x and xp
     double const vu  = gRandomA->Uniform();
     double const vv  = gRandomA->Uniform();
     double const vX  = vSigX * sqrt(-2 * log(vu)) * (sqrt(1 - vRho*vRho) * cos(2 * PI * vv) + vRho * sin(2 * PI * vv));
-    double const vXP = vSigXP * sqrt(-2 * log(vu)) * sin(2 * PI * vv);
+    double const vXP = vConverge * vSigXP * sqrt(-2 * log(vu)) * sin(2 * PI * vv);
 
     // New X0 location for this particle
     TVector3D XNew = this->GetX0();
@@ -795,7 +798,7 @@ TParticleA TParticleBeam::GetNewParticle ()
     // Beta vector from randomization and energy spread
     TVector3D BetaNew = fHorizontalDirection.Cross(fVerticalDirection) * Beta;
     BetaNew.RotateSelf(hXP, fVerticalDirection);
-    BetaNew.RotateSelf(vXP, fHorizontalDirection);
+    BetaNew.RotateSelf(vXP, -fHorizontalDirection);
 
     // Possibility to shift the time
     double const TNew = fT0;
@@ -816,6 +819,10 @@ TParticleA TParticleBeam::GetNewParticle ()
     // Gamma and Beta magnitude from energy distribution
     double const GammaE = ENew / TOSCARSSR::kgToGeV(this->GetM()) < 1 ? 1 : ENew / TOSCARSSR::kgToGeV(this->GetM());
     double const Beta = GammaE != 1 ? sqrt(1.0 - 1.0 / (GammaE * GammaE)) : 0;
+
+    // Converging or diverging
+    int const hConverge = fTwissAlphaX0[0] > 0 ? -1 : 1;
+    int const vConverge = fTwissAlphaX0[1] > 0 ? -1 : 1;
 
     double const hTheta = gRandomA->Uniform() * 2 * PI;
     double const vTheta = gRandomA->Uniform() * 2 * PI;
@@ -849,8 +856,8 @@ TParticleA TParticleBeam::GetNewParticle ()
     double const hX = hNewR * cos(hRealTheta);
     double const vX = vNewR * cos(vRealTheta);
 
-    double const hXP = hNewR * sin(hRealTheta);
-    double const vXP = vNewR * sin(vRealTheta);
+    double const hXP = hNewR * sin(hRealTheta) * hConverge;
+    double const vXP = vNewR * sin(vRealTheta) * vConverge;
 
     // New X0 location for this particle
     TVector3D XNew = this->GetX0();
@@ -860,7 +867,7 @@ TParticleA TParticleBeam::GetNewParticle ()
     // Beta vector from randomization and energy spread
     TVector3D BetaNew = fHorizontalDirection.Cross(fVerticalDirection) * Beta;
     BetaNew.RotateSelf(hXP, fVerticalDirection);
-    BetaNew.RotateSelf(vXP, fHorizontalDirection);
+    BetaNew.RotateSelf(vXP, -fHorizontalDirection);
 
     // Possibility to shift the time
     double const TNew = fT0;
