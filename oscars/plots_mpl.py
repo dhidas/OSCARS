@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from matplotlib.colors import LogNorm
 import matplotlib.ticker
 import numpy as np

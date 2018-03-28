@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from math import sin, cos, sqrt, pi
 
 class PSRectangle:
