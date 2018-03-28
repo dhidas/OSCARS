@@ -4320,6 +4320,172 @@ static PyObject* OSCARSSR_SetNewParticle (OSCARSSRObject* self, PyObject* args, 
 
 
 
+const char* DOC_OSCARSSR_GetBeamX0 = R"docstring(
+get_beam_x0()
+
+Get the initial position for the given beam in [m].  If more than one beam exists and no beam name is given will raise.
+
+Parameters
+----------
+beam : str
+    Name of beam (optional)
+
+
+Returns
+-------
+x0 : [float, float, float]
+    Initial beam position
+
+)docstring";
+static PyObject* OSCARSSR_GetBeamX0 (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
+{
+  // Get the beam position at particle t0
+
+  char const* Name             = "";
+
+  // Input variables and parsing
+  static const char *kwlist[] = {"name",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|s",
+                                   const_cast<char **>(kwlist),
+                                   &Name)) {
+    return NULL;
+  }
+
+  TVector3D X0 = self->obj->GetParticleBeam(Name).GetX0();
+  return OSCARSPY::TVector3DAsList( X0 );
+}
+
+
+
+
+const char* DOC_OSCARSSR_GetBeamU0 = R"docstring(
+get_beam_u0()
+
+Get the initial direction for the given beam.  If more than one beam exists and no beam name is given will raise.
+
+Parameters
+----------
+beam : str
+    Name of beam (optional)
+
+
+Returns
+-------
+u0 : [float, float, float]
+    Initial beam direction
+
+)docstring";
+static PyObject* OSCARSSR_GetBeamU0 (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
+{
+  // Get the beam position at particle t0
+
+  char const* Name             = "";
+
+  // Input variables and parsing
+  static const char *kwlist[] = {"name",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|s",
+                                   const_cast<char **>(kwlist),
+                                   &Name)) {
+    return NULL;
+  }
+
+  TVector3D U0 = self->obj->GetParticleBeam(Name).GetU0();
+  return OSCARSPY::TVector3DAsList( U0 );
+}
+
+
+
+
+const char* DOC_OSCARSSR_GetBeamHorizontalDirection = R"docstring(
+get_beam_horizontal_direction()
+
+Get the horizontal direction for the given beam.  If more than one beam exists and no beam name is given will raise.
+
+Parameters
+----------
+beam : str
+    Name of beam (optional)
+
+
+Returns
+-------
+horizontal_direction : [float, float, float]
+    Horizontal beam direction
+
+)docstring";
+static PyObject* OSCARSSR_GetBeamHorizontalDirection (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
+{
+  // Get the beam position at particle t0
+
+  char const* Name             = "";
+
+  // Input variables and parsing
+  static const char *kwlist[] = {"name",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|s",
+                                   const_cast<char **>(kwlist),
+                                   &Name)) {
+    return NULL;
+  }
+
+  TVector3D H = self->obj->GetParticleBeam(Name).GetHorizontalDirection();
+  return OSCARSPY::TVector3DAsList( H );
+}
+
+
+
+
+
+const char* DOC_OSCARSSR_GetBeamVerticalDirection = R"docstring(
+get_beam_vertical_direction()
+
+Get the vertical direction for the given beam.  If more than one beam exists and no beam name is given will raise.
+
+Parameters
+----------
+beam : str
+    Name of beam (optional)
+
+
+Returns
+-------
+vertical_direction : [float, float, float]
+    Vertical beam direction
+
+)docstring";
+static PyObject* OSCARSSR_GetBeamVerticalDirection (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
+{
+  // Get the beam position at particle t0
+
+  char const* Name             = "";
+
+  // Input variables and parsing
+  static const char *kwlist[] = {"name",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|s",
+                                   const_cast<char **>(kwlist),
+                                   &Name)) {
+    return NULL;
+  }
+
+  TVector3D H = self->obj->GetParticleBeam(Name).GetVerticalDirection();
+  return OSCARSPY::TVector3DAsList( H );
+}
+
+
+
+
+
+
+
+
+
 const char* DOC_OSCARSSR_GetParticleX0 = R"docstring(
 get_particle_x0()
 
@@ -8485,6 +8651,10 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   {"set_twiss_parameters",              (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_SetTwissParameters},
                                                                                           
   {"set_new_particle",                  (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_SetNewParticle},
+  {"get_beam_x0",                       (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetBeamX0},
+  {"get_beam_u0",                       (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetBeamU0},
+  {"get_beam_horizontal_direction",     (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetBeamHorizontalDirection},
+  {"get_beam_vertical_direction",       (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetBeamVerticalDirection},
   {"get_particle_x0",                   (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_GetParticleX0},
   {"get_particle_beta0",                (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_GetParticleBeta0},
   {"get_particle_e0",                   (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_GetParticleE0},
@@ -8595,6 +8765,10 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"set_twiss_parameters",              (PyCFunction) OSCARSSR_SetTwissParameters,              METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_SetTwissParameters},
 
   {"set_new_particle",                  (PyCFunction) OSCARSSR_SetNewParticle,                  METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_SetNewParticle},
+  {"get_beam_x0",                       (PyCFunction) OSCARSSR_GetBeamX0,                       METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetBeamX0},
+  {"get_beam_u0",                       (PyCFunction) OSCARSSR_GetBeamU0,                       METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetBeamU0},
+  {"get_beam_horizontal_direction",     (PyCFunction) OSCARSSR_GetBeamHorizontalDirection,      METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetBeamHorizontalDirection},
+  {"get_beam_vertical_direction",       (PyCFunction) OSCARSSR_GetBeamVerticalDirection,        METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetBeamVerticalDirection},
   {"get_particle_x0",                   (PyCFunction) OSCARSSR_GetParticleX0,                   METH_NOARGS,                  DOC_OSCARSSR_GetParticleX0},
   {"get_particle_beta0",                (PyCFunction) OSCARSSR_GetParticleBeta0,                METH_NOARGS,                  DOC_OSCARSSR_GetParticleBeta0},
   {"get_particle_e0",                   (PyCFunction) OSCARSSR_GetParticleE0,                   METH_NOARGS,                  DOC_OSCARSSR_GetParticleE0},
