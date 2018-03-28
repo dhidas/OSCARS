@@ -6,7 +6,7 @@ import numpy as np
 import uuid
 import oscars.sr
 
-import matplotlib as plt
+import matplotlib.pyplot as plt
 
 from math import atan
 
