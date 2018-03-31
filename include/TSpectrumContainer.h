@@ -42,6 +42,8 @@ class TSpectrumContainer
     void Clear ();
     void AverageFromFilesText (std::vector<std::string> const&);
     void AverageFromFilesBinary (std::vector<std::string> const&);
+    void AverageFromSpectra (std::vector<TSpectrumContainer> const& Spectra,
+                             std::vector<double> const& Weights = std::vector<double>());
 
   private:
 

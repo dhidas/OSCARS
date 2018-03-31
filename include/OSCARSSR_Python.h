@@ -69,7 +69,15 @@ static PyObject* OSCARSSR_SetParticleBeamSize (OSCARSSRObject* self, PyObject* a
 static PyObject* OSCARSSR_ClearParticleBeams (OSCARSSRObject* self);
 static PyObject* OSCARSSR_PrintParticleBeams (OSCARSSRObject* self);
 static PyObject* OSCARSSR_SetTwissParameters (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
+static PyObject* OSCARSSR_GetEmittance (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
+static PyObject* OSCARSSR_GetTwissBetaX0 (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
+static PyObject* OSCARSSR_GetTwissAlphaX0 (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
+static PyObject* OSCARSSR_GetTwissGammaX0 (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSSR_SetNewParticle (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
+static PyObject* OSCARSSR_GetBeamX0 (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
+static PyObject* OSCARSSR_GetBeamU0 (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
+static PyObject* OSCARSSR_GetBeamHorizontalDirection (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
+static PyObject* OSCARSSR_GetBeamVerticalDirection (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSSR_GetParticleX0 (OSCARSSRObject* self);
 static PyObject* OSCARSSR_GetParticleBeta0 (OSCARSSRObject* self);
 static PyObject* OSCARSSR_GetParticleE0 (OSCARSSRObject* self);

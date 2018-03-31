@@ -4227,6 +4227,182 @@ static PyObject* OSCARSSR_SetTwissParameters (OSCARSSRObject* self, PyObject* ar
 
 
 
+const char* DOC_OSCARSSR_GetEmittance = R"docstring(
+get_emittance(, beam)
+
+Get the horizontal and vertical emittance of a beam.  If more than one beam exists and no beam name is given will raise.
+
+Parameters
+----------
+beam : str
+    Name of beam (optional)
+
+
+Returns
+-------
+emittance : [float, float]
+    emittance for horizontal and vertical
+
+)docstring";
+static PyObject* OSCARSSR_GetEmittance (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
+{
+  // Get the beam emittance
+
+  char const* Name             = "";
+
+  // Input variables and parsing
+  static const char *kwlist[] = {"name",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|s",
+                                   const_cast<char **>(kwlist),
+                                   &Name)) {
+    return NULL;
+  }
+
+  TVector2D A0 = self->obj->GetParticleBeam(Name).GetEmittance();
+  return OSCARSPY::TVector2DAsList( A0 );
+}
+
+
+
+
+
+
+
+
+
+const char* DOC_OSCARSSR_GetTwissBetaX0 = R"docstring(
+get_twiss_beta_x0(, beam)
+
+Get the twiss beta parameters at beam x0 position.  If more than one beam exists and no beam name is given will raise.
+
+Parameters
+----------
+beam : str
+    Name of beam (optional)
+
+
+Returns
+-------
+beta : [float, float]
+    twiss beta for horizontal and vertical at x0
+
+)docstring";
+static PyObject* OSCARSSR_GetTwissBetaX0 (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
+{
+  // Get the beam position at particle t0
+
+  char const* Name             = "";
+
+  // Input variables and parsing
+  static const char *kwlist[] = {"name",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|s",
+                                   const_cast<char **>(kwlist),
+                                   &Name)) {
+    return NULL;
+  }
+
+  TVector2D A0 = self->obj->GetParticleBeam(Name).GetTwissBetaX0();
+  return OSCARSPY::TVector2DAsList( A0 );
+}
+
+
+
+
+
+
+
+
+
+const char* DOC_OSCARSSR_GetTwissAlphaX0 = R"docstring(
+get_twiss_alpha_x0(, beam)
+
+Get the twiss alpha parameters at beam x0 position.  If more than one beam exists and no beam name is given will raise.
+
+Parameters
+----------
+beam : str
+    Name of beam (optional)
+
+
+Returns
+-------
+alpha : [float, float]
+    twiss alpha for horizontal and vertical at x0
+
+)docstring";
+static PyObject* OSCARSSR_GetTwissAlphaX0 (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
+{
+  // Get the beam position at particle t0
+
+  char const* Name             = "";
+
+  // Input variables and parsing
+  static const char *kwlist[] = {"name",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|s",
+                                   const_cast<char **>(kwlist),
+                                   &Name)) {
+    return NULL;
+  }
+
+  TVector2D A0 = self->obj->GetParticleBeam(Name).GetTwissAlphaX0();
+  return OSCARSPY::TVector2DAsList( A0 );
+}
+
+
+
+
+
+
+const char* DOC_OSCARSSR_GetTwissGammaX0 = R"docstring(
+get_twiss_gamma_x0(, beam)
+
+Get the twiss gamma parameters at beam x0 position.  If more than one beam exists and no beam name is given will raise.
+
+Parameters
+----------
+beam : str
+    Name of beam (optional)
+
+
+Returns
+-------
+gamma : [float, float]
+    twiss gamma for horizontal and vertical at x0
+
+)docstring";
+static PyObject* OSCARSSR_GetTwissGammaX0 (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
+{
+  // Get the beam position at particle t0
+
+  char const* Name             = "";
+
+  // Input variables and parsing
+  static const char *kwlist[] = {"name",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|s",
+                                   const_cast<char **>(kwlist),
+                                   &Name)) {
+    return NULL;
+  }
+
+  TVector2D A0 = self->obj->GetParticleBeam(Name).GetTwissGammaX0();
+  return OSCARSPY::TVector2DAsList( A0 );
+}
+
+
+
+
+
+
+
+
 
 
 
@@ -7750,40 +7926,54 @@ static PyObject* OSCARSSR_AverageSpectra (OSCARSSRObject* self, PyObject* args, 
 {
   // Calculate the flux on a surface given an energy and list of points in 3D
 
-  PyObject*   List_InFileNamesText = PyList_New(0);
-  PyObject*   List_InFileNamesBinary = PyList_New(0);
-  char const* OutFileNameText = "";
-  char const* OutFileNameBinary = "";
+  PyObject*   List_InFileNamesText    = 0x0;
+  PyObject*   List_InFileNamesBinary  = 0x0;
+  PyObject*   List_InSpectra          = 0x0;
+  char const* OutFileNameText         = "";
+  char const* OutFileNameBinary       = "";
+  PyObject*   List_Weights            = 0x0;
 
 
   static const char *kwlist[] = {"ifiles",
                                  "bifiles",
+                                 "spectra",
                                  "ofile",
                                  "bofile",
+                                 "weights",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|OOss",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|OOOssO",
                                    const_cast<char **>(kwlist),
                                    &List_InFileNamesText,
                                    &List_InFileNamesBinary,
+                                   &List_InSpectra,
                                    &OutFileNameText,
-                                   &OutFileNameBinary)) {
+                                   &OutFileNameBinary,
+                                   &List_Weights)) {
     return NULL;
   }
 
   // Grab the number of input files for both text and binary lists
-  size_t const NFilesText = PyList_Size(List_InFileNamesText);
-  size_t const NFilesBinary = PyList_Size(List_InFileNamesBinary);
+  size_t const NFilesText = List_InFileNamesText != 0x0 ? PyList_Size(List_InFileNamesText) : 0;
+  size_t const NFilesBinary = List_InFileNamesBinary != 0x0 ? PyList_Size(List_InFileNamesBinary) : 0;
+  size_t const NSpectra = List_InSpectra != 0x0 ? PyList_Size(List_InSpectra) : 0;
+  size_t const NWeights = List_Weights != 0x0 ? PyList_Size(List_Weights) : 0;
 
-  // Doesn't allow for both binary and text input at the same time
-  if (NFilesText != 0 && NFilesBinary !=0) {
-    PyErr_SetString(PyExc_ValueError, "either text or binary files may be added, but not both.");
+  // Allows for only one type of input
+  if (NFilesText != 0 && NFilesBinary !=0 && NSpectra != 0) {
+    PyErr_SetString(PyExc_ValueError, "either text or binary or spectra may be added, but not a combination.");
     return NULL;
   }
 
   // Check that there is at least one file
-  if (NFilesText + NFilesBinary < 1) {
-    PyErr_SetString(PyExc_ValueError, "No files given.  You need at least one file as input in a list.");
+  if (NFilesText + NFilesBinary + NSpectra < 1) {
+    PyErr_SetString(PyExc_ValueError, "No files/spectra given.  You need at least one as input in a list.");
+    return NULL;
+  }
+
+  // Check the number of weights makes sense
+  if (NWeights != 0 && NFilesText + NFilesBinary + NSpectra != NWeights) {
+    PyErr_SetString(PyExc_ValueError, "The number of weights does not match the number of inputs (nor is it zero).");
     return NULL;
   }
 
@@ -7796,6 +7986,17 @@ static PyObject* OSCARSSR_AverageSpectra (OSCARSSRObject* self, PyObject* args, 
   for (size_t i = 0; i != NFilesBinary; ++i) {
     FileNamesBinary.push_back( OSCARSPY::GetAsString(PyList_GetItem(List_InFileNamesBinary, i)) );
   }
+  std::vector<TSpectrumContainer> SpectraVector;
+  for (size_t i = 0; i != NSpectra; ++i) {
+    SpectraVector.push_back(OSCARSPY::GetSpectrumFromList(PyList_GetItem(List_InSpectra, i)));
+  }
+
+  // Check weights
+  std::vector<double> Weights;
+  for (size_t i = 0; i != NWeights; ++i) {
+    Weights.push_back(PyFloat_AsDouble(PyList_GetItem(List_Weights, i)));
+  }
+
 
   // Container for flux average
   TSpectrumContainer Container;
@@ -7814,10 +8015,17 @@ static PyObject* OSCARSSR_AverageSpectra (OSCARSSRObject* self, PyObject* args, 
       PyErr_SetString(PyExc_ValueError, e.what());
       return NULL;
     }
-  } else {
+  } else if (NFilesBinary > 0) {
     try {
       Container.AverageFromFilesBinary(FileNamesBinary);
     } catch (std::invalid_argument e) {
+      PyErr_SetString(PyExc_ValueError, e.what());
+      return NULL;
+    }
+  } else if (NSpectra > 0) {
+    try {
+      Container.AverageFromSpectra(SpectraVector, Weights);
+    } catch (std::length_error e) {
       PyErr_SetString(PyExc_ValueError, e.what());
       return NULL;
     }
@@ -8649,6 +8857,10 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   {"print_particle_beams",              (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_PrintParticleBeams},
                                                                                           
   {"set_twiss_parameters",              (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_SetTwissParameters},
+  {"get_emittance",                     (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetEmittance},
+  {"get_twiss_beta_x0",                 (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetTwissBetaX0},
+  {"get_twiss_alpha_x0",                (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetTwissAlphaX0},
+  {"get_twiss_gamma_x0",                (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetTwissGammaX0},
                                                                                           
   {"set_new_particle",                  (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_SetNewParticle},
   {"get_beam_x0",                       (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetBeamX0},
@@ -8763,6 +8975,10 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"print_particle_beams",              (PyCFunction) OSCARSSR_PrintParticleBeams,              METH_NOARGS,                  DOC_OSCARSSR_PrintParticleBeams},
      
   {"set_twiss_parameters",              (PyCFunction) OSCARSSR_SetTwissParameters,              METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_SetTwissParameters},
+  {"get_emittance",                     (PyCFunction) OSCARSSR_GetEmittance,                    METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetEmittance},
+  {"get_twiss_beta_x0",                 (PyCFunction) OSCARSSR_GetTwissBetaX0,                  METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetTwissBetaX0},
+  {"get_twiss_alpha_x0",                (PyCFunction) OSCARSSR_GetTwissAlphaX0,                 METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetTwissAlphaX0},
+  {"get_twiss_gamma_x0",                (PyCFunction) OSCARSSR_GetTwissGammaX0,                 METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetTwissGammaX0},
 
   {"set_new_particle",                  (PyCFunction) OSCARSSR_SetNewParticle,                  METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_SetNewParticle},
   {"get_beam_x0",                       (PyCFunction) OSCARSSR_GetBeamX0,                       METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_GetBeamX0},

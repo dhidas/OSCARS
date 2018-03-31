@@ -272,7 +272,6 @@ class OSCARSSR
                                int    const MaxLevel = -2,
                                int    const MaxLevelExtended = 0,
                                int    const ReturnQuantity = 0);
-
     void AddToSpectrum (TSpectrumContainer const&, double const Weight = 1);
     void AddToFlux (T3DScalarContainer const&, double const Weight = 1);
     void AddToPowerDensity (T3DScalarContainer const&, double const Weight = 1);

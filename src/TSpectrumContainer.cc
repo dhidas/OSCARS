@@ -547,3 +547,56 @@ void TSpectrumContainer::AverageFromFilesBinary (std::vector<std::string> const&
 
   return;
 }
+
+
+void TSpectrumContainer::AverageFromSpectra (std::vector<TSpectrumContainer> const& Spectra, std::vector<double> const& Weights)
+{
+
+  // Clear my contents
+  this->Clear();
+
+  Spectra.size();
+  if (Weights.size() != 0 && Spectra.size() != Weights.size()) {
+    throw std::length_error("Incorrect size for weights given the spectra");
+  }
+
+  double const W = 1. / (double) Spectra.size();
+
+  // Check all npoints in spectra
+  size_t const NPoints = Spectra[0].GetNPoints();
+  for (std::vector<TSpectrumContainer>::const_iterator it = Spectra.begin(); it != Spectra.end(); ++it) {
+    if (it->GetNPoints() != NPoints) {
+      throw std::length_error("Incorrect size in one of the spectra");
+    }
+  }
+
+  for (size_t is = 0; is != Spectra.size(); ++is) {
+
+    double const ThisWeight = Weights.size() != 0 ? Weights[is] : W;
+
+    for (size_t ip = 0; ip != NPoints; ++ip) {
+
+      double const X = Spectra[is].GetEnergy(ip);
+      double const Y = Spectra[is].GetFlux(ip) * ThisWeight;
+
+      // Add point to self
+      if (is == 0) {
+        this->AddPoint(X, Y);
+      } else {
+        this->AddToFlux(ip, Y);
+      }
+    }
+  }
+
+
+
+  return;
+}
+
+
+
+
+
+
+
+
