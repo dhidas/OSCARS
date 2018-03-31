@@ -5,10 +5,11 @@ import copy
 import numpy as np
 import uuid
 import oscars.sr
+import oscars.twiss
 
 import matplotlib.pyplot as plt
 
-from math import atan
+from math import pi, sqrt, cos, sin, atan
 
 
 def read_file_list_with_header (ifile, idir=None):
@@ -504,6 +505,21 @@ def beam_statistics (osr, n=10000, cdt=0, show=True, beam='', bins=[50, 50], nsi
     stats['mean_vp'] = np.mean(YP)
     stats['mean_e'] = np.mean(E0)
 
+    tbeta = osr.get_twiss_beta_x0(beam)
+    talpha = osr.get_twiss_alpha_x0(beam)
+    tgamma = osr.get_twiss_gamma_x0(beam)
+    emittance = osr.get_emittance(beam)
+
+    twiss_h = oscars.twiss.twiss(beta=osr.get_twiss_beta_x0(beam)[0],
+                                 alpha=osr.get_twiss_alpha_x0(beam)[0],
+                                 emittance=osr.get_emittance(beam)[0]
+            )
+
+    twiss_v = oscars.twiss.twiss(beta=osr.get_twiss_beta_x0(beam)[1],
+                                 alpha=osr.get_twiss_alpha_x0(beam)[1],
+                                 emittance=osr.get_emittance(beam)[1]
+            )
+
         
     # To draw or not to draw
     draw = show or sum([len(fn) for fn in ofiles]) > 0
@@ -519,6 +535,9 @@ def beam_statistics (osr, n=10000, cdt=0, show=True, beam='', bins=[50, 50], nsi
         plt.xticks([-nsig*std_h, 0, nsig*std_h])
         plt.yticks([-nsig*std_hp, 0, nsig*std_hp])
         plt.hist2d(X, XP, bins=bins, range=[[-nsig*std_h, nsig*std_h], [-nsig*std_hp, nsig*std_hp]])
+
+        th = twiss_h.get_ellipse_points()
+        plt.plot(th[0], th[1], '-.', color='r')
         plt.tight_layout()
         if ofiles[0] != '':
             plt.savefig(ofiles[0])
@@ -536,6 +555,8 @@ def beam_statistics (osr, n=10000, cdt=0, show=True, beam='', bins=[50, 50], nsi
         plt.xticks([-nsig*std_v, 0, nsig*std_v])
         plt.yticks([-nsig*std_vp, 0, nsig*std_vp])
         plt.hist2d(Y, YP, bins=bins, range=[[-nsig*std_v, nsig*std_v], [-nsig*std_vp, nsig*std_vp]])
+        tv = twiss_v.get_ellipse_points()
+        plt.plot(tv[0], tv[1], '-.', color='r')
         plt.tight_layout()
         if ofiles[1] != '':
             plt.savefig(ofiles[1])
