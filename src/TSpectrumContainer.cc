@@ -369,7 +369,7 @@ void TSpectrumContainer::Clear ()
 
 
 
-void TSpectrumContainer::AverageFromFilesText (std::vector<std::string> const& Files)
+void TSpectrumContainer::AverageFromFilesText (std::vector<std::string> const& Files, std::vector<double> const& Weights)
 {
   // Average the inpput from all text files.  Text files must be the same points in energy
   // arranged in exactly the same format.  The energy points are taken from only the first file
@@ -383,9 +383,13 @@ void TSpectrumContainer::AverageFromFilesText (std::vector<std::string> const& F
     throw std::length_error("no files specified");
   }
 
-  // Double number of files for averaging
-  double const N = (double) Files.size();
+  // Check length of weights with number of files
+  if (Weights.size() != 0 && Files.size() != Weights.size()) {
+    throw std::length_error("Incorrect size for weights given the number of files");
+  }
 
+  // If no weights specified
+  double const W = 1. / (double) Files.size();
 
   // Open all files
   std::vector<std::ifstream> f(Files.size());
@@ -400,9 +404,12 @@ void TSpectrumContainer::AverageFromFilesText (std::vector<std::string> const& F
     }
   }
 
+  // Vector of weights for weighting
+  std::vector<double> ActualWeights = Weights.size() != 0 ? Weights : std::vector<double>(Files.size(), W);
 
   // Variables used for writing to file
-  double X, V;
+  double X = 0;
+  double V = 0;
 
   // Are we done reading yet
   bool NotDone = true;
@@ -410,7 +417,7 @@ void TSpectrumContainer::AverageFromFilesText (std::vector<std::string> const& F
   // Keep track of which point we are on
   size_t ip = 0;
 
-    // Loop over all points until done
+  // Loop over all points until done
   while (NotDone) {
 
     // For each point loop over files and average
@@ -435,9 +442,9 @@ void TSpectrumContainer::AverageFromFilesText (std::vector<std::string> const& F
 
       // Add point to self
       if (i == 0) {
-        this->AddPoint(X, V/N);
+        this->AddPoint(X, V * ActualWeights[i]);
       } else {
-        this->AddToFlux(ip, V/N);
+        this->AddToFlux(ip, V * ActualWeights[i]);
       }
     }
 
@@ -457,7 +464,7 @@ void TSpectrumContainer::AverageFromFilesText (std::vector<std::string> const& F
 
 
 
-void TSpectrumContainer::AverageFromFilesBinary (std::vector<std::string> const& Files)
+void TSpectrumContainer::AverageFromFilesBinary (std::vector<std::string> const& Files, std::vector<double> const& Weights)
 {
   // Average the inpput from all text files.  Text files must be the same points in energy
   // arranged in exactly the same format.  The energy points are taken from only the first file
@@ -471,8 +478,10 @@ void TSpectrumContainer::AverageFromFilesBinary (std::vector<std::string> const&
     throw std::length_error("no files specified");
   }
 
-  // Double number of files for averaging
-  double const N = (double) Files.size();
+  // Check length of weights with number of files
+  if (Weights.size() != 0 && Files.size() != Weights.size()) {
+    throw std::length_error("Incorrect size for weights given the number of files");
+  }
 
   // Open all files
   std::vector<std::ifstream> f(Files.size());
@@ -486,6 +495,12 @@ void TSpectrumContainer::AverageFromFilesBinary (std::vector<std::string> const&
       throw std::invalid_argument("Cannot open one or more files of input");
     }
   }
+
+  // If no weights specified
+  double const W = 1. / (double) Files.size();
+
+  // Vector of weights for weighting
+  std::vector<double> ActualWeights = Weights.size() != 0 ? Weights : std::vector<double>(Files.size(), W);
 
   // Variables used for writing to file
   double X = 0;
@@ -530,9 +545,9 @@ void TSpectrumContainer::AverageFromFilesBinary (std::vector<std::string> const&
 
       // Add point to self
       if (i == 0) {
-        this->AddPoint(X, V/N);
+        this->AddPoint(X, V * ActualWeights[i]);
       } else {
-        this->AddToFlux(ip, V/N);
+        this->AddToFlux(ip, V * ActualWeights[i]);
       }
     }
 
@@ -555,7 +570,6 @@ void TSpectrumContainer::AverageFromSpectra (std::vector<TSpectrumContainer> con
   // Clear my contents
   this->Clear();
 
-  Spectra.size();
   if (Weights.size() != 0 && Spectra.size() != Weights.size()) {
     throw std::length_error("Incorrect size for weights given the spectra");
   }

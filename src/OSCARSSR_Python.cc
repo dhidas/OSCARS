@@ -8014,6 +8014,9 @@ static PyObject* OSCARSSR_AverageSpectra (OSCARSSRObject* self, PyObject* args, 
     } catch (std::invalid_argument e) {
       PyErr_SetString(PyExc_ValueError, e.what());
       return NULL;
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, e.what());
+      return NULL;
     }
   } else if (NFilesBinary > 0) {
     try {
@@ -8021,7 +8024,10 @@ static PyObject* OSCARSSR_AverageSpectra (OSCARSSRObject* self, PyObject* args, 
     } catch (std::invalid_argument e) {
       PyErr_SetString(PyExc_ValueError, e.what());
       return NULL;
-    }
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, e.what());
+      return NULL;
+    } 
   } else if (NSpectra > 0) {
     try {
       Container.AverageFromSpectra(SpectraVector, Weights);
