@@ -101,7 +101,7 @@ def calculate_harmonics_me (osr, obs=[0, 0, 30], nparticles=1000, niterations=10
                     print('did not see spectrum in ith spectrum')
 
 
-                if sr.spec_test(peak_i[0]):
+                if len(peak_i) != 0 and sr.spec_test(peak_i[0]):
                     sr.done = True
                     sr.save_spectrum_range(spectrum_summed)
                     sr.nparticles = total_particles
