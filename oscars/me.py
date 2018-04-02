@@ -1,3 +1,6 @@
+from oscars.fit import *
+import sys
+
 class SpecRange:
     range_eV = [0, 0]
     done = False
@@ -5,6 +8,7 @@ class SpecRange:
     energy = 0
     fwhm = 0
     spectrum = []
+    nparticles = 0
 
     def __init__ (self, range_eV):
         self.range_eV=range_eV
@@ -18,10 +22,9 @@ class SpecRange:
 
     def spec_test (self, h):
         # Compare spectrum to previous
-        flux_test = abs((self.flux - h[0]) / self.flux) < 0.51
-        energy_test = abs(self.energy - h[1]) / self.energy < 0.51
+        flux_test = abs((self.flux - h[0]) / self.flux) < 0.01
+        energy_test = abs(self.energy - h[1]) / self.energy < 0.01
         fwhm_test = True #abs((self.fwhm - h[2]) / self.fwhm) < 0.01
-        #print('tests', flux_test, energy_test, fwhm_test)
 
         return flux_test and energy_test and fwhm_test
     
@@ -57,7 +60,6 @@ def calculate_harmonics_me (osr, obs=[0, 0, 30], nparticles=1000, niterations=10
     for h in harmonics:
         specr.append(SpecRange([int(h[1] - 6*h[2]), int(h[1] + 3*h[2])]))
 
-    nparticles = 10
     total_particles = nparticles
 
     spectrum_summed = osr.calculate_spectrum(obs=obs,
@@ -73,9 +75,8 @@ def calculate_harmonics_me (osr, obs=[0, 0, 30], nparticles=1000, niterations=10
             sr.fwhm = new_peak[0][2]
         else:
             print('failing to see spectrum in init')
-            plot_spectrum(spectrum_summed, xlim=sr.range_eV)
 
-    for i in range(7):
+    for i in range(niterations):
         # Number of particles this round and total after this round is calculated
         nparticles = total_particles
         total_particles += nparticles
@@ -98,16 +99,15 @@ def calculate_harmonics_me (osr, obs=[0, 0, 30], nparticles=1000, niterations=10
                 peak_i = find_peaks_parabola(spectrum_i, [sr.range_eV])
                 if len(peak_i) == 0:
                     print('did not see spectrum in ith spectrum')
-                    plot_spectrum(spectrum_i)
 
 
                 if sr.spec_test(peak_i[0]):
                     sr.done = True
                     sr.save_spectrum_range(spectrum_summed)
+                    sr.nparticles = total_particles
                 peak_summed = find_peaks_parabola(spectrum_summed, [sr.range_eV])
                 if len(peak_summed) == 0:
                     print('did not see spectrum in summed spectrum')
-                    plot_spectrum(spectrum_summed, xlim=sr.range_eV)
 
                 if len(peak_summed) != 0:
                     sr.flux = peak_summed[0][0]
