@@ -53,7 +53,7 @@ def get_points(sr):
 def calculate_harmonics_me (osr, obs=[0, 0, 30], nparticles=1000, niterations=10):
 
     spectrum_se = osr.calculate_spectrum(obs=[0, 0, 30], energy_range_eV=[10, 30000])
-    harmonics = find_odd_harmonics(spectrum_se)
+    harmonics = find_odd_harmonics(spectrum_se, show=False)
     
     spectrum_summed = []
     specr = []
