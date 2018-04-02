@@ -5372,6 +5372,10 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
   // Add all values to a vector
   std::vector<double> VPoints_eV;
   if (List_Points_eV != 0x0) {
+    if (PyList_Size(List_Points_eV) == 0) {
+      PyErr_SetString(PyExc_ValueError, "Number of points to calculate is zero.  Check input.");
+      return NULL;
+    }
     for (int i = 0; i < PyList_Size(List_Points_eV); ++i) {
       VPoints_eV.push_back(PyFloat_AsDouble(PyList_GetItem(List_Points_eV, i)));
     }
