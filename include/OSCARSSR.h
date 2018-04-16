@@ -171,6 +171,8 @@ class OSCARSSR
     // Functions related to Trajectory
     void CalculateTrajectory ();
     void CalculateTrajectory (TParticleA&);
+    void CalculateTrajectoryRK4 (TParticleA&);
+    void CalculateTrajectoryRKQS (TParticleA&);
     TParticleTrajectoryPoints const& GetTrajectory ();
     TParticleTrajectoryPoints& GetNewTrajectory ();
     void WriteTrajectory        (std::string const& OutFileName, std::string const& OutFormat = "DEFAULT");
@@ -466,11 +468,11 @@ class OSCARSSR
 
     void SetDerivativesFunction ();
 
-    void DerivativesE (double t, double x[], double dxdt[], TParticleA const&);
-    void DerivativesB (double t, double x[], double dxdt[], TParticleA const&);
-    void DerivativesEB (double t, double x[], double dxdt[], TParticleA const&);
-    void Derivatives (double t, double x[], double dxdt[], TParticleA const&);
-    void RK4 (double y[], double dydx[], int n, double x, double h, double yout[], TParticleA const&);
+    void DerivativesE  (double t, std::array<double, 6>& x, std::array<double, 6>& dxdt, TParticleA const& P);
+    void DerivativesB  (double t, std::array<double, 6>& x, std::array<double, 6>& dxdt, TParticleA const& P);
+    void DerivativesEB (double t, std::array<double, 6>& x, std::array<double, 6>& dxdt, TParticleA const& P);
+    void RK4  (std::array<double, 6>& y, std::array<double, 6>& dydx, double x, double h, std::array<double, 6>& yout, TParticleA const& P);
+    void RKAS (std::array<double, 6>& y, std::array<double, 6>& dydx, double x, double h, std::array<double, 6>& yout, TParticleA const& P);
 
 
     double fCTStart;
@@ -492,7 +494,7 @@ class OSCARSSR
     bool fUseGPUGlobal;
 
     // Function pointer for which function to use in the RK4 propogation
-    void (OSCARSSR::*fDerivativesFunction)(double, double*, double*, TParticleA const&);
+    void (OSCARSSR::*fDerivativesFunction)(double, std::array<double, 6>&, std::array<double, 6>&, TParticleA const&);
 
 };
 

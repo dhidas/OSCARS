@@ -801,6 +801,19 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
   // Clear any current trajectory
   P.ResetTrajectoryData();
 
+  this->CalculateTrajectoryRK4(P);
+
+  P.SetupTrajectoryInterpolated();
+
+  return;
+}
+
+
+
+
+void OSCARSSR::CalculateTrajectoryRK4 (TParticleA& P)
+{
+
   // Calculate the total DeltaT in seconds
   double const DeltaT = ((this->GetCTStop() - this->GetCTStart()) / TOSCARSSR::C() / (fNPointsTrajectory - 1));
 
@@ -811,12 +824,9 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
   size_t NPointsBackward = (P.GetT0() - this->GetCTStart()) / TOSCARSSR::C() / DeltaT;
 
 
-  // Number of dimensions of the array to be sent for RK calculation
-  int const N = 6;
-
   // Arrays to be sent for RK calculation
-  double x[N];
-  double dxdt[N];
+  std::array<double, 6> x;
+  std::array<double, 6> dxdt;
 
   // Initial conditions for the forward propogation
   x[0] = P.GetX0().GetX();
@@ -857,7 +867,7 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
 
       // Propogate
       (this->*fDerivativesFunction)(t, x, dxdt, P);
-      RK4(x, dxdt, N, t, DeltaT, x, P);
+      RK4(x, dxdt, t, DeltaT, x, P);
     }
   }
 
@@ -888,7 +898,7 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
     } else {
       // Propogate backward in time!
       (this->*fDerivativesFunction)(t, x, dxdt, P);
-      RK4(x, dxdt, N, t, DeltaTReversed, x, P);
+      RK4(x, dxdt, t, DeltaTReversed, x, P);
 
       // Add the point to the trajectory
       if (i > 0) {
@@ -900,10 +910,68 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
   // Re-Reverse the trajectory to be in the proper time order
   ParticleTrajectory.ReverseArrays();
 
-  P.SetupTrajectoryInterpolated();
+  return;
+}
+
+
+
+
+
+void OSCARSSR::CalculateTrajectoryRKQS (TParticleA& P)
+{
+  // Function to calculate the particle trajectory given initial conditions.
+  // This function uses the internal Trajectory member to store results
+
+
+  // Calculate the total DeltaT in seconds
+  double const DeltaT = ((this->GetCTStop() - this->GetCTStart()) / TOSCARSSR::C() / (fNPointsTrajectory - 1));
+
+
+  // Arrays to be sent for RK calculation
+  std::array<double, 6> x;
+  std::array<double, 6> dxdt;
+
+  // Initial conditions for the forward propogation
+  x[0] = P.GetX0().GetX();
+  x[1] = P.GetB0().GetX() * TOSCARSSR::C();
+  x[2] = P.GetX0().GetY();
+  x[3] = P.GetB0().GetY() * TOSCARSSR::C();
+  x[4] = P.GetX0().GetZ();
+  x[5] = P.GetB0().GetZ() * TOSCARSSR::C();
+
+
+  // Grap the particle trajectory object
+  TParticleTrajectoryPoints& ParticleTrajectory = P.GetTrajectory();
+  ParticleTrajectory.Reserve(fNPointsTrajectory);
+
+  // Set delta T for the trajectory
+  ParticleTrajectory.SetDeltaT(DeltaT);
+
+  (this->*fDerivativesFunction)(P.GetT0() / TOSCARSSR::C(), x, dxdt, P);
+
+  // Propogate forward in time
+  // this->PropogateRKQS()
+
+  // Reverse trajectory elements for backward propogation
+  ParticleTrajectory.ReverseArrays();
+
+  // Set initial conditions for propogating backwards
+  x[0] =  P.GetX0().GetX();
+  x[1] =  P.GetB0().GetX() * TOSCARSSR::C();
+  x[2] =  P.GetX0().GetY();
+  x[3] =  P.GetB0().GetY() * TOSCARSSR::C();
+  x[4] =  P.GetX0().GetZ();
+  x[5] =  P.GetB0().GetZ() * TOSCARSSR::C();
+
+  // Propogate backward in time
+  // this->PropogateRKQS()
+
+  // Re-Reverse the trajectory to be in the proper time order
+  ParticleTrajectory.ReverseArrays();
 
   return;
 }
+
 
 
 
@@ -999,7 +1067,7 @@ void OSCARSSR::SetDerivativesFunction ()
 
 
 
-void OSCARSSR::DerivativesE (double t, double x[], double dxdt[], TParticleA const& P)
+void OSCARSSR::DerivativesE (double t, std::array<double, 6>& x, std::array<double, 6>& dxdt, TParticleA const& P)
 {
   // This is a second order differential equation.  It does not account for the loss in energy due to
   // radiation.  Although 't' is not used it would be easy to implement a time dependent field
@@ -1030,7 +1098,7 @@ void OSCARSSR::DerivativesE (double t, double x[], double dxdt[], TParticleA con
 
 
 
-void OSCARSSR::DerivativesB (double t, double x[], double dxdt[], TParticleA const& P)
+void OSCARSSR::DerivativesB (double t, std::array<double, 6>& x, std::array<double, 6>& dxdt, TParticleA const& P)
 {
   // This is a second order differential equation.  It does not account for the loss in energy due to
   // radiation.  Although 't' is not used it would be easy to implement a time dependent field
@@ -1060,7 +1128,7 @@ void OSCARSSR::DerivativesB (double t, double x[], double dxdt[], TParticleA con
 
 
 
-void OSCARSSR::DerivativesEB (double t, double x[], double dxdt[], TParticleA const& P)
+void OSCARSSR::DerivativesEB (double t, std::array<double, 6>& x, std::array<double, 6>& dxdt, TParticleA const& P)
 {
   // This is a second order differential equation.  It does not account for the loss in energy due to
   // radiation.  Although 't' is not used it would be easy to implement a time dependent field
@@ -1093,83 +1161,91 @@ void OSCARSSR::DerivativesEB (double t, double x[], double dxdt[], TParticleA co
 
 
 
-void OSCARSSR::Derivatives (double t, double x[], double dxdt[], TParticleA const& P)
+void OSCARSSR::RK4 (std::array<double, 6>& y, std::array<double, 6>& dydx, double x, double h, std::array<double, 6>& yout, TParticleA const& P)
 {
-  // This is a second order differential equation.  It does not account for the loss in energy due to
-  // radiation.  Although 't' is not used it would be easy to implement a time dependent field
+  // Runge-Kutta 4th order method propogation
 
-  // The values correspond to:
-  // x[0] - x
-  // x[1] - Vx
-  // x[2] - y
-  // x[3] - Vy
-  // x[4] - z
-  // x[5] - Vz
+  int i;
+  double xh, hh, h6;
 
-  // BField at this point
-  TVector3D const B = this->GetB(x[0], x[2], x[4], t);
+  std::array<double, 6> dym;
+  std::array<double, 6> dyt;
+  std::array<double, 6> yt;
 
-  double const QoverMGamma = P.GetQoverMGamma();
 
-  dxdt[0] = x[1];
-  dxdt[1] = QoverMGamma * (-x[5] * B.GetY() + x[3] * B.GetZ());
-  dxdt[2] = x[3];                                                                                          
-  dxdt[3] = QoverMGamma * ( x[5] * B.GetX() - x[1] * B.GetZ());
-  dxdt[4] = x[5];                                                                                          
-  dxdt[5] = QoverMGamma * ( x[1] * B.GetY() - x[3] * B.GetX());
+  hh = h * 0.5;
+  h6 = h / 6.0;
+  xh = x + hh;
+
+  for (i = 0; i < 6; ++i) {
+    yt[i] = y[i] + hh * dydx[i];
+  }
+
+  (this->*fDerivativesFunction)(xh, yt, dyt, P);
+
+  for (i = 0; i < 6; ++i) {
+    yt[i] = y[i] + hh * dyt[i];
+  }
+
+  (this->*fDerivativesFunction)(xh, yt, dym, P);
+
+  for (i = 0; i < 6; ++i) {
+    yt[i] = y[i] + h * dym[i];
+    dym[i] += dyt[i];
+  }
+
+  (this->*fDerivativesFunction)(x + h, yt, dyt, P);
+
+  for (i = 0; i < 6; ++i) {
+    yout[i] = y[i] + h6 * (dydx[i] + dyt[i] + 2.0 * dym[i]);
+  }
+  
 
   return;
 }
 
 
 
-void OSCARSSR::RK4 (double y[], double dydx[], int n, double x, double h, double yout[], TParticleA const& P)
+
+
+void OSCARSSR::RKAS (std::array<double, 6>& y, std::array<double, 6>& dydx, double x, double h, std::array<double, 6>& yout, TParticleA const& P)
 {
-  // Runge-Kutta 4th order method propogation
-  // UPDATE: syntax
+  // Runge-Kutta 5th order method propogation with adaptive step control
 
   int i;
   double xh, hh, h6;
-  double *dym, *dyt, *yt;
 
-  dym = new double[n];
-  dyt = new double[n];
-  yt  = new double[n];
+  std::array<double, 6> dym;
+  std::array<double, 6> dyt;
+  std::array<double, 6> yt;
 
   hh = h * 0.5;
   h6 = h / 6.0;
   xh = x + hh;
 
-  for (i = 0; i < n; ++i) {
+  for (i = 0; i < 6; ++i) {
     yt[i] = y[i] + hh * dydx[i];
   }
 
   (this->*fDerivativesFunction)(xh, yt, dyt, P);
-  //this->DerivativesB(xh, yt, dyt, P);
 
-  for (i = 0; i < n; ++i) {
+  for (i = 0; i < 6; ++i) {
     yt[i] = y[i] + hh * dyt[i];
   }
 
   (this->*fDerivativesFunction)(xh, yt, dym, P);
-  //this->DerivativesB(xh, yt, dym, P);
 
-  for (i = 0; i < n; ++i) {
+  for (i = 0; i < 6; ++i) {
     yt[i] = y[i] + h * dym[i];
     dym[i] += dyt[i];
   }
 
   (this->*fDerivativesFunction)(x + h, yt, dyt, P);
-  //this->DerivativesB(x + h, yt, dyt, P);
 
-  for (i = 0; i < n; ++i) {
+  for (i = 0; i < 6; ++i) {
     yout[i] = y[i] + h6 * (dydx[i] + dyt[i] + 2.0 * dym[i]);
   }
   
-  delete [] dym;
-  delete [] dyt;
-  delete [] yt;
-
   return;
 }
 
