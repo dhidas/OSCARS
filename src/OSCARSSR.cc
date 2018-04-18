@@ -802,6 +802,7 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
   P.ResetTrajectoryData();
 
   this->CalculateTrajectoryRK4(P);
+  //this->CalculateTrajectoryRKAS(P);
 
   P.SetupTrajectoryInterpolated();
 
@@ -917,7 +918,7 @@ void OSCARSSR::CalculateTrajectoryRK4 (TParticleA& P)
 
 
 
-void OSCARSSR::CalculateTrajectoryRKQS (TParticleA& P)
+void OSCARSSR::CalculateTrajectoryRKAS (TParticleA& P)
 {
   // Function to calculate the particle trajectory given initial conditions.
   // This function uses the internal Trajectory member to store results
@@ -949,8 +950,9 @@ void OSCARSSR::CalculateTrajectoryRKQS (TParticleA& P)
 
   (this->*fDerivativesFunction)(P.GetT0() / TOSCARSSR::C(), x, dxdt, P);
 
+  std::cout << "st st " << this->GetCTStart() << " " << this->GetCTStop() << std::endl;
   // Propogate forward in time
-  // this->PropogateRKQS()
+  this->PropogateRKAS(x, P.GetT0() / TOSCARSSR::C(), this->GetCTStop() / TOSCARSSR::C(), 0.001, DeltaT, 1e-15, P);
 
   // Reverse trajectory elements for backward propogation
   ParticleTrajectory.ReverseArrays();
@@ -965,6 +967,7 @@ void OSCARSSR::CalculateTrajectoryRKQS (TParticleA& P)
 
   // Propogate backward in time
   // this->PropogateRKQS()
+  //this->PropogateRKAS(x, P.GetT0() / TOSCARSSR::C(), this->GetCTStart() / TOSCARSSR::C(), 0.001, DeltaT, 0, P);
 
   // Re-Reverse the trajectory to be in the proper time order
   ParticleTrajectory.ReverseArrays();
@@ -1208,43 +1211,236 @@ void OSCARSSR::RK4 (std::array<double, 6>& y, std::array<double, 6>& dydx, doubl
 
 
 
-void OSCARSSR::RKAS (std::array<double, 6>& y, std::array<double, 6>& dydx, double x, double h, std::array<double, 6>& yout, TParticleA const& P)
+void OSCARSSR::RKQS (std::array<double, 6>& x,
+                     std::array<double, 6>& dxdt,
+                     double *t,
+                     double hTry,
+                     double const Precision,
+                     std::array<double, 6>& xScale,
+                     double *hActual,
+                     double *hNext,
+                     TParticleA const& P)
+{
+  int i;
+  double MaxError;
+  double hTemp;
+  double tNew;
+
+  std::array<double, 6> xError;
+  std::array<double, 6> xTemp;
+
+  double h = hTry;
+
+  for (;;) {
+    this->RKCK(x, dxdt, *t, h, xTemp, xError, P);
+
+    MaxError = 0.0;
+    for (i = 0; i != 6; ++i) {
+      MaxError = fmax(MaxError, fabs(xError[i] / xScale[i]));
+    }
+    MaxError /= Precision;
+    if (MaxError <= 1.0) {
+      break;
+    }
+    hTemp = 0.9 * h * pow(MaxError, -0.25); // Shrink with safety
+
+    h = (h >= 0.0 ? fmax(hTemp, 0.1 * h) : fmin(hTemp, 0.1 * h));
+    tNew = (*t) + h;
+    if (tNew == *t) {
+      //std::cerr << "ERROR: stepsize underflow in rkqs" << std::endl;
+    }
+  }
+
+  // UPDATE: This OR if beta criteria not satisfied
+  if (MaxError > 1.89e-4) {
+    *hNext = 0.9 * h * pow(MaxError, -0.2);
+  } else {
+    *hNext = 5.0 * h;
+    if (*hNext > 1e-14) {
+      // UPDATE: Stepsize
+      *hNext = 1e-14;
+    }
+  }
+  *t += (*hActual = h);
+
+  for (i = 0; i != 6; ++i) {
+    x[i] = xTemp[i];
+  }
+
+
+  return;
+}
+
+
+
+
+
+
+void OSCARSSR::RKCK (std::array<double, 6>& x,
+                     std::array<double, 6>& dxdt,
+                     double t,
+                     double h,
+                     std::array<double, 6>& xOut,
+                     std::array<double, 6>& xError,
+                     TParticleA const& P)
+{
+  // Cash-Karp Constants
+  static double const  a2 = 0.2;
+  static double const  a3 = 0.3;
+  static double const  a4 = 0.6;
+  static double const  a5 = 1.0;
+  static double const  a6 = 0.875;
+  static double const b21 = 0.2;
+  static double const b31 = 3.0/40.0;
+  static double const b32 = 9.0/40.0;
+  static double const b41 = 0.3;
+  static double const b42 = -0.9;
+  static double const b43 = 1.2;
+  static double const b51 = -11.0/54.0;
+  static double const b52 = 2.5;
+  static double const b53 = -70.0/27.0;
+  static double const b54 = 35.0/27.0;
+  static double const b61 = 1631.0/55296.0;
+  static double const b62 = 175.0/512.0;
+  static double const b63 = 575.0/13824.0;
+  static double const b64 = 44275.0/110592.0;
+  static double const b65 = 253.0/4096.0;
+  static double const  c1 = 37.0/378.0;
+  static double const  c3 = 250.0/621.0;
+  static double const  c4 = 125.0/594.0;
+  static double const  c6 = 512.0/1771.0;
+  static double const dc5 = -277.00/14336.0;
+  static double const dc1 = c1 - 2825.0/27648.0;
+  static double const dc3 = c3 - 18575.0/48384.0;
+  static double const dc4 = c4 - 13525.0/55296.0;
+  static double const dc6 = c6 - 0.25;
+  
+  std::array<double, 6> dx2;
+  std::array<double, 6> dx3;
+  std::array<double, 6> dx4;
+  std::array<double, 6> dx5;
+  std::array<double, 6> dx6;
+  std::array<double, 6> xTemp;
+
+
+  for (int i = 0; i != 6; ++i) {
+    xTemp[i] = x[i] + b21 * h * dxdt[i];
+  }
+
+  (this->*fDerivativesFunction)(t + a2 * h, xTemp, dx2, P);
+
+  for (int i = 0; i != 6; ++i) {
+    xTemp[i] = x[i] + h * (b31 * dxdt[i] + b32 * dx2[i]);
+  }
+
+  (this->*fDerivativesFunction)(t + a3 * h, xTemp, dx3, P);
+
+  for (int i = 0;i != 6; ++i) {
+    xTemp[i] = x[i] + h * (b41 * dxdt[i] + b42 * dx2[i] + b43 * dx3[i]);
+  }
+
+  (this->*fDerivativesFunction)(t + a4 * h, xTemp, dx4, P);
+
+  for (int i = 0; i != 6; ++i) {
+    xTemp[i] = x[i] + h * (b51 * dxdt[i] + b52 * dx2[i] + b53 * dx3[i] + b54 * dx4[i]);
+  }
+
+  (this->*fDerivativesFunction)(t + a5 * h, xTemp, dx5, P);
+
+  for (int i = 0; i != 6; ++i) {
+    xTemp[i] = x[i] + h * (b61 * dxdt[i] + b62 * dx2[i] + b63 * dx3[i] + b64 * dx4[i] + b65 * dx5[i]);
+  }
+
+  (this->*fDerivativesFunction)(t + a6 * h, xTemp, dx6, P);
+
+  for (int i = 0; i != 6; ++i) {
+    xOut[i] = x[i] + h * (c1 * dxdt[i] + c3 * dx3[i] + c4 * dx4[i] + c6 * dx6[i]);
+  }
+
+  for (int i = 0; i != 6; ++i) {
+    xError[i] = h * (dc1 * dxdt[i] + dc3 * dx3[i] + dc4 * dx4[i] + dc5 * dx5[i] + dc6 * dx6[i]);
+  }
+
+  return;
+}
+
+
+
+
+
+void OSCARSSR::PropogateRKAS (std::array<double, 6>& XStart,
+                              double const T1,
+                              double const T2,
+                              double const Precision,
+                              double const InitialStep,
+                              double const MinimumStep,
+                              TParticleA& P)
 {
   // Runge-Kutta 5th order method propogation with adaptive step control
 
   int i;
-  double xh, hh, h6;
 
-  std::array<double, 6> dym;
-  std::array<double, 6> dyt;
-  std::array<double, 6> yt;
+  std::cout << "T1 T2: " << T1 << " " << T2 << std::endl;
+  double hNext;
+  double hActual;
 
-  hh = h * 0.5;
-  h6 = h / 6.0;
-  xh = x + hh;
+  TParticleTrajectoryPoints& ParticleTrajectory = P.GetTrajectory();
+  double DeltaT = ParticleTrajectory.GetDeltaT();
+  std::cout << "DeltaT: " << DeltaT << std::endl;
 
-  for (i = 0; i < 6; ++i) {
-    yt[i] = y[i] + hh * dydx[i];
+  std::array<double, 6> xScale;
+  std::array<double, 6> x;
+  std::array<double, 6> dxdt;
+
+  double t = T1;
+  double h = (T2 >= T1 ? InitialStep : -InitialStep);
+
+  for (i = 0; i != 6; ++i) {
+    x[i] = XStart[i];
+    std::cout << "XStart[i]: " << x[i] << std::endl;
   }
+  std::cout << "InitialStep: " << InitialStep << std::endl;
+  std::cout << "MinimumStep: " << MinimumStep << std::endl;
+  std::cout << "Precision: " << Precision << std::endl;
 
-  (this->*fDerivativesFunction)(xh, yt, dyt, P);
+  double TSave = t - DeltaT * 2.0;
 
-  for (i = 0; i < 6; ++i) {
-    yt[i] = y[i] + hh * dyt[i];
+  for (int nstp = 0; nstp != 1e7; ++nstp) {
+    (this->*fDerivativesFunction)(t, x, dxdt, P);
+
+    for (i = 0; i != 6; ++i) {
+      xScale[i] = fabs(x[i]) + fabs(dxdt[i] * h) + 1.0e-30; // Plus some very small number
+    }
+
+    if (fabs(t - TSave) > fabs(DeltaT)) {
+      ParticleTrajectory.AddPoint(x[0], x[2], x[4], x[1] / TOSCARSSR::C(), x[3] / TOSCARSSR::C(), x[5] / TOSCARSSR::C(), dxdt[1] / TOSCARSSR::C(), dxdt[3] / TOSCARSSR::C(), dxdt[5] / TOSCARSSR::C(), t);
+
+      TSave = t;
+    }
+
+    if ((t + h - T2) * (t + h - T1) > 0.0) {
+      h = T2 - t;
+    }
+
+    this->RKQS(x, dxdt, &t, h, Precision, xScale, &hActual, &hNext, P);
+
+    if ((t - T2) * (T2 - T1) >= 0.0) {
+      for (i = 0; i != 6; ++i) {
+        XStart[i] = x[i];
+      }
+
+      ParticleTrajectory.AddPoint(x[0], x[2], x[4], x[1] / TOSCARSSR::C(), x[3] / TOSCARSSR::C(), x[5] / TOSCARSSR::C(), dxdt[1] / TOSCARSSR::C(), dxdt[3] / TOSCARSSR::C(), dxdt[5] / TOSCARSSR::C(), t);
+
+
+      return;
+    }
+    if (fabs(hNext) <= MinimumStep) {
+      //std::cerr << "ERROR: Step size too small in PropogateRKQS" << std::endl;
+    }
+    h = hNext;
   }
+  //std::cerr << "ERROR: Too many steps in routine PropogateRKQS" << std::endl;;
 
-  (this->*fDerivativesFunction)(xh, yt, dym, P);
-
-  for (i = 0; i < 6; ++i) {
-    yt[i] = y[i] + h * dym[i];
-    dym[i] += dyt[i];
-  }
-
-  (this->*fDerivativesFunction)(x + h, yt, dyt, P);
-
-  for (i = 0; i < 6; ++i) {
-    yout[i] = y[i] + h6 * (dydx[i] + dyt[i] + 2.0 * dym[i]);
-  }
   
   return;
 }

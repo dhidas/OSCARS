@@ -172,7 +172,16 @@ class OSCARSSR
     void CalculateTrajectory ();
     void CalculateTrajectory (TParticleA&);
     void CalculateTrajectoryRK4 (TParticleA&);
-    void CalculateTrajectoryRKQS (TParticleA&);
+    void RKQS (std::array<double, 6>& y,
+               std::array<double, 6>& dydx,
+               double *x,
+               double hTry,
+               double const Precision,
+               std::array<double, 6>& yScale,
+               double *hActual,
+               double *hNext,
+               TParticleA const& P);
+    void CalculateTrajectoryRKAS (TParticleA&);
     TParticleTrajectoryPoints const& GetTrajectory ();
     TParticleTrajectoryPoints& GetNewTrajectory ();
     void WriteTrajectory        (std::string const& OutFileName, std::string const& OutFormat = "DEFAULT");
@@ -472,7 +481,20 @@ class OSCARSSR
     void DerivativesB  (double t, std::array<double, 6>& x, std::array<double, 6>& dxdt, TParticleA const& P);
     void DerivativesEB (double t, std::array<double, 6>& x, std::array<double, 6>& dxdt, TParticleA const& P);
     void RK4  (std::array<double, 6>& y, std::array<double, 6>& dydx, double x, double h, std::array<double, 6>& yout, TParticleA const& P);
-    void RKAS (std::array<double, 6>& y, std::array<double, 6>& dydx, double x, double h, std::array<double, 6>& yout, TParticleA const& P);
+    void PropogateRKAS (std::array<double, 6>& XStart,
+                        double const X1,
+                        double const X2,
+                        double const Precision,
+                        double const InitialStep,
+                        double const MinimumStep,
+                        TParticleA& P);
+    void RKCK (std::array<double, 6>& y,
+               std::array<double, 6>& dydx,
+               double x,
+               double h,
+               std::array<double, 6>& yOut,
+               std::array<double, 6>& yError,
+               TParticleA const& P);
 
 
     double fCTStart;
