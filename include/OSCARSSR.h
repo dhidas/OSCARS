@@ -515,6 +515,9 @@ class OSCARSSR
     int fNThreadsGlobal;
     bool fUseGPUGlobal;
 
+    // Error states for computations
+    bool fErrorGamma;
+
     // Function pointer for which function to use in the RK4 propogation
     void (OSCARSSR::*fDerivativesFunction)(double, std::array<double, 6>&, std::array<double, 6>&, TParticleA const&);
 
