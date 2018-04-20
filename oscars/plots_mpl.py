@@ -432,7 +432,7 @@ def plot_spectrum(S, log=False, show=True, ofile='', title='Spectrum', xlabel='E
 
 
 
-def plot_spectra(spectra, label=None, show=True, ofile='', title='', loc=None, log=False, loglog=False, xlabel='Energy [eV]', ylabel='[$\gamma / mm^2 / 0.1\%bw / s$]', figsize=None, ylim=None, xlim=None, ret=False, axis=None, transparent=True, xticks=None, xvlines=None, **kwargs):
+def plot_spectra(spectra, label=None, legend=None, show=True, ofile='', title='', loc=None, log=False, loglog=False, xlabel='Energy [eV]', ylabel='[$\gamma / mm^2 / 0.1\%bw / s$]', figsize=None, ylim=None, xlim=None, ret=False, axis=None, transparent=True, xticks=None, xvlines=None, **kwargs):
 
 
     # Size and limits
@@ -462,7 +462,7 @@ def plot_spectra(spectra, label=None, show=True, ofile='', title='', loc=None, l
     if log:
         plt.yscale('log')
 
-    plt.legend(loc=loc)
+    plt.legend(title=legend, loc=loc)
     if xlabel is not None:
         plt.xlabel(xlabel)
     if ylabel is not None:
