@@ -40,6 +40,10 @@ OSCARSSR::OSCARSSR ()
   fNPointsTrajectory = 0;
   fNPointsPerMeter = 10000;
 
+  // Error states
+  fErrorGamma = false;
+  fBig = 1;
+
   // Set derivs function default to E&B (to avoid anything nasty)
   SetDerivativesFunction();
 
@@ -1086,6 +1090,11 @@ void OSCARSSR::DerivativesE (double t, std::array<double, 6>& x, std::array<doub
   // BField at this point
   TVector3D const E = this->GetE(x[0], x[2], x[4], t);
 
+  double const OneMinus = (1. - (x[1]*x[1] + x[3]*x[3] + x[5]*x[5]) / (TOSCARSSR::C() * TOSCARSSR::C()));
+  if (OneMinus < 0) {
+    fErrorGamma = true;
+  }
+
   double const QoverMTimesSqrtOneMinusBetaSquared = P.GetQ() / P.GetM() * sqrt(1. - (x[1]*x[1] + x[3]*x[3] + x[5]*x[5]) / (TOSCARSSR::C() * TOSCARSSR::C()));
   double const BetaDotE = (x[1] * E.GetX() + x[3] * E.GetY() + x[5] * E.GetZ()) / TOSCARSSR::C();
 
@@ -1148,6 +1157,11 @@ void OSCARSSR::DerivativesEB (double t, std::array<double, 6>& x, std::array<dou
   TVector3D const B = this->GetB(x[0], x[2], x[4], t);
   TVector3D const E = this->GetE(x[0], x[2], x[4], t);
 
+  double const OneMinus = (1. - (x[1]*x[1] + x[3]*x[3] + x[5]*x[5]) / (TOSCARSSR::C() * TOSCARSSR::C()));
+  if (OneMinus < 0) {
+    fErrorGamma = true;
+  }
+
   double const QoverMTimesSqrtOneMinusBetaSquared = P.GetQ() / P.GetM() * sqrt(1. - (x[1]*x[1] + x[3]*x[3] + x[5]*x[5]) / (TOSCARSSR::C() * TOSCARSSR::C()));
   double const BetaDotE = (x[1] * E.GetX() + x[3] * E.GetY() + x[5] * E.GetZ()) / TOSCARSSR::C();
 
@@ -1199,8 +1213,29 @@ void OSCARSSR::RK4 (std::array<double, 6>& y, std::array<double, 6>& dydx, doubl
 
   (this->*fDerivativesFunction)(x + h, yt, dyt, P);
 
-  for (i = 0; i < 6; ++i) {
-    yout[i] = y[i] + h6 * (dydx[i] + dyt[i] + 2.0 * dym[i]);
+  std::array<double, 6> yout_test;
+  for (i = 0; i != 6; ++i) {
+    yout_test[i] = y[i] + h6 * (dydx[i] + dyt[i] + 2.0 * dym[i]);
+  }
+
+  if (fabs(h/2.) < fBig) {
+    std::cout << "h: " << fabs(h/2.) << std::endl;
+    fBig = fabs(h/2.);
+  }
+
+  if (fErrorGamma) {
+    fErrorGamma = false;
+    // This step failed, split it in half
+
+    std::array<double, 6> yout_half;
+    (this->*fDerivativesFunction)(x, y, dydx, P);
+    RK4 (y, dydx, x, h/2., yout_half, P);
+    (this->*fDerivativesFunction)(x+h/2., yout_half, dydx, P);
+    RK4 (yout_half, dydx, x+h/2., h/2., yout_test, P);
+  }
+
+  for (i = 0; i != 6; ++i) {
+    yout[i] = yout_test[i];
   }
   
 
