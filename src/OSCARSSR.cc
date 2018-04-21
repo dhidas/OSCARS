@@ -891,7 +891,9 @@ void OSCARSSR::CalculateTrajectoryRK4 (TParticleA& P)
   double const DeltaTReversed = -DeltaT;
 
   // Loop over all points "before" the initial point
+  if (NPointsBackward > 0)
   for (size_t i = 0; i != NPointsBackward + 1; ++i) {
+    std::cout << "iback " << i << std::endl;
 
     // This time
     double t = P.GetT0() / TOSCARSSR::C() + DeltaTReversed * (i);
@@ -901,6 +903,7 @@ void OSCARSSR::CalculateTrajectoryRK4 (TParticleA& P)
       x[2] += DeltaTReversed * x[3];
       x[4] += DeltaTReversed * x[5];
     } else {
+      std::cout << "prop: t " << t << std::endl;
       // Propogate backward in time!
       (this->*fDerivativesFunction)(t, x, dxdt, P);
       RK4(x, dxdt, t, DeltaTReversed, x, P);
@@ -1091,7 +1094,7 @@ void OSCARSSR::DerivativesE (double t, std::array<double, 6>& x, std::array<doub
   TVector3D const E = this->GetE(x[0], x[2], x[4], t);
 
   double const OneMinus = (1. - (x[1]*x[1] + x[3]*x[3] + x[5]*x[5]) / (TOSCARSSR::C() * TOSCARSSR::C()));
-  if (OneMinus < 0) {
+  if (OneMinus <= 0) {
     fErrorGamma = true;
   }
 
@@ -1158,7 +1161,7 @@ void OSCARSSR::DerivativesEB (double t, std::array<double, 6>& x, std::array<dou
   TVector3D const E = this->GetE(x[0], x[2], x[4], t);
 
   double const OneMinus = (1. - (x[1]*x[1] + x[3]*x[3] + x[5]*x[5]) / (TOSCARSSR::C() * TOSCARSSR::C()));
-  if (OneMinus < 0) {
+  if (OneMinus <= 0) {
     fErrorGamma = true;
   }
 
@@ -1219,7 +1222,7 @@ void OSCARSSR::RK4 (std::array<double, 6>& y, std::array<double, 6>& dydx, doubl
   }
 
   if (fabs(h/2.) < fBig) {
-    std::cout << "h: " << fabs(h/2.) << std::endl;
+    //std::cout << "h: " << fabs(h/2.) << std::endl;
     fBig = fabs(h/2.);
   }
 
