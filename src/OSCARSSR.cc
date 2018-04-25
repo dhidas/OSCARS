@@ -40,9 +40,8 @@ OSCARSSR::OSCARSSR ()
   fNPointsTrajectory = 0;
   fNPointsPerMeter = 10000;
 
-  // Error states
+  // Error states to default
   fErrorGamma = false;
-  fBig = 1;
 
   // Set derivs function default to E&B (to avoid anything nasty)
   SetDerivativesFunction();
@@ -1224,10 +1223,6 @@ void OSCARSSR::RK4 (std::array<double, 6>& y, std::array<double, 6>& dydx, doubl
   std::array<double, 6> yout_test;
   for (i = 0; i != 6; ++i) {
     yout_test[i] = y[i] + h6 * (dydx[i] + dyt[i] + 2.0 * dym[i]);
-  }
-
-  if (fabs(h/2.) < fBig) {
-    fBig = fabs(h/2.);
   }
 
   // Check final beta/gamma

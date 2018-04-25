@@ -517,7 +517,6 @@ class OSCARSSR
 
     // Error states for computations
     bool fErrorGamma;
-    double fBig;
 
     // Function pointer for which function to use in the RK4 propogation
     void (OSCARSSR::*fDerivativesFunction)(double, std::array<double, 6>&, std::array<double, 6>&, TParticleA const&);
