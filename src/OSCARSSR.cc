@@ -876,6 +876,7 @@ void OSCARSSR::CalculateTrajectoryRK4 (TParticleA& P)
     }
   }
 
+
   // Reverse trajectory elements for backward propogation
   ParticleTrajectory.ReverseArrays();
 
@@ -891,27 +892,23 @@ void OSCARSSR::CalculateTrajectoryRK4 (TParticleA& P)
   double const DeltaTReversed = -DeltaT;
 
   // Loop over all points "before" the initial point
-  if (NPointsBackward > 0)
-  for (size_t i = 0; i != NPointsBackward + 1; ++i) {
-    std::cout << "iback " << i << std::endl;
+  for (size_t i = 0; i != NPointsBackward; ++i) {
 
     // This time
-    double t = P.GetT0() / TOSCARSSR::C() + DeltaTReversed * (i);
+    double t1 = P.GetT0() / TOSCARSSR::C() + DeltaTReversed * (i);
+    double t2 = P.GetT0() / TOSCARSSR::C() + DeltaTReversed * (i+1);
 
     if (fDriftVolumeContainer.IsInside(TVector3D(x[0], x[2], x[4]))) {
       x[0] += DeltaTReversed * x[1];
       x[2] += DeltaTReversed * x[3];
       x[4] += DeltaTReversed * x[5];
     } else {
-      std::cout << "prop: t " << t << std::endl;
       // Propogate backward in time!
-      (this->*fDerivativesFunction)(t, x, dxdt, P);
-      RK4(x, dxdt, t, DeltaTReversed, x, P);
+      (this->*fDerivativesFunction)(t1, x, dxdt, P);
+      RK4(x, dxdt, t1, DeltaTReversed, x, P);
 
       // Add the point to the trajectory
-      if (i > 0) {
-        ParticleTrajectory.AddPoint(x[0], x[2], x[4], x[1] / TOSCARSSR::C(), x[3] / TOSCARSSR::C(), x[5] / TOSCARSSR::C(), dxdt[1] / TOSCARSSR::C(), dxdt[3] / TOSCARSSR::C(), dxdt[5] / TOSCARSSR::C(), t);
-      }
+      ParticleTrajectory.AddPoint(x[0], x[2], x[4], x[1] / TOSCARSSR::C(), x[3] / TOSCARSSR::C(), x[5] / TOSCARSSR::C(), dxdt[1] / TOSCARSSR::C(), dxdt[3] / TOSCARSSR::C(), dxdt[5] / TOSCARSSR::C(), t2);
     }
   }
 
@@ -1090,13 +1087,14 @@ void OSCARSSR::DerivativesE (double t, std::array<double, 6>& x, std::array<doub
   // x[4] - z
   // x[5] - Vz
 
-  // BField at this point
-  TVector3D const E = this->GetE(x[0], x[2], x[4], t);
-
   double const OneMinus = (1. - (x[1]*x[1] + x[3]*x[3] + x[5]*x[5]) / (TOSCARSSR::C() * TOSCARSSR::C()));
   if (OneMinus <= 0) {
     fErrorGamma = true;
+    return;
   }
+
+  // EField at this point
+  TVector3D const E = this->GetE(x[0], x[2], x[4], t);
 
   double const QoverMTimesSqrtOneMinusBetaSquared = P.GetQ() / P.GetM() * sqrt(1. - (x[1]*x[1] + x[3]*x[3] + x[5]*x[5]) / (TOSCARSSR::C() * TOSCARSSR::C()));
   double const BetaDotE = (x[1] * E.GetX() + x[3] * E.GetY() + x[5] * E.GetZ()) / TOSCARSSR::C();
@@ -1125,6 +1123,12 @@ void OSCARSSR::DerivativesB (double t, std::array<double, 6>& x, std::array<doub
   // x[3] - Vy
   // x[4] - z
   // x[5] - Vz
+
+  double const OneMinus = (1. - (x[1]*x[1] + x[3]*x[3] + x[5]*x[5]) / (TOSCARSSR::C() * TOSCARSSR::C()));
+  if (OneMinus <= 0) {
+    fErrorGamma = true;
+    return;
+  }
 
   // BField at this point
   TVector3D const B = this->GetB(x[0], x[2], x[4], t);
@@ -1156,14 +1160,14 @@ void OSCARSSR::DerivativesEB (double t, std::array<double, 6>& x, std::array<dou
   // x[4] - z
   // x[5] - Vz
 
-  // BField at this point
-  TVector3D const B = this->GetB(x[0], x[2], x[4], t);
-  TVector3D const E = this->GetE(x[0], x[2], x[4], t);
-
   double const OneMinus = (1. - (x[1]*x[1] + x[3]*x[3] + x[5]*x[5]) / (TOSCARSSR::C() * TOSCARSSR::C()));
   if (OneMinus <= 0) {
     fErrorGamma = true;
   }
+
+  // BField at this point
+  TVector3D const B = this->GetB(x[0], x[2], x[4], t);
+  TVector3D const E = this->GetE(x[0], x[2], x[4], t);
 
   double const QoverMTimesSqrtOneMinusBetaSquared = P.GetQ() / P.GetM() * sqrt(1. - (x[1]*x[1] + x[3]*x[3] + x[5]*x[5]) / (TOSCARSSR::C() * TOSCARSSR::C()));
   double const BetaDotE = (x[1] * E.GetX() + x[3] * E.GetY() + x[5] * E.GetZ()) / TOSCARSSR::C();
@@ -1181,12 +1185,13 @@ void OSCARSSR::DerivativesEB (double t, std::array<double, 6>& x, std::array<dou
 
 
 
-void OSCARSSR::RK4 (std::array<double, 6>& y, std::array<double, 6>& dydx, double x, double h, std::array<double, 6>& yout, TParticleA const& P)
+void OSCARSSR::RK4 (std::array<double, 6>& y, std::array<double, 6>& dydx, double x, double h, std::array<double, 6>& yout, TParticleA const& P, int const Depth)
 {
-  // Runge-Kutta 4th order method propogation
+  // Runge-Kutta 4th order method propogation with checking for Gamma (beta) validity
 
   int i;
   double xh, hh, h6;
+
 
   std::array<double, 6> dym;
   std::array<double, 6> dyt;
@@ -1222,25 +1227,31 @@ void OSCARSSR::RK4 (std::array<double, 6>& y, std::array<double, 6>& dydx, doubl
   }
 
   if (fabs(h/2.) < fBig) {
-    //std::cout << "h: " << fabs(h/2.) << std::endl;
     fBig = fabs(h/2.);
   }
 
-  if (fErrorGamma) {
+  // Check final beta/gamma
+  bool const ThisErrorGamma = 1.-(yout_test[1]*yout_test[1] + yout_test[3]*yout_test[3] + yout_test[5]*yout_test[5]) / (TOSCARSSR::C()*TOSCARSSR::C()) <= 0 ? true : false;
+
+  // Split if Gamma is in error state
+  if (fErrorGamma || ThisErrorGamma) {
     fErrorGamma = false;
     // This step failed, split it in half
 
+    // For the first half
     std::array<double, 6> yout_half;
     (this->*fDerivativesFunction)(x, y, dydx, P);
-    RK4 (y, dydx, x, h/2., yout_half, P);
+    RK4 (y, dydx, x, h/2., yout_half, P, Depth + 1);
+
+    // For the second half
     (this->*fDerivativesFunction)(x+h/2., yout_half, dydx, P);
-    RK4 (yout_half, dydx, x+h/2., h/2., yout_test, P);
+    RK4 (yout_half, dydx, x+h/2., h/2., yout_test, P, Depth + 1);
   }
 
+  // Copy back final result
   for (i = 0; i != 6; ++i) {
     yout[i] = yout_test[i];
   }
-  
 
   return;
 }

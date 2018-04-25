@@ -480,7 +480,7 @@ class OSCARSSR
     void DerivativesE  (double t, std::array<double, 6>& x, std::array<double, 6>& dxdt, TParticleA const& P);
     void DerivativesB  (double t, std::array<double, 6>& x, std::array<double, 6>& dxdt, TParticleA const& P);
     void DerivativesEB (double t, std::array<double, 6>& x, std::array<double, 6>& dxdt, TParticleA const& P);
-    void RK4  (std::array<double, 6>& y, std::array<double, 6>& dydx, double x, double h, std::array<double, 6>& yout, TParticleA const& P);
+    void RK4  (std::array<double, 6>& y, std::array<double, 6>& dydx, double x, double h, std::array<double, 6>& yout, TParticleA const& P, int const Depth = 0);
     void PropogateRKAS (std::array<double, 6>& XStart,
                         double const X1,
                         double const X2,
