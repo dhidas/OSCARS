@@ -168,7 +168,17 @@ class OSCARSSR
     void RemoveDriftVolume (std::string const& Name);
     void ClearDriftVolumes ();
 
+    // Types of beam distributions supported
+    enum OSCARSSR_TrajectoryCalculation {
+      kTrajectoryCalculation_None,
+      kTrajectoryCalculation_RK4,
+      kTrajectoryCalculation_RKAS
+    };
+
+
     // Functions related to Trajectory
+    void SetTrajectoryCalculation (std::string const& Method);
+    void SetTrajectoryCalculation (OSCARSSR_TrajectoryCalculation const Method);
     void CalculateTrajectory ();
     void CalculateTrajectory (TParticleA&);
     void CalculateTrajectoryRK4 (TParticleA&);
@@ -514,6 +524,9 @@ class OSCARSSR
     // Global thread and GPU settings
     int fNThreadsGlobal;
     bool fUseGPUGlobal;
+
+    // Which type of trajectory prop to use
+    OSCARSSR_TrajectoryCalculation fTrajectoryCalculation;
 
     // Error states for computations
     bool fErrorGamma;

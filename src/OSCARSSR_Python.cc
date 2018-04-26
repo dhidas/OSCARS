@@ -4943,6 +4943,56 @@ static PyObject* OSCARSSR_PrintDriftVolumes (OSCARSSRObject* self)
 
 
 
+const char* DOC_OSCARSSR_SetTrajectoryCalculation = R"docstring(
+set_trajectory_calculation (method)
+
+Set the global trajectory calculation method.
+
+
+Parameters
+----------
+method : str
+    Can be either 'RK4' (standard 4-th order method with Gamma checking and step splitting where neded)
+    or 'RKAS' (adaptive step).  When using RKAS note that for reasonable convergence time the fields
+    shold not be discontinuous (technically should be continuously differentiable).
+
+Returns
+-------
+None
+)docstring";
+static PyObject* OSCARSSR_SetTrajectoryCalculation (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
+{
+  // Set the type of calculation to use for trajectory propogation
+  const char* Method = "";
+
+  // Input variable list
+  static const char *kwlist[] = {"method",
+                                 NULL};
+
+  // Parse inputs
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char **>(kwlist),
+                                   &Method)) {
+    return NULL;
+  }
+
+
+  try {
+    self->obj->SetTrajectoryCalculation(Method);
+  } catch (std::invalid_argument e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
+  }
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
 const char* DOC_OSCARSSR_CalculateTrajectory = R"docstring(
 calculate_trajectory(, [ofile, bofile, oformat])
 
@@ -8886,6 +8936,7 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   {"clear_drifts",                      (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_ClearDriftVolumes},
   {"print_drifts",                      (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_PrintDriftVolumes},
 
+  {"set_trajectory_calculation",        (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_SetTrajectoryCalculation},
   {"calculate_trajectory",              (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateTrajectory},
   {"get_trajectory",                    (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_GetTrajectory},
   {"set_trajectory",                    (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_SetTrajectory},
@@ -9004,6 +9055,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"clear_drifts",                      (PyCFunction) OSCARSSR_ClearDriftVolumes,               METH_NOARGS,                  DOC_OSCARSSR_ClearDriftVolumes},
   {"print_drifts",                      (PyCFunction) OSCARSSR_PrintDriftVolumes,               METH_NOARGS,                  DOC_OSCARSSR_PrintDriftVolumes},
                                                                                           
+  {"set_trajectory_calculation",        (PyCFunction) OSCARSSR_SetTrajectoryCalculation,        METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_SetTrajectoryCalculation},
   {"calculate_trajectory",              (PyCFunction) OSCARSSR_CalculateTrajectory,             METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateTrajectory},
   {"get_trajectory",                    (PyCFunction) OSCARSSR_GetTrajectory,                   METH_NOARGS,                  DOC_OSCARSSR_GetTrajectory},
   {"set_trajectory",                    (PyCFunction) OSCARSSR_SetTrajectory,                   METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_SetTrajectory},

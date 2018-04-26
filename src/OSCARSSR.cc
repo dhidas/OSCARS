@@ -49,6 +49,9 @@ OSCARSSR::OSCARSSR ()
   // Set Global compute settings
   SetUseGPUGlobal(0);   // GPU off by default
   SetNThreadsGlobal(2); // Use N threads for calculations by default
+
+  // Set default trajectory calculation to RK4
+  SetTrajectoryCalculation(kTrajectoryCalculation_RK4);
 }
 
 
@@ -762,6 +765,34 @@ double OSCARSSR::GetRandomUniform () const
 }
 
 
+
+
+void OSCARSSR::SetTrajectoryCalculation (std::string const& Method)
+{
+  std::string MethodStr = Method;
+  std::transform(MethodStr.begin(), MethodStr.end(), MethodStr.begin(), ::toupper);
+
+  if (MethodStr == "RK4") {
+    this->SetTrajectoryCalculation(OSCARSSR::kTrajectoryCalculation_RK4);
+  } else if (MethodStr == "RKAS") {
+    this->SetTrajectoryCalculation(OSCARSSR::kTrajectoryCalculation_RKAS);
+  } else {
+    throw std::invalid_argument("Method requested is invalid.  Try again");
+  }
+
+  return;
+}
+
+
+
+void OSCARSSR::SetTrajectoryCalculation (OSCARSSR_TrajectoryCalculation const Method)
+{
+  fTrajectoryCalculation = Method;
+  return;
+}
+
+
+
 void OSCARSSR::CalculateTrajectory ()
 {
   // Function to calculate the particle trajectory of the member particle fParticle
@@ -804,8 +835,13 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
   // Clear any current trajectory
   P.ResetTrajectoryData();
 
-  this->CalculateTrajectoryRK4(P);
-  //this->CalculateTrajectoryRKAS(P);
+  if (fTrajectoryCalculation == OSCARSSR::kTrajectoryCalculation_RK4) {
+    this->CalculateTrajectoryRK4(P);
+  } else if (fTrajectoryCalculation == OSCARSSR::kTrajectoryCalculation_RKAS) {
+    this->CalculateTrajectoryRKAS(P);
+  } else {
+    throw std::invalid_argument("Internally there is no method specified for trajectory calculation.  The default has disappeared.");
+  }
 
   P.SetupTrajectoryInterpolated();
 
