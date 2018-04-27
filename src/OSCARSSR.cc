@@ -989,9 +989,11 @@ void OSCARSSR::CalculateTrajectoryRKAS (TParticleA& P)
 
   (this->*fDerivativesFunction)(P.GetT0() / TOSCARSSR::C(), x, dxdt, P);
 
-  std::cout << "st st " << this->GetCTStart() << " " << this->GetCTStop() << std::endl;
+  double const Precision = 1e-6;
+  double const MinimumStepSize = 1e-20;
+
   // Propogate forward in time
-  this->PropogateRKAS(x, P.GetT0() / TOSCARSSR::C(), this->GetCTStop() / TOSCARSSR::C(), 0.001, DeltaT, 1e-15, P);
+  this->PropogateRKAS(x, P.GetT0() / TOSCARSSR::C(), this->GetCTStop() / TOSCARSSR::C(), Precision, DeltaT, MinimumStepSize, P);
 
   // Reverse trajectory elements for backward propogation
   ParticleTrajectory.ReverseArrays();
@@ -1005,8 +1007,8 @@ void OSCARSSR::CalculateTrajectoryRKAS (TParticleA& P)
   x[5] =  P.GetB0().GetZ() * TOSCARSSR::C();
 
   // Propogate backward in time
-  // this->PropogateRKQS()
-  //this->PropogateRKAS(x, P.GetT0() / TOSCARSSR::C(), this->GetCTStart() / TOSCARSSR::C(), 0.001, DeltaT, 0, P);
+  (this->*fDerivativesFunction)(P.GetT0() / TOSCARSSR::C(), x, dxdt, P);
+  this->PropogateRKAS(x, P.GetT0() / TOSCARSSR::C(), this->GetCTStart() / TOSCARSSR::C(), Precision, DeltaT, MinimumStepSize, P);
 
   // Re-Reverse the trajectory to be in the proper time order
   ParticleTrajectory.ReverseArrays();
@@ -1299,7 +1301,7 @@ void OSCARSSR::RKQS (std::array<double, 6>& x,
                      std::array<double, 6>& xScale,
                      double *hActual,
                      double *hNext,
-                     TParticleA const& P)
+                     TParticleA& P)
 {
   int i;
   double MaxError;
@@ -1310,6 +1312,8 @@ void OSCARSSR::RKQS (std::array<double, 6>& x,
   std::array<double, 6> xTemp;
 
   double h = hTry;
+
+  double const DeltaT = P.GetTrajectory().GetDeltaT();
 
   for (;;) {
     this->RKCK(x, dxdt, *t, h, xTemp, xError, P);
@@ -1327,7 +1331,7 @@ void OSCARSSR::RKQS (std::array<double, 6>& x,
     h = (h >= 0.0 ? fmax(hTemp, 0.1 * h) : fmin(hTemp, 0.1 * h));
     tNew = (*t) + h;
     if (tNew == *t) {
-      //std::cerr << "ERROR: stepsize underflow in rkqs" << std::endl;
+      std::cerr << "ERROR: stepsize underflow in rkqs" << std::endl;
     }
   }
 
@@ -1336,10 +1340,10 @@ void OSCARSSR::RKQS (std::array<double, 6>& x,
     *hNext = 0.9 * h * pow(MaxError, -0.2);
   } else {
     *hNext = 5.0 * h;
-    if (*hNext > 1e-14) {
-      // UPDATE: Stepsize
-      *hNext = 1e-14;
-    }
+  }
+  if (fabs(*hNext) > DeltaT) {
+    // Limit stepsize to DeltaT for outputting
+    *hNext = DeltaT * (*hNext >= 0 ? 1 : -1);
   }
   *t += (*hActual = h);
 
@@ -1485,6 +1489,7 @@ void OSCARSSR::PropogateRKAS (std::array<double, 6>& XStart,
 
   double TSave = t - DeltaT * 2.0;
 
+  std::cout << "TSave: " << TSave << " DeltaT: " << DeltaT << std::endl;
   for (int nstp = 0; nstp != 1e7; ++nstp) {
     (this->*fDerivativesFunction)(t, x, dxdt, P);
 
@@ -1515,11 +1520,14 @@ void OSCARSSR::PropogateRKAS (std::array<double, 6>& XStart,
       return;
     }
     if (fabs(hNext) <= MinimumStep) {
-      //std::cerr << "ERROR: Step size too small in PropogateRKQS" << std::endl;
+      std::cerr << "ERROR: Step size too small in PropogateRKAS" << std::endl;
+    }
+    if (fabs(hNext) > fabs(DeltaT)) {
+      std::cout << "ER: hNext is too large" << std::endl;
     }
     h = hNext;
   }
-  //std::cerr << "ERROR: Too many steps in routine PropogateRKQS" << std::endl;;
+  std::cerr << "ERROR: Too many steps in routine PropogateRKAS" << std::endl;;
 
   
   return;

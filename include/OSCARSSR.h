@@ -190,7 +190,7 @@ class OSCARSSR
                std::array<double, 6>& yScale,
                double *hActual,
                double *hNext,
-               TParticleA const& P);
+               TParticleA& P);
     void CalculateTrajectoryRKAS (TParticleA&);
     TParticleTrajectoryPoints const& GetTrajectory ();
     TParticleTrajectoryPoints& GetNewTrajectory ();
