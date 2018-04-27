@@ -990,7 +990,7 @@ void OSCARSSR::CalculateTrajectoryRKAS (TParticleA& P)
   (this->*fDerivativesFunction)(P.GetT0() / TOSCARSSR::C(), x, dxdt, P);
 
   double const Precision = 1e-6;
-  double const MinimumStepSize = 1e-20;
+  double const MinimumStepSize = 1e-30;
 
   // Propogate forward in time
   this->PropogateRKAS(x, P.GetT0() / TOSCARSSR::C(), this->GetCTStop() / TOSCARSSR::C(), Precision, DeltaT, MinimumStepSize, P);
@@ -1316,6 +1316,7 @@ void OSCARSSR::RKQS (std::array<double, 6>& x,
   double const DeltaT = P.GetTrajectory().GetDeltaT();
 
   for (;;) {
+    fErrorGamma = false;
     this->RKCK(x, dxdt, *t, h, xTemp, xError, P);
 
     MaxError = 0.0;
@@ -1323,10 +1324,15 @@ void OSCARSSR::RKQS (std::array<double, 6>& x,
       MaxError = fmax(MaxError, fabs(xError[i] / xScale[i]));
     }
     MaxError /= Precision;
-    if (MaxError <= 1.0) {
+    if (MaxError <= 1.0 && !fErrorGamma) {
       break;
     }
-    hTemp = 0.9 * h * pow(MaxError, -0.25); // Shrink with safety
+    
+    if (fErrorGamma) {
+      hTemp = 0.25 * h; // quarter stepsize
+    } else {
+      hTemp = 0.9 * h * pow(MaxError, -0.25); // Shrink with safety
+    }
 
     h = (h >= 0.0 ? fmax(hTemp, 0.1 * h) : fmin(hTemp, 0.1 * h));
     tNew = (*t) + h;
@@ -1497,11 +1503,12 @@ void OSCARSSR::PropogateRKAS (std::array<double, 6>& XStart,
       xScale[i] = fabs(x[i]) + fabs(dxdt[i] * h) + 1.0e-30; // Plus some very small number
     }
 
-    if (fabs(t - TSave) > fabs(DeltaT)) {
+    // UPDATE: Commented out.  For now save all, max step taken care of elsewhere
+    //if (fabs(t - TSave) > fabs(DeltaT)) {
       ParticleTrajectory.AddPoint(x[0], x[2], x[4], x[1] / TOSCARSSR::C(), x[3] / TOSCARSSR::C(), x[5] / TOSCARSSR::C(), dxdt[1] / TOSCARSSR::C(), dxdt[3] / TOSCARSSR::C(), dxdt[5] / TOSCARSSR::C(), t);
 
       TSave = t;
-    }
+    //}
 
     if ((t + h - T2) * (t + h - T1) > 0.0) {
       h = T2 - t;
