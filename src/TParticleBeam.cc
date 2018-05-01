@@ -721,14 +721,6 @@ TParticleA TParticleBeam::GetNewParticle (std::string const& IdealOrRandom)
 }
 
 
-double normalCFD(double value)
-{
-   return 0.5 * erfc(-value * M_SQRT1_2);
-}
-
-
-
-
 TParticleA TParticleBeam::GetNewParticle ()
 {
   // Intended to get you a new random particle based on the beam parameters
