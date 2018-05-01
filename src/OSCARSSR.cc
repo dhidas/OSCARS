@@ -43,6 +43,9 @@ OSCARSSR::OSCARSSR ()
   // Error states to default
   fErrorGamma = false;
 
+  // Default trajectory precision (for methods that use it!)
+  fTrajectoryPrecision = 1e-6;
+
   // Set derivs function default to E&B (to avoid anything nasty)
   SetDerivativesFunction();
 
@@ -767,15 +770,18 @@ double OSCARSSR::GetRandomUniform () const
 
 
 
-void OSCARSSR::SetTrajectoryCalculation (std::string const& Method)
+void OSCARSSR::SetTrajectoryCalculation (std::string const& Method, double const Precision)
 {
   std::string MethodStr = Method;
   std::transform(MethodStr.begin(), MethodStr.end(), MethodStr.begin(), ::toupper);
 
   if (MethodStr == "RK4") {
+    if (Precision != -1) {
+      throw std::invalid_argument("RK4 Trajectory does not use the precision parameter and you are attempting to set it");
+    }
     this->SetTrajectoryCalculation(OSCARSSR::kTrajectoryCalculation_RK4);
   } else if (MethodStr == "RKAS") {
-    this->SetTrajectoryCalculation(OSCARSSR::kTrajectoryCalculation_RKAS);
+    this->SetTrajectoryCalculation(OSCARSSR::kTrajectoryCalculation_RKAS, Precision);
   } else {
     throw std::invalid_argument("Method requested is invalid.  Try again");
   }
@@ -785,11 +791,51 @@ void OSCARSSR::SetTrajectoryCalculation (std::string const& Method)
 
 
 
-void OSCARSSR::SetTrajectoryCalculation (OSCARSSR_TrajectoryCalculation const Method)
+void OSCARSSR::SetTrajectoryCalculation (OSCARSSR_TrajectoryCalculation const Method, double const Precision)
 {
   fTrajectoryCalculation = Method;
+
+  if (Precision != -1) {
+    if (Method == OSCARSSR::kTrajectoryCalculation_RK4) {
+      throw std::invalid_argument("RK4 Trajectory does not use the precision parameter and you are attempting to set it");
+    }
+    if (Precision <= 0) {
+      throw std::invalid_argument("Trajectory precision cannot be >= 0");
+    }
+    fTrajectoryPrecision = Precision;
+  }
   return;
 }
+
+
+
+
+std::string OSCARSSR::GetTrajectoryCalculationString () const
+{
+  // Return the string representation of the trajectory calculation method
+
+  if (fTrajectoryCalculation == OSCARSSR::kTrajectoryCalculation_RK4) {
+    return std::string("RK4");
+  } else if (fTrajectoryCalculation == OSCARSSR::kTrajectoryCalculation_RKAS) {
+    return std::string("RKAS");
+  } else if (fTrajectoryCalculation == OSCARSSR::kTrajectoryCalculation_None) {
+    return std::string("None");
+  }
+
+  throw std::invalid_argument("OSCARSSR::GetTrajectoryCalculationString does not recognize the calculation type enum");
+}
+
+
+
+
+
+double OSCARSSR::GetTrajectoryPrecision () const
+{
+  return fTrajectoryPrecision;
+}
+
+
+
 
 
 
@@ -989,7 +1035,7 @@ void OSCARSSR::CalculateTrajectoryRKAS (TParticleA& P)
 
   (this->*fDerivativesFunction)(P.GetT0() / TOSCARSSR::C(), x, dxdt, P);
 
-  double const Precision = 1e-6;
+  double const Precision = fTrajectoryPrecision;
   double const MinimumStepSize = 1e-30;
 
   // Propogate forward in time
@@ -1337,7 +1383,7 @@ void OSCARSSR::RKQS (std::array<double, 6>& x,
     h = (h >= 0.0 ? fmax(hTemp, 0.1 * h) : fmin(hTemp, 0.1 * h));
     tNew = (*t) + h;
     if (tNew == *t) {
-      std::cerr << "ERROR: stepsize underflow in rkqs" << std::endl;
+      throw std::underflow_error("stepsize underflow in rkqs.  Possible you have a discontinuous field");
     }
   }
 
@@ -1470,13 +1516,11 @@ void OSCARSSR::PropogateRKAS (std::array<double, 6>& XStart,
 
   int i;
 
-  std::cout << "T1 T2: " << T1 << " " << T2 << std::endl;
   double hNext;
   double hActual;
 
   TParticleTrajectoryPoints& ParticleTrajectory = P.GetTrajectory();
   double DeltaT = ParticleTrajectory.GetDeltaT();
-  std::cout << "DeltaT: " << DeltaT << std::endl;
 
   std::array<double, 6> xScale;
   std::array<double, 6> x;
@@ -1487,15 +1531,8 @@ void OSCARSSR::PropogateRKAS (std::array<double, 6>& XStart,
 
   for (i = 0; i != 6; ++i) {
     x[i] = XStart[i];
-    std::cout << "XStart[i]: " << x[i] << std::endl;
   }
-  std::cout << "InitialStep: " << InitialStep << std::endl;
-  std::cout << "MinimumStep: " << MinimumStep << std::endl;
-  std::cout << "Precision: " << Precision << std::endl;
 
-  double TSave = t - DeltaT * 2.0;
-
-  std::cout << "TSave: " << TSave << " DeltaT: " << DeltaT << std::endl;
   for (int nstp = 0; nstp != 1e7; ++nstp) {
     (this->*fDerivativesFunction)(t, x, dxdt, P);
 
@@ -1503,12 +1540,7 @@ void OSCARSSR::PropogateRKAS (std::array<double, 6>& XStart,
       xScale[i] = fabs(x[i]) + fabs(dxdt[i] * h) + 1.0e-30; // Plus some very small number
     }
 
-    // UPDATE: Commented out.  For now save all, max step taken care of elsewhere
-    //if (fabs(t - TSave) > fabs(DeltaT)) {
-      ParticleTrajectory.AddPoint(x[0], x[2], x[4], x[1] / TOSCARSSR::C(), x[3] / TOSCARSSR::C(), x[5] / TOSCARSSR::C(), dxdt[1] / TOSCARSSR::C(), dxdt[3] / TOSCARSSR::C(), dxdt[5] / TOSCARSSR::C(), t);
-
-      TSave = t;
-    //}
+    ParticleTrajectory.AddPoint(x[0], x[2], x[4], x[1] / TOSCARSSR::C(), x[3] / TOSCARSSR::C(), x[5] / TOSCARSSR::C(), dxdt[1] / TOSCARSSR::C(), dxdt[3] / TOSCARSSR::C(), dxdt[5] / TOSCARSSR::C(), t);
 
     if ((t + h - T2) * (t + h - T1) > 0.0) {
       h = T2 - t;
@@ -1527,14 +1559,11 @@ void OSCARSSR::PropogateRKAS (std::array<double, 6>& XStart,
       return;
     }
     if (fabs(hNext) <= MinimumStep) {
-      std::cerr << "ERROR: Step size too small in PropogateRKAS" << std::endl;
-    }
-    if (fabs(hNext) > fabs(DeltaT)) {
-      std::cout << "ER: hNext is too large" << std::endl;
+      throw std::underflow_error("Reached minimum stepsize in PropogateRKAS without convergence");
     }
     h = hNext;
   }
-  std::cerr << "ERROR: Too many steps in routine PropogateRKAS" << std::endl;;
+  throw std::underflow_error("Too many steps taken in routine PropogateRKAS");
 
   
   return;

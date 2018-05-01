@@ -104,6 +104,8 @@ static PyObject* OSCARSSR_AddToPowerDensity (OSCARSSRObject* self, PyObject* arg
 static PyObject* OSCARSSR_GetPowerDensity (OSCARSSRObject* self);
 static PyObject* OSCARSSR_CalculateElectricFieldTimeDomain (OSCARSSRObject* self, PyObject* args, PyObject *keywds);
 static PyObject* OSCARSSR_PrintGPU (OSCARSSRObject* self);
+static PyObject* OSCARSSR_PrintNThreads (OSCARSSRObject* self);
+static PyObject* OSCARSSR_PrintTrajectory (OSCARSSRObject* self);
 static PyObject* OSCARSSR_PrintAll (OSCARSSRObject* self);
 static PyObject* OSCARSSR_COUT (OSCARSSRObject* self, PyObject* args, PyObject *keywds);
 static PyObject* OSCARSSR_CERR (OSCARSSRObject* self, PyObject* args, PyObject *keywds);

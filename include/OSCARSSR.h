@@ -177,8 +177,10 @@ class OSCARSSR
 
 
     // Functions related to Trajectory
-    void SetTrajectoryCalculation (std::string const& Method);
-    void SetTrajectoryCalculation (OSCARSSR_TrajectoryCalculation const Method);
+    void SetTrajectoryCalculation (std::string const& Method, double const Precision = -1);
+    void SetTrajectoryCalculation (OSCARSSR_TrajectoryCalculation const Method, double const Precision = -1);
+    std::string GetTrajectoryCalculationString () const;
+    double GetTrajectoryPrecision () const;
     void CalculateTrajectory ();
     void CalculateTrajectory (TParticleA&);
     void CalculateTrajectoryRK4 (TParticleA&);
@@ -530,6 +532,9 @@ class OSCARSSR
 
     // Error states for computations
     bool fErrorGamma;
+
+    // Precision to use for Trajectory methods (the ones that use precision)
+    double fTrajectoryPrecision;
 
     // Function pointer for which function to use in the RK4 propogation
     void (OSCARSSR::*fDerivativesFunction)(double, std::array<double, 6>&, std::array<double, 6>&, TParticleA const&);

@@ -4944,7 +4944,7 @@ static PyObject* OSCARSSR_PrintDriftVolumes (OSCARSSRObject* self)
 
 
 const char* DOC_OSCARSSR_SetTrajectoryCalculation = R"docstring(
-set_trajectory_calculation (method)
+set_trajectory_calculation (method, precision)
 
 Set the global trajectory calculation method.
 
@@ -4956,6 +4956,9 @@ method : str
     or 'RKAS' (adaptive step).  When using RKAS note that for reasonable convergence time the fields
     shold not be discontinuous (technically should be continuously differentiable).
 
+precision : float
+    Only used for RKAS method.  Default is 1e-6.
+
 Returns
 -------
 None
@@ -4964,21 +4967,29 @@ static PyObject* OSCARSSR_SetTrajectoryCalculation (OSCARSSRObject* self, PyObje
 {
   // Set the type of calculation to use for trajectory propogation
   const char* Method = "";
+  double      Precision = -1;
 
   // Input variable list
   static const char *kwlist[] = {"method",
+                                 "precision",
                                  NULL};
 
   // Parse inputs
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|d",
                                    const_cast<char **>(kwlist),
-                                   &Method)) {
+                                   &Method,
+                                   &Precision
+                                   )) {
     return NULL;
   }
 
 
   try {
-    self->obj->SetTrajectoryCalculation(Method);
+    if (Precision == -1) {
+      self->obj->SetTrajectoryCalculation(Method);
+    } else {
+      self->obj->SetTrajectoryCalculation(Method, Precision);
+    }
   } catch (std::invalid_argument e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
@@ -5046,6 +5057,9 @@ static PyObject* OSCARSSR_CalculateTrajectory (OSCARSSRObject* self, PyObject* a
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
   } catch (std::out_of_range e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
+  } catch (std::underflow_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
   }
@@ -5582,7 +5596,11 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
   } catch (std::invalid_argument e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
+  } catch (std::underflow_error e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
   }
+
 
   if (!SpectrumContainer.AllConverged()) {
     OSCARSPY::PyPrint_stderr("Not all points converged to desired precision.  Can try increasing 'max_level_extended'\n");
@@ -5705,7 +5723,11 @@ static PyObject* OSCARSSR_CalculateTotalPower (OSCARSSRObject* self, PyObject* a
   } catch (std::out_of_range e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
+  } catch (std::underflow_error e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
   }
+
 
   return Py_BuildValue("f", Power);
 }
@@ -5985,7 +6007,11 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
   } catch (std::invalid_argument e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
+  } catch (std::underflow_error e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
   }
+
 
   // If not converged print warning
   if (!PowerDensityContainer.AllConverged()) {
@@ -6393,7 +6419,11 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
   } catch (std::invalid_argument e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
+  } catch (std::underflow_error e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
   }
+
 
   // If not converged print warning
   if (!PowerDensityContainer.AllConverged()) {
@@ -6742,7 +6772,11 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
   } catch (std::invalid_argument e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
+  } catch (std::underflow_error e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
   }
+
 
   // Write the output file if requested
   // Text output
@@ -7024,7 +7058,11 @@ static PyObject* OSCARSSR_CalculatePowerDensityLine (OSCARSSRObject* self, PyObj
   } catch (std::invalid_argument e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
+  } catch (std::underflow_error e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
   }
+
 
   // Write the output file if requested
   // Text output
@@ -7348,7 +7386,11 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
   } catch (std::invalid_argument e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
+  } catch (std::underflow_error e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
   }
+
 
   if (!FluxContainer.AllConverged()) {
     OSCARSPY::PyPrint_stderr("Not all points converged to desired precision.  Can try increasing 'max_level_extended'\n");
@@ -7819,7 +7861,11 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   } catch (std::invalid_argument e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
+  } catch (std::underflow_error e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
   }
+
 
   if (!FluxContainer.AllConverged()) {
     OSCARSPY::PyPrint_stderr("Not all points converged to desired precision.  Can try increasing 'max_level_extended'\n");
@@ -8729,6 +8775,42 @@ static PyObject* OSCARSSR_PrintNThreads (OSCARSSRObject* self)
 
 
 
+const char* DOC_OSCARSSR_PrintTrajectory = R"docstring(
+print_trajectory()
+
+Print information about trajectory calculation to standard out
+
+Parameters
+----------
+None
+
+Returns
+-------
+None
+)docstring";
+static PyObject* OSCARSSR_PrintTrajectory (OSCARSSRObject* self)
+{
+  // Print trajectory information
+
+  // Out string stream for printing beam information
+  std::ostringstream ostream;
+  ostream << "*Trajectory Calculation Globals*\n";
+  ostream << "Method:    " << self->obj->GetTrajectoryCalculationString() << "\n";
+  ostream << "Precision: " << self->obj->GetTrajectoryPrecision() << "\n" << std::endl;
+
+  OSCARSPY::PyPrint_stdout(ostream.str());
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
+
 const char* DOC_OSCARSSR_PrintAll = R"docstring(
 print_all()
 
@@ -8752,6 +8834,7 @@ static PyObject* OSCARSSR_PrintAll (OSCARSSRObject* self)
   OSCARSSR_PrintDriftVolumes(self);
   OSCARSSR_PrintGPU(self);
   OSCARSSR_PrintNThreads(self);
+  OSCARSSR_PrintTrajectory(self);
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
