@@ -72,6 +72,18 @@ class OSCARSTH
                                     double const NPeriods,
                                     int    const Harmonic) const;
 
+    TVector2D UndulatorFluxB (double const BField,
+                              double const Period,
+                              int    const NPeriods,
+                              int    const Harmonic
+                              ) const;
+
+    TVector2D UndulatorFluxK (double const K,
+                              double const Period,
+                              int    const NPeriods,
+                              int    const N
+                              ) const;
+
     double UndulatorFluxWeak (double const K,
                               double const Period,
                               double const NPeriods,
@@ -141,6 +153,7 @@ class OSCARSTH
 
 
     // Functions related to the particle beam
+    /*
     TParticleBeam& SetParticleBeam (std::string const& Beam,
                                     std::string const& Name = "default_name");
 
@@ -151,7 +164,26 @@ class OSCARSTH
                                     double const SigmaEnergyGeV = 0,
                                     TVector2D const& Eta = TVector2D(0, 0),
                                     std::string const& Name = "default_name");
+    */
 
+
+    // Functions related to the particle beam(s)
+    TParticleBeam& AddParticleBeam (std::string const& Type,
+                                    std::string const& Name,
+                                    TVector3D const& X0,
+                                    TVector3D const& V0,
+                                    double const Energy_GeV,
+                                    double const T0,
+                                    double const Current,
+                                    double const Weight,
+                                    double const Charge = 0,
+                                    double const Mass = 0);
+
+    TParticleBeam& AddParticleBeam (std::string const& Beam,
+                                    std::string const& Name,
+                                    double const Weight = 1);
+
+    void ClearParticleBeams ();
     TParticleBeam& GetParticleBeam ();
 
     bool CheckBeam () const;
@@ -165,6 +197,7 @@ class OSCARSTH
 
   private:
     TParticleBeam fParticleBeam;
+    TParticleBeamContainer fParticleBeamContainer;
 
     // Global thread and GPU settings
     int fNThreadsGlobal;

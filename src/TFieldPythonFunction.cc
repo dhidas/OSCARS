@@ -1,10 +1,16 @@
 #include "TFieldPythonFunction.h"
 
+#include "OSCARSPY.h"
+
 #include <stdexcept>
 
 // UPDATE: exceptions
 
-TFieldPythonFunction::TFieldPythonFunction (PyObject* Function, std::string const& Name)
+TFieldPythonFunction::TFieldPythonFunction (PyObject* Function,
+                                            TVector3D const& Rotations,
+                                            TVector3D const& Translation,
+                                            double const TimeOffset,
+                                            std::string const& Name)
 {
   // Constructor takes a python object, which should be a function
   // Increment reference because we're going to keep it..
@@ -13,6 +19,10 @@ TFieldPythonFunction::TFieldPythonFunction (PyObject* Function, std::string cons
   fPythonFunction = Function;
   this->SetName(Name);
   this->SetScaleFactorMinimumMaximum();
+
+  fRotations = Rotations;
+  fTranslation = Translation;
+  fTimeOffset = TimeOffset;
 
   // Check to see the function is callable
   if (!PyCallable_Check(fPythonFunction)) {
@@ -31,21 +41,23 @@ TFieldPythonFunction::~TFieldPythonFunction ()
 
 
 
-TVector3D TFieldPythonFunction::GetF (TVector3D const& X) const
+TVector3D TFieldPythonFunction::GetF (TVector3D const& X, double const T) const
 {
   // Get the magnetic field from a python function.
-
-  // For the future
-  double T = 0;
 
   // Check to see the function is callable
   if (!PyCallable_Check(fPythonFunction)) {
     throw;
   }
 
+  // Translate back into box frame
+  TVector3D XNew = X;
+  XNew.RotateSelfXYZ(fRotations);
+  XNew -= fTranslation;
+
   // Build the input object for the python function
   PyObject* InputTuple;
-  InputTuple = Py_BuildValue("(dddd)", X.GetX(), X.GetY(), X.GetZ(), T);
+  InputTuple = Py_BuildValue("(dddd)", XNew.GetX(), XNew.GetY(), XNew.GetZ(), T + fTimeOffset);
 
   // Call python function
   PyObject* OutputTuple = PyEval_CallObject(fPythonFunction, InputTuple);
@@ -64,12 +76,9 @@ TVector3D TFieldPythonFunction::GetF (TVector3D const& X) const
     throw;
   }
 
-
-
-  // Observation point from python list
-  TVector3D ReturnVector(PyFloat_AsDouble(PyList_GetItem(OutputList, 0)),
-                         PyFloat_AsDouble(PyList_GetItem(OutputList, 1)),
-                         PyFloat_AsDouble(PyList_GetItem(OutputList, 2)));
+  // Rotate field
+  TVector3D ReturnVector = OSCARSPY::ListAsTVector3D(OutputList);
+  ReturnVector.RotateSelfXYZ(fRotations);
 
   // Decrement object references no longer needed
   Py_DECREF(OutputTuple);
@@ -82,34 +91,39 @@ TVector3D TFieldPythonFunction::GetF (TVector3D const& X) const
 
 
 
-TVector3D TFieldPythonFunction::GetF (double const X, double const Y, double const Z) const
+TVector3D TFieldPythonFunction::GetF (double const X, double const Y, double const Z, double const T) const
 {
-  return this->GetF(TVector3D(X, Y, Z));
+  return this->GetF(TVector3D(X, Y, Z), T);
 }
 
 
 
 
-double TFieldPythonFunction::GetFx (double const X, double const Y, double const Z) const
+TVector3D TFieldPythonFunction::GetRotations () const
 {
-  return this->GetF(X, Y, Z).GetX();
+  return fRotations;
 }
 
 
 
 
-double TFieldPythonFunction::GetFy (double const X, double const Y, double const Z) const
+TVector3D TFieldPythonFunction::GetTranslation () const
 {
-  return this->GetF(X, Y, Z).GetY();
+  return fTranslation;
 }
 
 
 
 
-double TFieldPythonFunction::GetFz (double const X, double const Y, double const Z) const
+double TFieldPythonFunction::GetTimeOffset () const
 {
-  return this->GetF(X, Y, Z).GetZ();
+  // Return the time offset
+  return fTimeOffset;
 }
+
+
+
+
 
 
 

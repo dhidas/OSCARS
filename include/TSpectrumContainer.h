@@ -40,8 +40,12 @@ class TSpectrumContainer
     void WriteToFileBinary (std::string const, std::string const Header = "") const;
 
     void Clear ();
-    void AverageFromFilesText (std::vector<std::string> const&);
-    void AverageFromFilesBinary (std::vector<std::string> const&);
+    void AverageFromFilesText (std::vector<std::string> const&,
+                               std::vector<double> const& Weights = std::vector<double>());
+    void AverageFromFilesBinary (std::vector<std::string> const&,
+                               std::vector<double> const& Weights = std::vector<double>());
+    void AverageFromSpectra (std::vector<TSpectrumContainer> const& Spectra,
+                             std::vector<double> const& Weights = std::vector<double>());
 
   private:
 

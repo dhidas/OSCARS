@@ -1,8 +1,16 @@
+from __future__ import print_function
+
 import os
 import copy
 import numpy as np
 import uuid
 import oscars.sr
+import oscars.twiss
+
+import matplotlib.pyplot as plt
+
+from math import pi, sqrt, cos, sin, atan
+
 
 def read_file_list_with_header (ifile, idir=None):
     """
@@ -298,10 +306,32 @@ def scale_spectrum(s, c):
         
     return
 
-def add_spectra(spectra):
-    """Add spectra from list spectra and return new spectrum"""
+def add_spectra(spectra, weights=None):
+    """
+    Add spectra from list spectra and return new spectrum, optionally with weights
+
+    Parameters
+    ----------
+    spectra : list
+        A list of spectrums to add
+
+    weights : list[floats]
+        A list of floats to multiply the respective spectra by when adding
+
+    Returns
+    -------
+    spectrum : list
+        A spectrum in the form of a list of energy, flux pairs
+    """
     
+    if weights is not None:
+        if len(weights) != len(spectra):
+            raise IndexError('length of weights does not equal number of spectra')
+
+    # Copy 0th spectrum and weight it if requested
     spectrum=copy.deepcopy(spectra[0])
+    if weights is not None:
+        spectrum = [ [s[0], weights[0] * s[1]] for s in spectrum ]
 
     N = len(spectrum)
 
@@ -309,7 +339,10 @@ def add_spectra(spectra):
         if len(spectra[isp]) != N:
             raise ValueError('spectra do not have the same dimensions')
         for i in range(len(spectra[isp])):
-            spectrum[i][1] += spectra[isp][i][1]
+            if weights is None:
+                spectrum[i][1] += spectra[isp][i][1]
+            else:
+                spectrum[i][1] += spectra[isp][i][1] * weights[isp]
         
     return spectrum
 
@@ -374,3 +407,176 @@ def rebin (H, ANX=2, ANY=2):
      
     
     return HNEW
+
+
+def beam_statistics (osr, n=10000, cdt=0, show=True, beam='', bins=[50, 50], nsig=3, figsize=None, ofiles=['']*3):
+    """Sample the particle beam and provide some statistics and plots
+    
+    Parameters
+    ----------
+    osr : oscars.sr object
+        The oscars object which contains the beam of interest
+        
+    n : int
+        The number of particles you wish to sample
+        
+    cdt : float
+        The time (in meters) you wish to propogate the particle in free space from its initial position
+        
+    show : bool
+        Show the plots or not
+        
+    beam : str
+        Name of the beam of interest.  If none given will use the one given by osr
+        
+    bins : list[int, int]
+        Histogram binning
+        
+    nsig : float
+        Number of sigma to draw the histograms out to
+        
+    figsize : list[float, float]
+        Size of each figure
+        
+    ofiles : list[str, str, str]
+        A list of output names for the plots (in order)
+        
+    Returns
+    -------
+    stats : dict
+        A dict of possibly useful statistics
+    
+    """
+    
+    
+    # lists for plotting position, angle, and energy
+    X = []
+    Y = []
+    XP = []
+    YP = []
+    E0 = []
+
+    # Beam directions
+    U0 = osr.get_beam_u0(beam)
+    H0 = osr.get_beam_horizontal_direction(beam)
+    V0 = osr.get_beam_vertical_direction(beam)
+
+    # Looping over n particles
+    for i in range(n):
+        osr.set_new_particle(beam=beam)
+
+        # Initial position and beta
+        x = osr.get_particle_x0()
+        b = osr.get_particle_beta0()
+
+        # Energy of this particle
+        e0 = osr.get_particle_e0()
+
+        # Propogate particle if cdt is not zero
+        x = [x[i] + b[i] * cdt for i in range(len(x))]
+
+        # Horizontal and vertical position wrt beam coordinate system
+        h = np.dot(x, H0)
+        v = np.dot(x, V0)
+
+        # For positions and angles wrt beam coords
+        X.append(h)
+        Y.append(v)
+        XP.append(atan(np.dot(b, H0) / np.dot(b, U0)))
+        YP.append(atan(np.dot(b, V0) / np.dot(b, U0)))
+        E0.append(e0)
+
+    # Gather some useful statistics
+    std_h = np.std(X)
+    std_hp = np.std(XP)
+    std_v = np.std(Y)
+    std_vp = np.std(YP)
+    std_e = np.std(E0)
+
+    stats = dict()
+    stats['sigma_h'] = std_h
+    stats['sigma_hp'] = std_hp
+    stats['sigma_v'] = std_v
+    stats['sigma_vp'] = std_vp
+    stats['sigma_e'] = std_e
+    stats['mean_h'] = np.mean(X)
+    stats['mean_hp'] = np.mean(XP)
+    stats['mean_v'] = np.mean(Y)
+    stats['mean_vp'] = np.mean(YP)
+    stats['mean_e'] = np.mean(E0)
+
+    tbeta = osr.get_twiss_beta_x0(beam)
+    talpha = osr.get_twiss_alpha_x0(beam)
+    tgamma = osr.get_twiss_gamma_x0(beam)
+    emittance = osr.get_emittance(beam)
+
+    twiss_h = oscars.twiss.twiss(beta=osr.get_twiss_beta_x0(beam)[0],
+                                 alpha=osr.get_twiss_alpha_x0(beam)[0],
+                                 emittance=osr.get_emittance(beam)[0]
+            )
+
+    twiss_v = oscars.twiss.twiss(beta=osr.get_twiss_beta_x0(beam)[1],
+                                 alpha=osr.get_twiss_alpha_x0(beam)[1],
+                                 emittance=osr.get_emittance(beam)[1]
+            )
+
+        
+    # To draw or not to draw
+    draw = show or sum([len(fn) for fn in ofiles]) > 0
+    if draw:
+
+        # Plot of horizontal position and angle
+        plt.figure(figsize=figsize)
+        plt.title('<h>: ' + str(round(std_h, 9)) + ' <h\'>: ' + str(round(std_hp, 9)))
+        plt.xlabel('Horizontal position (h) [m]')
+        plt.ylabel('Horizontal angle (h\') [rad]')
+        plt.ticklabel_format(axis='x', style='sci', scilimits=(-3,3))
+        plt.ticklabel_format(axis='y', style='sci', scilimits=(-3,3))
+        plt.xticks([-nsig*std_h, 0, nsig*std_h])
+        plt.yticks([-nsig*std_hp, 0, nsig*std_hp])
+        plt.hist2d(X, XP, bins=bins, range=[[-nsig*std_h, nsig*std_h], [-nsig*std_hp, nsig*std_hp]])
+
+        th = twiss_h.get_ellipse_points()
+        plt.plot(th[0], th[1], '-.', color='r')
+        plt.tight_layout()
+        if ofiles[0] != '':
+            plt.savefig(ofiles[0])
+        if show:
+            plt.show()
+        plt.close()
+
+        # Plot of vertical position and angle
+        plt.figure(figsize=figsize)
+        plt.title('<v>: ' + str(round(std_v, 9)) + ' <v\'>: ' + str(round(std_vp, 9)))
+        plt.xlabel('Vertical position (v) [m]')
+        plt.ylabel('Vertical angle (v\') [rad]')
+        plt.ticklabel_format(axis='x', style='sci', scilimits=(-3,3))
+        plt.ticklabel_format(axis='y', style='sci', scilimits=(-3,3))
+        plt.xticks([-nsig*std_v, 0, nsig*std_v])
+        plt.yticks([-nsig*std_vp, 0, nsig*std_vp])
+        plt.hist2d(Y, YP, bins=bins, range=[[-nsig*std_v, nsig*std_v], [-nsig*std_vp, nsig*std_vp]])
+        tv = twiss_v.get_ellipse_points()
+        plt.plot(tv[0], tv[1], '-.', color='r')
+        plt.tight_layout()
+        if ofiles[1] != '':
+            plt.savefig(ofiles[1])
+        if show:
+            plt.show()
+        plt.close()
+
+        # Histogram of energy
+        plt.figure(figsize=figsize)
+        plt.title('Particle Energy [GeV] <E>:' + str(round(std_e, 5)))
+        plt.xlabel('Energy [GeV]')
+        plt.ylabel('Number of Particles')
+        plt.ticklabel_format(axis='x', style='sci', scilimits=(-3,3))
+        plt.ticklabel_format(axis='y', style='sci', scilimits=(-3,3))
+        plt.hist(E0, bins=50)
+        plt.tight_layout()
+        if ofiles[2] != '':
+            plt.savefig(ofiles[2])
+        if show:
+            plt.show()
+        plt.close()
+   
+    return stats

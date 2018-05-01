@@ -28,8 +28,8 @@ class TFieldContainer
     void AddField (TField*);
     void RemoveField (std::string const& Name);
 
-    TVector3D GetF  (double const, double const, double const) const;
-    TVector3D GetF  (TVector3D const&) const;
+    TVector3D GetF  (double const, double const, double const, double const T = 0, std::string const& Name = "") const;
+    TVector3D GetF  (TVector3D const&, double const T = 0, std::string const& Name = "") const;
 
     TField const& GetField (size_t const) const;
 

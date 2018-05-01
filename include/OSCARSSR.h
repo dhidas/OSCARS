@@ -42,6 +42,9 @@ class OSCARSSR
                            TVector3D const& R = TVector3D(0, 0, 0),
                            TVector3D const& D = TVector3D(0, 0, 0),
                            std::vector<double> const& S = std::vector<double>(),
+                           double const Frequency = 0,
+                           double const FrequencyPhase = 0,
+                           double const TimeOffset = 0,
                            std::string const& Name = "");
 
     void AddMagneticFieldInterpolated (std::vector<std::pair<double, std::string> > const& Mapping,
@@ -50,6 +53,9 @@ class OSCARSSR
                                        TVector3D const& Rotations = TVector3D(0, 0, 0),
                                        TVector3D const& Translation = TVector3D(0, 0, 0),
                                        std::vector<double> const& Scaling = std::vector<double>(),
+                                       double const Frequency = 0,
+                                       double const FrequencyPhase = 0,
+                                       double const TimeOffset = 0,
                                        std::string const& Name = "",
                                        std::string const& OutFileName = "");
 
@@ -64,6 +70,9 @@ class OSCARSSR
                            TVector3D const& Rotations = TVector3D(0, 0, 0),
                            TVector3D const& Translation = TVector3D(0, 0, 0),
                            std::vector<double> const& Scaling = std::vector<double>(),
+                           double const Frequency = 0,
+                           double const FrequencyPhase = 0,
+                           double const TimeOffset = 0,
                            std::string const& Name = "");
 
     void AddElectricFieldInterpolated (std::vector<std::pair<double, std::string> > const& Mapping,
@@ -72,6 +81,9 @@ class OSCARSSR
                                        TVector3D const& Rotations = TVector3D(0, 0, 0),
                                        TVector3D const& Translation = TVector3D(0, 0, 0),
                                        std::vector<double> const& Scaling = std::vector<double>(),
+                                       double const Frequency = 0,
+                                       double const FrequencyPhase = 0,
+                                       double const TimeOffset = 0,
                                        std::string const& Name = "");
 
     void AddElectricField (TField*);
@@ -104,11 +116,11 @@ class OSCARSSR
                            int const Version);
 
 
-    TVector3D GetB  (double const, double const, double const) const;
-    TVector3D GetB  (TVector3D const&) const;
+    TVector3D GetB  (double const X, double const Y, double const Z, double const T = 0, std::string const& Name = "") const;
+    TVector3D GetB  (TVector3D const& X, double const T = 0, std::string const& Name = "") const;
 
-    TVector3D GetE  (double const, double const, double const) const;
-    TVector3D GetE  (TVector3D const&) const;
+    TVector3D GetE  (double const X, double const Y, double const Z, double const T = 0, std::string const& Name = "") const;
+    TVector3D GetE  (TVector3D const& X, double const T = 0, std::string const& Name = "") const;
 
 
     // Functions related to the particle beam(s)
@@ -156,10 +168,32 @@ class OSCARSSR
     void RemoveDriftVolume (std::string const& Name);
     void ClearDriftVolumes ();
 
+    // Types of beam distributions supported
+    enum OSCARSSR_TrajectoryCalculation {
+      kTrajectoryCalculation_None,
+      kTrajectoryCalculation_RK4,
+      kTrajectoryCalculation_RKAS
+    };
+
+
     // Functions related to Trajectory
-    void CorrectTrajectory ();
+    void SetTrajectoryCalculation (std::string const& Method, double const Precision = -1);
+    void SetTrajectoryCalculation (OSCARSSR_TrajectoryCalculation const Method, double const Precision = -1);
+    std::string GetTrajectoryCalculationString () const;
+    double GetTrajectoryPrecision () const;
     void CalculateTrajectory ();
     void CalculateTrajectory (TParticleA&);
+    void CalculateTrajectoryRK4 (TParticleA&);
+    void RKQS (std::array<double, 6>& y,
+               std::array<double, 6>& dydx,
+               double *x,
+               double hTry,
+               double const Precision,
+               std::array<double, 6>& yScale,
+               double *hActual,
+               double *hNext,
+               TParticleA& P);
+    void CalculateTrajectoryRKAS (TParticleA&);
     TParticleTrajectoryPoints const& GetTrajectory ();
     TParticleTrajectoryPoints& GetNewTrajectory ();
     void WriteTrajectory        (std::string const& OutFileName, std::string const& OutFormat = "DEFAULT");
@@ -261,7 +295,6 @@ class OSCARSSR
                                int    const MaxLevel = -2,
                                int    const MaxLevelExtended = 0,
                                int    const ReturnQuantity = 0);
-
     void AddToSpectrum (TSpectrumContainer const&, double const Weight = 1);
     void AddToFlux (T3DScalarContainer const&, double const Weight = 1);
     void AddToPowerDensity (T3DScalarContainer const&, double const Weight = 1);
@@ -456,11 +489,24 @@ class OSCARSSR
 
     void SetDerivativesFunction ();
 
-    void DerivativesE (double t, double x[], double dxdt[], TParticleA const&);
-    void DerivativesB (double t, double x[], double dxdt[], TParticleA const&);
-    void DerivativesEB (double t, double x[], double dxdt[], TParticleA const&);
-    void Derivatives (double t, double x[], double dxdt[], TParticleA const&);
-    void RK4 (double y[], double dydx[], int n, double x, double h, double yout[], TParticleA const&);
+    void DerivativesE  (double t, std::array<double, 6>& x, std::array<double, 6>& dxdt, TParticleA const& P);
+    void DerivativesB  (double t, std::array<double, 6>& x, std::array<double, 6>& dxdt, TParticleA const& P);
+    void DerivativesEB (double t, std::array<double, 6>& x, std::array<double, 6>& dxdt, TParticleA const& P);
+    void RK4  (std::array<double, 6>& y, std::array<double, 6>& dydx, double x, double h, std::array<double, 6>& yout, TParticleA const& P, int const Depth = 0);
+    void PropogateRKAS (std::array<double, 6>& XStart,
+                        double const X1,
+                        double const X2,
+                        double const Precision,
+                        double const InitialStep,
+                        double const MinimumStep,
+                        TParticleA& P);
+    void RKCK (std::array<double, 6>& y,
+               std::array<double, 6>& dydx,
+               double x,
+               double h,
+               std::array<double, 6>& yOut,
+               std::array<double, 6>& yError,
+               TParticleA const& P);
 
 
     double fCTStart;
@@ -481,8 +527,17 @@ class OSCARSSR
     int fNThreadsGlobal;
     bool fUseGPUGlobal;
 
+    // Which type of trajectory prop to use
+    OSCARSSR_TrajectoryCalculation fTrajectoryCalculation;
+
+    // Error states for computations
+    bool fErrorGamma;
+
+    // Precision to use for Trajectory methods (the ones that use precision)
+    double fTrajectoryPrecision;
+
     // Function pointer for which function to use in the RK4 propogation
-    void (OSCARSSR::*fDerivativesFunction)(double, double*, double*, TParticleA const&);
+    void (OSCARSSR::*fDerivativesFunction)(double, std::array<double, 6>&, std::array<double, 6>&, TParticleA const&);
 
 };
 

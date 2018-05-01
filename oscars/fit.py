@@ -3,6 +3,7 @@ from __future__ import print_function
 import oscars.plots_mpl
 
 from scipy.optimize import curve_fit, minimize
+import math
 import numpy as np
 import warnings
 
@@ -498,3 +499,291 @@ def correct_trajectory(osr, position=[0, 0, 1], beta=[0, 0, 1], bfields=[], tol=
                                 name=bfields[ib][3])
 
     return
+
+
+
+
+def find_undulator_center_bfield_period (osr, zstart=-1, zstop=1, nz=10000, b_threshold=0.004,
+                                         figsize=[12, 4], n_remove=2, show=False, ofile=None):
+    """
+    find the center, average max bfield, and period for a undulator along the z-axis with
+    a field in the y-direction.
+    
+    Parameters
+    ----------
+    
+    osr : oscars.sr object
+        The oscars.sr object which contains the field
+        
+    zstart : float
+        Starting z position
+        
+    zstop : float
+        Stopping z position
+        
+    nz : int
+        Number of points in z to evaluate the field at
+        
+    b_threshold : float
+        A threshold around 0 field to ignore
+        
+    figsize : [int, int]
+        Size if figure if show is True
+        
+    n_remove : int
+        Number of maxima to remove from either side (terminating fields)
+        
+    show : bool
+        True will produce a plot
+        
+    ofile : bool
+        Out file name to save plot to
+    """
+
+    # Check number of z points is more than 2
+    if nz < 2:
+        raise ValueError('nz must be >=2')
+
+    # Maxima and position of Max
+    AllMaximum  = []
+    AllMaximumX = []
+
+    # Flags and min/max for searching.  List of max
+    IsAbove = False
+    IsBelow = False
+    MaxBy = 0
+    MinBy = 0
+    ZMax  = 0
+    ZMin  = 0
+    MaxList  = []
+
+    # Step size in z
+    zstep = (zstop - zstart) / (nz - 1)
+
+    # Loop over data and find min/max for every point
+    for z in np.linspace(zstart, zstop, nz, endpoint=True):
+        
+        # bfield in y-direction at z location
+        bfy = osr.get_bfield([0, 0, z])[1]
+        
+        if bfy < -b_threshold:
+            if IsAbove:
+                MaxList.append(ZMax)
+                MaxBy = 0
+            IsBelow = True
+            IsAbove = False
+
+        if bfy > b_threshold:
+            if IsBelow:
+                MaxList.append(ZMin)
+                MinBy = 0
+            IsBelow = False
+            IsAbove = True
+
+        if IsAbove and bfy > MaxBy:
+            MaxBy = bfy
+            ZMax  = z
+        if IsBelow and bfy < MinBy:
+            MinBy = bfy
+            ZMin  = z
+
+    if IsAbove:
+        MaxList.append(ZMax)
+
+    if IsBelow:
+        MaxList.append(ZMin)
+
+    if len(MaxList) < n_remove * 2:
+        raise IndexError('n_remove is larger than the number of maxima found')
+
+    # Remove sides if requested
+    MaxList = MaxList[n_remove:-n_remove]
+
+    # Parabolic fit of max based on step size
+    for z in MaxList:
+        x = [z - zstep, z, z + zstep]
+        y = [osr.get_bfield([0, 0, x[0]])[1],
+             osr.get_bfield([0, 0, x[1]])[1],
+             osr.get_bfield([0, 0, x[2]])[1]]
+
+        denom = (x[0] - x[1]) * (x[0] - x[2]) * (x[1] - x[2])
+        A = (x[2] * (y[1] - y[0]) + x[1] * (y[0] - y[2]) + x[0] * (y[2] - y[1])) / denom
+        B = (math.pow(x[2], 2) * (y[0] - y[1]) + math.pow(x[1], 2) * (y[2] - y[0]) + math.pow(x[0], 2) * (y[1] - y[2])) / denom
+        C = (x[1] * x[2] * (x[1] - x[2]) * y[0] + x[2] * x[0] * (x[2] - x[0]) * y[1] + x[0] * x[1] * (x[0] - x[1]) * y[2]) / denom
+
+        ParabolaMaxX = -B / (2.0 * A)
+        ParabolaMaxY = A * ParabolaMaxX * ParabolaMaxX + B * ParabolaMaxX + C
+
+        AllMaximum.append([ParabolaMaxX, ParabolaMaxY])
+        AllMaximumX.append(ParabolaMaxX)
+
+
+    # Center location
+    center = sum(AllMaximumX) / float(len(AllMaximumX))
+
+    # For plotting
+    Z  = []
+    By = []
+    for z in MaxList:
+        Z.append(z)
+        By.append(osr.get_bfield([0, 0, z])[1])
+        
+    ZZ = np.linspace(zstart, zstop, nz, endpoint=True)
+    BBy = [osr.get_bfield([0, 0, z])[1] for z in ZZ]
+
+    if show is True or ofile is not None:
+        plt.figure(figsize=figsize)
+        plt.title('$B_y$ Field, Maxima, and Center')
+        plt.xlabel('Z Position [m]')
+        plt.ylabel('Magnetic Field [T]')
+        plt.plot(ZZ, BBy, 'b-')
+        plt.plot(Z, By, 'r.')
+        plt.axvline(x=center, c='g', linestyle='--')
+        plt.legend(['By', 'Max'])
+
+        if ofile is not None:
+            plt.savefig(ofile, bbox_inches='tight')
+        if show:
+            plt.show()
+        plt.clf()
+
+    mean_max = np.mean([abs(m[1]) for m in AllMaximum])
+
+    periods = []
+    for i in range(len(AllMaximum)-1):
+        periods.append(2*(AllMaximum[i+1][0] - AllMaximum[i][0]))
+    mean_period = np.mean(periods)
+    
+    return [center, mean_max, mean_period]
+
+
+
+def diff_spectra (s0, s1, figsize=None, show=False):
+    """
+    Compute the fractional difference between s0 and s1 spectra
+    
+    Parameters
+    ----------
+    s0 : list (spectrum)
+        an oscars.sr spectrum list [[en0, flux0], [en1, flux1], ...]
+        
+    s1 : list (spectrum)
+        an oscars.sr spectrum list [[en0, flux0], [en1, flux1], ...]
+
+    figsize : list [int, int]
+        2d list for figure size in x and y
+
+    Returns
+    -------
+    spectrum like list of the fractional difference: [[en0, diff0], [en1, diff1], ...]
+    """
+    
+    n = len(s0)
+    if n != len(s1):
+        raise IndexError('length of s0 and s1 must be the same')
+        
+    s2 = []
+    for i in range(n):
+        if s0[i][1] != 0:
+            s2.append([s0[i][0], (s1[i][1] - s0[i][1])/s0[i][1]])
+        else:
+            s2.append([s0[i][0], 0])
+        
+    X = [s[0] for s in s2]
+    Y0 = [s[1] for s in s0]
+    Y1 = [s[1] for s in s1]
+    Y2 = [s[1] for s in s2]
+
+    if show:
+        # Two subplots, unpack the axes array immediately
+        f, (ax1, ax2) = plt.subplots(2, sharex=True, figsize=figsize)
+
+        ax1.set_title('Spectra')
+        ax1.plot(X, Y0)
+        ax1.plot(X, Y1)
+        ax2.set_title('Fractional Difference in Spectra')
+        ax2.plot(X, Y2)
+        plt.show()
+        plt.clf()
+
+    return s2
+
+
+
+def diff_harmonics (h0, h1, figsize=None, show=False):
+    """
+    Show the fractional difference between h0 and h1
+    
+    Parameters
+    ----------
+    h0 : list
+        List of harmonics, each entry having [flux, energy, width]
+
+    h1 : list
+        List of harmonics, each entry having [flux, energy, width]
+
+    figsize : list [int, int]
+        2d list for figure size in x and y
+        
+    Returns
+    -------
+    list of the fractional difference: [[en_h0, diff0], [en_h1, diff1], ...]
+    """
+    
+    n = len(h0)
+    if n != len(h1):
+        raise IndexError('length of h0 and h1 must be the same')
+        
+    h2 = []
+    h3 = []
+    h4 = []
+    for i in range(n):
+        if h0[i][1] != 0:
+            h2.append([i, (h1[i][1] - h0[i][1])])
+            h3.append([i, (h1[i][0] - h0[i][0])/h0[i][0]])
+            h4.append([i, (h1[i][1] - h0[i][1]), (h1[i][0] - h0[i][0])/h0[i][0]])
+        else:
+            h2.append([i, 0])
+            h3.append([i, 0])
+            h4.append([i, 0, 0])
+        
+    X = range(n)
+    Y0 = [h[0] for h in h0]
+    Y1 = [h[0] for h in h1]
+    Y2 = [h[1] for h in h2]
+    Y3 = [h[1] for h in h3]
+
+    if show:
+        # Two subplots, unpack the axes array immediately
+        f, (ax1, ax2, ax3) = plt.subplots(3, sharex=True, figsize=figsize)
+
+        ax1.set_title('Flux at Peak')
+        ax1.plot(X, Y0, '.')
+        ax1.plot(X, Y1, '.')
+
+        ax2.set_title('Shift in Energy [eV]')
+        ax2.plot(X, Y2, 'r.')
+
+        ax3.set_title('Fractional Change in Flux')
+        ax3.plot(X, Y3, 'g.')
+
+        f.subplots_adjust(hspace=0.3)
+
+        plt.xlabel('array index')
+        plt.show()
+
+        plt.clf()
+
+    return h4
+
+
+def compare_spectra(s0, s1, figsize=None, show=False):
+    """Compare two spectra"""
+    
+    a = diff_spectra(s0, s1, figsize=figsize, show=show)
+    h0 = find_odd_harmonics(s0, show=show)
+    h1 = find_odd_harmonics(s1, show=show)
+    b = diff_harmonics(h0, h1, figsize=figsize, show=show)
+    
+    return [a, b]
+    

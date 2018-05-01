@@ -69,7 +69,15 @@ static PyObject* OSCARSSR_SetParticleBeamSize (OSCARSSRObject* self, PyObject* a
 static PyObject* OSCARSSR_ClearParticleBeams (OSCARSSRObject* self);
 static PyObject* OSCARSSR_PrintParticleBeams (OSCARSSRObject* self);
 static PyObject* OSCARSSR_SetTwissParameters (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
+static PyObject* OSCARSSR_GetEmittance (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
+static PyObject* OSCARSSR_GetTwissBetaX0 (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
+static PyObject* OSCARSSR_GetTwissAlphaX0 (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
+static PyObject* OSCARSSR_GetTwissGammaX0 (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSSR_SetNewParticle (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
+static PyObject* OSCARSSR_GetBeamX0 (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
+static PyObject* OSCARSSR_GetBeamU0 (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
+static PyObject* OSCARSSR_GetBeamHorizontalDirection (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
+static PyObject* OSCARSSR_GetBeamVerticalDirection (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSSR_GetParticleX0 (OSCARSSRObject* self);
 static PyObject* OSCARSSR_GetParticleBeta0 (OSCARSSRObject* self);
 static PyObject* OSCARSSR_GetParticleE0 (OSCARSSRObject* self);
@@ -77,7 +85,6 @@ static PyObject* OSCARSSR_AddDriftVolume_Box (OSCARSSRObject* self, PyObject* ar
 static PyObject* OSCARSSR_RemoveDriftVolume (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSSR_ClearDriftVolumes (OSCARSSRObject* self);
 static PyObject* OSCARSSR_PrintDriftVolumes (OSCARSSRObject* self);
-static PyObject* OSCARSSR_CorrectTrajectory (OSCARSSRObject* self);
 static PyObject* OSCARSSR_CalculateTrajectory (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSSR_GetTrajectory (OSCARSSRObject* self);
 static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
@@ -86,6 +93,7 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
 static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, PyObject* args, PyObject *keywds);
 static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, PyObject *keywds);
 static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject* args, PyObject *keywds);
+static PyObject* OSCARSSR_WriteSpectrum (OSCARSSRObject* self, PyObject* args, PyObject *keywds);
 static PyObject* OSCARSSR_AverageSpectra (OSCARSSRObject* self, PyObject* args, PyObject *keywds);
 static PyObject* OSCARSSR_AddToSpectrum (OSCARSSRObject* self, PyObject* args, PyObject *keywds);
 static PyObject* OSCARSSR_GetSpectrum (OSCARSSRObject* self);
@@ -96,6 +104,8 @@ static PyObject* OSCARSSR_AddToPowerDensity (OSCARSSRObject* self, PyObject* arg
 static PyObject* OSCARSSR_GetPowerDensity (OSCARSSRObject* self);
 static PyObject* OSCARSSR_CalculateElectricFieldTimeDomain (OSCARSSRObject* self, PyObject* args, PyObject *keywds);
 static PyObject* OSCARSSR_PrintGPU (OSCARSSRObject* self);
+static PyObject* OSCARSSR_PrintNThreads (OSCARSSRObject* self);
+static PyObject* OSCARSSR_PrintTrajectory (OSCARSSRObject* self);
 static PyObject* OSCARSSR_PrintAll (OSCARSSRObject* self);
 static PyObject* OSCARSSR_COUT (OSCARSSRObject* self, PyObject* args, PyObject *keywds);
 static PyObject* OSCARSSR_CERR (OSCARSSRObject* self, PyObject* args, PyObject *keywds);

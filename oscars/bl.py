@@ -36,21 +36,24 @@ class bl(oscars.lut.lut1d):
         Path to the oscars beamline data directory
     
     
-    Currently Supported - facility beamline
-        NSLSII
-            SST
-                U42
-                EPU60
-    
     Returns
     -------
     None
     """
 
-
-    def __init__ (self, facility, beamline, device, current=None, base_path=None, gpu=1, nthreads=8):
-
+    def __init__ (self, facility=None, beamline=None, device=None, current=None, base_path=None, gpu=1, nthreads=8):
         oscars.lut.lut1d.__init__(self)
+
+        # Set base path if defined, otherwise default
+        if base_path is not None:
+            self.base_path = base_path
+        else:
+            self.base_path = os.path.join(os.sep, 'Users', 'dhidas', 'OSCARSDATA')
+
+        if facility is None or beamline is None or device is None:
+            print('You can select from the available facility, beamline, and device list:')
+            self.list()
+            return
 
         self.facility = facility
         self.beamline = beamline
@@ -67,16 +70,10 @@ class bl(oscars.lut.lut1d):
 
         self.bfield_mapping_1d_filename = None
         self.bfield_mapping_2d_filename = None
-        self.lut1d_filename = None
         self.lut2d_filename = None
 
         self.has_lut1d = False
         self.has_lut2d = False
-
-        if base_path is not None:
-            self.base_path = base_path
-        else:
-            self.base_path = os.path.join(os.sep, 'Users', 'dhidas', 'OSCARSDATA')
 
         # Read configuration file in order of precidence
         self.config = configparser.ConfigParser()
@@ -125,6 +122,18 @@ class bl(oscars.lut.lut1d):
             if 'ctstartstop' in c:
                 ctstartstop = list(map(float, c['ctstartstop'].split()))
                 self.osr.set_ctstartstop(ctstartstop[0], ctstartstop[1])
+
+
+        # Config bfield translation, etc
+        self.bfield_kwargs = None
+        if 'bfield' in self.config:
+            c = self.config['bfield'] # bfield config
+            a = dict()                # kwargs
+
+            if 'translation' in c: a['translation'] = list(map(float, c['translation'].split()))
+            if 'rotations' in c: raise ValueError('rotations keyword not allowed in config file, please remove')
+
+            self.bfield_kwargs = a
 
         self.phase_mode = None
         if 'general' in self.config:
@@ -276,9 +285,72 @@ class bl(oscars.lut.lut1d):
 
             self.power_density_kwargs = a
 
+        return
+
+
+    def load_lut1d (self, ifile):
+        """Load a specific lut1d file"""
+
+
+        if os.path.isfile(ifile):
+            try:
+                self.clear_lut1d()
+                self.read_file_lut1d(ifile)
+                self.lut1d_filename = ifile
+                self.has_lut1d = True
+            except:
+                raise IOError('Unable to load file.  Probably incorrect format or permissions: ' + ifile)
+        else:
+            raise IOError('file does not exist: ' + ifile)
+
+        return
+
+
+
+
+    def list (self):
+        """List facilities and beamlines"""
+
+        fstring = '    {:12} {:12}     {}'
+
+        print(fstring.format('Beamline', 'Device', 'Modes'))
+        print(fstring.format('--------', '------', '-----'))
+        print('')
+        for facility_name in os.listdir(os.path.join(self.base_path, 'Facilities')):
+            facility_path = os.path.join(self.base_path, 'Facilities', facility_name)
+            if os.path.isdir(facility_path):
+                print(facility_name)
+
+                for beamline_name in os.listdir(facility_path):
+                    beamline_path = os.path.join(facility_path, beamline_name)
+                    if os.path.isdir(beamline_path):
+                        #print('    Beamline:', beamline_name)
+
+                        for device_name in os.listdir(beamline_path):
+                            device_path = os.path.join(beamline_path, device_name)
+                            if os.path.isdir(device_path):
+                                #print('        Device:', device_name)
+
+                                modes = []
+                                try:
+                                    for mode_name in os.listdir(os.path.join(device_path, 'bfield')):
+                                        mode_path = os.path.join(device_path, 'bfield', mode_name)
+                                        if os.path.isdir(mode_path):
+                                            modes.append(mode_name)
+                                except:
+                                    warnings.warn('No bfields found for device: ' + device_name)
+                                print(fstring.format(beamline_name, device_name, ' '.join(modes)))
+
+
+
 
 
         return
+
+
+
+
+
 
     def info (self):
         """Print info about this beamline setup"""
@@ -380,6 +452,8 @@ class bl(oscars.lut.lut1d):
         if 'nparticles' in newargs:
             if newargs['nparticles'] <= 1:
                 self.osr.set_new_particle(particle='ideal')
+            else:
+                self.osr.set_new_particle()
         else:
             self.osr.set_new_particle(particle='ideal')
 
@@ -438,8 +512,17 @@ class bl(oscars.lut.lut1d):
 
         self.osr.clear_bfields()
         mapping = oscars.util.read_file_list_with_header(self.bfield_mapping_1d_filename)
-        self.osr.add_bfield_interpolated(mapping=mapping[0], iformat=mapping[1], rotations=mapping[2], translation=mapping[3], scale=mapping[4], parameter=gap)
-        self.osr.set_new_particle()
+
+        translation = mapping[3]
+        if 'translation' in self.bfield_kwargs:
+            t = self.bfield_kwargs['translation']
+            if len(t) != 3:
+                print('t:', t)
+                raise IndexError('translation input of incorrect length')
+            for i in range(3):
+                translation[i] += t[i]
+
+        self.osr.add_bfield_interpolated(mapping=mapping[0], iformat=mapping[1], rotations=mapping[2], translation=translation, scale=mapping[4], parameter=gap)
 
         self.gap = gap
 
@@ -529,20 +612,21 @@ class bl(oscars.lut.lut1d):
             except:
                 warnings.warn('could not set gap to that value.  likely it is outside of the interpolation range')
 
-        if self.has_lut1d is not None:
-            self.get_gaps(show=True, gap=self.gap)
+        if self.has_lut1d:
+            self.get_gaps(show=True, gap=self.gap, name=self.name)
 
         if self.gap is not None:
 
             self.osr.set_new_particle(particle='ideal')
             spectrum = self.osr.calculate_spectrum(**self.spectrum_kwargs)
 
+            tmp_flux_kwargs = self.flux_kwargs.copy()
             if 'energy_eV' not in self.flux_kwargs:
-                self.flux_kwargs['energy_eV'] = oscars.fit.find_first_harmonic(spectrum)[1]
+                tmp_flux_kwargs['energy_eV'] = oscars.fit.find_first_harmonic(spectrum)[1]
 
-            oscars.plots_mpl.plot_spectrum(spectrum, figsize=[16, 4], axvlines=[self.flux_kwargs['energy_eV']])
+            oscars.plots_mpl.plot_spectrum(spectrum, figsize=[16, 4], axvlines=[tmp_flux_kwargs['energy_eV']])
 
-            oscars.plots_mpl.plot_flux(self.osr.calculate_flux_rectangle(**self.flux_kwargs))
+            oscars.plots_mpl.plot_flux(self.osr.calculate_flux_rectangle(**tmp_flux_kwargs))
 
             oscars.plots_mpl.plot_power_density(self.osr.calculate_power_density_rectangle(**self.power_density_kwargs))
 

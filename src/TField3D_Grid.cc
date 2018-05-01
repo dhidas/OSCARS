@@ -14,6 +14,7 @@
 #include <array>
 
 #include "TOMATH.h"
+#include "TOSCARSSR.h"
 
 TField3D_Grid::TField3D_Grid (std::string const& Name)
 {
@@ -23,6 +24,10 @@ TField3D_Grid::TField3D_Grid (std::string const& Name)
 
   fRotated.SetXYZ(0, 0, 0);
   fTranslation.SetXYZ(0, 0, 0);
+
+  fFrequency = 0;
+  fFrequencyPhase = 0;
+  fTimeOffset = 0;
 }
 
 
@@ -33,6 +38,9 @@ TField3D_Grid::TField3D_Grid (std::string         const& InFileName,
                               TVector3D           const& Rotations,
                               TVector3D           const& Translation,
                               std::vector<double> const& Scaling,
+                              double              const  Frequency,
+                              double              const  FrequencyPhase,
+                              double              const  TimeOffset,
                               std::string         const& Name,
                               char                const  CommentChar)
 {
@@ -44,6 +52,10 @@ TField3D_Grid::TField3D_Grid (std::string         const& InFileName,
   std::string format = FileFormat;
   std::transform(format.begin(), format.end(), format.begin(), ::toupper);
 
+  // Time dependence
+  fFrequency = Frequency;
+  fFrequencyPhase = FrequencyPhase;
+  fTimeOffset = TimeOffset;
 
   // Which file format are you looking at?
   if (format == "OSCARS") {
@@ -71,6 +83,9 @@ TField3D_Grid::TField3D_Grid (std::vector<std::pair<double, std::string> > Mappi
                               TVector3D                             const& Rotations,
                               TVector3D                             const& Translation,
                               std::vector<double>                   const& Scaling,
+                              double                                const  Frequency,
+                              double                                const  FrequencyPhase,
+                              double                                const  TimeOffset,
                               std::string                           const& Name,
                               std::string                           const& OutFileName,
                               char                                  const  CommentChar)
@@ -87,6 +102,11 @@ TField3D_Grid::TField3D_Grid (std::vector<std::pair<double, std::string> > Mappi
   std::string format = FileFormat;
   std::transform(format.begin(), format.end(), format.begin(), ::toupper);
 
+  // Time dependence
+  fFrequency = Frequency;
+  fFrequencyPhase = FrequencyPhase;
+  fTimeOffset = TimeOffset;
+
   // Which file format are you looking at?
   if (format == "OSCARS") {
     this->InterpolateFromFiles(Mapping, Parameter, Rotations, Translation, Scaling);
@@ -98,7 +118,7 @@ TField3D_Grid::TField3D_Grid (std::vector<std::pair<double, std::string> > Mappi
     this->InterpolateFromFiles_SRW(Mapping, Parameter, Rotations, Translation, Scaling);
   } else if (format == "BINARY") {
     // UPDATE: Interpolated from binary
-    throw;
+    throw std::invalid_argument("Interpolation from BINARY not implemented yet");
   } else {
     std::cerr << "TField3D_Grid::TField3D_Grid format error format: " << FileFormat << std::endl;
     throw std::invalid_argument("incorrect format given");
@@ -116,9 +136,9 @@ TField3D_Grid::~TField3D_Grid ()
 
 
 
-TVector3D TField3D_Grid::GetF (double const X, double const Y, double const Z) const
+TVector3D TField3D_Grid::GetF (double const X, double const Y, double const Z, double const T) const
 {
-  return this->GetF(TVector3D(X, Y, Z));
+  return this->GetF(TVector3D(X, Y, Z), T);
 }
 
 
@@ -130,7 +150,7 @@ size_t TField3D_Grid::GetIndex (size_t const ix, size_t const iy, size_t const i
 
 
 
-TVector3D TField3D_Grid::GetF (TVector3D const& XIN) const
+TVector3D TField3D_Grid::GetF (TVector3D const& XIN, double const T) const
 {
   // Get the field at a point in space.  Must rotate point into coordinate system, then translate it.
 
@@ -149,7 +169,7 @@ TVector3D TField3D_Grid::GetF (TVector3D const& XIN) const
   if (fNZ > 1 && (X.GetZ() <= fZStart || X.GetZ() >= fZStop)) {
     return TVector3D(0, 0, 0);
   }
-      
+
   // Get index in each dimension relative to start and stop
   size_t const nx = fNX > 1 ? (X.GetX() - fXStart) / fXStep      : 0;
   double const dx = fNX > 1 ? (X.GetX() - fXStart) - nx * fXStep : 0;
@@ -160,6 +180,7 @@ TVector3D TField3D_Grid::GetF (TVector3D const& XIN) const
   size_t const nz = fNZ > 1 ? (X.GetZ() - fZStart) / fZStep      : 0;
   double const dz = fNZ > 1 ? (X.GetZ() - fZStart) - nz * fZStep : 0;
 
+  TVector3D Field(0, 0, 0);
 
   switch (fDIMX) {
     case kDIMX_XYZ:
@@ -186,27 +207,30 @@ TVector3D TField3D_Grid::GetF (TVector3D const& XIN) const
         TVector3D const v1 = v01 + dy * (v11 - v01) / fYStep;
 
         // Step in Z to find point
-        return v0 + dz * (v1 - v0) / fZStep;
+        Field = v0 + dz * (v1 - v0) / fZStep;
       }
       break;
     case kDIMX_X:
       {
         size_t const i0 = nx + 0;
         size_t const i1 = nx + 1;
-        return fData[i0] + dx * (fData[i1] - fData[i0]) / fXStep;
+        Field = fData[i0] + dx * (fData[i1] - fData[i0]) / fXStep;
       }
+      break;
     case kDIMX_Y:
       {
         size_t const i0 = ny + 0;
         size_t const i1 = ny + 1;
-        return fData[i0] + dy * (fData[i1] - fData[i0]) / fYStep;
+        Field = fData[i0] + dy * (fData[i1] - fData[i0]) / fYStep;
       }
+      break;
     case kDIMX_Z:
       {
         size_t const i0 = nz + 0;
         size_t const i1 = nz + 1;
-        return fData[i0] + dz * (fData[i1] - fData[i0]) / fZStep;
+        Field = fData[i0] + dz * (fData[i1] - fData[i0]) / fZStep;
       }
+      break;
     case kDIMX_XY:
       {
         size_t const i00 = GetIndex(nx + 0, ny + 0, 0);
@@ -217,8 +241,9 @@ TVector3D TField3D_Grid::GetF (TVector3D const& XIN) const
         size_t const i11 = GetIndex(nx + 1, ny + 1, 0);
         TVector3D const v1 = fData[i01] + dx * (fData[i11] - fData[i01]) / fXStep;
 
-        return v0 + dy * (v1 - v0) / fYStep;
+        Field = v0 + dy * (v1 - v0) / fYStep;
       }
+      break;
     case kDIMX_XZ:
       {
         size_t const i00 = GetIndex(nx + 0, 0, nz + 0);
@@ -229,8 +254,9 @@ TVector3D TField3D_Grid::GetF (TVector3D const& XIN) const
         size_t const i11 = GetIndex(nx + 1, 0, nz + 1);
         TVector3D const v1 = fData[i01] + dx * (fData[i11] - fData[i01]) / fXStep;
 
-        return v0 + dz * (v1 - v0) / fZStep;
+        Field = v0 + dz * (v1 - v0) / fZStep;
       }
+      break;
     case kDIMX_YZ:
       {
         size_t const i00 = GetIndex(0, ny + 0, nz + 0);
@@ -241,14 +267,14 @@ TVector3D TField3D_Grid::GetF (TVector3D const& XIN) const
         size_t const i11 = GetIndex(0, ny + 1, nz + 1);
         TVector3D const v1 = fData[i01] + dy * (fData[i11] - fData[i01]) / fYStep;
 
-        return v0 + dz * (v1 - v0) / fZStep;
+        Field = v0 + dz * (v1 - v0) / fZStep;
       }
       break;
     default:
       throw std::out_of_range("unknown dimension");
   }
 
-  throw std::out_of_range("unknown dimension");
+  return Field * cos(TOSCARSSR::TwoPi() * fFrequency * (T + fTimeOffset) + fFrequencyPhase);
 }
 
 
@@ -863,7 +889,7 @@ void TField3D_Grid::ReadFile_Binary (std::string const& InFileName,
   char* Comment = new char(NCommentChars + 1);
   fi.read(Comment, NCommentChars * sizeof(char));
   Comment[NCommentChars] = '\0';
-  delete [] Comment;
+  delete Comment;
 
   // Header 1: Version number
   int Version;
@@ -875,7 +901,7 @@ void TField3D_Grid::ReadFile_Binary (std::string const& InFileName,
   char* Format = new char(NFormatChars+1);
   fi.read(Format, NFormatChars * sizeof(char));
   Format[NFormatChars] = '\0';
-  delete [] Format;
+  delete Format;
 
 
   // Check version number
@@ -1704,7 +1730,7 @@ void TField3D_Grid::InterpolateFromFiles (std::vector<std::pair<double, std::str
       std::getline(*(InFiles[i]), L);
       if (HeaderValues[ih] != GetHeaderValue(L)) {
         // UPDATE: throws
-        throw;
+        throw std::out_of_range("Header value is incorrect format");
       }
     }
   }
@@ -2667,6 +2693,33 @@ double TField3D_Grid::GetZStep () const
 {
   // Return the Z step size
   return fZStep;
+}
+
+
+
+
+double TField3D_Grid::GetFrequency () const
+{
+  // Return the frequency
+  return fFrequency;
+}
+
+
+
+
+double TField3D_Grid::GetFrequencyPhase () const
+{
+  // Return the frequencyPhase
+  return fFrequencyPhase;
+}
+
+
+
+
+double TField3D_Grid::GetTimeOffset () const
+{
+  // Return the time offset
+  return fTimeOffset;
 }
 
 

@@ -107,6 +107,7 @@ moduleOSCARSSR = Extension('oscars.sr',
                                  'src/TField3D_Gaussian.cc',
                                  'src/TFieldContainer.cc',
                                  'src/TField3D_IdealUndulator.cc',
+                                 'src/TField3D_Halbach.cc',
                                  'src/TField3D_UniformBox.cc',
                                  'src/TFieldPythonFunction.cc',
                                  'src/TParticleA.cc',
@@ -149,6 +150,7 @@ moduleOSCARSTH = Extension('oscars.th',
                                  'src/TField3D_Gaussian.cc',
                                  'src/TFieldContainer.cc',
                                  'src/TField3D_IdealUndulator.cc',
+                                 'src/TField3D_Halbach.cc',
                                  'src/TField3D_UniformBox.cc',
                                  'src/TFieldPythonFunction.cc',
                                  'src/TParticleA.cc',
@@ -198,5 +200,5 @@ setup(
   package_data = {'' : ['LICENSE.txt']},
   #package_dir = {'oscars': 'python'},
   #include_package_data=True,
-  py_modules = ['oscars.plots_mpl', 'oscars.plots3d_mpl', 'oscars.parametric_surfaces', 'oscars.util', 'oscars.fit', 'oscars.bl', 'oscars.lut']
+  py_modules = ['oscars.plots_mpl', 'oscars.plots3d_mpl', 'oscars.parametric_surfaces', 'oscars.util', 'oscars.fit', 'oscars.bl', 'oscars.lut', 'oscars.brightness', 'oscars.twiss', 'oscars.me']
 )

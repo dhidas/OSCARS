@@ -25,15 +25,15 @@ class TField3D_IdealUndulator : public TField
                              TVector3D   const& Center    = TVector3D(0, 0, 0),
                              double      const  Phase     = 0,
                              double      const  Taper     = 0,
+                             double      const  Frequency = 0,
+                             double      const  FrequencyPhase = 0,
+                             double      const  TimeOffset = 0,
                              std::string const& Name      = "");
 
     ~TField3D_IdealUndulator ();
 
-    double    GetFx (double const X, double const Y, double const Z) const;
-    double    GetFy (double const X, double const Y, double const Z) const;
-    double    GetFz (double const X, double const Y, double const Z) const;
-    TVector3D GetF  (double const X, double const Y, double const Z) const;
-    TVector3D GetF  (TVector3D const& X) const;
+    TVector3D GetF  (double const X, double const Y, double const Z, double const T = 0) const;
+    TVector3D GetF  (TVector3D const& X, double const T = 0) const;
 
     void Init (TVector3D   const& Field,
                TVector3D   const& Period,
@@ -41,6 +41,9 @@ class TField3D_IdealUndulator : public TField
                TVector3D   const& Center    = TVector3D(0, 0, 0),
                double      const  Phase     = 0,
                double      const  Taper     = 0,
+               double      const  Frequency = 0,
+               double      const  FrequencyPhase = 0,
+               double      const  TimeOffset = 0,
                std::string const& Name      = "");
 
     TVector3D GetField () const;
@@ -49,6 +52,10 @@ class TField3D_IdealUndulator : public TField
     TVector3D GetCenter () const;
     double    GetPhase () const;
     double    GetTaper () const;
+
+    double    GetFrequency () const;
+    double    GetFrequencyPhase () const;
+    double    GetTimeOffset () const;
 
     void Print (std::ostream& os) const;
 
@@ -62,6 +69,10 @@ class TField3D_IdealUndulator : public TField
     TVector3D fCenter;
     double    fPhase;
     double    fTaper;
+
+    double fFrequency;
+    double fFrequencyPhase;
+    double fTimeOffset;
 
     double fUndulatorLength;
 
@@ -78,7 +89,10 @@ inline std::ostream& operator << (std::ostream& os, TField3D_IdealUndulator cons
      << "NPeriods                " << o.GetNPeriods() << "\n"
      << "Center                  " << o.GetCenter() << "\n"
      << "Phase                   " << o.GetPhase() << "\n"
-     << "Taper                   " << o.GetTaper() << "\n";
+     << "Taper                   " << o.GetTaper() << "\n"
+     << "Frequency               " << o.GetFrequency() << "\n"
+     << "FrequencyPhase          " << o.GetFrequencyPhase() << "\n"
+     << "TimeOffset              " << o.GetTimeOffset() << "\n";
 
   return os;
 }

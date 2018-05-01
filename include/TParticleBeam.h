@@ -154,8 +154,10 @@ class TParticleBeam : public TParticleA
     };
 
     void SetBeamDistribution (TParticleBeam_BeamDistribution const D);
+    void SetBeamDistribution (std::string const& Name);
     TParticleBeam_BeamDistribution const GetBeamDistribution () const;
 
+    TParticleBeam_BeamDistribution GetBeamDistribution (std::string const& Name) const;
     std::string GetBeamDistributionName () const;
 
   private:

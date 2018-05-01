@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
@@ -125,7 +127,7 @@ def power_density_3d(srs, surface,
 
 def power_density_3ds(srs, surface, ax,
                     normal=1, rotations=[0, 0, 0], translation=[0, 0, 0], nparticles=0, gpu=0, nthreads=0,
-                    alpha=0.4, transparent=True, max_level=-2):
+                    alpha=0.4, transparent=True, max_level=-2, ofile=''):
     """calculate power density for and plot a parametric surface in 3d"""
 
     points = []
@@ -136,7 +138,7 @@ def power_density_3ds(srs, surface, ax,
             points.append([surface.position(u, v), surface.normal(u, v)])
 
 
-    power_density = srs.calculate_power_density(points=points, normal=normal, rotations=rotations, translation=translation, nparticles=nparticles, gpu=gpu, nthreads=nthreads, max_level=max_level)
+    power_density = srs.calculate_power_density(points=points, normal=normal, rotations=rotations, translation=translation, nparticles=nparticles, gpu=gpu, nthreads=nthreads, max_level=max_level, ofile=ofile)
     P = [item[1] for item in power_density]
 
     X2 = []
@@ -290,7 +292,7 @@ def plot_bfield3D (srs, xlim=[-0.02, 0.02], ylim=[-0.02, 0.02], zlim=[-0.2, 0.02
 
 
 
-def plot_surface(surface, xlim=None, ylim=None, zlim=None, **kwargs):
+def plot_surface(surface, xlim=None, ylim=None, zlim=None, alpha=0.5, **kwargs):
     """plot a parametric surface in 3d"""
 
 
@@ -368,11 +370,33 @@ def plot_trajectory3d(trajectory, figsize=None):
 
 
 
+def get_surface_points (surface=None, surfaces=None, translation=None):
+
+    points = []
+    if surface is not None and surfaces is not None:
+        raise ValueError('pick one: surface or surfaces')
+
+    if surface is not None:
+        surfaces = [surface]
+
+    for surface in surfaces:
+        for u in np.linspace(surface.ustart, surface.ustop, surface.nu):
+            for v in np.linspace(surface.vstart, surface.vstop, surface.nv):
+                p = surface.position(u, v)
+                if translation is not None:
+                    p[0] += translation[0]
+                    p[1] += translation[1]
+                    p[2] += translation[2]
+                points.append([p, surface.normal(u, v)])
+
+    return points
 
 
 
 
-def plot_power_density_scatter (V, s=10):
+
+
+def plot_power_density_scatter (V, s=10, title='Power Density [$W/mm^2$]', figsize=None, bbox_inches='tight', alpha=1, transparent=True, ofile=None, colorbar=True):
 
     if len(V) == 0:
         return
@@ -391,17 +415,29 @@ def plot_power_density_scatter (V, s=10):
     else:
         C = [p / pmax for p in P]
 
-    Cen3D = plt.figure()
+    Cen3D = plt.figure(figsize=figsize)
     ax = Cen3D.add_subplot(111, projection='3d')
+    plt.title(title)
 
-    ax.scatter(X, Z, Y, c=C, s=s, alpha=1)
+    ax.scatter(X, Z, Y, c=C, s=s, alpha=alpha)
     ax.invert_xaxis()
 
     ax.set_xlabel('X [m]')
     ax.set_ylabel('Z [m]')
     ax.set_zlabel('Y [m]')
+
+    m = cm.ScalarMappable()
+    m.set_array(P)
+    if colorbar is True:
+        plt.colorbar(m, format='%.0e')
+        #plt.colorbar(m, format=r'%3.1f')
+
+    if ofile is not None:
+        plt.savefig(ofile, bbox_inches=bbox_inches, transparent=transparent)
+
     plt.show()
 
+    return
 
 
 
@@ -411,7 +447,7 @@ def plot_power_density_scatter (V, s=10):
 
 
 
-def plot_power_density_stl (P, title='Power Density [$W/mm^2$]', elev=30, azim=30, alpha=0.8, bbox_inches='tight', transparent=True, ofile=None):
+def plot_power_density_stl (P, title='Power Density [$W/mm^2$]', elev=30, azim=30, alpha=0.8, bbox_inches='tight', transparent=True, ofile=None, colorbar=True):
 
     pmax = max([p[1] for p in P])
 
@@ -451,6 +487,10 @@ def plot_power_density_stl (P, title='Power Density [$W/mm^2$]', elev=30, azim=3
     ax.set_xlabel('X [m]')
     ax.set_ylabel('Z [m]')
     ax.set_zlabel('Y [m]')
+
+    if colorbar is True:
+        plt.colorbar(m, format='%.0e')
+        #plt.colorbar(m, format=r'%3.1f')
 
     if ofile is not None:
         plt.savefig(ofile, bbox_inches=bbox_inches, transparent=transparent)

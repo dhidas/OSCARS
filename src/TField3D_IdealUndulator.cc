@@ -30,6 +30,9 @@ TField3D_IdealUndulator::TField3D_IdealUndulator (TVector3D const& Field,
                                                   TVector3D const& Center,
                                                   double const Phase,
                                                   double const Taper,
+                                                  double const Frequency,
+                                                  double const FrequencyPhase,
+                                                  double const TimeOffset,
                                                   std::string const& Name)
 {
   // Typical constructor.  This will generate a magnetic field in the direction specified by Field
@@ -43,7 +46,7 @@ TField3D_IdealUndulator::TField3D_IdealUndulator (TVector3D const& Field,
   // Center - Where in space the center of this field will be
   // Phase - A phase offset for the sine function given in [rad]
 
-  this->Init(Field, Period, NPeriods, Center, Phase, Taper, Name);
+  this->Init(Field, Period, NPeriods, Center, Phase, Taper, Frequency, FrequencyPhase, TimeOffset, Name);
 }
 
 
@@ -63,6 +66,9 @@ void TField3D_IdealUndulator::Init (TVector3D const& Field,
                                     TVector3D const& Center,
                                     double const Phase,
                                     double const Taper,
+                                    double const Frequency,
+                                    double const FrequencyPhase,
+                                    double const TimeOffset,
                                     std::string const& Name)
 {
   // Initialization function.  This will generate a magnetic field in the direction specified by Field
@@ -88,6 +94,10 @@ void TField3D_IdealUndulator::Init (TVector3D const& Field,
   fPhase    = Phase;
   fTaper    = Taper;
 
+  fFrequency = Frequency;
+  fFrequencyPhase = FrequencyPhase;
+  fTimeOffset = TimeOffset;
+
   fPeriodLength = fPeriod.Mag();
   fPeriodUnitVector = fPeriod.UnitVector();
 
@@ -100,31 +110,7 @@ void TField3D_IdealUndulator::Init (TVector3D const& Field,
 
 
 
-double TField3D_IdealUndulator::GetFx (double const X, double const Y, double const Z) const
-{
-  return this->GetF(X, Y, Z).GetX();
-}
-
-
-
-
-double TField3D_IdealUndulator::GetFy (double const X, double const Y, double const Z) const
-{
-  return this->GetF(X, Y, Z).GetY();
-}
-
-
-
-
-double TField3D_IdealUndulator::GetFz (double const X, double const Y, double const Z) const
-{
-  return this->GetF(X, Y, Z).GetZ();
-}
-
-
-
-
-TVector3D TField3D_IdealUndulator::GetF (TVector3D const& X) const
+TVector3D TField3D_IdealUndulator::GetF (TVector3D const& X, double const T) const
 {
 
   // UPDATE: Check min.max limits here?  maybe not
@@ -150,21 +136,27 @@ TVector3D TField3D_IdealUndulator::GetF (TVector3D const& X) const
   if (D < -fUndulatorLength / 2. + PhaseShift + fPeriodLength || D > fUndulatorLength / 2. + PhaseShift - fPeriodLength) {
     if (D < -fUndulatorLength / 2. + PhaseShift + fPeriodLength / 2. || D > fUndulatorLength / 2. + PhaseShift - fPeriodLength / 2.) {
 
-      return 0.25 * fField * sin(TOSCARSSR::TwoPi() * (D - PhaseShift) / fPeriodLength) * TaperCorrection;
-    } 
+      F = 0.25 * fField * sin(TOSCARSSR::TwoPi() * (D - PhaseShift) / fPeriodLength) * TaperCorrection;
+    } else {
+      F = 0.75 * fField * sin(TOSCARSSR::TwoPi() * (D - PhaseShift) / fPeriodLength) * TaperCorrection;
+    }
+  } else {
+    F =  fField * sin(TOSCARSSR::TwoPi() * (D - PhaseShift) / fPeriodLength) * TaperCorrection;
+  }
 
-    return 0.75 * fField * sin(TOSCARSSR::TwoPi() * (D - PhaseShift) / fPeriodLength) * TaperCorrection;
-  } 
-
-  return fField * sin(TOSCARSSR::TwoPi() * (D - PhaseShift) / fPeriodLength) * TaperCorrection;
+  if (fFrequency == 0) {
+    // It has no time dependence
+    return F;
+  }
+  return F * cos(TOSCARSSR::TwoPi() * fFrequency * (T + fTimeOffset) + fFrequencyPhase);
 }
 
 
 
 
-TVector3D TField3D_IdealUndulator::GetF (double const X, double const Y, double const Z) const
+TVector3D TField3D_IdealUndulator::GetF (double const X, double const Y, double const Z, double const T) const
 {
-  return this->GetF(TVector3D(X, Y, Z));
+  return this->GetF(TVector3D(X, Y, Z), T);
 }
 
 
@@ -220,6 +212,33 @@ double TField3D_IdealUndulator::GetTaper () const
 {
   // Return the taper
   return fTaper;
+}
+
+
+
+
+double TField3D_IdealUndulator::GetFrequency () const
+{
+  // Return the frequency
+  return fFrequency;
+}
+
+
+
+
+double TField3D_IdealUndulator::GetFrequencyPhase () const
+{
+  // Return the frequency
+  return fFrequencyPhase;
+}
+
+
+
+
+double TField3D_IdealUndulator::GetTimeOffset () const
+{
+  // Return the time offset for the frequency
+  return fTimeOffset;
 }
 
 
