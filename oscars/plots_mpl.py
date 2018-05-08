@@ -573,7 +573,7 @@ def plot_bfield(osr, mymin=-1, mymax=1, t=0, name='', ylim=None, show=True, ofil
 
 
 
-def plot_efield(osr, mymin=-1, mymax=1, ylim=None, show=True, ofile='', axis='Z', npoints=20000, between_two_points=None, ret=False):
+def plot_efield(osr, mymin=-1, mymax=1, t=0, name='', ylim=None, show=True, ofile='', axis='Z', npoints=20000, between_two_points=None, ret=False):
     """Plot the electric field as a function of Z"""
 
 

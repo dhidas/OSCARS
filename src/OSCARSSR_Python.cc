@@ -1812,7 +1812,7 @@ static PyObject* OSCARSSR_GetBField (OSCARSSRObject* self, PyObject* args, PyObj
   // Get the magnetic field at a point as a 3D list [Bx, By, Bz]
 
   // Python list object
-  PyObject* List = 0x0;//PyList_New(0);
+  PyObject* List = 0x0;
   double T = 0;
   char const* Name = "";
 
@@ -2919,7 +2919,7 @@ static PyObject* OSCARSSR_GetEField (OSCARSSRObject* self, PyObject* args, PyObj
   // Get the magnetic field at a point as a 3D list [Ex, Ey, Ez]
 
   // Python list object
-  PyObject* List = PyList_New(0);
+  PyObject* List = 0x0;
   double T = 0;
   char const* Name = "";
 
@@ -2930,6 +2930,7 @@ static PyObject* OSCARSSR_GetEField (OSCARSSRObject* self, PyObject* args, PyObj
 
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|ds",
                                    const_cast<char **>(kwlist),
+                                   &List,
                                    &T,
                                    &Name)) {
     return NULL;
