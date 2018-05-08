@@ -1843,7 +1843,6 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
 
   // Imaginary "i" and complxe 1+0i
   std::complex<double> const I(0, 1);
-  std::complex<double> const One(1, 0);
 
   // Photon vertical direction and positive and negative helicity
   TVector3D  const VerticalDirection = PropogationDirection.Cross(HorizontalDirection).UnitVector();
@@ -3279,7 +3278,6 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
 
   // Imaginary "i" and complxe 1+0i
   std::complex<double> const I(0, 1);
-  std::complex<double> const One(1, 0);
 
   // Photon vertical direction and positive and negative helicity
   TVector3D const VerticalDirection = PropogationDirection.Cross(HorizontalDirection).UnitVector();
