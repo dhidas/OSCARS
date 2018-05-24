@@ -59,7 +59,8 @@ install:
   #- "pip install --disable-pip-version-check --user --upgrade pip==9.0.3"
   - c:\python35-x64\python.exe -m pip install --disable-pip-version-check --user --upgrade pip==9.0.3
 
-  - "pip install wheel"
+  #- "pip install wheel"
+  - "%PYTHON%\\python.exe -m pip install --upgrade pip setuptools wheel"
 
   # Install cude and compile libs
   #- "CALL .ci\\build_cuda.cmd"
