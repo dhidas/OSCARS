@@ -61,11 +61,11 @@ def get_points(sr):
 
 
 
-def calculate_harmonics_me (osr, obs=[0, 0, 30], nparticles=1000, niterations=10):
+def calculate_harmonics_me (osr, obs=[0, 0, 30], nparticles=1000, niterations=10, energy_range_eV=[1, 30000]):
 
 
     # Grab the single particle spectrum and harmonics for reference
-    spectrum_se = osr.calculate_spectrum(obs=[0, 0, 30], energy_range_eV=[10, 30000])
+    spectrum_se = osr.calculate_spectrum(obs=obs, energy_range_eV=energy_range_eV)
     harmonics = find_odd_harmonics(spectrum_se, show=False)
 
     # For the summed spectrum from multi-electron sampling
