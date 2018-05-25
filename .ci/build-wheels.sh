@@ -11,6 +11,8 @@ ls /io
 
 cd /io
 
+mkdir wheelhouse
+
 ls -la /opt/python/
 # Compile wheels
 #for PYBIN in $PYALL; do
