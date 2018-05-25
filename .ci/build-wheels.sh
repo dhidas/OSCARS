@@ -11,9 +11,10 @@ ls /io
 
 cd /io
 
-ls -l /opt/python/
+ls -la /opt/python/
 # Compile wheels
-for PYBIN in $PYALL; do
+#for PYBIN in $PYALL; do
+for PYBIN in /opt/python/*/bin; do
     echo "/opt/python/${PYBIN}/bin/pip"
     #"/opt/python/${PYBIN}/bin/pip" install -r /io/requirements.txt
     #"/opt/python/${PYBIN}/bin/pip" wheel /io/ -w wheelhouse/
