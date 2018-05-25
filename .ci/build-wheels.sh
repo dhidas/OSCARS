@@ -4,9 +4,11 @@ set -e -x
 
 PYALL="cp27-cp27m cp27-cp27mu cp33-cp33m cp34-cp34m cp35-cp35m cp36-cp36m"
 
+echo In build-wheels.sh
 pwd
 ls .
 
+mkdir wheelhouse
 ls /io
 
 cd /io
