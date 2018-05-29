@@ -32,7 +32,8 @@ class SpecRange:
 
         # Compare spectrum to previous
         flux_test = abs((self.flux - h[0]) / self.flux) < 0.01
-        energy_test = abs(self.energy - h[1]) / self.energy < 0.01
+        #energy_test = abs(self.energy - h[1]) / self.energy < 0.01
+        energy_test = abs(self.energy - h[1]) < 1.0
         fwhm_test = True #abs((self.fwhm - h[2]) / self.fwhm) < 0.01
 
         return flux_test and energy_test and fwhm_test
@@ -61,7 +62,7 @@ def get_points(sr):
 
 
 
-def calculate_harmonics_me (osr, obs=[0, 0, 30], nparticles=1000, niterations=10, energy_range_eV=[1, 30000]):
+def calculate_harmonics_me (osr, obs=[0, 0, 30], nparticles=1000, niterations=10, energy_range_eV=[1, 30000], ofile=None, max_harmonic=None):
 
 
     # Grab the single particle spectrum and harmonics for reference
@@ -75,6 +76,14 @@ def calculate_harmonics_me (osr, obs=[0, 0, 30], nparticles=1000, niterations=10
     # Loop over harmonics and append SpecRanges given the FWHM
     for h in harmonics:
         specr.append(SpecRange([int(h[1] - 6*h[2]), int(h[1] + 3*h[2])]))
+
+    if max_harmonic is not None:
+        if max_harmonic < 1:
+            raise ValueError('max_harmonic must be >= 1')
+
+        specr = specr[0:int(max_harmonic/2) + 1]
+        if len(specr) == 0:
+            raise IndexError('no harmonics in range.  check max_harmonic')
 
     total_particles = nparticles
 
@@ -147,6 +156,12 @@ def calculate_harmonics_me (osr, obs=[0, 0, 30], nparticles=1000, niterations=10
         if sum([not x.done for x in specr]) == 0:
             print('done')
             break
+
+    if ofile is not None:
+        with open(ofile, 'w') as of:
+            of.write('# Harmonic energy flux fwhm complete_status\n')
+            for i in range(len(specr)):
+                of.write( str(i*2+1) + ' ' + str(sr.energy) + ' ' + str(sr.flux) + ' ' + str(sr.fwhm) + ' ' + str(sr.done) + '\n')
 
     return specr
 
