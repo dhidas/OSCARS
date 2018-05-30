@@ -14,6 +14,9 @@ class lut1d:
         self.splines_gap_vs_energy = dict()
         self.splines_flux_vs_energy = dict()
         self.energy_range = dict()
+        self.splines_energy_vs_gap = dict()
+        self.splines_flux_vs_gap = dict()
+        self.gap_range = dict()
         
         if self.lut1d_filename is not None:
             self.read_file_lut1d(self.lut1d_filename)
@@ -27,6 +30,9 @@ class lut1d:
         self.splines_gap_vs_energy = dict()
         self.splines_flux_vs_energy = dict()
         self.energy_range = dict()
+        self.splines_energy_vs_gap = dict()
+        self.splines_flux_vs_gap = dict()
+        self.gap_range = dict()
 
         return
 
@@ -78,10 +84,14 @@ class lut1d:
                     #cs_gap_vs_energy = CubicSpline(energy, gap)
                     #cs_flux_vs_energy = CubicSpline(energy, flux)
 
+                    # Forward and reverse splines
                     self.splines_gap_vs_energy[harmonic] = CubicSpline(energy, gap)
                     self.splines_flux_vs_energy[harmonic] = CubicSpline(energy, flux)
                     self.energy_range[harmonic] = [energy[0], energy[-1]]
 
+                    self.splines_energy_vs_gap[harmonic] = CubicSpline(gap, energy)
+                    self.splines_flux_vs_gap[harmonic] = CubicSpline(gap, flux)
+                    self.gap_range[harmonic] = [gap[0], gap[-1]]
         return
 
 
