@@ -1104,10 +1104,20 @@ void OSCARSSR::WriteTrajectoryBinary (std::string const& OutFileName, std::strin
 
 
 
+//void OSCARSSR::NewParticleTrajectory (std::string const& InFileName, std::string const& Beam)
+//{
+//  this->SetNewParticle(Beam);
+//  this->ReadTrajectory(InFileName);
+//  return;
+//}
+
+
+
 
 void OSCARSSR::ReadTrajectory (std::string const& InFileName)
 {
   GetNewTrajectory().ReadFromFile(InFileName);
+  fParticle.SetupTrajectoryInterpolated();
   return;
 }
 
@@ -1943,6 +1953,7 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
 
         TVector3DC const ThisEw = ( ( (1 - (B).Mag2()) * (N - B) ) / ( D * D * (pow(1 - N.Dot(B), 2)) )
             + ( N.Cross( (N - B).Cross(AoverC) ) ) / ( D * pow(1 - N.Dot(B), 2) ) ) * std::exp(Exponent); // NF + FF
+        //TVector3DC const ThisEw = ( N.Cross( (N - B).Cross(AoverC) ) ) / ( D * pow(1 - N.Dot(B), 2) )  * std::exp(Exponent); // FF
 
         // Add this contribution
         SumE += ThisEw;
@@ -1998,6 +2009,239 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
 
   return;
 }
+
+
+
+
+
+
+
+void OSCARSSR::CalculateSpectrumPoints_Y (TParticleA& Particle,
+                                        TVector3D const& ObservationPoint,
+                                        TSpectrumContainer& Spectrum,
+                                        size_t const iThread,
+                                        size_t const NThreads,
+                                        bool& Done,
+                                        std::string const& PolarizationIn,
+                                        double const Angle,
+                                        TVector3D const& HorizontalDirection,
+                                        TVector3D const& PropogationDirection,
+                                        double const Precision,
+                                        int    const MaxLevel,
+                                        int    const MaxLevelExtended,
+                                        double const Weight,
+                                        int    const ReturnQuantity)
+{
+  // Calculates the single particle spectrum at a given observation point
+  // in units of [photons / second / 0.001% BW / mm^2]
+  // Save this in the spectrum container.
+  //
+  // Particle - the Particle.. with a Trajectory structure hopefully
+  // ObservationPoint - Observation Point
+  // Spectrum - Spectrum container
+
+  // Check that particle has been set yet.  If fType is "" it has not been set yet
+  if (Particle.GetType() == "") {
+    throw std::out_of_range("no particle defined");
+  }
+
+  // Calculate trajectory if it doesn't exist
+  if (Particle.GetTrajectory().GetNPoints() == 0) {
+    this->CalculateTrajectory(Particle);
+  }
+
+  // Calculate trajectory if it doesn't exist
+  if (Particle.GetTrajectory().GetNPoints() == 0) {
+    this->CalculateTrajectory(Particle);
+  }
+
+
+
+  // Check you are not requesting a level above the maximum
+  if (MaxLevel > TParticleA::kMaxTrajectoryLevel) {
+    std::cerr << "WARNING: MaxLevel > TParticleA::kMaxTrajectoryLevel.  Setting MaxLevel to TParticleA::kMaxTrajectoryLevel" << std::endl;
+  }
+
+  // Set the level to stop at if requested, but not above the hard limit
+  int const LevelStopMemory = MaxLevel >= -1  && MaxLevel <= TParticleA::kMaxTrajectoryLevel ? MaxLevel : TParticleA::kMaxTrajectoryLevel;
+  int const LevelStopWithExtended = MaxLevelExtended > LevelStopMemory ? MaxLevelExtended : LevelStopMemory;
+
+  // Number of points in spectrum
+  int const NSpectrumPoints = Spectrum.GetNPoints();
+
+  // Check input spectrum range numbers
+  if (iThread >= NThreads) {
+    throw std::out_of_range("spectrum thread range is incorrect.  Please report this error.");
+  }
+
+  // Constant C0 for calculation
+  double const C0 = Particle.GetQ() / (TOSCARSSR::FourPi() * TOSCARSSR::C() * TOSCARSSR::Epsilon0() * TOSCARSSR::Sqrt2Pi());
+
+  // Constant for flux calculation at the end
+  double const C2 = TOSCARSSR::FourPi() * Particle.GetCurrent() / (TOSCARSSR::H() * fabs(Particle.GetQ()) * TOSCARSSR::Mu0() * TOSCARSSR::C()) * 1e-6 * 0.001;
+
+  // Imaginary "i" and complxe 1+0i
+  std::complex<double> const I(0, 1);
+  std::complex<double> const One(1, 0);
+
+  // Photon vertical direction and positive and negative helicity
+  TVector3D const VerticalDirection = PropogationDirection.Cross(HorizontalDirection).UnitVector();
+  TVector3DC const Positive = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) + VerticalDirection * I );
+  TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * I );
+
+  TVector3DC PolarizationVector(0, 0, 0);
+
+  // Put polarization string in all upper case
+  std::string Polarization = PolarizationIn;
+  std::transform(Polarization.begin(), Polarization.end(), Polarization.begin(), ::tolower);
+  std::replace(Polarization.begin(), Polarization.end(), ' ', '-');
+
+  if (Polarization.find("all") != std::string::npos) {
+    // Do Nothing
+  } else if (Polarization.find("linear-horizontal") != std::string::npos || Polarization.find("lh") != std::string::npos) {
+    PolarizationVector = HorizontalDirection;
+  } else if (Polarization.find("linear-vertical") != std::string::npos || Polarization.find("lv") != std::string::npos) {
+    PolarizationVector = VerticalDirection;
+  } else if (Polarization == "linear") {
+    TVector3D PolarizationAngle = HorizontalDirection;
+    PolarizationAngle.RotateSelf(Angle, PropogationDirection);
+    PolarizationVector = PolarizationAngle;
+  } else if (Polarization.find("circular-left") != std::string::npos || Polarization.find("cl") != std::string::npos) {
+    PolarizationVector = Positive;
+  } else if (Polarization.find("circular-right") != std::string::npos || Polarization.find("cr") != std::string::npos) {
+    PolarizationVector = Negative;
+  } else {
+    // Throw invalid argument if polarization is not recognized
+    throw std::invalid_argument("Polarization requested not recognized");
+  }
+
+
+
+
+  // Extended trajectory (not using memory for storage of arrays
+  TParticleTrajectoryInterpolatedPoints TE;
+
+  // Alternative outputs
+  double Result_Precision = -1;
+  int    Result_Level     = -1;
+
+
+  // Loop over all points in the spectrum container
+  for (size_t i = iThread; i < NSpectrumPoints; i += NThreads) {
+
+    // Angular frequency
+    double const Omega = Spectrum.GetAngularFrequency(i);
+
+    // Constant for field calculation
+    std::complex<double> ICoverOmega = I * TOSCARSSR::C() / Omega;
+
+    // Constant for calculation
+    std::complex<double> const C1(0, C0 * Omega);
+
+    // Electric field summation in frequency space
+    TVector3DC SumE(0, 0, 0);
+
+    double ThisMag = -1;
+    double LastMag = -1;
+    double ThisPhase = -1;
+    double LastPhase = -1;
+    double MaxDPhase = 0;
+    int    LastLevel = 0;
+
+    for (int iLevel = 0; iLevel <= LevelStopWithExtended; ++iLevel) {
+      LastLevel = iLevel;
+
+      // Grab the Trajectory (using memory arrays) if below level threshold, else set NULL
+      TParticleTrajectoryPoints const& TM = Particle.GetTrajectoryLevel(iLevel <= LevelStopMemory ? iLevel : 0);
+      if (iLevel > LevelStopMemory) {
+        TE = Particle.GetTrajectoryExtendedLevel(iLevel);
+      }
+
+
+      // Number of points in the trajectory
+      size_t const NTPoints = iLevel <= LevelStopMemory ? TM.GetNPoints() : TE.GetNPoints();
+
+
+      MaxDPhase = 0;
+      // Loop over trajectory points
+      for (int iT = 0; iT != NTPoints; ++iT) {
+        TParticleTrajectoryPoint const& PP = (iLevel <= LevelStopMemory ? TM.GetPoint(iT) : TE.GetTrajectoryPoint(iT));
+
+        // Get position, Beta, and Acceleration (over c)
+        TVector3D const& X = PP.GetX();
+        TVector3D const& B = PP.GetB();
+        TVector3D const& AoverC = PP.GetAoverC();
+        double    const  Time = iLevel <= LevelStopMemory ? TM.GetT(iT) : TE.GetT(iT);
+
+        // Define R and unit vector in direction of R, and D (distance to observer)
+        TVector3D const R = ObservationPoint - X;
+        TVector3D const N = R.UnitVector();
+        double const D = R.Mag();
+
+        ThisPhase = -Omega * (Time + D / TOSCARSSR::C());
+        double const PhaseTestValue = fabs(ThisPhase - LastPhase);
+        if (iT != 0 && PhaseTestValue > MaxDPhase) {
+          MaxDPhase = PhaseTestValue;
+        }
+        LastPhase = ThisPhase;
+        std::complex<double> Exponent(0, ThisPhase);
+
+				// Sum in fourier transformed field (integral)
+				SumE += (TVector3DC(B) - (N * ( One + (ICoverOmega / (D))))) / D * std::exp(Exponent);
+			}
+
+      TVector3DC ThisSumE = SumE * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(iLevel);
+      if (PolarizationVector.Mag2() > 0.001) {
+        ThisSumE = ThisSumE.Dot(PolarizationVector) * PolarizationVector;
+      }
+      ThisMag = ThisSumE.Dot( ThisSumE.CC() ).real();
+
+
+      Result_Precision = fabs(ThisMag - LastMag) / LastMag;
+      if ( (iLevel > 8 && Result_Precision < Precision && MaxDPhase < TOSCARSSR::Pi()) || (iLevel > 8 && MaxDPhase < TOSCARSSR::Pi() && ThisMag == LastMag)) {
+        Result_Level = iLevel;
+        break;
+      }
+
+      LastMag = ThisMag;
+    }
+
+    if (Result_Level == -1) {
+      Spectrum.SetNotConverged(i);
+    }
+
+    // Multiply by constant factor
+    SumE *= C1 * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(LastLevel);
+
+    // Correcr for polarization
+    if (PolarizationVector.Mag2() > 0.001) {
+      SumE = SumE.Dot(PolarizationVector) * PolarizationVector;
+    }
+
+    // Set the flux for this frequency / energy point
+    // Add to container
+    switch (ReturnQuantity) {
+      case 1:
+        Spectrum.AddToFlux(i, Result_Precision * Weight);
+        break;
+      case 2:
+        Spectrum.AddToFlux(i, ((double) Result_Level) * Weight);
+        break;
+      default:
+				Spectrum.AddToFlux(i, C2 *  SumE.Dot( SumE.CC() ).real() * Weight);
+        break;
+    }
+  }
+
+
+  // Set done to true
+  Done = true;
+
+  return;
+}
+
+
+
 
 
 
@@ -2954,13 +3198,15 @@ double OSCARSSR::CalculateTotalPower (TParticleA& Particle,
       TVector3D const& B = PP.GetB();
       TVector3D const& AoverC = PP.GetAoverC();
 
+      double const Gamma6 = 1./pow(1-B.Dot(B), 3);
+
       double const BetaDiff = (B - Last_Beta).Mag();
       if (iT > 0 && BetaDiff > BetaDiffMax) {
         BetaDiffMax = BetaDiff;
       }
       Last_Beta = B;
 
-      Sum += (AoverC.Mag2() - (B.Cross(AoverC)).Mag2());
+      Sum += (AoverC.Mag2() - (B.Cross(AoverC)).Mag2()) * Gamma6;
     }
 
     double const ThisSum = Sum * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(iLevel);
@@ -2979,7 +3225,7 @@ double OSCARSSR::CalculateTotalPower (TParticleA& Particle,
     LastSum = ThisSum;
   }
 
-  double const ResultPower = LastSum * fabs(Particle.GetQ() * Particle.GetCurrent()) * pow(Particle.GetGamma(), 6) / (6 * TOSCARSSR::Pi() * TOSCARSSR::Epsilon0() * TOSCARSSR::C());
+  double const ResultPower = LastSum * fabs(Particle.GetQ() * Particle.GetCurrent()) / (6 * TOSCARSSR::Pi() * TOSCARSSR::Epsilon0() * TOSCARSSR::C());
 
   double ReturnValue = 0;
 
