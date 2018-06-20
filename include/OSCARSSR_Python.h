@@ -36,6 +36,7 @@ static PyObject* OSCARSSR_SetSeed (OSCARSSRObject* self, PyObject* arg);
 static PyObject* OSCARSSR_SetGPUGlobal (OSCARSSRObject* self, PyObject* arg);
 static PyObject* OSCARSSR_CheckGPU (OSCARSSRObject* self, PyObject* arg);
 static PyObject* OSCARSSR_SetNThreadsGlobal (OSCARSSRObject* self, PyObject* arg);
+static PyObject* OSCARSSR_MandelbrotSet (OSCARSSRObject* self, PyObject* arg);
 static PyObject* OSCARSSR_GetCTStart (OSCARSSRObject* self);
 static PyObject* OSCARSSR_GetCTStop (OSCARSSRObject* self);
 static PyObject* OSCARSSR_SetCTStartStop (OSCARSSRObject* self, PyObject* args);
