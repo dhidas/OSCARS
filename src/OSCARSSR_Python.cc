@@ -358,6 +358,66 @@ static PyObject* OSCARSSR_SetNThreadsGlobal (OSCARSSRObject* self, PyObject* arg
 
 
 
+const char* DOC_OSCARSSR_MandelbrotSet = R"docstring(
+calculate_mandelbrot_set(width, npoints [, rotations, translation, nthreads, gpu, ngpu, ofile, bofile])
+
+Calculate the mandelbrot set for a range specified by width and translation.
+
+Parameters
+----------
+width : [float, float]
+    The width in X and Y
+
+npoints : [int, int]
+    The number of points in the dimenstions specified in width
+
+rotations : [0, 0, float]
+    Required to be a 3-element list, but only the 3rd component is used.  Only rotate around the z-axis
+
+translation : [float, float, 0]
+    Required to be a 3-element list, but only the first two are used for the translation in X and Y
+
+nthreads : int
+    Set the number of threads to use for this calculation
+
+gpu : int
+    Use the gpu or not (0 or 1).  If 1 will attempt to use ALL gpus available.  This is overridden if you use the input 'ngpu'
+
+ngpu : int or list
+    If ngpu is an int, use that number of gpus (if available).
+    If ngpu is a list, the list should be a list of gpus you wish to use
+
+ofile : str
+    Output file name
+
+bofile : str
+    Binary output file name
+
+
+Returns
+-------
+Returns
+-------
+mandelbrot_set : list
+    A list, each element of which is a pair representing the position (2D relative (X, Y) and value at that position.  eg [[[x1_0, x2_0, 0], v_0], [[x1_1, x2_1, 0], v_1]],  ...].  The position is always given as a list of length 3.  The third element is always zero.
+)docstring";
+static PyObject* OSCARSSR_MandelbrotSet (OSCARSSRObject* self, PyObject* arg)
+{
+  // Grab the value from input
+  int const NThreads = (int) PyLong_AsLong(arg);
+
+  PyErr_SetString(PyExc_ValueError, "Not implemented yet");
+  return NULL;
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
 
 
 
@@ -5192,31 +5252,43 @@ None
 static PyObject* OSCARSSR_SetTrajectory (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
 {
 
+  const char* Beam_IN                  = "";
   const char* InFileNameText           = "";
   const char* InFileNameBinary         = "";
   //const char* InFormat                 = "";
 
   // Input variable list
-  static const char *kwlist[] = {"ifile",
+  static const char *kwlist[] = {"beam",
+                                 "ifile",
                                  "bifile",
                                  NULL};
 
   // Parse inputs
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ss",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sss",
                                    const_cast<char **>(kwlist),
+                                   &Beam_IN,
                                    &InFileNameText,
                                    &InFileNameBinary)) {
     return NULL;
   }
 
+  std::string const Beam = Beam_IN;
 
   // Write to file if output specified
   try {
     // Text file output
     if (std::strlen(InFileNameText) != 0) {
-      self->obj->ReadTrajectory(InFileNameText);
+      if (Beam == "") {
+        self->obj->CurrentParticleReadTrajectory(InFileNameText);
+      } else {
+        self->obj->NewParticleReadTrajectory(InFileNameText, Beam);
+      }
     } else if (std::strlen(InFileNameBinary) != 0) {
-      self->obj->ReadTrajectoryBinary(InFileNameBinary);
+      if (Beam == "") {
+        self->obj->CurrentParticleReadTrajectoryBinary(InFileNameText);
+      } else {
+        self->obj->NewParticleReadTrajectoryBinary(InFileNameText, Beam);
+      }
     }
 
   } catch (std::length_error e) {
@@ -5228,7 +5300,14 @@ static PyObject* OSCARSSR_SetTrajectory (OSCARSSRObject* self, PyObject* args, P
   } catch (std::invalid_argument e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
+  } catch (std::out_of_range e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
+  } catch (...) {
+    PyErr_SetString(PyExc_RuntimeError, "Uncaught c exception in OSCARSSR_SetTrajectory.  Please report this.");
+    return NULL;
   }
+    
 
   // Return the trajectory
   return OSCARSSR_GetTrajectory(self);
@@ -8957,6 +9036,7 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   {"set_gpu_global",                    (PyCFunction) OSCARSSR_Fake, METH_O,                       DOC_OSCARSSR_SetGPUGlobal},
   {"check_gpu",                         (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_CheckGPU},
   {"set_nthreads_global",               (PyCFunction) OSCARSSR_Fake, METH_O,                       DOC_OSCARSSR_SetNThreadsGlobal},
+  {"calculate_mandelbrot_set",          (PyCFunction) OSCARSSR_Fake, METH_VARARGS,                 DOC_OSCARSSR_MandelbrotSet},
                                                                                                                             
   {"get_ctstart",                       (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_GetCTStart},
   {"get_ctstop",                        (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_GetCTStop},
@@ -9076,6 +9156,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"set_gpu_global",                    (PyCFunction) OSCARSSR_SetGPUGlobal,                    METH_O,                       DOC_OSCARSSR_SetGPUGlobal},
   {"check_gpu",                         (PyCFunction) OSCARSSR_CheckGPU,                        METH_NOARGS,                  DOC_OSCARSSR_CheckGPU},
   {"set_nthreads_global",               (PyCFunction) OSCARSSR_SetNThreadsGlobal,               METH_O,                       DOC_OSCARSSR_SetNThreadsGlobal},
+  {"calculate_mandelbrot_set",          (PyCFunction) OSCARSSR_MandelbrotSet,                   METH_VARARGS,                 DOC_OSCARSSR_MandelbrotSet},
                                                                                                                             
   {"get_ctstart",                       (PyCFunction) OSCARSSR_GetCTStart,                      METH_NOARGS,                  DOC_OSCARSSR_GetCTStart},
   {"get_ctstop",                        (PyCFunction) OSCARSSR_GetCTStop,                       METH_NOARGS,                  DOC_OSCARSSR_GetCTStop},
