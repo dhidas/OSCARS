@@ -38,7 +38,29 @@ class lut1d:
 
         
     def read_file_lut1d(self, ifile):
-        """read a file and setup data accordingly"""
+        """read a file and setup data accordingly for the lut1d.  The file format is a simple text file.  Comments may be included on any
+           line by beginning the line with '#'.  Entries for the table begin with the 'harmonic' keyword followed by whitespace and the harmonic number.
+           This is then followed by multiple lines each containing energy gap flux (whitespace separated) for as many points as desired.
+           The units for these are arbitrary, but suggested are: [eV, mm, a.u.].  The lines do not need to be any any particular order, but
+           must be grouped by harmonic number.
+           For example this is a valid file:
+
+           # A comment line - U42 planar undulator
+
+           harmonic 1
+            313.39 11.5 175950363894016.0
+            536.12 16.0 266545674797824.0
+            874.82 21.0 347655414526208.0
+           1752.20 35.0 180941839137408.0
+           2008.33 55.0  10694510247968.0
+
+           harmonic 3
+            941.47 11.5 212151858914304.0
+           1360.22 14.5 252854000205824.0
+           1890.43 17.5 262521650105344.0
+           3089.79 23.0 184171317321728.0
+
+        """
         
         self.clear()
         self.lut1d_filename = ifile

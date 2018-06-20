@@ -434,7 +434,7 @@ def plot_spectrum(S, log=False, show=True, ofile='', title='Spectrum', xlabel='E
 
 
 
-def plot_spectra(spectra, label=None, legend=None, show=True, ofile='', title='', loc=None, log=False, loglog=False, xlabel='Energy [eV]', ylabel='[$\gamma / mm^2 / 0.1\%bw / s$]', figsize=None, ylim=None, xlim=None, ret=False, axis=None, transparent=True, xticks=None, xvlines=None, **kwargs):
+def plot_spectra(spectra, label=None, legend=None, colors=None, show=True, ofile='', title='', loc=None, log=False, loglog=False, xlabel='Energy [eV]', ylabel='[$\gamma / mm^2 / 0.1\%bw / s$]', figsize=None, ylim=None, xlim=None, ret=False, axis=None, transparent=True, xticks=None, xvlines=None, **kwargs):
 
 
     # Size and limits
@@ -446,16 +446,16 @@ def plot_spectra(spectra, label=None, legend=None, show=True, ofile='', title=''
 
     for i in range(len(spectra)):
         s = spectra[i]
-        
+        color = colors[i] if colors is not None else None
         X = [item[0] for item in s]
         Y = [item[1] for item in s]
         if label is not None:
             if label[i] is not None:
-                plt.plot(X, Y, label=label[i], **kwargs)
+                plt.plot(X, Y, label=label[i], c=color, **kwargs)
             else:
-                plt.plot(X, Y, **kwargs)
+                plt.plot(X, Y, c=color, **kwargs)
         else:
-            plt.plot(X, Y, **kwargs)
+            plt.plot(X, Y, c=color, **kwargs)
 
     if xvlines is not None:
         for xvline in xvlines:
