@@ -1104,18 +1104,34 @@ void OSCARSSR::WriteTrajectoryBinary (std::string const& OutFileName, std::strin
 
 
 
-//void OSCARSSR::NewParticleTrajectory (std::string const& InFileName, std::string const& Beam)
-//{
-//  this->SetNewParticle(Beam);
-//  this->ReadTrajectory(InFileName);
-//  return;
-//}
 
-
-
-
-void OSCARSSR::ReadTrajectory (std::string const& InFileName)
+void OSCARSSR::NewParticleReadTrajectory (std::string const& InFileName, std::string const& Beam)
 {
+  // Set a new ideal particle from the given beam and read the trajectory data from a file
+  this->SetNewParticle(Beam, "ideal");
+  this->CurrentParticleReadTrajectory(InFileName);
+  return;
+}
+
+
+
+
+
+void OSCARSSR::NewParticleReadTrajectoryBinary (std::string const& InFileName, std::string const& Beam)
+{
+  // Set a new ideal particle from the given beam and read the trajectory data from a file
+  this->SetNewParticle(Beam, "ideal");
+  this->CurrentParticleReadTrajectoryBinary(InFileName);
+  return;
+}
+
+
+
+
+void OSCARSSR::CurrentParticleReadTrajectory (std::string const& InFileName)
+{
+  // For the current particle, get a new trajectory, read trajectory data from file
+  // and setup interpolating structure
   GetNewTrajectory().ReadFromFile(InFileName);
   fParticle.SetupTrajectoryInterpolated();
   return;
@@ -1124,9 +1140,12 @@ void OSCARSSR::ReadTrajectory (std::string const& InFileName)
 
 
 
-void OSCARSSR::ReadTrajectoryBinary (std::string const& InFileName)
+void OSCARSSR::CurrentParticleReadTrajectoryBinary (std::string const& InFileName)
 {
+  // For the current particle, get a new trajectory, read trajectory data from file
+  // and setup interpolating structure
   GetNewTrajectory().ReadFromFileBinary(InFileName);
+  fParticle.SetupTrajectoryInterpolated();
   return;
 }
 

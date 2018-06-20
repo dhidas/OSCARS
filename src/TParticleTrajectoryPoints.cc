@@ -253,7 +253,7 @@ void TParticleTrajectoryPoints::WriteToFile (std::string const& FileName, std::s
 
   // Write in default format
   if (Format == "DEFAULT") {
-    Format = "T X Y Z BX BY BZ AX AY AZ";
+    Format = "T X Y Z BX BY BZ BPX BPY BPZ";
 
     // Write header
     f << "# " << Format << std::endl;
@@ -278,11 +278,11 @@ void TParticleTrajectoryPoints::WriteToFile (std::string const& FileName, std::s
         << " "
         << fP[i].GetB().GetZ()
         << " "
-        << fP[i].GetAoverC().GetX() * TOSCARSSR::C()
+        << fP[i].GetAoverC().GetX()
         << " "
-        << fP[i].GetAoverC().GetY() * TOSCARSSR::C()
+        << fP[i].GetAoverC().GetY()
         << " "
-        << fP[i].GetAoverC().GetZ() * TOSCARSSR::C()
+        << fP[i].GetAoverC().GetZ()
         << std::endl;
     }
   } else {
@@ -325,12 +325,12 @@ void TParticleTrajectoryPoints::WriteToFile (std::string const& FileName, std::s
           f << fP[i].GetB().GetY();
         } else if (*it == "BZ") {
           f << fP[i].GetB().GetZ();
-        } else if (*it == "AX") {
-          f << fP[i].GetAoverC().GetX() * TOSCARSSR::C();
-        } else if (*it == "AY") {
-          f << fP[i].GetAoverC().GetY() * TOSCARSSR::C();
-        } else if (*it == "AZ") {
-          f << fP[i].GetAoverC().GetZ() * TOSCARSSR::C();
+        } else if (*it == "BPX") {
+          f << fP[i].GetAoverC().GetX();
+        } else if (*it == "BPY") {
+          f << fP[i].GetAoverC().GetY();
+        } else if (*it == "BPZ") {
+          f << fP[i].GetAoverC().GetZ();
         } else {
           throw std::invalid_argument("format specifier not recognized");
         }
@@ -370,7 +370,7 @@ void TParticleTrajectoryPoints::WriteToFileBinary (std::string const& FileName, 
 
   // Write in default format
   if (Format == "DEFAULT") {
-    Format = "T X Y Z BX BY BZ AX AY AZ";
+    Format = "T X Y Z BX BY BZ BPX BPY BPZ";
 
     // Length of format string to be stored in binary file as char(s)
     int const FormatLength = (int) Format.size();
@@ -398,11 +398,11 @@ void TParticleTrajectoryPoints::WriteToFileBinary (std::string const& FileName, 
       f.write((char*) &v, sizeof(float));
       v = (float) fP[i].GetB().GetZ();
       f.write((char*) &v, sizeof(float));
-      v = (float) fP[i].GetAoverC().GetX() * TOSCARSSR::C();
+      v = (float) fP[i].GetAoverC().GetX();
       f.write((char*) &v, sizeof(float));
-      v = (float) fP[i].GetAoverC().GetY() * TOSCARSSR::C();
+      v = (float) fP[i].GetAoverC().GetY();
       f.write((char*) &v, sizeof(float));
-      v = (float) fP[i].GetAoverC().GetZ() * TOSCARSSR::C();
+      v = (float) fP[i].GetAoverC().GetZ();
       f.write((char*) &v, sizeof(float));
     }
   } else {
@@ -449,12 +449,12 @@ void TParticleTrajectoryPoints::WriteToFileBinary (std::string const& FileName, 
           v = (float) fP[i].GetB().GetY();
         } else if (*it == "BZ") {
           v = (float) fP[i].GetB().GetZ();
-        } else if (*it == "AX") {
-          v = (float) fP[i].GetAoverC().GetX() * TOSCARSSR::C();
-        } else if (*it == "AY") {
-          v = (float) fP[i].GetAoverC().GetY() * TOSCARSSR::C();
-        } else if (*it == "AZ") {
-          v = (float) fP[i].GetAoverC().GetZ() * TOSCARSSR::C();
+        } else if (*it == "BPX") {
+          v = (float) fP[i].GetAoverC().GetX();
+        } else if (*it == "BPY") {
+          v = (float) fP[i].GetAoverC().GetY();
+        } else if (*it == "BPZ") {
+          v = (float) fP[i].GetAoverC().GetZ();
         } else {
           throw std::invalid_argument("format specifier not recognized");
         }
@@ -477,7 +477,6 @@ void TParticleTrajectoryPoints::ReadFromFile (std::string const& FileName)
 {
   // Read a text file of the trajectory
   // UPDATE: Read Text File - Add format
-  throw;
 
   // Open the input file for reading
   std::ifstream f(FileName.c_str());
@@ -520,6 +519,8 @@ void TParticleTrajectoryPoints::ReadFromFile (std::string const& FileName)
     }
 
   }
+
+  std::cout << "done reading file, what next??" << std::endl;
 
   return;
 }
@@ -614,11 +615,11 @@ void TParticleTrajectoryPoints::ReadFromFileBinary (std::string const& FileName)
       iby = i;
     } else if (Word == "BZ") {
       ibz = i;
-    } else if (Word == "AX") {
+    } else if (Word == "BPX") {
       iax = i;
-    } else if (Word == "AY") {
+    } else if (Word == "BPY") {
       iay = i;
-    } else if (Word == "AZ") {
+    } else if (Word == "BPZ") {
       iaz = i;
     } else {
       throw std::invalid_argument("format specifier not recognized");
@@ -646,7 +647,7 @@ void TParticleTrajectoryPoints::ReadFromFileBinary (std::string const& FileName)
     if (f.eof()) {
       break;
     } else {
-      this->AddPoint( TVector3D(x, y, z), TVector3D(bx, by, bz), TVector3D(ax, ay, az) * TOSCARSSR::C(), t );
+      this->AddPoint( TVector3D(x, y, z), TVector3D(bx, by, bz), TVector3D(ax, ay, az), t );
     }
   }
 
