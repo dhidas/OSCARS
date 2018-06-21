@@ -21,6 +21,7 @@ ls -la /opt/python/
 for PYBIN in /opt/python/*/bin; do
     #echo "/opt/python/${PYBIN}/bin/pip"
     #"/opt/python/${PYBIN}/bin/pip" install -r /io/requirements.txt
+    "${PYBIN}/pip" install —upgrade setuptools
     "${PYBIN}/pip" install -r /io/requirements.txt
     #"/opt/python/${PYBIN}/bin/pip" wheel /io/ -w wheelhouse/
     #"/opt/python/${PYBIN}/bin/python" setup.py bdist_wheel --dist-dir wheelhouse
