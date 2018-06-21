@@ -52,6 +52,7 @@ class TParticleTrajectoryPoints
     void WriteToFileBinary (std::string const& FileName, std::string const& FormatIn = "default") const;
 
     void ReadFromFile       (std::string const&);
+    void ReadFromFileFormat       (std::string const&);
     void ReadFromFileBinary (std::string const&);
 
     void Lock ();

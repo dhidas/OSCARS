@@ -473,6 +473,61 @@ void TParticleTrajectoryPoints::WriteToFileBinary (std::string const& FileName, 
 
 
 
+void TParticleTrajectoryPoints::ReadFromFileFormat (std::string const& FileName)
+{
+  // Read a text file of the trajectory
+  // UPDATE: THIS IS TO REDO FOR SPECIFIED FORMATS
+
+  // Open the input file for reading
+  std::ifstream f(FileName.c_str());
+  if (!f.is_open()) {
+    throw;
+  }
+
+  // Variables to read from file
+  double t;
+  double x, y, z;
+  double bx, by, bz;
+  double aocx, aocy, aocz;
+
+  size_t n = 0;
+
+  // Loop over all lines in file, skip anything that starts with somethign which is not
+  // a floating point number
+  std::istringstream LineStream;
+  for (std::string Line; std::getline(f, Line); ++n) {
+    if (f.eof()) {
+      break;
+    }
+
+    LineStream.clear();
+    LineStream.str(Line);
+
+    LineStream >> t;
+    if (LineStream.fail()) {
+      // Presumably this is a comment line, although it could be
+      // a data formatting error, but I'll ignore that for now.
+      continue;
+    }
+
+    LineStream >> x >> y >> z >> bx >> by >> bz >> aocx >> aocy >> aocz;
+
+    if (!LineStream.fail()) { // check for error
+      this->AddPoint( TVector3D(x, y, z), TVector3D(bx, by, bz), TVector3D(aocx, aocy, aocz), t );
+    } else {
+      throw;
+    }
+
+  }
+
+  std::cout << "done reading file, what next??" << std::endl;
+
+  return;
+}
+
+
+
+
 void TParticleTrajectoryPoints::ReadFromFile (std::string const& FileName)
 {
   // Read a text file of the trajectory

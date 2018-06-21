@@ -5230,7 +5230,7 @@ static PyObject* OSCARSSR_GetTrajectory (OSCARSSRObject* self)
 
 
 const char* DOC_OSCARSSR_SetTrajectory = R"docstring(
-set_trajectory(, [ifile, bifile])
+set_trajectory(, [beam, trajectory, ifile, bifile])
 
 UPDATE: This about ctstartstop
 
@@ -5238,10 +5238,17 @@ UPDATE: This about ctstartstop
 
 Parameters
 ----------
-ifile: str
+beam : str
+    Name of beam which this trajectory belongs to.  If specified, a new particle will be created, if not specified
+    the current particle is used.
+
+trajectory : list
+    The trajectory in OSCARS trajectory format [[t, [x, y, z], [bx, by, bz], [bx', by', bz']], ...]
+
+ifile : str
     Text input file name
 
-bifile: str
+bifile : str
     Binary input file name
 
 
@@ -5253,42 +5260,84 @@ static PyObject* OSCARSSR_SetTrajectory (OSCARSSRObject* self, PyObject* args, P
 {
 
   const char* Beam_IN                  = "";
+  PyObject *PListTrajectory            = 0x0;
   const char* InFileNameText           = "";
   const char* InFileNameBinary         = "";
   //const char* InFormat                 = "";
 
   // Input variable list
   static const char *kwlist[] = {"beam",
+                                 "trajectory",
                                  "ifile",
                                  "bifile",
                                  NULL};
 
   // Parse inputs
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sss",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sOss",
                                    const_cast<char **>(kwlist),
                                    &Beam_IN,
+                                   &PListTrajectory,
                                    &InFileNameText,
                                    &InFileNameBinary)) {
     return NULL;
   }
 
+  // Beam name input
   std::string const Beam = Beam_IN;
+
+  // Checks on multiple inputs
+  if (InFileNameText != "" && InFileNameBinary != "") {
+    PyErr_SetString(PyExc_ValueError, "Cannot specify both text and binary input files");
+    return NULL;
+  }
+
+  if (PListTrajectory != 0x0 && (InFileNameText != "" || InFileNameBinary != "")) {
+    PyErr_SetString(PyExc_ValueError, "Cannot specify both an input file and a trajectory list");
+    return NULL;
+  }
 
   // Write to file if output specified
   try {
-    // Text file output
-    if (std::strlen(InFileNameText) != 0) {
-      if (Beam == "") {
-        self->obj->CurrentParticleReadTrajectory(InFileNameText);
-      } else {
-        self->obj->NewParticleReadTrajectory(InFileNameText, Beam);
+    if (InFileNameText != "" || InFileNameBinary != "") {
+      // Text file output
+      if (std::strlen(InFileNameText) != 0) {
+        if (Beam == "") {
+          self->obj->CurrentParticleReadTrajectory(InFileNameText);
+        } else {
+          self->obj->NewParticleReadTrajectory(InFileNameText, Beam);
+        }
+      } else if (std::strlen(InFileNameBinary) != 0) {
+        if (Beam == "") {
+          self->obj->CurrentParticleReadTrajectoryBinary(InFileNameText);
+        } else {
+          self->obj->NewParticleReadTrajectoryBinary(InFileNameText, Beam);
+        }
       }
-    } else if (std::strlen(InFileNameBinary) != 0) {
-      if (Beam == "") {
-        self->obj->CurrentParticleReadTrajectoryBinary(InFileNameText);
-      } else {
-        self->obj->NewParticleReadTrajectoryBinary(InFileNameText, Beam);
+    } else if (PListTrajectory != 0x0) {
+      if (Beam != "") {
+        self->obj->SetNewParticle(Beam, "ideal");
       }
+      TParticleTrajectoryPoints& TNew = self->obj->GetNewTrajectory();
+      for (int i = 0; i != PyList_Size(PListTrajectory); ++i) {
+        PyObject* ThisPoint = PyList_GetItem(PListTrajectory, i);
+        if (PyList_Size(ThisPoint) != 4) {
+          PyErr_SetString(PyExc_ValueError, ("Incorrect format in 'trajectory' entry number " + std::to_string(i)).c_str());
+          return NULL;
+        }
+        try {
+          std::cout << "adding point: " << PyFloat_AsDouble(PyList_GetItem(ThisPoint, 0)) << std::endl;
+          TNew.AddPoint(OSCARSPY::ListAsTVector3D(PyList_GetItem(ThisPoint, 1)),
+                        OSCARSPY::ListAsTVector3D(PyList_GetItem(ThisPoint, 2)),
+                        OSCARSPY::ListAsTVector3D(PyList_GetItem(ThisPoint, 3)),
+                        PyFloat_AsDouble(PyList_GetItem(ThisPoint, 0)));
+        } catch (...) {
+          PyErr_SetString(PyExc_ValueError, ("Incorrect format in 'trajectory' entry number " + std::to_string(i)).c_str());
+          return NULL;
+        }
+      }
+    
+
+    } else {
     }
 
   } catch (std::length_error e) {
@@ -5308,9 +5357,9 @@ static PyObject* OSCARSSR_SetTrajectory (OSCARSSRObject* self, PyObject* args, P
     return NULL;
   }
     
-
-  // Return the trajectory
-  return OSCARSSR_GetTrajectory(self);
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
 }
 
 
