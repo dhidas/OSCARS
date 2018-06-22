@@ -136,7 +136,7 @@ TSpectrumContainer GetSpectrumFromList (PyObject* List)
   // Get size of input list
   size_t const NPoints = PyList_Size(List);
   if (NPoints <= 0) {
-    throw;
+    throw std::length_error("GetSpectrumFromList reporting no points");
   }
 
   TSpectrumContainer S;
@@ -146,7 +146,7 @@ TSpectrumContainer GetSpectrumFromList (PyObject* List)
     if (PyList_Size(List_Point) == 2) {
       S.AddPoint(PyFloat_AsDouble(PyList_GetItem(List_Point, 0)), PyFloat_AsDouble(PyList_GetItem(List_Point, 1)));
     } else {
-      throw;
+      throw std::length_error("GetSpectrumFromList reporting not 2 points");
     }
   }
 
@@ -311,7 +311,7 @@ T3DScalarContainer GetT3DScalarContainerFromList (PyObject* List)
   // Get size of input list
   size_t const NPoints = PyList_Size(List);
   if (NPoints <= 0) {
-    throw;
+    throw std::length_error("GetT3DScalarContainerFromList reporting no points");
   }
 
   T3DScalarContainer F;
@@ -321,7 +321,7 @@ T3DScalarContainer GetT3DScalarContainerFromList (PyObject* List)
     if (PyList_Size(List_Point) == 2) {
       F.AddPoint(OSCARSPY::ListAsTVector3D(PyList_GetItem(List_Point, 0)), PyFloat_AsDouble(PyList_GetItem(List_Point, 1)));
     } else {
-      throw;
+      throw std::length_error("GetT3DScalarContainerFromList reporting not 2 points");
     }
   }
 

@@ -196,12 +196,12 @@ class OSCARSSR
     void CalculateTrajectoryRKAS (TParticleA&);
     TParticleTrajectoryPoints const& GetTrajectory ();
     TParticleTrajectoryPoints& GetNewTrajectory ();
-    void WriteTrajectory        (std::string const& OutFileName, std::string const& OutFormat = "DEFAULT");
-    void WriteTrajectoryBinary  (std::string const& OutFileName, std::string const& OutFormat = "DEFAULT");
-    void NewParticleReadTrajectory             (std::string const& InFileName, std::string const& Beam = "", std::string const& InFormat = "DEFAULT");
-    void NewParticleReadTrajectoryBinary       (std::string const& InFileName, std::string const& Beam = "");
-    void CurrentParticleReadTrajectory         (std::string const& InFileName, std::string const& InFormat = "DEFAULT");
-    void CurrentParticleReadTrajectoryBinary   (std::string const& InFileName);
+    void WriteTrajectory        (std::string const& OutFileName, std::string const& OutFormat = "");
+    void WriteTrajectoryBinary  (std::string const& OutFileName, std::string const& OutFormat = "");
+    void NewParticleReadTrajectory             (std::string const& InFileName, std::string const& Beam = "", std::string const& InFormat = "");
+    void NewParticleReadTrajectoryBinary       (std::string const& InFileName, std::string const& Beam = "", std::string const& InFormat = "");
+    void CurrentParticleReadTrajectory         (std::string const& InFileName, std::string const& InFormat = "");
+    void CurrentParticleReadTrajectoryBinary   (std::string const& InFileName, std::string const& InFormat = "");
     void ClearTrajectory ();
 
     void SetNPointsTrajectory (size_t const);

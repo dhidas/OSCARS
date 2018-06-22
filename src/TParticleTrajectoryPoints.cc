@@ -270,7 +270,7 @@ void TParticleTrajectoryPoints::WriteToFile (std::string const& FileName, std::s
   std::transform(Format.begin(), Format.end(), Format.begin(), ::toupper);
 
   // Write in default format
-  if (Format == "DEFAULT") {
+  if (Format == "") {
     Format = "T X Y Z BX BY BZ BPX BPY BPZ";
 
     // Write header
@@ -387,7 +387,7 @@ void TParticleTrajectoryPoints::WriteToFileBinary (std::string const& FileName, 
 
 
   // Write in default format
-  if (Format == "DEFAULT") {
+  if (Format == "") {
     Format = "T X Y Z BX BY BZ BPX BPY BPZ";
 
     // Length of format string to be stored in binary file as char(s)
@@ -398,30 +398,30 @@ void TParticleTrajectoryPoints::WriteToFileBinary (std::string const& FileName, 
     f.write((char*) Format.c_str(), FormatLength * sizeof(char));
 
     // For writing data
-    float v = 0;
+    double v = 0;
 
     // Loop over all points and print to file
     for (size_t i = 0; i != fP.size(); ++i) {
-      v = (float) fT[i];
-      f.write((char*) &v, sizeof(float));
-      v = (float) fP[i].GetX().GetX();
-      f.write((char*) &v, sizeof(float));
-      v = (float) fP[i].GetX().GetY();
-      f.write((char*) &v, sizeof(float));
-      v = (float) fP[i].GetX().GetZ();
-      f.write((char*) &v, sizeof(float));
-      v = (float) fP[i].GetB().GetX();
-      f.write((char*) &v, sizeof(float));
-      v = (float) fP[i].GetB().GetY();
-      f.write((char*) &v, sizeof(float));
-      v = (float) fP[i].GetB().GetZ();
-      f.write((char*) &v, sizeof(float));
-      v = (float) fP[i].GetAoverC().GetX();
-      f.write((char*) &v, sizeof(float));
-      v = (float) fP[i].GetAoverC().GetY();
-      f.write((char*) &v, sizeof(float));
-      v = (float) fP[i].GetAoverC().GetZ();
-      f.write((char*) &v, sizeof(float));
+      v = (double) fT[i];
+      f.write((char*) &v, sizeof(double));
+      v = (double) fP[i].GetX().GetX();
+      f.write((char*) &v, sizeof(double));
+      v = (double) fP[i].GetX().GetY();
+      f.write((char*) &v, sizeof(double));
+      v = (double) fP[i].GetX().GetZ();
+      f.write((char*) &v, sizeof(double));
+      v = (double) fP[i].GetB().GetX();
+      f.write((char*) &v, sizeof(double));
+      v = (double) fP[i].GetB().GetY();
+      f.write((char*) &v, sizeof(double));
+      v = (double) fP[i].GetB().GetZ();
+      f.write((char*) &v, sizeof(double));
+      v = (double) fP[i].GetAoverC().GetX();
+      f.write((char*) &v, sizeof(double));
+      v = (double) fP[i].GetAoverC().GetY();
+      f.write((char*) &v, sizeof(double));
+      v = (double) fP[i].GetAoverC().GetZ();
+      f.write((char*) &v, sizeof(double));
     }
   } else {
 
@@ -444,7 +444,7 @@ void TParticleTrajectoryPoints::WriteToFileBinary (std::string const& FileName, 
     f.write((char*) Format.c_str(), FormatLength * sizeof(char));
 
     // For writing data
-    float v = 0;
+    double v = 0;
 
 
     // Loop over all points and print to file
@@ -454,29 +454,29 @@ void TParticleTrajectoryPoints::WriteToFileBinary (std::string const& FileName, 
         
         // Which component to write
         if (*it == "T") {
-          v = (float) fT[i];
+          v = (double) fT[i];
         } else if (*it == "X") {
-          v = (float) fP[i].GetX().GetX();
+          v = (double) fP[i].GetX().GetX();
         } else if (*it == "Y") {
-          v = (float) fP[i].GetX().GetY();
+          v = (double) fP[i].GetX().GetY();
         } else if (*it == "Z") {
-          v = (float) fP[i].GetX().GetZ();
+          v = (double) fP[i].GetX().GetZ();
         } else if (*it == "BX") {
-          v = (float) fP[i].GetB().GetX();
+          v = (double) fP[i].GetB().GetX();
         } else if (*it == "BY") {
-          v = (float) fP[i].GetB().GetY();
+          v = (double) fP[i].GetB().GetY();
         } else if (*it == "BZ") {
-          v = (float) fP[i].GetB().GetZ();
+          v = (double) fP[i].GetB().GetZ();
         } else if (*it == "BPX") {
-          v = (float) fP[i].GetAoverC().GetX();
+          v = (double) fP[i].GetAoverC().GetX();
         } else if (*it == "BPY") {
-          v = (float) fP[i].GetAoverC().GetY();
+          v = (double) fP[i].GetAoverC().GetY();
         } else if (*it == "BPZ") {
-          v = (float) fP[i].GetAoverC().GetZ();
+          v = (double) fP[i].GetAoverC().GetZ();
         } else {
           throw std::invalid_argument("format specifier not recognized");
         }
-        f.write((char*) &v, sizeof(float));
+        f.write((char*) &v, sizeof(double));
 
       }
     }
@@ -537,13 +537,13 @@ void TParticleTrajectoryPoints::ReadFromFileFormat (std::string const& FileName,
   // Transform input format
   std::string Format = FormatIn;
   std::transform(Format.begin(), Format.end(), Format.begin(), ::toupper);
-  if (FormatIn == "DEFAULT" && FormatFound != "") {
+  if (FormatIn == "" && FormatFound != "") {
     Format = FormatFound;
   }
   std::transform(Format.begin(), Format.end(), Format.begin(), ::toupper);
 
   // Check and set format
-  if (Format == "DEFAULT") {
+  if (Format == "") {
     Format = "T X Y Z BX BY BZ BPX BPY BPZ";
   }
 
@@ -577,7 +577,7 @@ void TParticleTrajectoryPoints::ReadFromFileFormat (std::string const& FileName,
 
   // If you do not have a time of position you are indeed done for.
   if (!(HasT && HasPosition)) {
-    throw;
+    throw std::length_error("trajectory must contain time and position in 1d at a minimum");
   }
 
   // A place for every column (although some are not used)
@@ -661,65 +661,10 @@ void TParticleTrajectoryPoints::ReadFromFileFormat (std::string const& FileName,
 
 
 
-void TParticleTrajectoryPoints::ReadFromFile (std::string const& FileName)
-{
-  // Read a text file of the trajectory
-  // UPDATE: Read Text File - Add format
-
-  // Open the input file for reading
-  std::ifstream f(FileName.c_str());
-  if (!f.is_open()) {
-    throw;
-  }
-
-  // Variables to read from file
-  double t;
-  double x, y, z;
-  double bx, by, bz;
-  double aocx, aocy, aocz;
-
-  size_t n = 0;
-
-  // Loop over all lines in file, skip anything that starts with somethign which is not
-  // a floating point number
-  std::istringstream LineStream;
-  for (std::string Line; std::getline(f, Line); ++n) {
-    if (f.eof()) {
-      break;
-    }
-
-    LineStream.clear();
-    LineStream.str(Line);
-
-    LineStream >> t;
-    if (LineStream.fail()) {
-      // Presumably this is a comment line, although it could be
-      // a data formatting error, but I'll ignore that for now.
-      continue;
-    }
-
-    LineStream >> x >> y >> z >> bx >> by >> bz >> aocx >> aocy >> aocz;
-
-    if (!LineStream.fail()) { // check for error
-      this->AddPoint( TVector3D(x, y, z), TVector3D(bx, by, bz), TVector3D(aocx, aocy, aocz), t );
-    } else {
-      throw;
-    }
-
-  }
-
-  return;
-}
-
-
-
-
 void TParticleTrajectoryPoints::ReadFromFileBinary (std::string const& FileName, std::string const& FormatIn)
 {
   // Read a text file of the trajectory
 
-  std::cout << "Made it to ReadFromFileBinary" << std::endl;
-  std::cout << "Trying to read file: " << FileName << std::endl;
   // Open the input file for reading
   std::ifstream f(FileName, std::ios::binary);
   if (!f.is_open()) {
@@ -730,8 +675,6 @@ void TParticleTrajectoryPoints::ReadFromFileBinary (std::string const& FileName,
   char* FormatRead = 0x0;
 
   if (FormatIn == "") {
-    std::cout << " Reading format from binary file" << std::endl;
-
     // Read format length as first word
     int FormatReadLength = 0;
     f.read((char*) &FormatReadLength, sizeof(int));
@@ -751,7 +694,6 @@ void TParticleTrajectoryPoints::ReadFromFileBinary (std::string const& FileName,
   // Transform input format
   std::string Format = FormatRead == 0x0 ? FormatIn : FormatRead;
   std::transform(Format.begin(), Format.end(), Format.begin(), ::toupper);
-  std::cout << " Format after reading is: " << Format << std::endl;
 
   // If we created it let's delete it
   if (FormatRead != 0x0) {
@@ -760,101 +702,114 @@ void TParticleTrajectoryPoints::ReadFromFileBinary (std::string const& FileName,
 
   // Ordered vector of inputs
   std::istringstream FormatStream(Format);
-  std::vector<std::string> FormatWords;
+  std::vector<std::string> FormatVector;
   for (std::string ss; FormatStream >> ss; ) {
-    FormatWords.push_back(ss.c_str());
+    FormatVector.push_back(ss.c_str());
   }
 
-  if (FormatWords.size() < 1) {
+  if (FormatVector.size() < 1) {
     throw std::length_error("Format must contain at least one element");
   }
 
 
-  // For data reading
-  float* v = new float[FormatWords.size()];
+  // Number of columns
+  size_t const NColumns = FormatVector.size();
 
-  // Variables to read from file
-  float   t  = 0;
-  float   x  = 0;
-  float   y  = 0;
-  float   z  = 0;
-  float   bx = 0;
-  float   by = 0;
-  float   bz = 0;
-  float   ax = 0;
-  float   ay = 0;
-  float   az = 0;
 
-  int   it  = -1;
-  int   ix  = -1;
-  int   iy  = -1;
-  int   iz  = -1;
-  int   ibx = -1;
-  int   iby = -1;
-  int   ibz = -1;
-  int   iax = -1;
-  int   iay = -1;
-  int   iaz = -1;
+  // Check which components exist
+  bool const HasT   =  std::find(FormatVector.begin(), FormatVector.end(), "T") != FormatVector.end();
+  bool const HasX   =  std::find(FormatVector.begin(), FormatVector.end(), "X") != FormatVector.end();
+  bool const HasY   =  std::find(FormatVector.begin(), FormatVector.end(), "Y") != FormatVector.end();
+  bool const HasZ   =  std::find(FormatVector.begin(), FormatVector.end(), "Z") != FormatVector.end();
+  bool const HasBX  =  std::find(FormatVector.begin(), FormatVector.end(), "BX") != FormatVector.end();
+  bool const HasBY  =  std::find(FormatVector.begin(), FormatVector.end(), "BY") != FormatVector.end();
+  bool const HasBZ  =  std::find(FormatVector.begin(), FormatVector.end(), "BZ") != FormatVector.end();
+  bool const HasBPX =  std::find(FormatVector.begin(), FormatVector.end(), "BPX") != FormatVector.end();
+  bool const HasBPY =  std::find(FormatVector.begin(), FormatVector.end(), "BPY") != FormatVector.end();
+  bool const HasBPZ =  std::find(FormatVector.begin(), FormatVector.end(), "BPZ") != FormatVector.end();
 
-  for (size_t i = 0; i != FormatWords.size(); ++i) {
-    std::string const& Word = FormatWords[i];
+  bool const HasPosition  = (HasX || HasY || HasZ);
+  bool const HasBeta      = (HasBX || HasBY || HasBZ);
+  bool const HasBetaPrime = (HasBPX || HasBPY || HasBPZ);
 
-    // Which component index is which variable
-    if (Word == "T") {
-      it = i;
-    } else if (Word == "X") {
-      ix = i;
-    } else if (Word == "Y") {
-      iy = i;
-    } else if (Word == "Z") {
-      iz = i;
-    } else if (Word == "BX") {
-      ibx = i;
-    } else if (Word == "BY") {
-      iby = i;
-    } else if (Word == "BZ") {
-      ibz = i;
-    } else if (Word == "BPX") {
-      iax = i;
-    } else if (Word == "BPY") {
-      iay = i;
-    } else if (Word == "BPZ") {
-      iaz = i;
-    } else {
-      throw std::invalid_argument("format specifier not recognized");
-    }
+
+  // If you do not have a time of position you are indeed done for.
+  if (!(HasT && HasPosition)) {
+    throw std::length_error("trajectory must contain time and position in 1d at a minimum");
   }
 
-  std::cout << " starting to read file" << std::endl;
+  // For reading the binary input
+  double Input;
+
+  // Out variables which will be put in trajectory
+  double T;
+  TVector3D X(0, 0, 0);
+  TVector3D B(0, 0, 0);
+  TVector3D BP(0, 0, 0);
+
+
+  size_t ipoint = 0;
   while (!f.eof()) {
 
-    for (size_t i = 0; i != FormatWords.size(); ++i) {
-      f.read( (char*)    &v[i], sizeof(float));
+    // Setting this point to zero
+    X.SetXYZ(0, 0, 0);
+    B.SetXYZ(0, 0, 0);
+    BP.SetXYZ(0, 0, 0);
+
+    for (size_t i = 0; i != FormatVector.size(); ++i) {
+      f.read( (char*)    &Input, sizeof(double));
+
+      if (FormatVector[i] == "T") {
+        T = Input;
+      } else if (FormatVector[i] == "X") {
+        X.SetX(Input);
+      } else if (FormatVector[i] == "Y") {
+        X.SetY(Input);
+      } else if (FormatVector[i] == "Z") {
+        X.SetZ(Input);
+      } else if (FormatVector[i] == "BX") {
+        B.SetX(Input);
+      } else if (FormatVector[i] == "BY") {
+        B.SetY(Input);
+      } else if (FormatVector[i] == "BZ") {
+        B.SetZ(Input);
+      } else if (FormatVector[i] == "BPX") {
+        BP.SetX(Input);
+      } else if (FormatVector[i] == "BPY") {
+        BP.SetY(Input);
+      } else if (FormatVector[i] == "BPZ") {
+        BP.SetZ(Input);
+      }
+
     }
 
-    if (it != -1) { t = v[it]; }
-    if (ix != -1) { x = v[ix]; }
-    if (iy != -1) { y = v[iy]; }
-    if (iz != -1) { z = v[iz]; }
-    if (ibx != -1) { bx = v[ibx]; }
-    if (iby != -1) { by = v[iby]; }
-    if (ibz != -1) { bz = v[ibz]; }
-    if (iax != -1) { ax = v[iax]; }
-    if (iay != -1) { ay = v[iay]; }
-    if (iaz != -1) { az = v[iaz]; }
 
     // If end of file, stop, otherwise add to trajectory
     if (f.eof()) {
       break;
     } else {
-      this->AddPoint( TVector3D(x, y, z), TVector3D(bx, by, bz), TVector3D(ax, ay, az), t );
+      if (B.Mag() >= 1.0) {
+        throw std::out_of_range("Magnitude of beta >= 1 in input file.  Sorry, this is beyond einstein.  ipoint: " + std::to_string(ipoint));
+      }
+      // We have a line, a point, add it!!
+      this->AddPoint(X, B, BP, T);
     }
+
+    ++ipoint;
   }
 
-  std::cout << " done reading file" << std::endl;
+  // Trajectory data is all read.  If no beta, deduce from X, T
+  if (!HasBeta) {
+    this->ConstructBetaAtPoints();
+  }
 
-  // Delete data vector
-  delete v;
+  // If no BP deduce from B, T
+  if (!HasBetaPrime) {
+    this->ConstructAoverCAtPoints();
+  }
+
+  // Close file nicely
+  f.close();
 
   return;
 }

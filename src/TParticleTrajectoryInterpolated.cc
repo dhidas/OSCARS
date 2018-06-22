@@ -29,8 +29,7 @@ TParticleTrajectoryInterpolated::TParticleTrajectoryInterpolated (TParticleTraje
   // Number of points in inpt
   size_t const NPoints = TPTP.GetNPoints();
   if (NPoints < 2) {
-    std::cerr << "throwing npoints too low" << std::endl;
-    throw;
+    throw std::length_error("TParticleTrajectoryInterpolated::TParticleTrajectoryInterpolated not enough points in input TPTP trajectory");
   }
 
   this->Set(TPTP.GetTimePoints(), TPTP.GetTrajectory());
@@ -61,7 +60,6 @@ void TParticleTrajectoryInterpolated::Set (TParticleTrajectoryPoints const& TPTP
 {
   // Check that there are at least two points
   if (TPTP.GetNPoints() < 2) {
-    std::cerr << "ERROR: TParticleTrajectoryInterpolated::Set NPoints is too small" << std::endl;
     throw std::length_error("TParticleTrajectoryInterpolated::Set NPoints is too small");
   }
 
@@ -84,7 +82,6 @@ void TParticleTrajectoryInterpolated::Set (std::vector<double> const& T,
   // Check that there are at least two points and that the number of points is
   // the same as the number of time points
   if (T.size() < 2 || T.size() != P.size()) {
-    std::cerr << "ERROR: TParticleTrajectoryInterpolated::Set NPoints is too small or T and P do not match" << std::endl;
     throw std::length_error("TParticleTrajectoryInterpolated::Set NPoints is too small or T and P do not match");
   }
 
@@ -187,11 +184,11 @@ void TParticleTrajectoryInterpolated::FillTParticleTrajectoryPoints (TParticleTr
   // Fill a TParticleTrajectoryPoints object with trajectory points from this interpolation
 
   if (TStop <= TStart) {
-    throw;
+    throw std::logic_error("TParticleTrajectoryInterpolated::FillTParticleTrajectoryPoints finding TStop <= TStart.  Please report this");
   }
 
   if (NPoints < 2) {
-    throw;
+    throw std::logic_error("TParticleTrajectoryInterpolated::FillTParticleTrajectoryPoints finding NPoints < 2.  Please report this");
   }
 
   // Time step
@@ -309,7 +306,7 @@ void TParticleTrajectoryInterpolated::LevelCheck (int const Level) const
   // Common place to check the level and throw exception if incorrect
 
   if (Level < 0) {
-    throw;
+    throw std::logic_error("TParticleTrajectoryInterpolated::LevelCheck seeing Level < 0.  Please report this");
   }
   return;
 }

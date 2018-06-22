@@ -101,8 +101,7 @@ TVector3D TTriangle3D::operator [] (int const i) const
     case 3:
       return fN;
     default:
-      std::cerr << "ERROR: TTriangle3D operator []" << std::endl;
-      throw;
+      throw std::out_of_range("TTriangle3D::operator [] index out of range");
   }
 }
 
@@ -125,8 +124,7 @@ TVector3D& TTriangle3D::operator [] (int const i)
     case 3:
       return fN;
     default:
-      std::cerr << "ERROR: TTriangle3D operator []" << std::endl;
-      throw;
+      throw std::out_of_range("TTriangle3D::operator [] index out of range");
   }
 }
 

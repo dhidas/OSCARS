@@ -2513,9 +2513,7 @@ static PyObject* OSCARSTH_AddParticleBeam (OSCARSTHObject* self, PyObject* args,
 
   // Check for no beam
   if (ThisBeam == 0x0) {
-    // UPDATE: add specific throw
-    std::cerr << "ERROR: No beam at checkpoint" << std::endl;
-    throw;
+    throw std::logic_error("logic error. I do not see a beam at this point.  please report");
   }
 
   if (Sigma_Energy_GeV == 0) {

@@ -3884,9 +3884,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
 
   // Check for no beam
   if (ThisBeam == 0x0) {
-    // UPDATE: add specific throw
-    std::cerr << "ERROR: No beam at checkpoint" << std::endl;
-    throw;
+    throw std::logic_error("logic error. I do not see a beam at this point.  please report");
   }
 
   if (Sigma_Energy_GeV == 0) {
@@ -5308,7 +5306,7 @@ static PyObject* OSCARSSR_SetTrajectory (OSCARSSRObject* self, PyObject* args, P
   PyObject *PListTrajectory            = 0x0;
   const char* InFileNameText           = "";
   const char* InFileNameBinary         = "";
-  const char* InFormat                 = "DEFAULT";
+  const char* InFormat                 = "";
 
   // Input variable list
   static const char *kwlist[] = {"beam",
@@ -5348,19 +5346,16 @@ static PyObject* OSCARSSR_SetTrajectory (OSCARSSRObject* self, PyObject* args, P
     if (InFileNameText != "" || InFileNameBinary != "") {
       // Text file output
       if (std::strlen(InFileNameText) != 0) {
-        std::cout << "attempting to read file" << std::endl;
         if (Beam == "") {
-          std::cout << "no beam specified" << std::endl;
           self->obj->CurrentParticleReadTrajectory(InFileNameText, InFormat);
         } else {
-          std::cout << "beam specified" << std::endl;
           self->obj->NewParticleReadTrajectory(InFileNameText, Beam, InFormat);
         }
       } else if (std::strlen(InFileNameBinary) != 0) {
         if (Beam == "") {
-          self->obj->CurrentParticleReadTrajectoryBinary(InFileNameBinary);
+          self->obj->CurrentParticleReadTrajectoryBinary(InFileNameBinary, InFormat);
         } else {
-          self->obj->NewParticleReadTrajectoryBinary(InFileNameBinary, Beam);
+          self->obj->NewParticleReadTrajectoryBinary(InFileNameBinary, Beam, InFormat);
         }
       }
     } else if (PListTrajectory != 0x0) {
@@ -7595,7 +7590,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
   T3DScalarContainer FluxContainer;
 
   try {
-    throw;
+    throw std::runtime_error("not currently used");
     // UPDATE: Must fix single flux to accept polarizaton and angle
     self->obj->CalculateFlux(Surface, Energy_eV, FluxContainer, "all", 0, TVector3D(1, 0, 0), TVector3D(0, 1, 0), NParticles, NThreads, GPU, NumberOfGPUs, GPUVector, Precision, MaxLevel, MaxLevelExtended, Dim, ReturnQuantity);
   } catch (std::length_error e) {

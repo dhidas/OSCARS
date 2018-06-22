@@ -405,35 +405,6 @@ TVector3D TParticleBeam::GetTwissLatticeReference () const
 
 
 
-void TParticleBeam::SetSigma (TVector3D const& HorizontalDirection, TVector2D const& SigmaU, TVector2D const& SigmaUP, TVector3D const& SigmaAt, double const SigmaEnergyGeV)
-{
-  // Set beam parameters.  This function likely to be updated with better twiss functions
-  // UPDATE: Twiss?
-
-  std::cerr << "TParticleBeam::SetSigma called doing nothing" << std::endl;
-  return;
-  throw;
-  fHorizontalDirection = HorizontalDirection.UnitVector();
-  fSigmaU              = SigmaU;
-  fSigmaUP             = SigmaUP;
-  fSigmaAt             = SigmaAt;
-  fSigmaEnergyGeV      = SigmaEnergyGeV;
-
-  // The vertical direction has to be orthogonal to the two other directions
-  fVerticalDirection = fU0.Cross(fHorizontalDirection).UnitVector();
-
-  if (fabs(fHorizontalDirection.Dot(this->GetU0())) > 0.00000001) {
-    // We're supposed to be doing precision science here!
-    throw;
-  }
-
-
-  return;
-}
-
-
-
-
 TVector3D const& TParticleBeam::GetX0 () const
 {
   // Return const reference to the initial position
@@ -685,8 +656,7 @@ void TParticleBeam::SetWeight (double const Weight)
 {
   // Set the weight for this beam
   if (Weight <= 0) {
-    std::cerr << "Weight cannot be <= 0" << std::endl;
-    throw;
+    throw std::runtime_error("Particle weight cannot be negative");
   }
 
   fWeight = Weight;

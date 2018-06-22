@@ -47,7 +47,7 @@ TVector3D TFieldPythonFunction::GetF (TVector3D const& X, double const T) const
 
   // Check to see the function is callable
   if (!PyCallable_Check(fPythonFunction)) {
-    throw;
+    throw std::runtime_error("For some reason GetF is saying python function not callable.  Please report this.");
   }
 
   // Translate back into box frame
@@ -67,13 +67,13 @@ TVector3D TFieldPythonFunction::GetF (TVector3D const& X, double const T) const
 
   // If the output is null we didn't get anything
   if (OutputTuple == NULL) {
-    throw;
+    throw std::logic_error("TFieldPythonFunction::GetF output tuple is NULL.  Please report this.");
   }
 
   // Get a python list from output tuple
   PyObject* OutputList;
   if (!PyArg_Parse(OutputTuple, "O!", &PyList_Type, &OutputList)) {
-    throw;
+    throw std::logic_error("TFieldPythonFunction::GetF cannot get from output tuple.  Please report this.");
   }
 
   // Rotate field

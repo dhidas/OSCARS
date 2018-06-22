@@ -905,7 +905,6 @@ void OSCARSSR::CalculateTrajectoryRK4 (TParticleA& P)
 
 
   // The number of points in the forward and backward direction
-  // UPDATE: Check the details of these numbers
   size_t NPointsForward  = 1 + (this->GetCTStop() - P.GetT0()) / TOSCARSSR::C() / DeltaT;
   size_t NPointsBackward = (P.GetT0() - this->GetCTStart()) / TOSCARSSR::C() / DeltaT;
 
@@ -939,7 +938,7 @@ void OSCARSSR::CalculateTrajectoryRK4 (TParticleA& P)
     double t = P.GetT0() / TOSCARSSR::C() + DeltaT * i;
 
 
-    // UPDATE: dhidas dhidas dhidas
+    // UPDATE: Possibly take this away
     if (fDriftVolumeContainer.IsInside(TVector3D(x[0], x[2], x[4]))) {
       x[0] += DeltaT * x[1];
       x[2] += DeltaT * x[3];
@@ -1117,11 +1116,11 @@ void OSCARSSR::NewParticleReadTrajectory (std::string const& InFileName, std::st
 
 
 
-void OSCARSSR::NewParticleReadTrajectoryBinary (std::string const& InFileName, std::string const& Beam)
+void OSCARSSR::NewParticleReadTrajectoryBinary (std::string const& InFileName, std::string const& Beam, std::string const& InFormat)
 {
   // Set a new ideal particle from the given beam and read the trajectory data from a file
   this->SetNewParticle(Beam, "ideal");
-  this->CurrentParticleReadTrajectoryBinary(InFileName);
+  this->CurrentParticleReadTrajectoryBinary(InFileName, InFormat);
   return;
 }
 
@@ -1140,11 +1139,11 @@ void OSCARSSR::CurrentParticleReadTrajectory (std::string const& InFileName, std
 
 
 
-void OSCARSSR::CurrentParticleReadTrajectoryBinary (std::string const& InFileName)
+void OSCARSSR::CurrentParticleReadTrajectoryBinary (std::string const& InFileName, std::string const& InFormat)
 {
   // For the current particle, get a new trajectory, read trajectory data from file
   // and setup interpolating structure
-  GetNewTrajectory().ReadFromFileBinary(InFileName);
+  GetNewTrajectory().ReadFromFileBinary(InFileName, InFormat);
   fParticle.SetupTrajectoryInterpolated();
   return;
 }
@@ -1416,7 +1415,6 @@ void OSCARSSR::RKQS (std::array<double, 6>& x,
     }
   }
 
-  // UPDATE: This OR if beta criteria not satisfied
   if (MaxError > 1.89e-4) {
     *hNext = 0.9 * h * pow(MaxError, -0.2);
   } else {
@@ -2690,7 +2688,6 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface,
       PowerDensityContainer.AddPoint( TVector3D(Surface.GetX1(i), Surface.GetX2(i), 0), 0);
     }
   } else if (Dimension == 1) {
-    // UPDATE: Needs something for 1D
     if (Surface.GetNPoints() == 1) {
       PowerDensityContainer.AddPoint( Surface.GetPoint(0).GetPoint(), 0 );
     } else {
@@ -2887,7 +2884,6 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
 
         // For computing non-normally incidence
         double const N1DotNormal = HasNormal ? N1.Dot(Normal) : 1;
-        // UPDATE: URGENT: Check this
         if (Directional && N1DotNormal <= 0) {
           continue;
         }
@@ -3126,7 +3122,7 @@ double OSCARSSR::CalculateTotalPower (double const Precision,
                                       int    const MaxLevelExtended,
                                       int    const ReturnQuantity)
 {
-  // UPDATE: commet
+  // Calculate the total power
 
   // Check that particle has been set yet.  If fType is "" it has not been set yet
   if (fParticle.GetType() == "") {

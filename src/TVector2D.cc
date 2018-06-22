@@ -259,8 +259,7 @@ double TVector2D::operator [] (int const i) const
     case 1:
       return fY;
     default:
-      std::cerr << "ERROR: TVector2D operator []" << std::endl;
-      throw;
+      throw std::out_of_range("TVector2D operator [] requested index out of range");
   }
   return 0.;
 }
@@ -280,8 +279,7 @@ double& TVector2D::operator [] (int const i)
     case 1:
       return fY;
     default:
-      std::cerr << "ERROR: TVector2D operator []" << std::endl;
-      throw;
+      throw std::out_of_range("TVector2D operator [] requested index out of range");
   }
   return fX;
 }

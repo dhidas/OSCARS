@@ -123,14 +123,12 @@ void TTriangle3DContainer::WriteSTLFile (std::string const& FileName)
   // Open the output file
   std::ofstream fi(FileName.c_str(), std::ios::binary);
   if (!fi.is_open()) {
-    std::cout << "file not open" << std::endl;
     throw std::ofstream::failure("output file cannot be opened");
   }
 
   char H[80];
   sprintf(H, "%s", "OSCARS OSCARS OSCARS OSCARS OSCARS   ");
   fi.write(H, 80 * sizeof(char));
-  std::cout << "brinted" << std::endl;
 
   uint32_t NTriangles = (uint32_t) fT.size();;
   fi.write((char*) &NTriangles, sizeof(uint32_t));
