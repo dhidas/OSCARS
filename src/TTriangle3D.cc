@@ -1,5 +1,6 @@
 #include "TTriangle3D.h"
 
+#include <stdexcept>
 
 
 TTriangle3D::TTriangle3D (TVector3D const& A,
