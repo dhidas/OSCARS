@@ -80,7 +80,15 @@ const char* GetAsString (PyObject* S)
 
 
 
+#if PY_MAJOR_VERSION == 3
+#if PY_MINOR_VERSION >= 7
+const char* GetVersionOfModule (std::string const& ModuleName)
+#else
 char* GetVersionOfModule (std::string const& ModuleName)
+#endif
+#elif PY_MAJOR_VERSION < 3
+char* GetVersionOfModule (std::string const& ModuleName)
+#endif
 {
   PyObject* pkg_resources = PyImport_ImportModule("pkg_resources");
   if (pkg_resources == NULL) {
