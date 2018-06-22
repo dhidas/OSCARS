@@ -56,16 +56,27 @@ void PyPrint_stdout (std::string const& s)
 
 
 
+#if PY_MAJOR_VERSION < 3
 char* GetAsString (PyObject* S)
 {
-  // Return the correct string version depending on the python version
-
-  #if PY_MAJOR_VERSION >= 3
-  return PyUnicode_AsUTF8(S);
-  #else
   return PyString_AsString(S);
-  #endif
 }
+#elif PY_MAJOR_VERSION == 3
+#if PY_MINOR_VERSION <= 6
+char* GetAsString (PyObject* S)
+{
+  return PyUnicode_AsUTF8(S);
+}
+#else
+const char* GetAsString (PyObject* S)
+{
+  return PyUnicode_AsUTF8(S);
+}
+#endif
+#endif
+
+
+
 
 
 
