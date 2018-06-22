@@ -30,6 +30,7 @@ static PyObject* OSCARSSR_new (PyTypeObject* type, PyObject* args, PyObject* kwd
 static PyObject* OSCARSSR_Pi (OSCARSSRObject* self, PyObject* arg);
 static PyObject* OSCARSSR_Qe (OSCARSSRObject* self, PyObject* arg);
 static PyObject* OSCARSSR_Me (OSCARSSRObject* self, PyObject* arg);
+static PyObject* OSCARSSR_C (OSCARSSRObject* self, PyObject* arg);
 static PyObject* OSCARSSR_Random (OSCARSSRObject* self, PyObject* arg);
 static PyObject* OSCARSSR_RandomNormal (OSCARSSRObject* self, PyObject* arg);
 static PyObject* OSCARSSR_SetSeed (OSCARSSRObject* self, PyObject* arg);
@@ -88,6 +89,7 @@ static PyObject* OSCARSSR_ClearDriftVolumes (OSCARSSRObject* self);
 static PyObject* OSCARSSR_PrintDriftVolumes (OSCARSSRObject* self);
 static PyObject* OSCARSSR_CalculateTrajectory (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSSR_GetTrajectory (OSCARSSRObject* self);
+static PyObject* OSCARSSR_SetTrajectory (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSSR_CalculateTotalPower (OSCARSSRObject* self, PyObject* args, PyObject *keywds);
 static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject* args, PyObject *keywds);

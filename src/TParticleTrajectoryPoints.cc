@@ -10,6 +10,7 @@
 #include "TParticleTrajectoryPoints.h"
 
 #include "TOSCARSSR.h"
+#include "TOMATH.h"
 
 #include <algorithm>
 #include <fstream>
@@ -94,6 +95,13 @@ TVector3D const& TParticleTrajectoryPoints::GetB (size_t const i) const
 
 
 
+void TParticleTrajectoryPoints::SetB (size_t const i, TVector3D const& B)
+{
+  fP[i].SetB(B);
+}
+
+
+
 TVector3D TParticleTrajectoryPoints::GetV (size_t const i) const
 {
   return this->GetB(i) * TOSCARSSR::C();
@@ -106,6 +114,16 @@ TVector3D TParticleTrajectoryPoints::GetV (size_t const i) const
 TVector3D const& TParticleTrajectoryPoints::GetAoverC (size_t const i) const
 {
   return fP[i].GetAoverC();
+}
+
+
+
+
+
+void TParticleTrajectoryPoints::SetAoverC (size_t const i, TVector3D const& AoverC)
+{
+  fP[i].SetAoverC(AoverC);
+  return;
 }
 
 
@@ -473,54 +491,169 @@ void TParticleTrajectoryPoints::WriteToFileBinary (std::string const& FileName, 
 
 
 
-void TParticleTrajectoryPoints::ReadFromFileFormat (std::string const& FileName)
+void TParticleTrajectoryPoints::ReadFromFileFormat (std::string const& FileName, std::string const& FormatIn)
 {
   // Read a text file of the trajectory
   // UPDATE: THIS IS TO REDO FOR SPECIFIED FORMATS
-
   // Open the input file for reading
   std::ifstream f(FileName.c_str());
   if (!f.is_open()) {
+    throw std::ifstream::failure("cannot open input file specified");
+  }
+
+  std::string HeaderLine;
+  std::getline(f, HeaderLine);
+  std::vector<std::string> HeaderVector;
+  std::istringstream HeaderStream(HeaderLine);
+  for (std::string a; HeaderStream >> a; ) {
+    HeaderVector.push_back(a);
+  }
+
+  std::string FormatFound = "";
+
+  if (HeaderVector.size() != 0 && std::string(HeaderVector[0], 0, 1) != "#") {
+    f.seekg(0, f.beg);
+  } else {
+    if (HeaderVector[0].size() != 1) {
+      HeaderVector[0] = std::string(HeaderVector[0], 1, HeaderVector[0].size()-1);
+    } else {
+      HeaderVector.erase(HeaderVector.begin());
+    }
+    bool const HasT   =  std::find(HeaderVector.begin(), HeaderVector.end(), "T") != HeaderVector.end();
+    bool const HasX   =  std::find(HeaderVector.begin(), HeaderVector.end(), "X") != HeaderVector.end();
+    bool const HasY   =  std::find(HeaderVector.begin(), HeaderVector.end(), "Y") != HeaderVector.end();
+    bool const HasZ   =  std::find(HeaderVector.begin(), HeaderVector.end(), "Z") != HeaderVector.end();
+
+    // Does it have the minimum to be a format specified
+    if (HasT && (HasX || HasY || HasZ)) {
+      for (size_t i = 0; i != HeaderVector.size(); ++i) {
+        FormatFound += " " + HeaderVector[i];
+      }
+    } else {
+      // I guess it was just a comment
+    }
+  }
+
+  // Transform input format
+  std::string Format = FormatIn;
+  std::transform(Format.begin(), Format.end(), Format.begin(), ::toupper);
+  if (FormatIn == "DEFAULT" && FormatFound != "") {
+    Format = FormatFound;
+  }
+  std::transform(Format.begin(), Format.end(), Format.begin(), ::toupper);
+
+  // Check and set format
+  if (Format == "DEFAULT") {
+    Format = "T X Y Z BX BY BZ BPX BPY BPZ";
+  }
+
+  // Figure out how many columns in the data input
+  std::istringstream FormatStringStream(Format);
+  std::vector<std::string> FormatVector;
+  for (std::string one; FormatStringStream >> one; ) {
+    FormatVector.push_back(one);
+  }
+
+  // Number of columns
+  size_t const NColumns = FormatVector.size();
+
+
+  // Check which components exist
+  bool const HasT   =  std::find(FormatVector.begin(), FormatVector.end(), "T") != FormatVector.end();
+  bool const HasX   =  std::find(FormatVector.begin(), FormatVector.end(), "X") != FormatVector.end();
+  bool const HasY   =  std::find(FormatVector.begin(), FormatVector.end(), "Y") != FormatVector.end();
+  bool const HasZ   =  std::find(FormatVector.begin(), FormatVector.end(), "Z") != FormatVector.end();
+  bool const HasBX  =  std::find(FormatVector.begin(), FormatVector.end(), "BX") != FormatVector.end();
+  bool const HasBY  =  std::find(FormatVector.begin(), FormatVector.end(), "BY") != FormatVector.end();
+  bool const HasBZ  =  std::find(FormatVector.begin(), FormatVector.end(), "BZ") != FormatVector.end();
+  bool const HasBPX =  std::find(FormatVector.begin(), FormatVector.end(), "BPX") != FormatVector.end();
+  bool const HasBPY =  std::find(FormatVector.begin(), FormatVector.end(), "BPY") != FormatVector.end();
+  bool const HasBPZ =  std::find(FormatVector.begin(), FormatVector.end(), "BPZ") != FormatVector.end();
+
+  bool const HasPosition  = (HasX || HasY || HasZ);
+  bool const HasBeta      = (HasBX || HasBY || HasBZ);
+  bool const HasBetaPrime = (HasBPX || HasBPY || HasBPZ);
+
+
+  // If you do not have a time of position you are indeed done for.
+  if (!(HasT && HasPosition)) {
     throw;
   }
 
-  // Variables to read from file
-  double t;
-  double x, y, z;
-  double bx, by, bz;
-  double aocx, aocy, aocz;
+  // A place for every column (although some are not used)
+  double Input;
 
-  size_t n = 0;
+  std::string IgnoredRead;
 
-  // Loop over all lines in file, skip anything that starts with somethign which is not
-  // a floating point number
-  std::istringstream LineStream;
-  for (std::string Line; std::getline(f, Line); ++n) {
-    if (f.eof()) {
-      break;
+  // Out variables which will be put in trajectory
+  double T;
+  TVector3D X(0, 0, 0);
+  TVector3D B(0, 0, 0);
+  TVector3D BP(0, 0, 0);
+
+  // Loop over all lines in file
+  for (std::string line; std::getline(f, line); ) {
+
+    X.SetXYZ(0, 0, 0);
+    B.SetXYZ(0, 0, 0);
+    BP.SetXYZ(0, 0, 0);
+
+    // Parse one line
+    std::istringstream sline(line);
+    for (size_t i = 0; i != NColumns; ++i) {
+      if (FormatVector[i] == "*") {
+        sline >> IgnoredRead;
+      } else {
+        sline >> Input;
+
+        // If there is a fail the format specifier does not match the input
+        if (sline.fail()) {
+          throw std::length_error("When parsing the input trajectory file the format specified does not match the data in length");
+        }
+
+        if (FormatVector[i] == "T") {
+          T = Input;
+        } else if (FormatVector[i] == "X") {
+          X.SetX(Input);
+        } else if (FormatVector[i] == "Y") {
+          X.SetY(Input);
+        } else if (FormatVector[i] == "Z") {
+          X.SetZ(Input);
+        } else if (FormatVector[i] == "BX") {
+          B.SetX(Input);
+        } else if (FormatVector[i] == "BY") {
+          B.SetY(Input);
+        } else if (FormatVector[i] == "BZ") {
+          B.SetZ(Input);
+        } else if (FormatVector[i] == "BPX") {
+          BP.SetX(Input);
+        } else if (FormatVector[i] == "BPY") {
+          BP.SetY(Input);
+        } else if (FormatVector[i] == "BPZ") {
+          BP.SetZ(Input);
+        }
+      }
     }
 
-    LineStream.clear();
-    LineStream.str(Line);
-
-    LineStream >> t;
-    if (LineStream.fail()) {
-      // Presumably this is a comment line, although it could be
-      // a data formatting error, but I'll ignore that for now.
-      continue;
+    if (B.Mag() >= 1.0) {
+      throw std::out_of_range("Magnitude of beta >= 1 in input file.  Sorry, this is beyond einstein.  Line:\n" + line);
     }
-
-    LineStream >> x >> y >> z >> bx >> by >> bz >> aocx >> aocy >> aocz;
-
-    if (!LineStream.fail()) { // check for error
-      this->AddPoint( TVector3D(x, y, z), TVector3D(bx, by, bz), TVector3D(aocx, aocy, aocz), t );
-    } else {
-      throw;
-    }
-
+    // We have a line, a point, add it!!
+    this->AddPoint(X, B, BP, T);
   }
 
-  std::cout << "done reading file, what next??" << std::endl;
+  // Close file
+  f.close();
+
+  // Trajectory data is all read.  If no beta, deduce from X, T
+  if (!HasBeta) {
+    this->ConstructBetaAtPoints();
+  }
+
+  // If no BP deduce from B, T
+  if (!HasBetaPrime) {
+    this->ConstructAoverCAtPoints();
+  }
 
   return;
 }
@@ -575,44 +708,55 @@ void TParticleTrajectoryPoints::ReadFromFile (std::string const& FileName)
 
   }
 
-  std::cout << "done reading file, what next??" << std::endl;
-
   return;
 }
 
 
 
 
-void TParticleTrajectoryPoints::ReadFromFileBinary (std::string const& FileName)
+void TParticleTrajectoryPoints::ReadFromFileBinary (std::string const& FileName, std::string const& FormatIn)
 {
   // Read a text file of the trajectory
 
+  std::cout << "Made it to ReadFromFileBinary" << std::endl;
+  std::cout << "Trying to read file: " << FileName << std::endl;
   // Open the input file for reading
   std::ifstream f(FileName, std::ios::binary);
   if (!f.is_open()) {
-    throw;
+    throw std::ifstream::failure("cannot open input file: " + FileName);
   }
 
-  // Read format length as first word
-  int FormatLength = 0;
-  f.read((char*) &FormatLength, sizeof(int));
+  // For reading format from file
+  char* FormatRead = 0x0;
 
-  // Check format length
-  if (FormatLength < 1) {
-    throw;
+  if (FormatIn == "") {
+    std::cout << " Reading format from binary file" << std::endl;
+
+    // Read format length as first word
+    int FormatReadLength = 0;
+    f.read((char*) &FormatReadLength, sizeof(int));
+
+    // Check format length
+    if (FormatReadLength < 1) {
+      throw std::ifstream::failure("Trying to read binary file format from file header failed.  Incorrect format.");
+    }
+
+    // Read input format
+    FormatRead = new char[FormatReadLength+1];
+
+    FormatRead[FormatReadLength] = '\0';
+    f.read((char*) FormatRead, FormatReadLength * sizeof(char));
   }
-
-  // Read input format
-  char* FormatIn = new char[FormatLength+1];
-
-  FormatIn[FormatLength] = '\0';
-  f.read((char*) FormatIn, FormatLength * sizeof(char));
 
   // Transform input format
-  std::string Format = FormatIn;
+  std::string Format = FormatRead == 0x0 ? FormatIn : FormatRead;
   std::transform(Format.begin(), Format.end(), Format.begin(), ::toupper);
+  std::cout << " Format after reading is: " << Format << std::endl;
 
-  delete FormatIn;
+  // If we created it let's delete it
+  if (FormatRead != 0x0) {
+    delete FormatRead;
+  }
 
   // Ordered vector of inputs
   std::istringstream FormatStream(Format);
@@ -681,6 +825,7 @@ void TParticleTrajectoryPoints::ReadFromFileBinary (std::string const& FileName)
     }
   }
 
+  std::cout << " starting to read file" << std::endl;
   while (!f.eof()) {
 
     for (size_t i = 0; i != FormatWords.size(); ++i) {
@@ -706,11 +851,59 @@ void TParticleTrajectoryPoints::ReadFromFileBinary (std::string const& FileName)
     }
   }
 
+  std::cout << " done reading file" << std::endl;
+
   // Delete data vector
   delete v;
 
   return;
 }
+
+
+
+
+void TParticleTrajectoryPoints::ConstructBetaAtPoints ()
+{
+  // This functino will construct Beta from the positions and time.
+  // It should only be used when Beta information is missing
+
+  std::vector<double> Times;
+  std::vector<TVector3D> Pos;
+  for (size_t i = 0; i != this->GetNPoints(); ++i) {
+    Times.push_back(this->GetT(i));
+    Pos.push_back(this->GetX(i));
+  }
+  TOMATH::TSpline1D3<TVector3D> S(Times, Pos);
+  for (size_t i = 0; i != this->GetNPoints(); ++i) {
+    this->SetB(i, S.GetDerivative(i) / TOSCARSSR::C());
+  }
+
+  return;
+}
+
+
+
+
+void TParticleTrajectoryPoints::ConstructAoverCAtPoints ()
+{
+  // This function will construct AoverC from the Beta and time.
+  // It should only be used when AoverC information is missing
+
+  std::vector<double> Times;
+  std::vector<TVector3D> Betas;
+  for (size_t i = 0; i != this->GetNPoints(); ++i) {
+    Times.push_back(this->GetT(i));
+    Betas.push_back(this->GetB(i));
+  }
+  TOMATH::TSpline1D3<TVector3D> S(Times, Betas);
+  for (size_t i = 0; i != this->GetNPoints(); ++i) {
+    this->SetAoverC(i, S.GetDerivative(i));
+  }
+
+  return;
+}
+
+
 
 
 

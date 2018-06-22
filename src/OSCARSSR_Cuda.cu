@@ -871,7 +871,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
 
   // Compute known host values
   *h_c0    = OSR.GetCurrentParticle().GetQ() / (TOSCARSSR::FourPi() * TOSCARSSR::C() * TOSCARSSR::Epsilon0() * TOSCARSSR::Sqrt2Pi());
-  *h_c2    = TOSCARSSR::FourPi() * OSR.GetCurrentParticle().GetCurrent() / (TOSCARSSR::H() * fabs(OSR.GetCurrentParticle().GetQ()) * TOSCARSSR::Mu0() * TOSCARSSR::C()) * 1e-6 * 0.001;
+  *h_c2    = TOSCARSSR::FourPi() * fabs(OSR.GetCurrentParticle().GetCurrent()) / (TOSCARSSR::H() * fabs(OSR.GetCurrentParticle().GetQ()) * TOSCARSSR::Mu0() * TOSCARSSR::C()) * 1e-6 * 0.001;
   *h_c     = TOSCARSSR::C();
   *h_omega = TOSCARSSR::EvToAngularFrequency(Energy_eV);
   for (size_t i = 0; i < *h_ns; ++i) {
@@ -1960,7 +1960,7 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
 
   // Compute known host values
   *h_c0    = OSR.GetCurrentParticle().GetQ() / (TOSCARSSR::FourPi() * TOSCARSSR::C() * TOSCARSSR::Epsilon0() * TOSCARSSR::Sqrt2Pi());
-  *h_c2    = TOSCARSSR::FourPi() * OSR.GetCurrentParticle().GetCurrent() / (TOSCARSSR::H() * fabs(OSR.GetCurrentParticle().GetQ()) * TOSCARSSR::Mu0() * TOSCARSSR::C()) * 1e-6 * 0.001;
+  *h_c2    = TOSCARSSR::FourPi() * fabs(OSR.GetCurrentParticle().GetCurrent()) / (TOSCARSSR::H() * fabs(OSR.GetCurrentParticle().GetQ()) * TOSCARSSR::Mu0() * TOSCARSSR::C()) * 1e-6 * 0.001;
   *h_c     = TOSCARSSR::C();
   for (size_t i = 0; i < *h_no; ++i) {
     h_om[i] = Spectrum.GetAngularFrequency(i);
@@ -3098,7 +3098,7 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
   for (int ip = 0; ip < NParticlesReally; ++ip) {
     // Set constant for this particle
     *h_gamma = OSR.GetCurrentParticle().GetGamma();
-    *h_const = fabs(OSR.GetCurrentParticle().GetQ() * OSR.GetCurrentParticle().GetCurrent()) / (16 * TOSCARSSR::Pi2() * TOSCARSSR::Epsilon0() * TOSCARSSR::C()) / 1e6;
+    *h_const = fabs(OSR.GetCurrentParticle().GetQ() * fabs(OSR.GetCurrentParticle().GetCurrent())) / (16 * TOSCARSSR::Pi2() * TOSCARSSR::Epsilon0() * TOSCARSSR::C()) / 1e6;
 
     // Copy trajectory to first GPU, then internal async transfers (where possible)
     cudaSetDevice(d0);

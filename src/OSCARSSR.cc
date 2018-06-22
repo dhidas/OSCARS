@@ -1105,11 +1105,11 @@ void OSCARSSR::WriteTrajectoryBinary (std::string const& OutFileName, std::strin
 
 
 
-void OSCARSSR::NewParticleReadTrajectory (std::string const& InFileName, std::string const& Beam)
+void OSCARSSR::NewParticleReadTrajectory (std::string const& InFileName, std::string const& Beam, std::string const& InFormat)
 {
   // Set a new ideal particle from the given beam and read the trajectory data from a file
   this->SetNewParticle(Beam, "ideal");
-  this->CurrentParticleReadTrajectory(InFileName);
+  this->CurrentParticleReadTrajectory(InFileName, InFormat);
   return;
 }
 
@@ -1128,11 +1128,11 @@ void OSCARSSR::NewParticleReadTrajectoryBinary (std::string const& InFileName, s
 
 
 
-void OSCARSSR::CurrentParticleReadTrajectory (std::string const& InFileName)
+void OSCARSSR::CurrentParticleReadTrajectory (std::string const& InFileName, std::string const& InFormat)
 {
   // For the current particle, get a new trajectory, read trajectory data from file
   // and setup interpolating structure
-  GetNewTrajectory().ReadFromFile(InFileName);
+  GetNewTrajectory().ReadFromFileFormat(InFileName, InFormat);
   fParticle.SetupTrajectoryInterpolated();
   return;
 }
@@ -1840,12 +1840,6 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
     this->CalculateTrajectory(Particle);
   }
 
-  // Calculate trajectory if it doesn't exist
-  if (Particle.GetTrajectory().GetNPoints() == 0) {
-    this->CalculateTrajectory(Particle);
-  }
-
-
 
   // Check you are not requesting a level above the maximum
   if (MaxLevel > TParticleA::kMaxTrajectoryLevel) {
@@ -1868,7 +1862,7 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
   double const C0 = Particle.GetQ() / (TOSCARSSR::FourPi() * TOSCARSSR::C() * TOSCARSSR::Epsilon0() * TOSCARSSR::Sqrt2Pi());
 
   // Constant for flux calculation at the end
-  double const C2 = TOSCARSSR::FourPi() * Particle.GetCurrent() / (TOSCARSSR::H() * fabs(Particle.GetQ()) * TOSCARSSR::Mu0() * TOSCARSSR::C()) * 1e-6 * 0.001;
+  double const C2 = TOSCARSSR::FourPi() * fabs(Particle.GetCurrent()) / (TOSCARSSR::H() * fabs(Particle.GetQ()) * TOSCARSSR::Mu0() * TOSCARSSR::C()) * 1e-6 * 0.001;
 
   // Imaginary "i" and complxe 1+0i
   std::complex<double> const I(0, 1);

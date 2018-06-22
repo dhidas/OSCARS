@@ -63,9 +63,27 @@ TVector3D const& TParticleTrajectoryPoint::GetB () const
 
 
 
+void TParticleTrajectoryPoint::SetB (TVector3D const& B)
+{
+  fB = B;
+  return;
+}
+
+
+
+
 TVector3D const& TParticleTrajectoryPoint::GetAoverC () const
 {
   return fAoverC;
+}
+
+
+
+
+void TParticleTrajectoryPoint::SetAoverC (TVector3D const& AoverC)
+{
+  fAoverC = AoverC;
+  return;
 }
 
 

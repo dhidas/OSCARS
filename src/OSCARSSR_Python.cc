@@ -203,6 +203,24 @@ static PyObject* OSCARSSR_Me (OSCARSSRObject* self, PyObject* arg)
 
 
 
+const char* DOC_OSCARSSR_C = R"docstring(
+c()
+
+Get the value of the speed of light in [m/s]
+
+Returns
+-------
+speed of light : float
+)docstring";
+static PyObject* OSCARSSR_C (OSCARSSRObject* self, PyObject* arg)
+{
+  // Return the internal OSCARSSR number for mass of the electron [kg]
+  return Py_BuildValue("d", TOSCARSSR::C());
+}
+
+
+
+
 const char* DOC_OSCARSSR_Random = R"docstring(
 rand()
 
@@ -5230,10 +5248,24 @@ static PyObject* OSCARSSR_GetTrajectory (OSCARSSRObject* self)
 
 
 const char* DOC_OSCARSSR_SetTrajectory = R"docstring(
-set_trajectory(, [beam, trajectory, ifile, bifile])
+set_trajectory(, [beam, trajectory, ifile, bifile, iformat])
 
-UPDATE: This about ctstartstop
+Input an trajectory from a file or as a python list.  The minimum requirements are:
+    * Must have at least 3 points
+    * Must specify time for each point
+    * Must specify at least one space dimension for each point (X or Y or Z)
 
+The general format for a trajectory point is:
+    [t, [x, y, z], [bx, by, bz], [bx', by', bz']]
+
+A trajectory would be a list containing such points.  Where the b and b' terms are not given they will be constructed
+from the derivatives of a cubic spline at each point in t.  The decision to reconstruct this is based on the first
+element in the list containing or not containing b and b' terms.  If you mean for OSCARS to reconstruct them leave
+them off entirely, e.g.
+    [t, [x, y, z]], or [t, [x, y, z], [bx, by, bz]]
+
+You do not need to specify a beam in the input nor have one defined, but if you want to run the SR calculations one
+must define a beam so that the core knows about charge and mass.
 
 
 Parameters
@@ -5243,13 +5275,26 @@ beam : str
     the current particle is used.
 
 trajectory : list
-    The trajectory in OSCARS trajectory format [[t, [x, y, z], [bx, by, bz], [bx', by', bz']], ...]
+    The trajectory in OSCARS trajectory format [[t, [x, y, z], [bx, by, bz], [bx', by', bz']], ...].  It is advisable
+    to include b* and b*', but in the case that you don't have them they will be calculated from t and position from
+    the cubic spline coefficients.
 
 ifile : str
-    Text input file name
+    Text input file name.  The input should be in column format.  If the first line begins with '#' OSCARS will attempt
+    to read it as iformat (see iformat input).  If it cannot, it will be treated as a comment and ignored.
 
 bifile : str
     Binary input file name
+
+iformat : str
+    Format of the text input file.  This string will override any format specified within the file.  The format
+    secifiers are whitespace delimited.  At a minimum you need to specify T and one of (X, Y, Z).  It is recommended
+    to specify all parameters, but beta and beta^prime are not required.  The allowed specifiers are:
+        T X Y Z BX BY BZ BPX BPY BPZ *
+    '*' means "ignore this column".  The order of columns does not matter.
+    Example format strings:
+        'T X Y Z' - Specifying time and x, y, z coordinates
+        'T X * Z BX * BZ BPX * BPZ' - Specifying X and Z components and ignoring some columns
 
 
 Returns
@@ -5263,22 +5308,24 @@ static PyObject* OSCARSSR_SetTrajectory (OSCARSSRObject* self, PyObject* args, P
   PyObject *PListTrajectory            = 0x0;
   const char* InFileNameText           = "";
   const char* InFileNameBinary         = "";
-  //const char* InFormat                 = "";
+  const char* InFormat                 = "DEFAULT";
 
   // Input variable list
   static const char *kwlist[] = {"beam",
                                  "trajectory",
                                  "ifile",
                                  "bifile",
+                                 "iformat",
                                  NULL};
 
   // Parse inputs
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sOss",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sOsss",
                                    const_cast<char **>(kwlist),
                                    &Beam_IN,
                                    &PListTrajectory,
                                    &InFileNameText,
-                                   &InFileNameBinary)) {
+                                   &InFileNameBinary,
+                                   &InFormat)) {
     return NULL;
   }
 
@@ -5301,43 +5348,88 @@ static PyObject* OSCARSSR_SetTrajectory (OSCARSSRObject* self, PyObject* args, P
     if (InFileNameText != "" || InFileNameBinary != "") {
       // Text file output
       if (std::strlen(InFileNameText) != 0) {
+        std::cout << "attempting to read file" << std::endl;
         if (Beam == "") {
-          self->obj->CurrentParticleReadTrajectory(InFileNameText);
+          std::cout << "no beam specified" << std::endl;
+          self->obj->CurrentParticleReadTrajectory(InFileNameText, InFormat);
         } else {
-          self->obj->NewParticleReadTrajectory(InFileNameText, Beam);
+          std::cout << "beam specified" << std::endl;
+          self->obj->NewParticleReadTrajectory(InFileNameText, Beam, InFormat);
         }
       } else if (std::strlen(InFileNameBinary) != 0) {
         if (Beam == "") {
-          self->obj->CurrentParticleReadTrajectoryBinary(InFileNameText);
+          self->obj->CurrentParticleReadTrajectoryBinary(InFileNameBinary);
         } else {
-          self->obj->NewParticleReadTrajectoryBinary(InFileNameText, Beam);
+          self->obj->NewParticleReadTrajectoryBinary(InFileNameBinary, Beam);
         }
       }
     } else if (PListTrajectory != 0x0) {
+      // Here we will take in a trajectory from python lists.
+
+      // Check that this is a list and has at least an element
+      if (PyList_Size(PListTrajectory) < 1) {
+        PyErr_SetString(PyExc_ValueError, "Input trajectory is not the correct format");
+        return NULL;
+      }
+
+      // Get a new trajectory.  If beam defined use the one defined
       if (Beam != "") {
         self->obj->SetNewParticle(Beam, "ideal");
       }
+
+      // The new Trajectory to fill
       TParticleTrajectoryPoints& TNew = self->obj->GetNewTrajectory();
+
+      // Let's do some checking on the structure of the input list first.  If it does not have a beta or betaprime we will
+      // flag this and calculate them for the user
+      //
+      // Start by looking at the 0-th element of the list
+      PyObject* FirstPoint = PyList_GetItem(PListTrajectory, 0);
+      bool const HasB  = PyList_Size(FirstPoint) >= 3;
+      bool const HasBP = PyList_Size(FirstPoint) >= 4;
+
       for (int i = 0; i != PyList_Size(PListTrajectory); ++i) {
         PyObject* ThisPoint = PyList_GetItem(PListTrajectory, i);
-        if (PyList_Size(ThisPoint) != 4) {
+        if (PyList_Size(ThisPoint) <= 1) {
           PyErr_SetString(PyExc_ValueError, ("Incorrect format in 'trajectory' entry number " + std::to_string(i)).c_str());
           return NULL;
         }
         try {
-          std::cout << "adding point: " << PyFloat_AsDouble(PyList_GetItem(ThisPoint, 0)) << std::endl;
-          TNew.AddPoint(OSCARSPY::ListAsTVector3D(PyList_GetItem(ThisPoint, 1)),
-                        OSCARSPY::ListAsTVector3D(PyList_GetItem(ThisPoint, 2)),
-                        OSCARSPY::ListAsTVector3D(PyList_GetItem(ThisPoint, 3)),
-                        PyFloat_AsDouble(PyList_GetItem(ThisPoint, 0)));
+          if (HasB && HasBP) {
+            TNew.AddPoint(OSCARSPY::ListAsTVector3D(PyList_GetItem(ThisPoint, 1)),
+                          OSCARSPY::ListAsTVector3D(PyList_GetItem(ThisPoint, 2)),
+                          OSCARSPY::ListAsTVector3D(PyList_GetItem(ThisPoint, 3)),
+                          PyFloat_AsDouble(PyList_GetItem(ThisPoint, 0)));
+          } else if (HasB) {
+            TNew.AddPoint(OSCARSPY::ListAsTVector3D(PyList_GetItem(ThisPoint, 1)),
+                          OSCARSPY::ListAsTVector3D(PyList_GetItem(ThisPoint, 2)),
+                          TVector3D(0, 0, 0),
+                          PyFloat_AsDouble(PyList_GetItem(ThisPoint, 0)));
+          } else {
+            TNew.AddPoint(OSCARSPY::ListAsTVector3D(PyList_GetItem(ThisPoint, 1)),
+                          TVector3D(0, 0, 0),
+                          TVector3D(0, 0, 0),
+                          PyFloat_AsDouble(PyList_GetItem(ThisPoint, 0)));
+          }
         } catch (...) {
           PyErr_SetString(PyExc_ValueError, ("Incorrect format in 'trajectory' entry number " + std::to_string(i)).c_str());
           return NULL;
         }
       }
+
+      // Reconstruct beta and betaprime if not given in input
+      if (!HasB) {
+        TNew.ConstructBetaAtPoints();
+      }
+      if (!HasBP) {
+        TNew.ConstructAoverCAtPoints();
+      }
     
 
     } else {
+      // Not sure what you wanted here...
+      PyErr_SetString(PyExc_ValueError, "Need to specify where to get the trajectory from, ifile, trajectory, etc..");
+      return NULL;
     }
 
   } catch (std::length_error e) {
@@ -9079,6 +9171,7 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   {"pi",                                (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_Pi},
   {"qe",                                (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_Qe},
   {"me",                                (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_Me},
+  {"c",                                 (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_C},
   {"rand",                              (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_Random},
   {"norm",                              (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_RandomNormal},
   {"set_seed",                          (PyCFunction) OSCARSSR_Fake, METH_O,                       DOC_OSCARSSR_SetSeed},
@@ -9199,6 +9292,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"pi",                                (PyCFunction) OSCARSSR_Pi,                              METH_NOARGS,                  DOC_OSCARSSR_Pi},
   {"qe",                                (PyCFunction) OSCARSSR_Qe,                              METH_NOARGS,                  DOC_OSCARSSR_Qe},
   {"me",                                (PyCFunction) OSCARSSR_Me,                              METH_NOARGS,                  DOC_OSCARSSR_Me},
+  {"c",                                 (PyCFunction) OSCARSSR_C,                               METH_NOARGS,                  DOC_OSCARSSR_C},
   {"rand",                              (PyCFunction) OSCARSSR_Random,                          METH_NOARGS,                  DOC_OSCARSSR_Random},
   {"norm",                              (PyCFunction) OSCARSSR_RandomNormal,                    METH_NOARGS,                  DOC_OSCARSSR_RandomNormal},
   {"set_seed",                          (PyCFunction) OSCARSSR_SetSeed,                         METH_O,                       DOC_OSCARSSR_SetSeed},

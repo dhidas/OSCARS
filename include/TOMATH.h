@@ -10,6 +10,7 @@
 
 #include <vector>
 #include <string>
+#include <iostream>
 #include <fstream>
 
 #include "TVector3D.h"
@@ -51,7 +52,7 @@ template <class T> class TSpline1D3
       fYPP.clear();
 
       if (X.size() != Y.size()) {
-        throw;
+        throw std::length_error("TSpline1D3 detected the length of each input is different");
       }
 
       for (size_t i = 0; i != X.size(); ++i) {
@@ -70,7 +71,7 @@ template <class T> class TSpline1D3
       fY.clear();
       fYPP.clear();
       if (N <= 0) {
-        throw;
+        throw std::length_error("TSpline1D3 believes that N <= 0");
       }
 
       std::vector<double> XI(N);
@@ -111,7 +112,7 @@ template <class T> class TSpline1D3
       // Distance between points, check that it isn't zero!
       double const h = fX[khi] - fX[klo];
       if (h == 0) {
-        throw;
+        throw std::out_of_range("TSpline1D3 sees that the stepsize h is zero");
       }
 
       // Fractional distance to the points on either side
@@ -119,21 +120,34 @@ template <class T> class TSpline1D3
       double const b = (x - fX[klo]) / h;
 
       // Return the value of Y
+
       return a * fY[klo] + b * fY[khi] + ((a * a * a - a) * fYPP[klo] + (b * b * b - b) * fYPP[khi]) * (h * h) / 6.;
     }
 
+
+
+
+    T GetDerivative (int const i) const
+    {
+      // Return the dY/dx-value according to spline
+
+      if (i >= fYPP.size()-1) {
+        return this->GetDerivative(i-1);
+      }
+      return (fY[i+1] - fY[i]) / (fX[i+1] - fX[i]) - fYPP[i] * (fX[i+1] - fX[i]) / 3 - fYPP[i+1] * (fX[i+1] - fX[i]) / 6;
+    }
 
     void Derivatives ()
     {
       // Number in vectors
       int const N = (int) fX.size();
       if (N != (int) fY.size()) {
-        throw;
+        throw std::length_error("TSpline1D3 sees that N is not equal to the length of Y");
       }
 
 
       if (N < 3) {
-        throw;
+        throw std::length_error("TSpline1D3 does not see enough points for interpolation.  Please use >= 3 points");
       }
 
       // Resize output
@@ -256,7 +270,7 @@ class TSpline1D3_1d : public TSpline1D3<double>
 
       std::ifstream f(InFileName);
       if (!f.is_open()) {
-        throw;
+        throw std::ifstream::failure("TSpline1D3_1d cannot open file for writing");
       }
 
       while (!f.eof()) {

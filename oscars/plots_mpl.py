@@ -142,6 +142,61 @@ def plot_trajectory_velocity(trajectory, show=True, ofile='', figsize=[18, 4.5],
     return
     
     
+def plot_trajectory_betaprime(trajectory, show=True, ofile='', figsize=[18, 4.5], ret=False):
+    """Plot the trajectory beta^prime.  You can optionally change the axis, output to a file, show or not, and return or not
+       
+       :param trajectory: Particle trajectory
+       :type  trajectory: list
+       :param show: to show the plot or not
+       :type  show: bool
+       :param ofile: output file name
+       :type  ofile: str
+       :param axis: which axis to plot trajectory on
+       :type  axis: str
+       :param figsize: dimension of the figure
+       :type  figsize: list
+       :param ret: to return the plot or not
+       :type  ret: bool
+       """
+
+
+    # Get coordinate lists
+    T  = [item[0]    for item in trajectory]
+    VX = [item[3][0] for item in trajectory]
+    VY = [item[3][1] for item in trajectory]
+    VZ = [item[3][2] for item in trajectory]
+
+    # Plot VX, VY, VZ vs. T
+    plt.figure(1, figsize=figsize)
+    plt.subplot(131)
+    plt.plot(T, VX)
+    plt.xlabel('T [s]')
+    plt.ylabel('$\\beta_x$')
+    plt.title('Particle $\\beta^\\prime_x$')
+
+    plt.subplot(132)
+    plt.plot(T, VY)
+    plt.xlabel('T [s]')
+    plt.ylabel('$\\beta_y$')
+    plt.title('Particle $\\beta^\\prime_y$')
+
+    plt.subplot(133)
+    plt.plot(T, VZ)
+    plt.xlabel('T [s]')
+    plt.ylabel('$\\beta_z$')
+    plt.title('Particle $\\beta^\\prime_z$')
+
+    if ofile != '':
+        plt.savefig(ofile, bbox_inches='tight')
+
+    if show == True:
+        plt.show()
+
+    if ret:
+        return plt
+    return
+    
+    
 def plot_power_density(V, title=None, xlabel='X1 Axis [$m$]', ylabel='X2 Axis [$m$]', show=True, ofile='', figsize=None, ret=False, x1=None, x2=None):
     """Plot a 2D histogram with equal spacing"""
      

@@ -26,8 +26,10 @@ class TParticleTrajectoryPoints
 
     TVector3D const& GetX      (size_t const) const;
     TVector3D const& GetB      (size_t const) const;
+    void             SetB      (size_t const, TVector3D const&);
     TVector3D        GetV      (size_t const) const;
     TVector3D const& GetAoverC (size_t const) const;
+    void             SetAoverC (size_t const, TVector3D const&);
     TVector3D        GetA      (size_t const) const;
     double           GetT      (size_t const) const;
 
@@ -52,8 +54,11 @@ class TParticleTrajectoryPoints
     void WriteToFileBinary (std::string const& FileName, std::string const& FormatIn = "default") const;
 
     void ReadFromFile       (std::string const&);
-    void ReadFromFileFormat       (std::string const&);
-    void ReadFromFileBinary (std::string const&);
+    void ReadFromFileFormat (std::string const& FileName, std::string const& FormatIn = "default");
+    void ReadFromFileBinary (std::string const& FileName, std::string const& FormatIn = "");
+
+    void ConstructBetaAtPoints ();
+    void ConstructAoverCAtPoints ();
 
     void Lock ();
     void UnLock ();

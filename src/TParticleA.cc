@@ -360,8 +360,7 @@ void TParticleA::SetupTrajectoryInterpolated ()
   // Setup the internal interpolated trajectory structure
 
   if (fTrajectory.GetNPoints() < 2) {
-    std::cerr << "ERROR: TParticleA::SetupTrajectoryInterpolated Trajectory.GetNPoints() < 2" << std::endl;
-    throw;
+    throw std::length_error("Not enough points in this trajectory");
   }
   
   fTrajectoryInterpolated.Set(fTrajectory);

@@ -62,7 +62,7 @@ void TParticleTrajectoryInterpolated::Set (TParticleTrajectoryPoints const& TPTP
   // Check that there are at least two points
   if (TPTP.GetNPoints() < 2) {
     std::cerr << "ERROR: TParticleTrajectoryInterpolated::Set NPoints is too small" << std::endl;
-    throw;
+    throw std::length_error("TParticleTrajectoryInterpolated::Set NPoints is too small");
   }
 
   // Set the interpolating structure
@@ -85,7 +85,7 @@ void TParticleTrajectoryInterpolated::Set (std::vector<double> const& T,
   // the same as the number of time points
   if (T.size() < 2 || T.size() != P.size()) {
     std::cerr << "ERROR: TParticleTrajectoryInterpolated::Set NPoints is too small or T and P do not match" << std::endl;
-    throw;
+    throw std::length_error("TParticleTrajectoryInterpolated::Set NPoints is too small or T and P do not match");
   }
 
   // Set the interpolating structure

@@ -28,7 +28,9 @@ class TParticleTrajectoryPoint
 
     TVector3D const& GetX () const;
     TVector3D const& GetB () const;
+    void             SetB (TVector3D const&);
     TVector3D const& GetAoverC () const;
+    void             SetAoverC (TVector3D const&);
 
     TParticleTrajectoryPoint operator  + (TParticleTrajectoryPoint const&) const;
     TParticleTrajectoryPoint operator  - (TParticleTrajectoryPoint const&) const;
