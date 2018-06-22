@@ -196,10 +196,12 @@ class OSCARSSR
     void CalculateTrajectoryRKAS (TParticleA&);
     TParticleTrajectoryPoints const& GetTrajectory ();
     TParticleTrajectoryPoints& GetNewTrajectory ();
-    void WriteTrajectory        (std::string const& OutFileName, std::string const& OutFormat = "DEFAULT");
-    void WriteTrajectoryBinary  (std::string const& OutFileName, std::string const& OutFormat = "DEFAULT");
-    void ReadTrajectory         (std::string const& InFileName);
-    void ReadTrajectoryBinary   (std::string const& InFileName);
+    void WriteTrajectory        (std::string const& OutFileName, std::string const& OutFormat = "");
+    void WriteTrajectoryBinary  (std::string const& OutFileName, std::string const& OutFormat = "");
+    void NewParticleReadTrajectory             (std::string const& InFileName, std::string const& Beam = "", std::string const& InFormat = "");
+    void NewParticleReadTrajectoryBinary       (std::string const& InFileName, std::string const& Beam = "", std::string const& InFormat = "");
+    void CurrentParticleReadTrajectory         (std::string const& InFileName, std::string const& InFormat = "");
+    void CurrentParticleReadTrajectoryBinary   (std::string const& InFileName, std::string const& InFormat = "");
     void ClearTrajectory ();
 
     void SetNPointsTrajectory (size_t const);
@@ -252,6 +254,21 @@ class OSCARSSR
                             int    const MaxLevelExtended = 0,
                             int    const ReturnQuantity = 0);
 
+    void CalculateSpectrumPoints_Y (TParticleA& Particle,
+                                  TVector3D const& ObservationPoint,
+                                  TSpectrumContainer& Spectrum,
+                                  size_t const iThread,
+                                  size_t const NThreads,
+                                  bool& Done,
+                                  std::string const& Polarization,
+                                  double const Angle,
+                                  TVector3D const& HorizontalDirection,
+                                  TVector3D const& PropogationDirection,
+                                  double const Precision,
+                                  int    const MaxLevel,
+                                  int    const MaxLevelExtended,
+                                  double const Weight,
+                                  int    const ReturnQuantity);
     void CalculateSpectrumPoints (TParticleA& Particle,
                                   TVector3D const& ObservationPoint,
                                   TSpectrumContainer& Spectrum,

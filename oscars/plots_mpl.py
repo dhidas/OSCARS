@@ -142,6 +142,61 @@ def plot_trajectory_velocity(trajectory, show=True, ofile='', figsize=[18, 4.5],
     return
     
     
+def plot_trajectory_betaprime(trajectory, show=True, ofile='', figsize=[18, 4.5], ret=False):
+    """Plot the trajectory beta^prime.  You can optionally change the axis, output to a file, show or not, and return or not
+       
+       :param trajectory: Particle trajectory
+       :type  trajectory: list
+       :param show: to show the plot or not
+       :type  show: bool
+       :param ofile: output file name
+       :type  ofile: str
+       :param axis: which axis to plot trajectory on
+       :type  axis: str
+       :param figsize: dimension of the figure
+       :type  figsize: list
+       :param ret: to return the plot or not
+       :type  ret: bool
+       """
+
+
+    # Get coordinate lists
+    T  = [item[0]    for item in trajectory]
+    VX = [item[3][0] for item in trajectory]
+    VY = [item[3][1] for item in trajectory]
+    VZ = [item[3][2] for item in trajectory]
+
+    # Plot VX, VY, VZ vs. T
+    plt.figure(1, figsize=figsize)
+    plt.subplot(131)
+    plt.plot(T, VX)
+    plt.xlabel('T [s]')
+    plt.ylabel('$\\beta_x$')
+    plt.title('Particle $\\beta^\\prime_x$')
+
+    plt.subplot(132)
+    plt.plot(T, VY)
+    plt.xlabel('T [s]')
+    plt.ylabel('$\\beta_y$')
+    plt.title('Particle $\\beta^\\prime_y$')
+
+    plt.subplot(133)
+    plt.plot(T, VZ)
+    plt.xlabel('T [s]')
+    plt.ylabel('$\\beta_z$')
+    plt.title('Particle $\\beta^\\prime_z$')
+
+    if ofile != '':
+        plt.savefig(ofile, bbox_inches='tight')
+
+    if show == True:
+        plt.show()
+
+    if ret:
+        return plt
+    return
+    
+    
 def plot_power_density(V, title=None, xlabel='X1 Axis [$m$]', ylabel='X2 Axis [$m$]', show=True, ofile='', figsize=None, ret=False, x1=None, x2=None):
     """Plot a 2D histogram with equal spacing"""
      
@@ -434,7 +489,7 @@ def plot_spectrum(S, log=False, show=True, ofile='', title='Spectrum', xlabel='E
 
 
 
-def plot_spectra(spectra, label=None, legend=None, show=True, ofile='', title='', loc=None, log=False, loglog=False, xlabel='Energy [eV]', ylabel='[$\gamma / mm^2 / 0.1\%bw / s$]', figsize=None, ylim=None, xlim=None, ret=False, axis=None, transparent=True, xticks=None, xvlines=None, **kwargs):
+def plot_spectra(spectra, label=None, legend=None, colors=None, show=True, ofile='', title='', loc=None, log=False, loglog=False, xlabel='Energy [eV]', ylabel='[$\gamma / mm^2 / 0.1\%bw / s$]', figsize=None, ylim=None, xlim=None, ret=False, axis=None, transparent=True, xticks=None, xvlines=None, **kwargs):
 
 
     # Size and limits
@@ -446,16 +501,16 @@ def plot_spectra(spectra, label=None, legend=None, show=True, ofile='', title=''
 
     for i in range(len(spectra)):
         s = spectra[i]
-        
+        color = colors[i] if colors is not None else None
         X = [item[0] for item in s]
         Y = [item[1] for item in s]
         if label is not None:
             if label[i] is not None:
-                plt.plot(X, Y, label=label[i], **kwargs)
+                plt.plot(X, Y, label=label[i], c=color, **kwargs)
             else:
-                plt.plot(X, Y, **kwargs)
+                plt.plot(X, Y, c=color, **kwargs)
         else:
-            plt.plot(X, Y, **kwargs)
+            plt.plot(X, Y, c=color, **kwargs)
 
     if xvlines is not None:
         for xvline in xvlines:
@@ -573,7 +628,7 @@ def plot_bfield(osr, mymin=-1, mymax=1, t=0, name='', ylim=None, show=True, ofil
 
 
 
-def plot_efield(osr, mymin=-1, mymax=1, ylim=None, show=True, ofile='', axis='Z', npoints=20000, between_two_points=None, ret=False):
+def plot_efield(osr, mymin=-1, mymax=1, t=0, name='', ylim=None, show=True, ofile='', axis='Z', npoints=20000, between_two_points=None, ret=False):
     """Plot the electric field as a function of Z"""
 
 

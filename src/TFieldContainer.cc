@@ -163,7 +163,7 @@ void TFieldContainer::WriteToFile (std::string const& OutFileName,
   // Open file for output
   std::ofstream of(OutFileName.c_str());
   if (!of.is_open()) {
-    throw;
+    throw std::ifstream::failure("TFieldContainer::WriteToFile failed to open file for writing: " + OutFileName);
   }
 
   std::string CommentNoCRLF = Comment;

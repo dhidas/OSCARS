@@ -59,7 +59,7 @@ void T3DScalarContainer::SetNotConverged (size_t const i)
 
   size_t const VectorIndex = i / (8 * sizeof(int));
   if (VectorIndex >= fNotConverged.size()) {
-    throw;
+    throw std::out_of_range("T3DScalarContainer::SetNotConverged index out of range");
   }
 
   int const Bit = (0x1 << (i % (8 * sizeof(int))));
@@ -236,7 +236,7 @@ void T3DScalarContainer::AverageFromFilesBinary (std::vector<std::string> const&
 
   // Check that we have at least one file!
   if (Files.size() < 1) {
-    throw;
+    throw std::length_error("T3DScalarContainer::AverageFromFilesBinary no files given");
   }
 
   // Double number of files for averaging
@@ -247,7 +247,7 @@ void T3DScalarContainer::AverageFromFilesBinary (std::vector<std::string> const&
   for (size_t i = 0; i != Files.size(); ++i) {
     f[i].open(Files[i].c_str(), std::ios::binary);
     if (!f[i].is_open()) {
-      throw;
+      throw std::ifstream::failure("Cannot open input file: " + Files[i]);
     }
   }
 
@@ -295,7 +295,7 @@ void T3DScalarContainer::AverageFromFilesBinary (std::vector<std::string> const&
 
           // This must be file index 0
           if (i != 0) {
-            throw;
+            throw std::logic_error("T3DScalarContainer::AverageFromFilesBinary index here must be 0.  Please report this.");
           }
 
           break;
@@ -339,7 +339,7 @@ void T3DScalarContainer::AverageFromFilesBinary (std::vector<std::string> const&
 
           // This must be file index 0
           if (i != 0) {
-            throw;
+            throw std::logic_error("T3DScalarContainer::AverageFromFilesBinary index here must be 0..  Please report this.");
           }
 
           break;
@@ -357,7 +357,7 @@ void T3DScalarContainer::AverageFromFilesBinary (std::vector<std::string> const&
       ++ip;
     }
   } else {
-    throw;
+    throw std::out_of_range("T3DScalarContainer::AverageFromFilesBinary I do not know how to calculate in this dimension");
   }
 
 
@@ -428,7 +428,7 @@ void T3DScalarContainer::WriteToFileBinary (std::string const& OutFileName,
   // Open file for writing
   std::ofstream of(OutFileName.c_str(), std::ios::binary);
   if (!of.is_open()) {
-    throw;
+    throw std::ifstream::failure("cannot open out file named: " + OutFileName);
   }
 
   // Variables for writing
@@ -483,7 +483,7 @@ size_t T3DScalarContainer::GetNPoints () const
 T3DScalar const& T3DScalarContainer::GetPoint (size_t const i) const
 {
   if (i >= fValues.size()) {
-    throw;
+    throw std::out_of_range("T3DScalarContainer::GetPoint index is out of range");
   }
 
   return fValues[i];

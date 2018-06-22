@@ -115,9 +115,8 @@ void TSurfacePoints_Rectangle::Init (int const NX1, int const NX2, TVector3D con
   if (fNormal == -1) {
     fNormalVector *= -1;
   } else if (fNormal != 0 && fNormal != 1) {
-    throw;
+    throw std::logic_error("fNormal is of the incorrect form.  Must be -1, 0, 1");
   }
-
 
   return;
 }

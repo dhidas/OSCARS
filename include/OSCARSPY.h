@@ -28,7 +28,15 @@ namespace OSCARSPY {
   void PyPrint_stderr (std::string const&);
   void PyPrint_stdout (std::string const&);
 
+#if PY_MAJOR_VERSION == 3
+#if PY_MINOR_VERSION >= 7
+  const char* GetAsString (PyObject* S);
+#else
   char* GetAsString (PyObject* S);
+#endif
+#elif PY_MAJOR_VERSION < 3
+  char* GetAsString (PyObject* S);
+#endif
   char* GetVersionOfModule (std::string const&);
 
   PyObject* GetSpectrumAsList (TSpectrumContainer const& Spectrum);

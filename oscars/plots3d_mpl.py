@@ -43,6 +43,7 @@ def power_density_3d(srs, surface,
 
     colors =[]
     MAXP = max(P)
+    MINP = min(P)
     if MAXP == 0:
         MAXP=1
     PP = []
@@ -99,8 +100,9 @@ def power_density_3d(srs, surface,
     plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
     plt.ticklabel_format(style='sci', axis='z', scilimits=(0,0))
     if colorbar is True:
-        plt.colorbar(m, format='%.0e')
-        #plt.colorbar(m, format=r'%3.1f')
+        sm = plt.cm.ScalarMappable(cmap=cm.viridis, norm=plt.Normalize(vmin=MINP, vmax=MAXP))
+        sm._A = []
+        plt.colorbar(sm, format='%.0e')
 
 
     plt.title(title)
@@ -429,8 +431,9 @@ def plot_power_density_scatter (V, s=10, title='Power Density [$W/mm^2$]', figsi
     m = cm.ScalarMappable()
     m.set_array(P)
     if colorbar is True:
-        plt.colorbar(m, format='%.0e')
-        #plt.colorbar(m, format=r'%3.1f')
+        sm = plt.cm.ScalarMappable(cmap=cm.viridis, norm=plt.Normalize(vmin=pmin, vmax=pmax))
+        sm._A = []
+        plt.colorbar(sm, format='%.0e')
 
     if ofile is not None:
         plt.savefig(ofile, bbox_inches=bbox_inches, transparent=transparent)
@@ -450,8 +453,10 @@ def plot_power_density_scatter (V, s=10, title='Power Density [$W/mm^2$]', figsi
 def plot_power_density_stl (P, title='Power Density [$W/mm^2$]', elev=30, azim=30, alpha=0.8, bbox_inches='tight', transparent=True, ofile=None, colorbar=True):
 
     pmax = max([p[1] for p in P])
+    pmin = min([p[1] for p in P])
 
     m = cm.ScalarMappable(cm.viridis)
+#m.set_array([p[1]/pmax for p in P])
 
     xmax = ymax = zmax = -99999
     xmin = ymin = zmin = +99999
@@ -489,8 +494,9 @@ def plot_power_density_stl (P, title='Power Density [$W/mm^2$]', elev=30, azim=3
     ax.set_zlabel('Y [m]')
 
     if colorbar is True:
-        plt.colorbar(m, format='%.0e')
-        #plt.colorbar(m, format=r'%3.1f')
+        sm = plt.cm.ScalarMappable(cmap=cm.viridis, norm=plt.Normalize(vmin=pmin, vmax=pmax))
+        sm._A = []
+        plt.colorbar(sm, format='%.0e')
 
     if ofile is not None:
         plt.savefig(ofile, bbox_inches=bbox_inches, transparent=transparent)

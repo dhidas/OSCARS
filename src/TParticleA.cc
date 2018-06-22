@@ -102,7 +102,7 @@ void TParticleA::SetParticleType (std::string const& Type)
     // Don't do anything.  Q and M are set elsewhere for custom particles
   } else {
     std::cerr << "TParticleA::SetParticleType type not found: " << Type << std::endl;
-    throw;
+    throw std::runtime_error("type particle does not exist");
   }
 
   return;
@@ -134,7 +134,7 @@ void TParticleA::SetParticleTypeCustom (std::string const& Type, double const Ch
 void TParticleA::SetParticleTypeFromPDGID (int const ID)
 {
   // UPDATE: If I find an easy way to implement a list for this
-  throw;
+  throw std::runtime_error("this function not implemented");
   return;
 }
 
@@ -360,8 +360,7 @@ void TParticleA::SetupTrajectoryInterpolated ()
   // Setup the internal interpolated trajectory structure
 
   if (fTrajectory.GetNPoints() < 2) {
-    std::cerr << "ERROR: TParticleA::SetupTrajectoryInterpolated Trajectory.GetNPoints() < 2" << std::endl;
-    throw;
+    throw std::length_error("Not enough points in this trajectory");
   }
   
   fTrajectoryInterpolated.Set(fTrajectory);

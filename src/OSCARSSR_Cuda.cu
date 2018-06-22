@@ -517,7 +517,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
                                                 TSurfacePoints const& Surface,
                                                 double const Energy_eV,
                                                 T3DScalarContainer& FluxContainer,
-                                                std::string const& Polarization,
+                                                std::string const& PolarizationIn,
                                                 double const Angle,
                                                 TVector3D const& HorizontalDirection,
                                                 TVector3D const& PropogationDirection,
@@ -555,30 +555,39 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   bool const ThisParticleOnly = NParticles == 0 ? true : false;
   int  const NParticlesReally = ThisParticleOnly ? 1 : NParticles;
 
+  // Imaginary "i" and complxe 1+0i
+  std::complex<double> const I(0, 1);
+
+  // Photon vertical direction and positive and negative helicity
+  TVector3D const VerticalDirection = PropogationDirection.Cross(HorizontalDirection).UnitVector();
+  TVector3DC const Positive = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) + VerticalDirection * I );
+  TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * I );
+
   // Calculate polarization vector to use (0, 0, 0) for 'all'
-  TVector3DC PhotonPolarizationVector(0, 0, 0);
-  if (Polarization == "all") {
-    // Do nothing, it is already ALL
+  TVector3DC PolarizationVector(0, 0, 0);
+
+  // Put polarization string in all upper case
+  std::string Polarization = PolarizationIn;
+  std::transform(Polarization.begin(), Polarization.end(), Polarization.begin(), ::tolower);
+  std::replace(Polarization.begin(), Polarization.end(), ' ', '-');
+
+  if (Polarization.find("all") != std::string::npos) {
+    // Do Nothing
+  } else if (Polarization.find("linear-horizontal") != std::string::npos || Polarization.find("lh") != std::string::npos) {
+    PolarizationVector = HorizontalDirection;
+  } else if (Polarization.find("linear-vertical") != std::string::npos || Polarization.find("lv") != std::string::npos) {
+    PolarizationVector = VerticalDirection;
+  } else if (Polarization == "linear") {
+    TVector3D PolarizationAngle = HorizontalDirection;
+    PolarizationAngle.RotateSelf(Angle, PropogationDirection);
+    PolarizationVector = PolarizationAngle;
+  } else if (Polarization.find("circular-left") != std::string::npos || Polarization.find("cl") != std::string::npos) {
+    PolarizationVector = Positive;
+  } else if (Polarization.find("circular-right") != std::string::npos || Polarization.find("cr") != std::string::npos) {
+    PolarizationVector = Negative;
   } else {
-    TVector3D  const VerticalDirection = PropogationDirection.Cross(HorizontalDirection).UnitVector();
-    TVector3DC const Positive = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) + VerticalDirection * std::complex<double>(0, 1) );
-    TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * std::complex<double>(0, 1) );
-    if (Polarization == "linear-horizontal") {
-      PhotonPolarizationVector = HorizontalDirection;
-    } else if (Polarization == "linear-vertical") {
-      PhotonPolarizationVector = VerticalDirection;
-    } else if (Polarization == "linear") {
-      TVector3D PolarizationAngle = HorizontalDirection;
-      PolarizationAngle.RotateSelf(Angle, PropogationDirection);
-      PhotonPolarizationVector = PolarizationAngle;
-    } else if (Polarization == "circular-left") {
-      PhotonPolarizationVector = Positive;
-    } else if (Polarization == "circular-right") {
-      PhotonPolarizationVector = Negative;
-    } else {
-      // Throw invalid argument if polarization is not recognized
-      throw std::invalid_argument("Polarization requested not recognized");
-    }
+    // Throw invalid argument if polarization is not recognized
+    throw std::invalid_argument("Polarization requested not recognized");
   }
 
 
@@ -602,9 +611,9 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
   *h_ns     = (int) Surface.GetNPoints();
 
   // Photon polarization
-  h_pol[0] = make_cuDoubleComplex(PhotonPolarizationVector.GetX().real(), PhotonPolarizationVector.GetX().imag());
-  h_pol[1] = make_cuDoubleComplex(PhotonPolarizationVector.GetY().real(), PhotonPolarizationVector.GetY().imag());
-  h_pol[2] = make_cuDoubleComplex(PhotonPolarizationVector.GetZ().real(), PhotonPolarizationVector.GetZ().imag());
+  h_pol[0] = make_cuDoubleComplex(PolarizationVector.GetX().real(), PolarizationVector.GetX().imag());
+  h_pol[1] = make_cuDoubleComplex(PolarizationVector.GetY().real(), PolarizationVector.GetY().imag());
+  h_pol[2] = make_cuDoubleComplex(PolarizationVector.GetZ().real(), PolarizationVector.GetZ().imag());
 
   int const NThreads = *h_ns;
   int const NThreadsPerBlock = NTHREADS_PER_BLOCK;
@@ -862,7 +871,7 @@ extern "C" void OSCARSSR_Cuda_CalculateFluxGPU (OSCARSSR& OSR,
 
   // Compute known host values
   *h_c0    = OSR.GetCurrentParticle().GetQ() / (TOSCARSSR::FourPi() * TOSCARSSR::C() * TOSCARSSR::Epsilon0() * TOSCARSSR::Sqrt2Pi());
-  *h_c2    = TOSCARSSR::FourPi() * OSR.GetCurrentParticle().GetCurrent() / (TOSCARSSR::H() * fabs(OSR.GetCurrentParticle().GetQ()) * TOSCARSSR::Mu0() * TOSCARSSR::C()) * 1e-6 * 0.001;
+  *h_c2    = TOSCARSSR::FourPi() * fabs(OSR.GetCurrentParticle().GetCurrent()) / (TOSCARSSR::H() * fabs(OSR.GetCurrentParticle().GetQ()) * TOSCARSSR::Mu0() * TOSCARSSR::C()) * 1e-6 * 0.001;
   *h_c     = TOSCARSSR::C();
   *h_omega = TOSCARSSR::EvToAngularFrequency(Energy_eV);
   for (size_t i = 0; i < *h_ns; ++i) {
@@ -1598,7 +1607,7 @@ __global__ void OSCARSSR_Cuda_SpectrumGPU (double          *t,                  
 extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
                                                     TVector3D const& ObservationPoint,
                                                     TSpectrumContainer& Spectrum,
-                                                    std::string const& Polarization,
+                                                    std::string const& PolarizationIn,
                                                     double const Angle,
                                                     TVector3D const& HorizontalDirection,
                                                     TVector3D const& PropogationDirection,
@@ -1637,30 +1646,38 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
   int  const NParticlesReally = ThisParticleOnly ? 1 : NParticles;
 
 
-  // Calculate polarization vector to use (0, 0, 0) for 'all'
-  TVector3DC PhotonPolarizationVector(0, 0, 0);
-  if (Polarization == "all") {
-    // Do nothing, it is already ALL
+  // Imaginary "i" and complxe 1+0i
+  std::complex<double> const I(0, 1);
+
+  // Photon vertical direction and positive and negative helicity
+  TVector3D  const VerticalDirection = PropogationDirection.Cross(HorizontalDirection).UnitVector();
+  TVector3DC const Positive = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) + VerticalDirection * I );
+  TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * I );
+
+  TVector3DC PolarizationVector(0, 0, 0);
+
+  // Put polarization string in all upper case
+  std::string Polarization = PolarizationIn;
+  std::transform(Polarization.begin(), Polarization.end(), Polarization.begin(), ::tolower);
+  std::replace(Polarization.begin(), Polarization.end(), ' ', '-');
+
+  if (Polarization.find("all") != std::string::npos) {
+    // Do Nothing
+  } else if (Polarization.find("linear-horizontal") != std::string::npos || Polarization.find("lh") != std::string::npos) {
+    PolarizationVector = HorizontalDirection;
+  } else if (Polarization.find("linear-vertical") != std::string::npos || Polarization.find("lv") != std::string::npos) {
+    PolarizationVector = VerticalDirection;
+  } else if (Polarization == "linear") {
+    TVector3D PolarizationAngle = HorizontalDirection;
+    PolarizationAngle.RotateSelf(Angle, PropogationDirection);
+    PolarizationVector = PolarizationAngle;
+  } else if (Polarization.find("circular-left") != std::string::npos || Polarization.find("cl") != std::string::npos) {
+    PolarizationVector = Positive;
+  } else if (Polarization.find("circular-right") != std::string::npos || Polarization.find("cr") != std::string::npos) {
+    PolarizationVector = Negative;
   } else {
-    TVector3D  const VerticalDirection = PropogationDirection.Cross(HorizontalDirection).UnitVector();
-    TVector3DC const Positive = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) + VerticalDirection * std::complex<double>(0, 1) );
-    TVector3DC const Negative = 1. / sqrt(2) * (TVector3DC(HorizontalDirection) - VerticalDirection * std::complex<double>(0, 1) );
-    if (Polarization == "linear-horizontal") {
-      PhotonPolarizationVector = HorizontalDirection;
-    } else if (Polarization == "linear-vertical") {
-      PhotonPolarizationVector = VerticalDirection;
-    } else if (Polarization == "linear") {
-      TVector3D PolarizationAngle = HorizontalDirection;
-      PolarizationAngle.RotateSelf(Angle, PropogationDirection);
-      PhotonPolarizationVector = PolarizationAngle;
-    } else if (Polarization == "circular-left") {
-      PhotonPolarizationVector = Positive;
-    } else if (Polarization == "circular-right") {
-      PhotonPolarizationVector = Negative;
-    } else {
-      // Throw invalid argument if polarization is not recognized
-      throw std::invalid_argument("Polarization requested not recognized");
-    }
+    // Throw invalid argument if polarization is not recognized
+    throw std::invalid_argument("Polarization requested not recognized");
   }
 
 
@@ -1692,9 +1709,9 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
   *h_no     = (int) Spectrum.GetNPoints();
 
   // Photon polarization
-  h_pol[0] = make_cuDoubleComplex(PhotonPolarizationVector.GetX().real(), PhotonPolarizationVector.GetX().imag());
-  h_pol[1] = make_cuDoubleComplex(PhotonPolarizationVector.GetY().real(), PhotonPolarizationVector.GetY().imag());
-  h_pol[2] = make_cuDoubleComplex(PhotonPolarizationVector.GetZ().real(), PhotonPolarizationVector.GetZ().imag());
+  h_pol[0] = make_cuDoubleComplex(PolarizationVector.GetX().real(), PolarizationVector.GetX().imag());
+  h_pol[1] = make_cuDoubleComplex(PolarizationVector.GetY().real(), PolarizationVector.GetY().imag());
+  h_pol[2] = make_cuDoubleComplex(PolarizationVector.GetZ().real(), PolarizationVector.GetZ().imag());
 
   int const NThreads = *h_no;
   int const NThreadsPerBlock = NTHREADS_PER_BLOCK;
@@ -1943,7 +1960,7 @@ extern "C" void OSCARSSR_Cuda_CalculateSpectrumGPU (OSCARSSR& OSR,
 
   // Compute known host values
   *h_c0    = OSR.GetCurrentParticle().GetQ() / (TOSCARSSR::FourPi() * TOSCARSSR::C() * TOSCARSSR::Epsilon0() * TOSCARSSR::Sqrt2Pi());
-  *h_c2    = TOSCARSSR::FourPi() * OSR.GetCurrentParticle().GetCurrent() / (TOSCARSSR::H() * fabs(OSR.GetCurrentParticle().GetQ()) * TOSCARSSR::Mu0() * TOSCARSSR::C()) * 1e-6 * 0.001;
+  *h_c2    = TOSCARSSR::FourPi() * fabs(OSR.GetCurrentParticle().GetCurrent()) / (TOSCARSSR::H() * fabs(OSR.GetCurrentParticle().GetQ()) * TOSCARSSR::Mu0() * TOSCARSSR::C()) * 1e-6 * 0.001;
   *h_c     = TOSCARSSR::C();
   for (size_t i = 0; i < *h_no; ++i) {
     h_om[i] = Spectrum.GetAngularFrequency(i);
@@ -3081,7 +3098,7 @@ extern "C" void OSCARSSR_Cuda_CalculatePowerDensityGPU (OSCARSSR& OSR,
   for (int ip = 0; ip < NParticlesReally; ++ip) {
     // Set constant for this particle
     *h_gamma = OSR.GetCurrentParticle().GetGamma();
-    *h_const = fabs(OSR.GetCurrentParticle().GetQ() * OSR.GetCurrentParticle().GetCurrent()) / (16 * TOSCARSSR::Pi2() * TOSCARSSR::Epsilon0() * TOSCARSSR::C()) / 1e6;
+    *h_const = fabs(OSR.GetCurrentParticle().GetQ() * fabs(OSR.GetCurrentParticle().GetCurrent())) / (16 * TOSCARSSR::Pi2() * TOSCARSSR::Epsilon0() * TOSCARSSR::C()) / 1e6;
 
     // Copy trajectory to first GPU, then internal async transfers (where possible)
     cudaSetDevice(d0);
