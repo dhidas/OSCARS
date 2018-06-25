@@ -55,6 +55,10 @@ def read_file_list_with_header (ifile, idir=None):
         scale = list(map(float, fi.readline().partition('#')[0].split()))
 
         for l in fi:
+            # Check for blank line or comment
+            if len(l.strip()) == 0 or l.startswith('#'):
+                continue
+
             ls = l.split()
             pv = float(ls[0])
             fn = os.path.join(mydir, ' '.join(ls[1:]))
