@@ -98,15 +98,22 @@ template <class T> class TSpline1D3
       //size_t const klo = std::distance(fX.begin(), ilo) - 0;
       //size_t const khi = klo + 1;
 
-      int klo=0;
-      int khi = (int) fX.size() - 1;
-      int k;
-      while (khi - klo > 1) {
-        k = (khi + klo) >> 1;
-        if (fX[k] > x) {
-          khi = k;
-        } else {
-          klo = k;
+      static int klo=0;
+      static int khi = (int) fX.size() - 1;
+      static int k;
+
+      // This if statement is to speed up
+      if ((khi - klo == 1 && (fX[khi] <= x || fX[klo] > x)) || khi - klo > 1) {
+        klo=0;
+        khi = (int) fX.size() - 1;
+
+        while (khi - klo > 1) {
+          k = (khi + klo) >> 1;
+          if (fX[k] > x) {
+            khi = k;
+          } else {
+            klo = k;
+          }
         }
       }
 
