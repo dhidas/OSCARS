@@ -6411,7 +6411,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
 {
   // Calculate the spectrum given an observation point, and energy range
 
-  char const* SurfacePlane = "";
+  char const* SurfacePlane = "XY";
   size_t      NX1 = 0;
   size_t      NX2 = 0;
   double      Width_X1 = 0;
@@ -7790,7 +7790,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
 {
   // Calculate the spectrum given an observation point, and energy range
 
-  char const* SurfacePlane = "";
+  char const* SurfacePlane = "XY";
   size_t      NX1 = 0;
   size_t      NX2 = 0;
   double      Width_X1 = 0;
