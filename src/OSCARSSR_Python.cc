@@ -6332,7 +6332,7 @@ npoints: int
     number of in each dimension for surface
 
 plane : str
-    The plane to start in (XY, XZ, YZ, YX, ZX, ZY).  The normal to the surface is defined using the right handed cross product (ie the last three have opposite normal vectors from the first three)
+    The plane to start in (XY, XZ, YZ, YX, ZX, ZY).  The normal to the surface is defined using the right handed cross product (ie the last three have opposite normal vectors from the first three).  Default is 'XY'.
 
 width : list
     Width of rectangle in X1 and X2: [w1, w2]
@@ -7714,7 +7714,7 @@ npoints : list [int, int]
     Number of points in X1 and X2 dimension [n1, n2]
 
 plane : str
-    The plane to start in (XY, XZ, YZ, YX, ZX, ZY).  The normal to the surface is defined using the right handed cross product (ie the last three have opposite normal vectors from the first three)
+    The plane to start in (XY, XZ, YZ, YX, ZX, ZY).  The normal to the surface is defined using the right handed cross product (ie the last three have opposite normal vectors from the first three).  Default is 'XY'.
 
 normal : int
     -1 if you wish to reverse the normal vector, 0 if you wish to ignore the +/- direction in computations, 1 if you with to use the direction of the normal vector as given. 
