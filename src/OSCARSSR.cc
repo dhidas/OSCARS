@@ -1142,7 +1142,13 @@ void OSCARSSR::CurrentParticleReadTrajectory (std::string const& InFileName, std
 {
   // For the current particle, get a new trajectory, read trajectory data from file
   // and setup interpolating structure
-  GetNewTrajectory().ReadFromFileFormat(InFileName, InFormat);
+
+  // If current particle does not have a type it is not real
+  if (fParticle.GetType() == "") {
+    this->SetNewParticle();
+  }
+
+  this->GetNewTrajectory().ReadFromFileFormat(InFileName, InFormat);
   fParticle.SetupTrajectoryInterpolated();
   return;
 }
@@ -1154,7 +1160,13 @@ void OSCARSSR::CurrentParticleReadTrajectoryBinary (std::string const& InFileNam
 {
   // For the current particle, get a new trajectory, read trajectory data from file
   // and setup interpolating structure
-  GetNewTrajectory().ReadFromFileBinary(InFileName, InFormat);
+
+  // If current particle does not have a type it is not real
+  if (fParticle.GetType() == "") {
+    this->SetNewParticle();
+  }
+
+  this->GetNewTrajectory().ReadFromFileBinary(InFileName, InFormat);
   fParticle.SetupTrajectoryInterpolated();
   return;
 }
@@ -2604,6 +2616,7 @@ void OSCARSSR::CalculatePowerDensity (TParticleA& Particle,
   // Particle - Particle, contains trajectory (or if not, calculate it)
   // Surface - Observation Point
 
+
   // Calculate trajectory if it doesn't exist
   if (Particle.GetTrajectory().GetNPoints() == 0) {
     this->CalculateTrajectory(Particle);
@@ -2651,6 +2664,8 @@ void OSCARSSR::CalculatePowerDensity (TSurfacePoints const& Surface,
   // Calculates the power density in units of [W / mm^2]
   // THIS is the ENTRY POINT typically
   //
+
+
 
   // Check that particle has been set yet.  If fType is "" it has not been set yet
   if (fParticle.GetType() == "") {
