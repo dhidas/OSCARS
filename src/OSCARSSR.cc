@@ -526,6 +526,17 @@ void OSCARSSR::SetNewParticle (std::string const& BeamName, std::string const& I
 
 
 
+void OSCARSSR::SetupTrajectoryInterpolated ()
+{
+  // Setup interpolating structure for current particle
+  fParticle.SetupTrajectoryInterpolated();
+
+  return;
+}
+
+
+
+
 void OSCARSSR::ClearParticleBeams ()
 {
   // Clear the contents of the particle beam container

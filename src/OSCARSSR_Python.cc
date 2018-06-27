@@ -5419,6 +5419,9 @@ static PyObject* OSCARSSR_SetTrajectory (OSCARSSRObject* self, PyObject* args, P
       if (!HasBP) {
         TNew.ConstructAoverCAtPoints();
       }
+
+      // Setup trajectory interpolation
+      self->obj->SetupTrajectoryInterpolated();
     
 
     } else {
@@ -5814,6 +5817,12 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
     return NULL;
   } catch (std::underflow_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
+  } catch (std::exception e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
+  } catch (...) {
+    PyErr_SetString(PyExc_ValueError, "I caught an unexpected exception.  Please report this");
     return NULL;
   }
 
