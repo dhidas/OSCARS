@@ -6332,7 +6332,7 @@ npoints: int
     number of in each dimension for surface
 
 plane : str
-    The plane to start in (XY, XZ, YZ, YX, ZX, ZY).  The normal to the surface is defined using the right handed cross product (ie the last three have opposite normal vectors from the first three)
+    The plane to start in (XY, XZ, YZ, YX, ZX, ZY).  The normal to the surface is defined using the right handed cross product (ie the last three have opposite normal vectors from the first three).
 
 width : list
     Width of rectangle in X1 and X2: [w1, w2]
@@ -6420,7 +6420,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
   PyObject*   List_Width       = PyList_New(0);
   PyObject*   List_Translation = PyList_New(0);
   PyObject*   List_Rotations   = PyList_New(0);
-  PyObject*   List_X0X1X2      = PyList_New(0);
+  PyObject*   List_X0X1X2      = 0x0;
   int         NormalDirection = 0;
   int         NParticles = 0;
   int         GPU = -1;
@@ -6475,6 +6475,15 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
                                    &MaxLevelExtended,
                                    &Dim,
                                    &ReturnQuantityChars)) {
+    return NULL;
+  }
+
+  if (List_X0X1X2 == 0x0 && SurfacePlane == "") {
+    PyErr_SetString(PyExc_ValueError, "Must define 'plane' or 'x0x1x2'");
+    return NULL;
+  }
+  if (List_X0X1X2 != 0x0 && SurfacePlane != "") {
+    PyErr_SetString(PyExc_ValueError, "Can not define both 'plane' and 'x0x1x2'");
     return NULL;
   }
 
@@ -6559,7 +6568,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
   // If X0X1X2 defined
   std::vector<TVector3D> X0X1X2;
 
-  if (PyList_Size(List_X0X1X2) != 0) {
+  if (List_X0X1X2 != 0x0) {
     if (PyList_Size(List_X0X1X2) == 3) {
       for (int i = 0; i != 3; ++i) {
         PyObject* List_X = PyList_GetItem(List_X0X1X2, i);
@@ -7714,7 +7723,7 @@ npoints : list [int, int]
     Number of points in X1 and X2 dimension [n1, n2]
 
 plane : str
-    The plane to start in (XY, XZ, YZ, YX, ZX, ZY).  The normal to the surface is defined using the right handed cross product (ie the last three have opposite normal vectors from the first three)
+    The plane to start in (XY, XZ, YZ, YX, ZX, ZY).  The normal to the surface is defined using the right handed cross product (ie the last three have opposite normal vectors from the first three).
 
 normal : int
     -1 if you wish to reverse the normal vector, 0 if you wish to ignore the +/- direction in computations, 1 if you with to use the direction of the normal vector as given. 
@@ -7799,7 +7808,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   PyObject*   List_Width= PyList_New(0);
   PyObject*   List_Translation = PyList_New(0);
   PyObject*   List_Rotations = PyList_New(0);
-  PyObject*   List_X0X1X2 = PyList_New(0);
+  PyObject*   List_X0X1X2 = 0x0;
   int         NormalDirection = 0;
   int         Dim = 2;
   double      Energy_eV = 0;
@@ -7869,6 +7878,15 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
                                    &ReturnQuantityChars,
                                    &OutFileNameText,
                                    &OutFileNameBinary)) {
+    return NULL;
+  }
+
+  if (List_X0X1X2 == 0x0 && SurfacePlane == "") {
+    PyErr_SetString(PyExc_ValueError, "Must define 'plane' or 'x0x1x2'");
+    return NULL;
+  }
+  if (List_X0X1X2 != 0x0 && SurfacePlane != "") {
+    PyErr_SetString(PyExc_ValueError, "Can not define both 'plane' and 'x0x1x2'");
     return NULL;
   }
 
@@ -7958,7 +7976,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   // If X0X1X2 defined
   std::vector<TVector3D> X0X1X2;
 
-  if (PyList_Size(List_X0X1X2) != 0) {
+  if (List_X0X1X2 != 0x0) {
     if (PyList_Size(List_X0X1X2) == 3) {
       for (int i = 0; i != 3; ++i) {
         PyObject* List_X = PyList_GetItem(List_X0X1X2, i);
