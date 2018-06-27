@@ -84,6 +84,9 @@ def plot_trajectory_position(trajectory, show=True, ofile='', axis='Z', figsize=
 
     if ret is True:
         return plt
+
+    plt.clf()
+    plt.close()
     return
 
 
@@ -139,6 +142,9 @@ def plot_trajectory_velocity(trajectory, show=True, ofile='', figsize=[18, 4.5],
 
     if ret:
         return plt
+
+    plt.clf()
+    plt.close()
     return
     
     
@@ -194,6 +200,9 @@ def plot_trajectory_betaprime(trajectory, show=True, ofile='', figsize=[18, 4.5]
 
     if ret:
         return plt
+
+    plt.clf()
+    plt.close()
     return
     
     
@@ -236,6 +245,8 @@ def plot_power_density(V, title=None, xlabel='X1 Axis [$m$]', ylabel='X2 Axis [$
     if ret:
         return plt
 
+    plt.clf()
+    plt.close()
     return
 
 
@@ -369,6 +380,8 @@ def plot_power_density_2d1d(V, x1=None, x2=None, title=None, xlabel='[$m$]', yla
     if ret:
         return plt
 
+    plt.clf()
+    plt.close()
     return
 
 
@@ -396,6 +409,8 @@ def plot_power_density_1d(V, title='Power Density [$W / mm^2$]', xlabel='[$m$]',
     if ret:
         return plt
 
+    plt.clf()
+    plt.close()
     return
 
 
@@ -445,6 +460,7 @@ def plot_flux(V, title='Flux [$\gamma / mm^2 / 0.1\%bw / s$]', xlabel='X1 Axis [
     if ret:
         return plt
 
+    plt.clf()
     plt.close()
     return
 
@@ -485,6 +501,8 @@ def plot_spectrum(S, log=False, show=True, ofile='', title='Spectrum', xlabel='E
     if ret is True:
         return plt
 
+    plt.clf()
+    plt.close()
     return
 
 
@@ -542,6 +560,9 @@ def plot_spectra(spectra, label=None, legend=None, colors=None, show=True, ofile
 
     if ret:
         return plt
+
+    plt.clf()
+    plt.close()
     return
 
 
@@ -620,6 +641,9 @@ def plot_bfield(osr, mymin=-1, mymax=1, t=0, name='', ylim=None, show=True, ofil
 
     if ret:
         return plt
+
+    plt.clf()
+    plt.close()
     return
 
 
@@ -700,6 +724,9 @@ def plot_efield(osr, mymin=-1, mymax=1, t=0, name='', ylim=None, show=True, ofil
 
     if ret:
         return plt
+
+    plt.clf()
+    plt.close()
     return
 
 
@@ -757,6 +784,9 @@ def plot_electric_field_vs_time(efield, show=True, ofile='', ret=False):
 
     if ret:
         return plt
+
+    plt.clf()
+    plt.close()
     return
     
     
@@ -816,6 +846,9 @@ def plot_undulator_flux_onaxis(oth, period, nperiods, harmonics, minimum=0, bfie
 
     if ret:
         return plt
+
+    plt.clf()
+    plt.close()
     return
 
 
@@ -874,6 +907,9 @@ def plot_undulator_brightness(oth, period, nperiods, harmonics, minimum=0, bfiel
 
     if ret:
         return plt
+
+    plt.clf()
+    plt.close()
     return
 
 
@@ -930,6 +966,8 @@ def plot_flux_spectrum(F, S, energy=None, title='Flux [$\gamma / mm^2 / 0.1\%bw 
     if ret:
         return plt
 
+    plt.clf()
+    plt.close()
     return
 
 

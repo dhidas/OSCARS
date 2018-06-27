@@ -55,6 +55,9 @@ class bl(oscars.lut.lut1d):
             self.list()
             return
 
+        self.return_all = True
+        self.show_all = True
+
         self.facility = facility
         self.beamline = beamline
         self.device = device
@@ -370,6 +373,72 @@ class bl(oscars.lut.lut1d):
 
 
 
+    def return_return (self, ret):
+        """
+        Do I return the return value.  Based on self.return_all and ret input.  If nothing is specified
+        the default is to return true.
+
+        Parameters
+        ----------
+        ret : bool
+            Input return
+
+        Returns
+        -------
+        True of False depending on self.return_all and ret, defaulting to True
+        """
+
+        if ret is not None:
+            return ret
+        if self.return_all is not None:
+            return self.return_all
+        return True
+
+
+
+
+
+
+    def show_plot (self, show):
+        """
+        Do I show the plot in a function call.  Based on self.show_all and show input.  If nothing is specified
+        the default is to return true.
+
+        Parameters
+        ----------
+        show : bool
+            Input return
+
+        Returns
+        -------
+        True of False depending on self.return_all and ret, defaulting to True
+        """
+
+        if show is not None:
+            return show
+        if self.show_all is not None:
+            return self.show_all
+        return True
+
+
+
+
+    def plot_spectra (self, spectra, **kwargs):
+        """
+        Plot multiple spectra.  Forward call to oscars.plots_mpl.plot_spectra().  See there for documentation.
+        """
+
+        if 'title' not in kwargs:
+            kwargs['title'] = self.facility + ' ' + self.beamline + ' ' + self.device + ' Spectra'
+        if 'show' not in kwargs:
+            kwargs['show'] = self.show_plot(show=None)
+
+        return oscars.plots_mpl.plot_spectra(spectra, **kwargs)
+        
+
+
+
+
 
     def bfield (self, gap=None, **kwargs):
         """Plot the magnetic field.
@@ -421,8 +490,7 @@ class bl(oscars.lut.lut1d):
 
         return
 
-
-    def spectrum (self, gap=None, **kwargs):
+    def spectrum (self, gap=None, ret=None, show=None, **kwargs):
         """Calculate and plot spectrum
         
         Parameters
@@ -457,16 +525,25 @@ class bl(oscars.lut.lut1d):
         else:
             self.osr.set_new_particle(particle='ideal')
 
-        spectrum = self.osr.calculate_spectrum(**newargs)
-        oscars.plots_mpl.plot_spectrum(spectrum, figsize=[16, 4])
+        fofile = None
+        if 'fofile' in newargs:
+            fofile = newargs['fofile']
+            del newargs['fofile']
 
+        spectrum = self.osr.calculate_spectrum(**newargs)
+
+        oscars.plots_mpl.plot_spectrum(spectrum, figsize=[16, 4], show=self.show_plot(show), ofile=fofile)
+
+        # Check return request
+        if self.return_return(ret):
+            return spectrum
         return
 
 
 
 
 
-    def flux (self, gap=None, **kwargs):
+    def flux (self, gap=None, ret=None, show=None, **kwargs):
         """Calculate the flux
         
         Parameters
@@ -499,9 +576,18 @@ class bl(oscars.lut.lut1d):
         else:
             self.osr.set_new_particle(particle='ideal')
 
-        flux = self.osr.calculate_flux_rectangle(**newargs)
-        oscars.plots_mpl.plot_flux(flux)
+        fofile = None
+        if 'fofile' in newargs:
+            fofile = newargs['fofile']
+            del newargs['fofile']
 
+        flux = self.osr.calculate_flux_rectangle(**newargs)
+
+        oscars.plots_mpl.plot_flux(flux, show=self.show_plot(show), ofile=fofile)
+
+        # If no return value return
+        if self.return_return(ret):
+            return flux
         return
 
 
@@ -553,7 +639,7 @@ class bl(oscars.lut.lut1d):
 
 
 
-    def power_density (self, gap=None, **kwargs):
+    def power_density (self, gap=None, ret=None, show=None, **kwargs):
         """Calculate the power_density
         
         Parameters
@@ -586,9 +672,18 @@ class bl(oscars.lut.lut1d):
         else:
             self.osr.set_new_particle(particle='ideal')
 
-        power_density = self.osr.calculate_power_density_rectangle(**newargs)
-        oscars.plots_mpl.plot_power_density(power_density)
+        fofile = None
+        if 'fofile' in newargs:
+            fofile = newargs['fofile']
+            del newargs['fofile']
 
+        power_density = self.osr.calculate_power_density_rectangle(**newargs)
+
+        oscars.plots_mpl.plot_power_density(power_density, show=self.show_plot(show), ofile=fofile)
+
+        # If no return value return
+        if self.return_return(ret):
+            return power_density
         return
 
 
