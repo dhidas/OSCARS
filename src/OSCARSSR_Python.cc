@@ -3508,6 +3508,9 @@ static PyObject* OSCARSSR_SetParticleBeam (OSCARSSRObject* self, PyObject* args,
     return ret;
   }
 
+  // Set the initial particle as ideal
+  self->obj->SetNewParticle("", "ideal");
+
   return ret;
 }
 
@@ -3518,6 +3521,8 @@ const char* DOC_OSCARSSR_AddParticleBeam = R"docstring(
 add_particle_beam([, type, name, energy_GeV, d0, x0, beam, sigma_energy_GeV, t0, current, weight, rotations, translation, horizontal_direction, beta, alpha, gamma, emittance, eta, lattice_reference, mass, charge, ctstartstop, distribution])
 
 Add a particle beam to the OSCARS object with a name given by *name*.  There is no limit to the number of different particle beams one can add.  They are added with a *weight* which is by default 1.  The weight is used in random sampling when asking for a new particle, for example in oscars.sr.set_new_particle().  If the *beam* parameter is given you only need to specify *name* and *x0*.
+
+If no beams exist yet, this function sets the initial particle as 'ideal'
 
 Supported particle types for *type* are:
     * electron
@@ -3596,7 +3601,7 @@ charge : float
     Charge of a *custom* particle.  This is only used if *type* = 'custom'.  Must be non-zero.
 
 ctstartstop : [float, float]
-    Initial start and stop times for the calculation.  Not technically a beam parameter here, but the ability to set it in this function
+    Initial start and stop times for the calculation.  Not technically a beam parameter here, but the ability to set it in this function.  It will default to [0, 1e-99] if not specified.  This is to accomodate input trajectories which have their own start and stop times.
 
 distribution : str
     Which particle beam distribution you want to use for non-zero emittance beams.
@@ -3727,6 +3732,8 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
     return NULL;
   }
 
+  // Has no beam on entry?
+  bool const IsFirstBeam = self->obj->GetNParticleBeams() == 0 ? true : false;
 
   // Are you asking for one of the predefined beams?
   bool const HasPredefinedBeam = std::strlen(Beam) != 0 ? true : false;
@@ -3988,10 +3995,14 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
       PyErr_SetString(PyExc_ValueError, "Incorrect format in 'ctstartstop'");
       return NULL;
     }
+  } else {
+    self->obj->SetCTStartStop(0, 1e-99);
   }
 
-  // Set the initial particle as ideal
-  self->obj->SetNewParticle("", "ideal");
+  // Set the initial particle as ideal if this is the first beam
+  if (IsFirstBeam) {
+    self->obj->SetNewParticle("", "ideal");
+  }
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -5327,6 +5338,12 @@ static PyObject* OSCARSSR_SetTrajectory (OSCARSSRObject* self, PyObject* args, P
     return NULL;
   }
 
+  // Require that a particle beam be previously defined
+  if (self->obj->GetNParticleBeams() == 0) {
+    PyErr_SetString(PyExc_ValueError, "Must previously have defined a particle beam to associate this trajectory with.  try: add_particle_beam() or set_particle_beam() first");
+    return NULL;
+  }
+
   // Beam name input
   std::string const Beam = Beam_IN;
 
@@ -5370,6 +5387,9 @@ static PyObject* OSCARSSR_SetTrajectory (OSCARSSRObject* self, PyObject* args, P
       // Get a new trajectory.  If beam defined use the one defined
       if (Beam != "") {
         self->obj->SetNewParticle(Beam, "ideal");
+      }
+      if (self->obj->GetCurrentParticle().GetType() == "") {
+        self->obj->SetNewParticle();
       }
 
       // The new Trajectory to fill
@@ -5422,6 +5442,8 @@ static PyObject* OSCARSSR_SetTrajectory (OSCARSSRObject* self, PyObject* args, P
 
       // Setup trajectory interpolation
       self->obj->SetupTrajectoryInterpolated();
+
+
     
 
     } else {

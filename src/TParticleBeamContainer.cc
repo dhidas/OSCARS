@@ -87,7 +87,6 @@ TParticleBeam& TParticleBeamContainer::AddNewParticleBeam (std::string const& Be
 
 TParticleA TParticleBeamContainer::GetNewParticle ()
 {
-  // UPDATE: incomplete
   return fParticleBeams[ this->GetRandomBeamIndexByWeight() ].GetNewParticle();
 }
 
