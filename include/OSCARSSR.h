@@ -150,6 +150,7 @@ class OSCARSSR
     TParticleA const&  GetCurrentParticle () const;
     void SetNewParticle ();
     void SetNewParticle (std::string const&, std::string const&);
+    void SetupTrajectoryInterpolated ();
     void ClearParticleBeams ();
 
     void SetEmittance (std::string const& Beam,
