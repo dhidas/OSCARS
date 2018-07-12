@@ -377,3 +377,101 @@ class lut1d:
             plt.close()
             
         return gap_list
+
+
+
+
+    def create_lut1d_from_file_list (file_list, ofile=None, header=None):
+        """
+        Create a lut1d lookup table from the list of gap values and filenames.  Will
+        output to a file if ofile is specified, otherwise will output to the standard
+        out.
+        
+        The format of the input files is as follows:
+            Any line beginning with # is a comment and ignored.  Data lines must be of the form:
+            harmonic energy flux fwhm True/False
+            
+            harmonic - harmonic number (int)
+            energy - peak photon energy (suggested eV)
+            flux - intensity (suggested ph/s/0.1%bw/mm^2)
+            fwhm - energy width, if not wanted just put a 0
+            True/False - convergence, if desired
+            
+        
+        Parameters
+        ----------
+        file_list : list of lists
+            A list of lists each of which is [float(gap), str(filename)].
+            The files should be of the format output by oscars.me.calculate_harmonics_me
+            
+        ofile : str
+            Name of output file if needed
+            
+        Returns
+        -------
+        None
+        
+        """
+        
+        # Add # to header if it does not begin with one
+        if header is not None and not header.split()[0].startswith('#'):
+            header = '# ' + header
+    
+        # dict for harmonic enrty appends
+        harmonics = dict()
+        
+        # Loop over all gap-filename entries in the list
+        for gap_fn in file_list:
+            
+            # In case gap str is input, make it a float
+            gap = float(gap_fn[0])
+            
+            # Try to open file
+            with open(gap_fn[1]) as fi:
+                
+                # Read line by line
+                for line in fi:
+                    
+                    # Any line beginning with 
+                    if line.split()[0].startswith('#'):
+                        continue
+                    
+                    v = line.split()
+                    if len(v) == 0:
+                        continue
+                    if len(v) != 5:
+                        raise IndexError('Incorrect number of elements found')
+                        
+                    h = int(v[0])
+                    en = float(v[1])
+                    fl = float(v[2])
+                    w = float(v[3])
+                    d = v[4] in ['True', '1']
+                    if not d:
+                        print(d, gap_fn[1])
+                    
+                    if h not in harmonics:
+                        harmonics[h] = []
+                    harmonics[h].append([en, gap, fl, w])
+        
+        if ofile is None:
+            if header is not None:
+                print(header)
+            for key in sorted(harmonics):
+                print('harmonic', key)
+                for v in sorted(harmonics[key], key=lambda x: x[0]):
+                    print(v[0], v[1], v[2])
+                print()
+        else:
+            with open(ofile, 'w') as fo:
+                if header is not None:
+                    fo.write(header + '\n')
+                for key in sorted(harmonics):
+                    fo.write('harmonic ' + str(key) + '\n')
+                    for v in sorted(harmonics[key], key=lambda x: x[0]):
+                        fo.write('{} {} {}\n'.format(v[0], v[1], v[2]))
+                    fo.write('\n')
+    
+        return
+    
+    
