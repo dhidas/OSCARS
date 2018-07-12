@@ -503,6 +503,7 @@ void TParticleTrajectoryPoints::ReadFromFileFormat (std::string const& FileName,
 
   std::string HeaderLine;
   std::getline(f, HeaderLine);
+  std::transform(HeaderLine.begin(), HeaderLine.end(), HeaderLine.begin(), ::toupper);
   std::vector<std::string> HeaderVector;
   std::istringstream HeaderStream(HeaderLine);
   for (std::string a; HeaderStream >> a; ) {
@@ -556,7 +557,6 @@ void TParticleTrajectoryPoints::ReadFromFileFormat (std::string const& FileName,
 
   // Number of columns
   size_t const NColumns = FormatVector.size();
-
 
   // Check which components exist
   bool const HasT   =  std::find(FormatVector.begin(), FormatVector.end(), "T") != FormatVector.end();
