@@ -236,7 +236,7 @@ def plot_power_density(V, title=None, xlabel='X1 Axis [$m$]', ylabel='X2 Axis [$
     plt.ylabel(ylabel)
     plt.title(title)
 
-    if ofile != '':
+    if ofile != '' and ofile is not None:
         plt.savefig(ofile, bbox_inches='tight')
 
     if show == True:
@@ -451,7 +451,7 @@ def plot_flux(V, title='Flux [$\gamma / mm^2 / 0.1\%bw / s$]', xlabel='X1 Axis [
     if clim is not None:
       plt.clim(clim)
 
-    if ofile != '':
+    if ofile != '' and ofile is not None:
         plt.savefig(ofile, bbox_inches='tight')
 
     if show == True:
@@ -492,7 +492,7 @@ def plot_spectrum(S, log=False, show=True, ofile='', title='Spectrum', xlabel='E
         for line in axhlines:
             plt.axhline(y=line, color='green', linestyle='--')
 
-    if ofile != '':
+    if ofile != None and ofile != '':
         plt.savefig(ofile, bbox_inches='tight', transparent=transparent)
 
     if show == True:
@@ -957,7 +957,7 @@ def plot_flux_spectrum(F, S, energy=None, title='Flux [$\gamma / mm^2 / 0.1\%bw 
         plt.axvline(x=energy, color='red')
 
     plt.figure(1)
-    if ofile != '':
+    if ofile != '' and ofile != None:
         plt.savefig(ofile, bbox_inches='tight')
 
     if show == True:
