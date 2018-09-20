@@ -42,7 +42,7 @@ class TTriangle3DContainer
   private:
     std::vector<TTriangle3D> fT;  // List of triangles
 
-    TVector3D fBBox[2];           // Bounding box
+    TVector3D fBBox[4];           // Bounding box
     double fScale;                // Scale factor on geometry
 };
 
