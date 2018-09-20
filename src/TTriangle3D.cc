@@ -9,6 +9,7 @@ TTriangle3D::TTriangle3D (TVector3D const& A,
                           TVector3D const& N)
 {
   this->Set(A, B, C, N);
+  this->SetValue(0);
 }
 
 
@@ -19,6 +20,7 @@ TTriangle3D::TTriangle3D (double const Ax, double const Ay, double const Az,
                           double const Nx, double const Ny, double const Nz)
 {
   this->Set(TVector3D(Ax, Ay, Az), TVector3D(Bx, By, Bz), TVector3D(Cx, Cy, Cz), TVector3D(Nx ,Ny, Nz));
+  this->SetValue(0);
 }
 
 
