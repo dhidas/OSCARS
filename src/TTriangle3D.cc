@@ -159,6 +159,8 @@ void TTriangle3D::AddToValue (double const V)
 double TTriangle3D::RayIntersectionDistance (TVector3D const& RayOrigin, TVector3D const& RayDirectionIn) const
 {
   // Returns the distance to intersection in units of ray direction (normalized)
+  //
+  // This is the method of Moller and Trumbore described in "Fast, Minimum Storage Ray, Triangle Intersection"
 
   TVector3D const RayDirection = RayDirectionIn.UnitVector();
   TVector3D edge1, edge2, tvec, pvec, qvec;
