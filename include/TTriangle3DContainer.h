@@ -25,6 +25,9 @@ class TTriangle3DContainer
     size_t GetNPoints () const;
     TTriangle3D GetPoint (size_t const i) const;
     void Clear ();
+    void ClearValues ();
+
+    void AddToPoint (size_t const, double const);
 
     void RotateSelfXYZ (TVector3D const&);
     void TranslateSelf (TVector3D const&);

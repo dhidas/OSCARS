@@ -49,6 +49,13 @@ class TTriangle3D
     void SetValue (double const);
     double GetValue () const;
 
+    void SetCompensation (double const);
+    double GetCompensation () const;
+
+    void AddToValue (double const);
+
+    double RayIntersectionDistance (TVector3D const& RayOrigin, TVector3D const& RayDirection) const;
+
     TVector3D  operator [] (int const) const;
     TVector3D& operator [] (int const);
     TTriangle3D& operator += (TVector3D const&);
@@ -62,7 +69,8 @@ class TTriangle3D
 
     TVector3D fCenter;  // Center of mass
 
-    double fValue;      // Value or quantity of interest (PD, flux, etc)
+    double fValue;        // Value or quantity of interest (PD, flux, etc)
+    double fCompensation; // Compensation for additions of Value
 };
 
 

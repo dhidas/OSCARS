@@ -3143,6 +3143,345 @@ void OSCARSSR::CalculatePowerDensityGPU (TSurfacePoints const& Surface,
 
 
 
+
+
+
+
+
+
+
+
+
+
+void OSCARSSR::CalculatePowerDensitySTL (TTriangle3DContainer& STLContainer,
+                                         double const Precision,
+                                         int    const MaxLevel,
+                                         int    const MaxLevelExtended,
+                                         int const NParticles,
+                                         int const NThreads,
+                                         int const GPU,
+                                         int const NGPU,
+                                         std::vector<int> VGPU,
+                                         int const ReturnQuantity)
+{
+  // Calculates the power density in units of [W / mm^2]
+  // THIS is the ENTRY POINT FOR STL Calculations typically
+
+
+  // Check that particle has been set yet.  If fType is "" it has not been set yet
+  if (fParticle.GetType() == "") {
+    try {
+      this->SetNewParticle();
+    } catch (std::exception e) {
+      throw std::out_of_range("no beam defined");
+    }
+  }
+
+  // Number of threads to possibly use
+  int const NThreadsToUse = NThreads < 1 ? fNThreadsGlobal : NThreads;
+  if (NThreadsToUse <= 0) {
+    throw std::out_of_range("NThreads or NThreadsGlobal must be >= 1");
+  }
+
+  // Should we use the GPU or not?
+  int const NGPUAvailable = this->CheckGPU();
+  bool const UseGPU = GPU == 0 ? false : this->GetUseGPUGlobal() && (NGPUAvailable > 0) ? true : (GPU == 1) && (NGPUAvailable > 0);
+
+  // If use GPU, let's check the GPU vector, or construct one if we must
+  std::vector<int> GPUVector;
+  for (std::vector<int>::const_iterator it = VGPU.begin(); it != VGPU.end(); ++it) {
+    GPUVector.push_back(*it);
+  }
+  if (GPUVector.size() == 0) {
+    for (int i = 0; i < NGPU; ++i) {
+      GPUVector.push_back(i);
+    }
+  }
+  if (NGPU != -1 && NGPU < (int) GPUVector.size()) {
+    GPUVector.resize(NGPU);
+  }
+
+
+
+
+  STLContainer.ClearValues();
+
+
+  // Which cpmpute method will we use, gpu, multi-thread, or single-thread
+  if (UseGPU) {
+    throw;
+  } else {
+    if (NParticles == 0) {
+      if (NThreadsToUse == 1) {
+        this->CalculatePowerDensitySTL(fParticle,
+                                       STLContainer,
+                                       Precision,
+                                       MaxLevel,
+                                       MaxLevelExtended,
+                                       1,
+                                       ReturnQuantity);
+      } else {
+        throw;
+      }
+    } else {
+      throw;
+    }
+  }
+
+  return;
+}
+
+
+
+
+
+
+
+
+void OSCARSSR::CalculatePowerDensitySTL (TParticleA& Particle,
+                                         TTriangle3DContainer& STLContainer,
+                                         double const Precision,
+                                         int    const MaxLevel,
+                                         int    const MaxLevelExtended,
+                                         double const Weight,
+                                         int    const ReturnQuantity)
+{
+
+  // Calculate trajectory if it doesn't exist
+  if (Particle.GetTrajectory().GetNPoints() == 0) {
+    this->CalculateTrajectory(Particle);
+  }
+
+  // Extra inpts for calculation
+  bool Done = false;
+  size_t const iFirst = 0;
+  size_t const iLast = STLContainer.GetNPoints() - 1;
+
+  // Calculate the power density
+  CalculatePowerDensityPointsSTL(Particle,
+                                 STLContainer,
+                                 iFirst,
+                                 iLast,
+                                 Done,
+                                 Precision,
+                                 MaxLevel,
+                                 MaxLevelExtended,
+                                 Weight,
+                                 ReturnQuantity);
+
+  return;
+}
+
+
+
+
+
+void OSCARSSR::CalculatePowerDensityPointsSTL (TParticleA& Particle,
+                                               TTriangle3DContainer& STLContainer,
+                                               size_t const iFirst,
+                                               size_t const iLast,
+                                               bool& Done,
+                                               double const Precision,
+                                               int    const MaxLevel,
+                                               int    const MaxLevelExtended,
+                                               double const Weight,
+                                               int    const ReturnQuantity)
+{
+  // Calculates the single particle power density in a range of points
+  // in units of [watts / second / mm^2]
+
+  // Check you are not requesting a level above the maximum
+  if (MaxLevel > TParticleA::kMaxTrajectoryLevel) {
+    std::cerr << "WARNING: MaxLevel > TParticleA::kMaxTrajectoryLevel.  Setting MaxLevel to TParticleA::kMaxTrajectoryLevel" << std::endl;
+  }
+
+  // Set the level to stop at if requested, but not above the hard limit
+  int const LevelStopMemory = MaxLevel >= -1  && MaxLevel <= TParticleA::kMaxTrajectoryLevel ? MaxLevel : TParticleA::kMaxTrajectoryLevel;
+  int const LevelStopWithExtended = MaxLevelExtended > LevelStopMemory ? MaxLevelExtended : LevelStopMemory;
+
+  // Variables for parts of the numerator and denominator of power density equation
+  TVector3D Numerator;
+  double Denominator;
+
+  // Extended trajectory (not using memory for storage of arrays
+  TParticleTrajectoryInterpolatedPoints TE;
+
+  // Alternative outputs
+  double Result_Precision = -1;
+  int    Result_Level     = -1;
+
+  TVector3D const Origin(0, 0, 0);
+
+  std::vector<bool> IsBlocked(STLContainer.GetNPoints(), false);
+  for (size_t i = 0; i != STLContainer.GetNPoints(); ++i) {
+
+    // Get direction vector of ray
+    double const PointDistance = (STLContainer.GetPoint(i).GetCenter() - Origin).Mag();
+    TVector3D Dir = (STLContainer.GetPoint(i).GetCenter() - Origin).UnitVector();
+
+    for (size_t j = 0; j != STLContainer.GetNPoints(); ++j) {
+      if (i == j) {
+        continue;
+      }
+
+      // Test if in FF this triangle is blocked
+      double const IntersectionDistance = STLContainer.GetPoint(j).RayIntersectionDistance(Origin, Dir);
+      if (IntersectionDistance > 0 && IntersectionDistance < PointDistance) {
+        IsBlocked[i] = true;
+        break;
+      }
+    }
+  }
+
+  // Loop over all points in the spectrum container
+  for (size_t i = iFirst; i <= iLast; ++i) {
+    if (IsBlocked[i]) {
+      continue;
+    }
+
+    // Obs point
+    TVector3D const Obs    = STLContainer.GetPoint(i).GetCenter();
+    TVector3D const Normal = STLContainer.GetPoint(i).GetNormal();
+
+    double ThisSum = -1;
+    double LastSum = -1;
+    int    LastLevel = 0;
+
+    // Summing for this power density
+    double Sum = 0;
+
+    for (int iLevel = 0; iLevel <= LevelStopWithExtended; ++iLevel) {
+      LastLevel = iLevel;
+
+      // Keep track of Beta for precision
+      TVector3D Last_Beta(0, 0, 0);
+      double BetaDiffMax = -1;
+
+      // Grab the Trajectory (using memory arrays) if below level threshold, else set NULL
+      TParticleTrajectoryPoints const& TM = Particle.GetTrajectoryLevel(iLevel <= LevelStopMemory ? iLevel : 0);
+      if (iLevel > LevelStopMemory) {
+        TE = Particle.GetTrajectoryExtendedLevel(iLevel);
+      }
+
+      // Number of points in the trajectory
+      size_t const NTPoints = iLevel <= LevelStopMemory ? TM.GetNPoints() : TE.GetNPoints();
+
+      // Loop over trajectory points
+      for (int iT = 0; iT != NTPoints; ++iT) {
+
+        TParticleTrajectoryPoint const& PP = (iLevel <= LevelStopMemory ? TM.GetPoint(iT) : TE.GetTrajectoryPoint(iT));
+
+        // Get position, Beta, and Acceleration (over c)
+        TVector3D const& X = PP.GetX();
+        TVector3D const& B = PP.GetB();
+        TVector3D const& AoverC = PP.GetAoverC();
+
+        double const BetaDiff = (B - Last_Beta).Mag();
+        if (iT > 0 && BetaDiff > BetaDiffMax) {
+          BetaDiffMax = BetaDiff;
+        }
+        Last_Beta = B;
+
+        // Define the three normal vectors.  N1 is in the direction of propogation,
+        // N2 and N3 are in a plane perpendicular to N1
+        TVector3D const N1 = (Obs - X).UnitVector();
+        TVector3D const N2 = N1.Orthogonal().UnitVector();
+        TVector3D const N3 = N1.Cross(N2).UnitVector();
+
+        // For computing non-normally incidence
+        double const N1DotNormal = fabs(N1.Dot(Normal));
+
+        // Compute Numerator and denominator
+        Numerator = N1.Cross( ( (N1 - B).Cross((AoverC)) ) );
+        Denominator = pow(1 - (B).Dot(N1), 5);
+
+        // Add contributions from both N2 and N3
+        Sum += pow(Numerator.Dot(N2), 2) / Denominator / (Obs - X).Mag2() * N1DotNormal;
+        Sum += pow(Numerator.Dot(N3), 2) / Denominator / (Obs - X).Mag2() * N1DotNormal;
+
+      }
+
+      double const ThisSum = Sum * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(iLevel);
+
+      Result_Precision = fabs(ThisSum - LastSum) / LastSum;
+      if ( (iLevel > 8 && Result_Precision < Precision && BetaDiffMax < 2. / (Particle.GetGamma())) || (iLevel > 8 && BetaDiffMax < 2. / (Particle.GetGamma()) && ThisSum == LastSum) ) {
+        Result_Level = iLevel;
+        break;
+      } else if (iLevel > 8 && ThisSum == LastSum) {
+        // The assumption here is that zero is last and now
+        Result_Level = iLevel;
+        Result_Precision = 0;
+        break;
+      }
+
+      LastSum = ThisSum;
+    }
+
+    // If a point does not converge mark it
+    if (Result_Level == -1) {
+      //PowerDensityContainer.SetNotConverged(i);
+    }
+
+    Sum *= fabs(Particle.GetQ() * Particle.GetCurrent()) / (16 * TOSCARSSR::Pi2() * TOSCARSSR::Epsilon0() * TOSCARSSR::C()) * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(LastLevel);
+
+    // m^2 to mm^2
+    Sum /= 1e6;
+
+
+    // Add to container
+    switch (ReturnQuantity) {
+      case 1:
+        STLContainer.AddToPoint(i, Result_Precision * Weight);
+        break;
+      case 2:
+        STLContainer.AddToPoint(i, ((double) Result_Level) * Weight);
+        break;
+      default:
+        STLContainer.AddToPoint(i, Sum * Weight);
+        break;
+    }
+
+  } // POINTS
+
+
+  // Set done to true
+  Done = true;
+
+  return;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 double OSCARSSR::CalculateTotalPower (double const Precision,
                                       int    const MaxLevel,
                                       int    const MaxLevelExtended,

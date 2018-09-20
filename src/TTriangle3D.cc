@@ -10,6 +10,7 @@ TTriangle3D::TTriangle3D (TVector3D const& A,
 {
   this->Set(A, B, C, N);
   this->SetValue(0);
+  this->SetCompensation(0);
 }
 
 
@@ -21,6 +22,7 @@ TTriangle3D::TTriangle3D (double const Ax, double const Ay, double const Az,
 {
   this->Set(TVector3D(Ax, Ay, Az), TVector3D(Bx, By, Bz), TVector3D(Cx, Cy, Cz), TVector3D(Nx ,Ny, Nz));
   this->SetValue(0);
+  this->SetCompensation(0);
 }
 
 
@@ -109,6 +111,7 @@ TVector3D TTriangle3D::GetNormal () const
 void TTriangle3D::SetValue (double const V)
 {
   fValue = V;
+  this->SetCompensation(0);
   return;
 }
 
@@ -118,6 +121,94 @@ double TTriangle3D::GetValue () const
 {
   return fValue;
 }
+
+
+
+
+void TTriangle3D::SetCompensation (double const V)
+{
+  fCompensation = V;
+  return;
+}
+
+
+
+double TTriangle3D::GetCompensation () const
+{
+  return fCompensation;
+}
+
+
+
+void TTriangle3D::AddToValue (double const V)
+{
+  // Compensated summation
+
+  double Sum = fValue;
+  double y = V - fCompensation;
+  double t = Sum + y;
+  fCompensation = (t - Sum) - y;
+  fValue = V + Sum;
+
+  return;
+}
+
+
+
+
+double TTriangle3D::RayIntersectionDistance (TVector3D const& RayOrigin, TVector3D const& RayDirectionIn) const
+{
+  // Returns the distance to intersection in units of ray direction (normalized)
+
+  TVector3D const RayDirection = RayDirectionIn.UnitVector();
+  TVector3D edge1, edge2, tvec, pvec, qvec;
+  double det, inv_det, t, u, v;
+
+  // Find vectors for two edges sharing fA
+  edge1 = fB - fA;
+  edge2 = fC - fA;
+
+  // Begin calculating determinant - also used to calculate U parameter
+  pvec = RayDirection.Cross(edge2);
+
+  // If determinant is near zero, ray lies in plane of triangle
+  det = edge1.Dot(pvec);
+
+
+  // EPSILON 0.000001
+  if (det > -1e-9 && det < 1e-9) {
+    return -1;
+  }
+  inv_det = 1.0 / det;
+
+  // Calculate distance from fA to ray RayOriginin
+  tvec = RayOrigin - fA;
+
+  // Calculate U parameter and test bounds
+  u = tvec.Dot(pvec) * inv_det;
+  if (u < 0.0 || u > 1.0) {
+    return -1;
+  }
+
+  // Prepare to test V parameter
+  qvec = tvec.Cross(edge1);
+
+  // Calculate V parameter and test bounds
+  v = RayDirection.Dot(qvec) * inv_det;
+  if (v < 0.0 || u + v > 1.0) {
+    return -1;
+  }
+
+  // Calculate t, ray intersects triangle
+  t = edge2.Dot(qvec) * inv_det;
+
+  if (t < 0) {
+    return -1;
+  }
+
+  return t;
+}
+
 
 
 

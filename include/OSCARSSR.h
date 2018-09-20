@@ -25,6 +25,7 @@
 #include "T3DScalarContainer.h"
 #include "TParticleTrajectoryInterpolated.h"
 #include "TRandomA.h"
+#include "TTriangle3DContainer.h"
 
 
 class OSCARSSR
@@ -382,6 +383,38 @@ class OSCARSSR
                                    int    const MaxLevel,
                                    int    const MaxLevelExtended,
                                    int    const ReturnQuantity);
+
+
+    void CalculatePowerDensitySTL (TTriangle3DContainer& STLContainer,
+                                   double const Precision,
+                                   int    const MaxLevel,
+                                   int    const MaxLevelExtended,
+                                   int const NParticles,
+                                   int const NThreads,
+                                   int const GPU,
+                                   int const NGPU,
+                                   std::vector<int> VGPU,
+                                   int const ReturnQuantity);
+
+    void CalculatePowerDensitySTL (TParticleA& Particle,
+                                   TTriangle3DContainer& STLContainer,
+                                   double const Precision,
+                                   int    const MaxLevel,
+                                   int    const MaxLevelExtended,
+                                   double const Weight,
+                                   int    const ReturnQuantity);
+
+    void CalculatePowerDensityPointsSTL (TParticleA& Particle,
+                                         TTriangle3DContainer& STLContainer,
+                                         size_t const iFirst,
+                                         size_t const iLast,
+                                         bool& Done,
+                                         double const Precision,
+                                         int    const MaxLevel,
+                                         int    const MaxLevelExtended,
+                                         double const Weight,
+                                         int    const ReturnQuantity);
+
 
     double CalculateTotalPower (double const Precision = 0.01,
                                 int    const MaxLevel = TParticleA::kMaxTrajectoryLevel,

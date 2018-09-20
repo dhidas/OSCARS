@@ -48,6 +48,39 @@ void TTriangle3DContainer::Clear ()
 
 
 
+void TTriangle3DContainer::ClearValues ()
+{
+  // Set all values to zero
+  for (std::vector<TTriangle3D>::iterator it = fT.begin(); it != fT.end(); ++it) {
+    it->SetValue(0);
+  }
+  return;
+}
+
+
+
+
+void TTriangle3DContainer::AddToPoint (size_t const i, double const V)
+{
+  // Compensated sum for adding to points
+
+  // Check that the point is within range
+  if (i >= fT.size()) {
+    throw std::length_error("TTriangle3DContainer::AddtoPoint index out of range");
+  }
+
+  fT[i].AddToValue(V);
+
+  return;
+}
+
+
+
+
+
+
+
+
 void TTriangle3DContainer::RotateSelfXYZ (TVector3D const& R)
 {
   for (std::vector<TTriangle3D>::iterator it = fT.begin(); it != fT.end(); ++it) {

@@ -6978,6 +6978,8 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
   }
 
   TTriangle3DContainer STLContainer;
+  //TTriangle3D TT(0, 0, -0.03,  0, -0.01, -0.03,  0.01, 0, -0.03, 0, 0, 1);
+  //STLContainer.Add(TT);
   try {
     STLContainer.ReadSTLFile(InFileName, Scale);
   } catch (...) {
@@ -7005,10 +7007,7 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
   // Actually calculate the spectrum
   bool const Directional = NormalDirection == 0 ? false : true;
   try {
-    self->obj->CalculatePowerDensity(Surface,
-                                     PowerDensityContainer,
-                                     Dim,
-                                     Directional,
+    self->obj->CalculatePowerDensitySTL(STLContainer,
                                      Precision,
                                      MaxLevel,
                                      MaxLevelExtended,
@@ -7056,12 +7055,12 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
   PyObject *PList = PyList_New(0);
 
   // UPDATE: URGENT: PD output ofile, bofile
-  size_t const NPoints = PowerDensityContainer.GetNPoints();
+  size_t const NPoints = STLContainer.GetNPoints();
 
   PyObject* Value;
 
   for (size_t i = 0; i != NPoints; ++i) {
-    T3DScalar P = PowerDensityContainer.GetPoint(i);
+    //T3DScalar P = PowerDensityContainer.GetPoint(i);
     TTriangle3D T = STLContainer.GetPoint(i);
 
     // Inner list for each point
@@ -7085,7 +7084,7 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
     PyList_Append(PList2, PListT);
     Py_DECREF(PListT);
 
-    Value = Py_BuildValue("f", P.GetV());
+    Value = Py_BuildValue("f", T.GetValue());
     PyList_Append(PList2, Value);
     Py_DECREF(Value);
 
