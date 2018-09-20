@@ -9075,6 +9075,40 @@ static PyObject* OSCARSSR_PrintTrajectory (OSCARSSRObject* self)
 
 
 
+const char* DOC_OSCARSSR_PrintSTL = R"docstring(
+print_stl()
+
+Print information about stl files to standard out
+
+Parameters
+----------
+None
+
+Returns
+-------
+None
+)docstring";
+static PyObject* OSCARSSR_PrintSTL (OSCARSSRObject* self)
+{
+  // Print STL information
+
+  // Out string stream for printing information
+  std::ostringstream ostream;
+  ostream << "*STL Information*\n";
+
+  OSCARSPY::PyPrint_stdout(ostream.str());
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
+
 const char* DOC_OSCARSSR_PrintAll = R"docstring(
 print_all()
 
@@ -9099,6 +9133,7 @@ static PyObject* OSCARSSR_PrintAll (OSCARSSRObject* self)
   OSCARSSR_PrintGPU(self);
   OSCARSSR_PrintNThreads(self);
   OSCARSSR_PrintTrajectory(self);
+  OSCARSSR_PrintSTL(self);
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
