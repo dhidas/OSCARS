@@ -42,6 +42,7 @@ class TTriangle3D
     void Translate (TVector3D const& T);
     void RotateSelfXYZ    (TVector3D const& R);
 
+    TVector3D CalculateCenter () const;
     TVector3D GetCenter () const;
     TVector3D GetNormal () const;
 
@@ -51,10 +52,12 @@ class TTriangle3D
 
 
   private:
-    TVector3D fA;
-    TVector3D fB;
-    TVector3D fC;
-    TVector3D fN;
+    TVector3D fA;       // Vertex
+    TVector3D fB;       // Vertex
+    TVector3D fC;       // Vertex
+    TVector3D fN;       // Normal vector
+
+    TVector3D fCenter;  // Center of mass
 };
 
 

@@ -37,6 +37,9 @@ void TTriangle3D::Set (TVector3D const& A,
   fB = B;
   fC = C;
   fN = N;
+
+  fCenter = this->CalculateCenter();
+
   return;
 }
 
@@ -54,6 +57,9 @@ void TTriangle3D::Translate (TVector3D const& T)
   fA += T;
   fB += T;
   fC += T;
+
+  fCenter += T;
+
   return;
 }
 
@@ -66,7 +72,17 @@ void TTriangle3D::RotateSelfXYZ (TVector3D const& R)
   fC.RotateSelfXYZ(R);
   fN.RotateSelfXYZ(R);
 
+  fCenter.RotateSelfXYZ(R);
+
   return;
+}
+
+
+
+
+TVector3D TTriangle3D::CalculateCenter () const
+{
+  return (fA + fB + fC) / 3.;
 }
 
 
@@ -74,7 +90,7 @@ void TTriangle3D::RotateSelfXYZ (TVector3D const& R)
 
 TVector3D TTriangle3D::GetCenter () const
 {
-  return (fA + fB + fC) / 3.;
+  return fCenter;
 }
 
 
@@ -139,6 +155,9 @@ TTriangle3D& TTriangle3D::operator += (TVector3D const& V)
   fA += V;
   fB += V;
   fC += V;
+
+  fCenter += V;
+
   return *this;
 }
 
