@@ -103,6 +103,23 @@ TVector3D TTriangle3D::GetNormal () const
 
 
 
+
+void TTriangle3D::SetValue (double const V)
+{
+  fValue = V;
+  return;
+}
+
+
+
+double TTriangle3D::GetValue () const
+{
+  return fValue;
+}
+
+
+
+
 TVector3D TTriangle3D::operator [] (int const i) const
 {
   // An operator to use an index like a vector
