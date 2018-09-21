@@ -6750,6 +6750,124 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
 
 
 
+const char* DOC_OSCARSSR_AddSTL = R"docstring(
+add_stl(ifile [, rotations, translation, scale, name])
+
+Add an STL object, typically from a file.  One can scale, rotate, translate, and name the object.  All input objects will be used when calculating power density for STL.
+
+
+Parameters
+----------
+ifile : str
+    The STL file to import
+
+rotations : list, optional
+    3-element list representing rotations around x, y, and z axes: [:math:`\theta_x, \theta_y, \theta_z`]
+
+translation : list, optional
+    3-element list representing a translation in space [x, y, z]
+
+scale : float
+    What to scale the dimensions by.  Default input is in meters.
+
+name : str
+    Name of the object
+
+Returns
+-------
+None
+
+
+
+
+Examples
+--------
+coming
+)docstring";
+static PyObject* OSCARSSR_AddSTL (OSCARSSRObject* self, PyObject* args, PyObject *keywds)
+{
+  // Calculate the spectrum given an observation point, and energy range
+
+  const char* InFileName = "";
+  PyObject*   List_Translation = PyList_New(0);
+  PyObject*   List_Rotations   = PyList_New(0);
+  double      Scale = 1;
+  const char* Name = "";
+
+
+  static const char *kwlist[] = {"ifile",
+                                 "rotations",
+                                 "translation",
+                                 "scale",
+                                 "name",
+                                  NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|OOds",
+                                   const_cast<char **>(kwlist),
+                                   &InFileName,
+                                   &List_Rotations,
+                                   &List_Translation,
+                                   &Scale,
+                                   &Name)) {
+    return NULL;
+  }
+
+
+  // Vectors for rotations and translations.  Default to 0
+  TVector3D Rotations(0, 0, 0);
+  TVector3D Translation(0, 0, 0);
+
+  // Check for Rotations in the input
+  if (PyList_Size(List_Rotations) != 0) {
+    try {
+      Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
+      return NULL;
+    }
+  }
+
+
+  // Check for Translation in the input
+  if (PyList_Size(List_Translation) != 0) {
+    try {
+      Translation = OSCARSPY::ListAsTVector3D(List_Translation);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
+      return NULL;
+    }
+  }
+
+
+
+  self->obj->AddSTLFile(InFileName);
+
+
+  TTriangle3DContainer STLContainer;
+  //TTriangle3D TT(0, 0, -0.03,  0, -0.01, -0.03,  0.01, 0, -0.03, 0, 0, 1);
+  //STLContainer.Add(TT);
+  try {
+    STLContainer.ReadSTLFile(InFileName, Scale, Rotations, Translation);
+  } catch (...) {
+    PyErr_SetString(PyExc_ValueError, "Cannot read STL file");
+    return NULL;
+  }
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
+
+
+
+
+
 const char* DOC_OSCARSSR_CalculatePowerDensitySTL = R"docstring(
 calculate_power_density_stl(ifiles [, rotations, translation, ofile, bofile, stlofile, normal, scale, nparticles, gpu, ngpu, nthreads, precision, max_level, max_level_extended, quantity])
 
@@ -6981,13 +7099,11 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
   //TTriangle3D TT(0, 0, -0.03,  0, -0.01, -0.03,  0.01, 0, -0.03, 0, 0, 1);
   //STLContainer.Add(TT);
   try {
-    STLContainer.ReadSTLFile(InFileName, Scale);
+    STLContainer.ReadSTLFile(InFileName, Scale, Rotations, Translation);
   } catch (...) {
     PyErr_SetString(PyExc_ValueError, "Cannot read STL file");
     return NULL;
   }
-  STLContainer.RotateSelfXYZ(Rotations);
-  STLContainer.TranslateSelf(Translation);
 
 
   TSurfacePoints_3D Surface;
@@ -9096,6 +9212,8 @@ static PyObject* OSCARSSR_PrintSTL (OSCARSSRObject* self)
   std::ostringstream ostream;
   ostream << "*STL Information*\n";
 
+  ostream << self->obj->GetSTLContainer() << std::endl;
+
   OSCARSPY::PyPrint_stdout(ostream.str());
 
   // Must return python object None in a special way
@@ -9330,7 +9448,9 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   {"calculate_total_power",             (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateTotalPower},
   {"calculate_power_density",           (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensity},
   {"calculate_power_density_rectangle", (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensityRectangle},
+  {"add_stl",                           (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddSTL},
   {"calculate_power_density_stl",       (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensitySTL},
+  {"print_stl",                         (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_PrintSTL},
   {"calculate_power_density_line",      (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensityLine},
 
   //{"calculate_flux",                    (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateFlux},
@@ -9451,7 +9571,9 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"calculate_total_power",             (PyCFunction) OSCARSSR_CalculateTotalPower,             METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateTotalPower},
   {"calculate_power_density",           (PyCFunction) OSCARSSR_CalculatePowerDensity,           METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensity},
   {"calculate_power_density_rectangle", (PyCFunction) OSCARSSR_CalculatePowerDensityRectangle,  METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensityRectangle},
+  {"add_stl",                           (PyCFunction) OSCARSSR_AddSTL,                          METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddSTL},
   {"calculate_power_density_stl",       (PyCFunction) OSCARSSR_CalculatePowerDensitySTL,        METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensitySTL},
+  {"print_stl",                         (PyCFunction) OSCARSSR_PrintSTL,                        METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_PrintSTL},
   {"calculate_power_density_line",      (PyCFunction) OSCARSSR_CalculatePowerDensityLine,       METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensityLine},
 
   //{"calculate_flux",                    (PyCFunction) OSCARSSR_CalculateFlux,                   METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateFlux},

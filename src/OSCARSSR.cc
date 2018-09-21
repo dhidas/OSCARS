@@ -3455,6 +3455,17 @@ void OSCARSSR::CalculatePowerDensityPointsSTL (TParticleA& Particle,
 
 
 
+void OSCARSSR::AddSTLFile (std::string const& InFileName,
+                           double const Scale,
+                           TVector3D const& Rotations,
+                           TVector3D const& Translation,
+                           std::string const& Name)
+{
+  std::cout << "hello dude" << std::endl;
+  fSTLContainer.AddFile(InFileName, Scale, Rotations, Translation, Name);
+  return;
+}
+
 
 
 
@@ -4325,4 +4336,12 @@ TDriftVolumeContainer const& OSCARSSR::GetDriftVolumeContainer () const
 {
   // Return the drift volume container
   return fDriftVolumeContainer;
+}
+
+
+
+TSTLContainer const& OSCARSSR::GetSTLContainer () const
+{
+  // Return the STL container
+  return fSTLContainer;
 }

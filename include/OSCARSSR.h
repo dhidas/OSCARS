@@ -26,6 +26,7 @@
 #include "TParticleTrajectoryInterpolated.h"
 #include "TRandomA.h"
 #include "TTriangle3DContainer.h"
+#include "TSTLContainer.h"
 
 
 class OSCARSSR
@@ -415,6 +416,13 @@ class OSCARSSR
                                          double const Weight,
                                          int    const ReturnQuantity);
 
+    void AddSTLFile (std::string const& InFileName,
+                     double const Scale = 1,
+                     TVector3D const& Rotations = TVector3D(0, 0, 0),
+                     TVector3D const& Translation = TVector3D(0, 0, 0),
+                     std::string const& Name = "");
+
+
 
     double CalculateTotalPower (double const Precision = 0.01,
                                 int    const MaxLevel = TParticleA::kMaxTrajectoryLevel,
@@ -529,6 +537,7 @@ class OSCARSSR
     TFieldContainer const& GetBFieldContainer () const;
     TFieldContainer const& GetEFieldContainer () const;
     TDriftVolumeContainer const& GetDriftVolumeContainer () const;
+    TSTLContainer const& GetSTLContainer () const;
 
   private:
     TFieldContainer  fBFieldContainer;
@@ -537,6 +546,8 @@ class OSCARSSR
     TParticleBeamContainer fParticleBeamContainer;
 
     TDriftVolumeContainer fDriftVolumeContainer;
+
+    TSTLContainer fSTLContainer;
 
     void SetDerivativesFunction ();
 

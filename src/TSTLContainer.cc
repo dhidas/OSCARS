@@ -29,11 +29,31 @@ void TSTLContainer::AddFile (std::string const& InFileName,
   }
 
   fSTL.push_back( TTriangle3DContainer() );
-  fSTL.back().ReadSTLFile(InFileName, Scale);
-  fSTL.back().RotateSelfXYZ(Rotations);
-  fSTL.back().TranslateSelf(Translation);
+  fSTL.back().ReadSTLFile(InFileName, Scale, Rotations, Translation, MyName);
 
   fSTLMap[MyName] = fSTL.size() - 1;
 
   return;
 }
+
+
+
+
+TTriangle3DContainer const& TSTLContainer::GetTTriangle3DContainer (size_t const i) const
+{
+  if (i >= fSTL.size()) {
+    throw std::out_of_range("TSTLContainer::GetTTriangle3DContainer index out of range");
+  }
+
+  return fSTL[i];
+}
+
+
+
+
+
+size_t TSTLContainer::GetNSTL () const
+{
+  return fSTL.size();
+}
+

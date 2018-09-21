@@ -86,6 +86,8 @@ void TTriangle3DContainer::RotateSelfXYZ (TVector3D const& R)
   for (std::vector<TTriangle3D>::iterator it = fT.begin(); it != fT.end(); ++it) {
     it->RotateSelfXYZ(R);
   }
+
+  fRotations = R;
   return;
 }
 
@@ -97,13 +99,18 @@ void TTriangle3DContainer::TranslateSelf (TVector3D const& T)
   for (std::vector<TTriangle3D>::iterator it = fT.begin(); it != fT.end(); ++it) {
     *it += T;
   }
+
+  fTranslation += T;
   return;
 }
 
 
 
 void TTriangle3DContainer::ReadSTLFile (std::string const& FileName,
-                                        double const Scale)
+                                        double const Scale,
+                                        TVector3D const& Rotations,
+                                        TVector3D const& Translation,
+                                        std::string const& Name)
 {
   // Read an STL file and add all points to self
 
@@ -141,6 +148,15 @@ void TTriangle3DContainer::ReadSTLFile (std::string const& FileName,
   }
 
   fi.close();
+
+  fFileName = FileName;
+  fScale = Scale;
+  fRotations = Rotations;
+  fTranslation = Translation;
+  fName = Name;
+
+  this->RotateSelfXYZ(fRotations);
+  this->TranslateSelf(Translation);
 
   return;
 }
@@ -191,4 +207,44 @@ void TTriangle3DContainer::WriteSTLFile (std::string const& FileName)
   fi.close();
 
   return;
+}
+
+
+
+
+
+
+
+
+std::string TTriangle3DContainer::GetFileName () const
+{
+  return fFileName;
+}
+
+
+
+double TTriangle3DContainer::GetScale () const
+{
+  return fScale;
+}
+
+
+
+TVector3D TTriangle3DContainer::GetRotations () const
+{
+  return fRotations;
+}
+
+
+
+TVector3D TTriangle3DContainer::GetTranslation () const
+{
+  return fTranslation;
+}
+
+
+
+std::string TTriangle3DContainer::GetName () const
+{
+  return fName;
 }

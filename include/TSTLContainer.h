@@ -29,6 +29,11 @@ class TSTLContainer
                   TVector3D   const& Rotations = TVector3D(0, 0, 0),
                   TVector3D   const& Translation = TVector3D(0, 0, 0),
                   std::string const& Name = "");
+
+    TTriangle3DContainer const& GetTTriangle3DContainer (size_t const) const;
+
+    size_t GetNSTL () const;
+
     
 
   private:
@@ -57,6 +62,24 @@ class TSTLContainer
 
 
 
+
+
+
+inline std::ostream& operator << (std::ostream& os, TSTLContainer const& o)
+{
+  // For easy printing
+  os << "TSTLContainer has " << o.GetNSTL() << " STL Objects" << std::endl;
+
+  size_t const N = o.GetNSTL();
+
+  for (size_t i = 0; i != N; ++i) {
+    TTriangle3DContainer T = o.GetTTriangle3DContainer(i);
+
+    os << T << std::endl;
+  }
+
+  return os;
+}
 
 
 
