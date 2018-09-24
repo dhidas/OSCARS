@@ -6789,8 +6789,8 @@ static PyObject* OSCARSSR_AddSTL (OSCARSSRObject* self, PyObject* args, PyObject
   // Calculate the spectrum given an observation point, and energy range
 
   const char* InFileName = "";
-  PyObject*   List_Translation = PyList_New(0);
-  PyObject*   List_Rotations   = PyList_New(0);
+  PyObject*   List_Translation = 0x0;
+  PyObject*   List_Rotations   = 0x0;
   double      Scale = 1;
   const char* Name = "";
 
@@ -6818,7 +6818,7 @@ static PyObject* OSCARSSR_AddSTL (OSCARSSRObject* self, PyObject* args, PyObject
   TVector3D Translation(0, 0, 0);
 
   // Check for Rotations in the input
-  if (PyList_Size(List_Rotations) != 0) {
+  if (List_Rotations != 0x0) {
     try {
       Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
     } catch (std::length_error e) {
@@ -6829,7 +6829,7 @@ static PyObject* OSCARSSR_AddSTL (OSCARSSRObject* self, PyObject* args, PyObject
 
 
   // Check for Translation in the input
-  if (PyList_Size(List_Translation) != 0) {
+  if (List_Translation != 0x0) {
     try {
       Translation = OSCARSPY::ListAsTVector3D(List_Translation);
     } catch (std::length_error e) {
@@ -6840,7 +6840,12 @@ static PyObject* OSCARSSR_AddSTL (OSCARSSRObject* self, PyObject* args, PyObject
 
 
 
-  self->obj->AddSTLFile(InFileName);
+  try {
+    self->obj->AddSTLFile(InFileName, Scale, Rotations, Translation, Name);
+  } catch (std::invalid_argument e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
+  }
 
 
   TTriangle3DContainer STLContainer;

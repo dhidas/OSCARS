@@ -151,8 +151,8 @@ void TTriangle3DContainer::ReadSTLFile (std::string const& FileName,
 
   fFileName = FileName;
   fScale = Scale;
-  fRotations = Rotations;
-  fTranslation = Translation;
+  fRotations = TVector3D(0, 0, 0);
+  fTranslation = TVector3D(0, 0, 0);
   fName = Name;
 
   this->RotateSelfXYZ(fRotations);

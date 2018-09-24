@@ -3310,7 +3310,20 @@ void OSCARSSR::CalculatePowerDensityPointsSTL (TParticleA& Particle,
   double Result_Precision = -1;
   int    Result_Level     = -1;
 
+  // FarField Origin
   TVector3D const Origin(0, 0, 0);
+
+  for (size_t ic = 0; ic < fSTLContainer.GetNSTL(); ++ic) {
+    TTriangle3DContainer const& ThisTT3DC = fSTLContainer.GetTTriangle3DContainer(ic);
+
+    for (size_t i = 0; i != ThisTT3DC.GetNPoints(); ++i) {
+      for (size_t jc = 0; jc < fSTLContainer.GetNSTL(); ++jc) {
+        // Is this box in the path of this ray, if so, check the inside elemaents
+      }
+    }
+
+  }
+
 
   std::vector<bool> IsBlocked(STLContainer.GetNPoints(), false);
   for (size_t i = 0; i != STLContainer.GetNPoints(); ++i) {
@@ -3461,7 +3474,6 @@ void OSCARSSR::AddSTLFile (std::string const& InFileName,
                            TVector3D const& Translation,
                            std::string const& Name)
 {
-  std::cout << "hello dude" << std::endl;
   fSTLContainer.AddFile(InFileName, Scale, Rotations, Translation, Name);
   return;
 }
