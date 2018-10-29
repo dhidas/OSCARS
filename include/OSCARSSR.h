@@ -386,8 +386,7 @@ class OSCARSSR
                                    int    const ReturnQuantity);
 
 
-    void CalculatePowerDensitySTL (TTriangle3DContainer& STLContainer,
-                                   double const Precision,
+    void CalculatePowerDensitySTL (double const Precision,
                                    int    const MaxLevel,
                                    int    const MaxLevelExtended,
                                    int const NParticles,
@@ -398,7 +397,7 @@ class OSCARSSR
                                    int const ReturnQuantity);
 
     void CalculatePowerDensitySTL (TParticleA& Particle,
-                                   TTriangle3DContainer& STLContainer,
+                                   TSTLContainer& STLContainer,
                                    double const Precision,
                                    int    const MaxLevel,
                                    int    const MaxLevelExtended,
@@ -406,7 +405,7 @@ class OSCARSSR
                                    int    const ReturnQuantity);
 
     void CalculatePowerDensityPointsSTL (TParticleA& Particle,
-                                         TTriangle3DContainer& STLContainer,
+                                         TSTLContainer& STLContainer,
                                          size_t const iFirst,
                                          size_t const iLast,
                                          bool& Done,

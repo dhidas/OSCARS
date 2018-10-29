@@ -10,6 +10,8 @@
 
 #include "TTriangle3D.h"
 
+#include "TVector2D.h"
+
 #include <vector>
 #include <iostream>
 #include <fstream>

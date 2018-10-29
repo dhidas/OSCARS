@@ -31,13 +31,21 @@ class TSTLContainer
                   std::string const& Name = "");
 
     TTriangle3DContainer const& GetTTriangle3DContainer (size_t const) const;
+    void WriteSTLFile (std::string const& FileName) const;
 
     size_t GetNSTL () const;
+    size_t GetNPoints () const;
 
+    TTriangle3D GetPoint (size_t const i) const;
+
+    void AddToPoint (size_t const i, double const Value);
+
+    void ClearValues ();
     
 
   private:
     std::vector<TTriangle3DContainer> fSTL;
+    std::vector<size_t> fNPoints;
     std::map<std::string, size_t> fSTLMap;
 
 };

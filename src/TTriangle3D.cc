@@ -178,7 +178,7 @@ double TTriangle3D::RayIntersectionDistance (TVector3D const& RayOrigin, TVector
 
 
   // EPSILON 0.000001
-  if (det > -1e-9 && det < 1e-9) {
+  if (det > -1e-12 && det < 1e-12) {
     return -1;
   }
   inv_det = 1.0 / det;

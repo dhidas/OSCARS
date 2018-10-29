@@ -3250,6 +3250,15 @@ static PyObject* OSCARSSR_WriteMagneticField (OSCARSSRObject* self, PyObject* ar
   if (std::strlen(OutFileName) > 0) {
     try {
       self->obj->WriteField("B", OutFileName, OutFormat, XLim, NX, YLim, NY, ZLim, NZ, Comment);
+    } catch (std::ifstream::failure e) {
+      PyErr_SetString(PyExc_ValueError, e.what());
+      return NULL;
+    } catch (std::out_of_range e) {
+      PyErr_SetString(PyExc_ValueError, e.what());
+      return NULL;
+    } catch (std::invalid_argument e) {
+      PyErr_SetString(PyExc_ValueError, e.what());
+      return NULL;
     } catch (...) {
       PyErr_SetString(PyExc_ValueError, "could not write output file");
       return NULL;
@@ -6847,17 +6856,6 @@ static PyObject* OSCARSSR_AddSTL (OSCARSSRObject* self, PyObject* args, PyObject
     return NULL;
   }
 
-
-  TTriangle3DContainer STLContainer;
-  //TTriangle3D TT(0, 0, -0.03,  0, -0.01, -0.03,  0.01, 0, -0.03, 0, 0, 1);
-  //STLContainer.Add(TT);
-  try {
-    STLContainer.ReadSTLFile(InFileName, Scale, Rotations, Translation);
-  } catch (...) {
-    PyErr_SetString(PyExc_ValueError, "Cannot read STL file");
-    return NULL;
-  }
-
   // Must return python object None in a special way
   Py_INCREF(Py_None);
   return Py_None;
@@ -6874,7 +6872,7 @@ static PyObject* OSCARSSR_AddSTL (OSCARSSRObject* self, PyObject* args, PyObject
 
 
 const char* DOC_OSCARSSR_CalculatePowerDensitySTL = R"docstring(
-calculate_power_density_stl(ifiles [, rotations, translation, ofile, bofile, stlofile, normal, scale, nparticles, gpu, ngpu, nthreads, precision, max_level, max_level_extended, quantity])
+calculate_power_density_stl(source_origin [, ofile, bofile, stlofile, nparticles, gpu, ngpu, nthreads, precision, max_level, max_level_extended, quantity])
 
 Calculate the power density on surfaces described in STL format input files
 
@@ -6884,14 +6882,8 @@ You **must** specify either both (*plane* and *width*) or *x0x1x2*
 
 Parameters
 ----------
-ifiles : list[str]
-    A list of STL files to import.
-
-rotations : list, optional
-    3-element list representing rotations around x, y, and z axes: [:math:`\theta_x, \theta_y, \theta_z`]
-
-translation : list, optional
-    3-element list representing a translation in space [x, y, z]
+source_origin: list[float, float, float]
+    Far-field origin source point in [x, y, z]
 
 ofile : str
     Output file name
@@ -6902,12 +6894,6 @@ bofile : str
 stlofile : str
     STL output file name.  Will include RGB color information in the attribute byte count, maybe
 
-normal : int
-    -1 if you wish to reverse the normal vector, 0 if you wish to ignore the +/- direction in computations, 1 if you with to use the direction of the normal vector as given. 
-
-scale : float
-    What to scale the dimensions by.  Default input is in meters.
-
 nparticles : int
     Number of particles to use for multi-particle calculations
 
@@ -6917,7 +6903,6 @@ gpu : int
 ngpu : int or list
     If ngpu is an int, use that number of gpus (if available).
     If ngpu is a list, the list should be a list of gpus you wish to use
-
 
 nthreads : int
     Number of threads to use
@@ -6953,12 +6938,7 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
 {
   // Calculate the spectrum given an observation point, and energy range
 
-  PyObject*   List_Files = PyList_New(0);
-  const char* InFileName = "";
-  PyObject*   List_Translation = PyList_New(0);
-  PyObject*   List_Rotations   = PyList_New(0);
-  int         NormalDirection = -1;    // Default to -1 for STL
-  double      Scale = 1;
+  PyObject*   List_SourceOrigin = 0x0;
   int         NParticles = 0;
   int         GPU = -1;
   PyObject*   NGPU = 0x0;
@@ -6974,15 +6954,10 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
   int const Dim = 3;
 
 
-  static const char *kwlist[] = {"ifiles",
-                                 "ifile",
-                                 "rotations",
-                                 "translation",
+  static const char *kwlist[] = {"source_origin",
                                  "ofile",
                                  "bofile",
                                  "stlofile",
-                                 "normal",
-                                 "scale",
                                  "nparticles",
                                  "gpu",
                                  "ngpu",
@@ -6993,17 +6968,12 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
                                  "quantity",
                                   NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|OsOOsssidiiOidiii",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|sssiOiidiis",
                                    const_cast<char **>(kwlist),
-                                   &List_Files,
-                                   &InFileName,
-                                   &List_Rotations,
-                                   &List_Translation,
+                                   &List_SourceOrigin,
                                    &OutFileNameText,
                                    &OutFileNameBinary,
                                    &OutFileNameSTL,
-                                   &NormalDirection,
-                                   &Scale,
                                    &NParticles,
                                    &GPU,
                                    &NGPU,
@@ -7023,27 +6993,15 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
 
 
 
-  // Vectors for rotations and translations.  Default to 0
-  TVector3D Rotations(0, 0, 0);
-  TVector3D Translation(0, 0, 0);
+  // Vectors for FF source point
+  TVector3D SourceOrigin(0, 0, 0);
 
   // Check for Rotations in the input
-  if (PyList_Size(List_Rotations) != 0) {
+  if (List_SourceOrigin != 0x0) {
     try {
-      Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
+      SourceOrigin = OSCARSPY::ListAsTVector3D(List_SourceOrigin);
     } catch (std::length_error e) {
-      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
-      return NULL;
-    }
-  }
-
-
-  // Check for Translation in the input
-  if (PyList_Size(List_Translation) != 0) {
-    try {
-      Translation = OSCARSPY::ListAsTVector3D(List_Translation);
-    } catch (std::length_error e) {
-      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'source_origin'");
       return NULL;
     }
   }
@@ -7100,44 +7058,20 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
     return NULL;
   }
 
-  TTriangle3DContainer STLContainer;
-  //TTriangle3D TT(0, 0, -0.03,  0, -0.01, -0.03,  0.01, 0, -0.03, 0, 0, 1);
-  //STLContainer.Add(TT);
+
+
   try {
-    STLContainer.ReadSTLFile(InFileName, Scale, Rotations, Translation);
-  } catch (...) {
-    PyErr_SetString(PyExc_ValueError, "Cannot read STL file");
-    return NULL;
-  }
-
-
-  TSurfacePoints_3D Surface;
-
-  for (size_t istl = 0; istl != STLContainer.GetNPoints(); ++istl) {
-    TVector3D Center = STLContainer.GetPoint(istl).GetCenter();
-    if (NormalDirection < 0) {
-      Surface.AddPoint(Center, -STLContainer.GetPoint(istl).GetNormal());
-    } else {
-      Surface.AddPoint(Center, STLContainer.GetPoint(istl).GetNormal());
-    }
-  }
-
-  // Container for Point plus scalar
-  T3DScalarContainer PowerDensityContainer;
-
-  // Actually calculate the spectrum
-  bool const Directional = NormalDirection == 0 ? false : true;
-  try {
-    self->obj->CalculatePowerDensitySTL(STLContainer,
-                                     Precision,
-                                     MaxLevel,
-                                     MaxLevelExtended,
-                                     NParticles,
-                                     NThreads,
-                                     GPU,
-                                     NumberOfGPUs,
-                                     GPUVector,
-                                     ReturnQuantity);
+    std::cout << "Tryign calculation" << std::endl;
+    self->obj->CalculatePowerDensitySTL(Precision,
+                                        MaxLevel,
+                                        MaxLevelExtended,
+                                        NParticles,
+                                        NThreads,
+                                        GPU,
+                                        NumberOfGPUs,
+                                        GPUVector,
+                                        ReturnQuantity);
+    std::cout << "after calculation" << std::endl;
 
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
@@ -7157,14 +7091,15 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
   // Write the output file if requested
   // Text output
   if (std::string(OutFileNameText) != "") {
-    PowerDensityContainer.WriteToFileText(OutFileNameText, Dim);
+    //PowerDensityContainer.WriteToFileText(OutFileNameText, Dim);
   }
 
   // Binary output
   if (std::string(OutFileNameBinary) != "") {
-    PowerDensityContainer.WriteToFileBinary(OutFileNameBinary, Dim);
+    //PowerDensityContainer.WriteToFileBinary(OutFileNameBinary, Dim);
   }
 
+  TSTLContainer const&  STLContainer = self->obj->GetSTLContainer();
   if (std::string(OutFileNameSTL) != "") {
     STLContainer.WriteSTLFile(OutFileNameSTL);
   }

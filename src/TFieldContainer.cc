@@ -303,7 +303,7 @@ void TFieldContainer::WriteToFile (std::string const& OutFileName,
     }
 
     // Check for correct input configuration
-    if (StartPoint.Mag() == 0 || Step.Mag() == 0 || N <= 0) {
+    if (Step.Mag() == 0 || N <= 0) {
       std::cerr << "ERROR: limits or npoints not correctly defined" << std::endl;
       throw std::out_of_range("limits or npoints not correctly defined");
     }

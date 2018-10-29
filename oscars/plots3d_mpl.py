@@ -450,7 +450,11 @@ def plot_power_density_scatter (V, s=10, title='Power Density [$W/mm^2$]', figsi
 
 
 
-def plot_power_density_stl (P, title='Power Density [$W/mm^2$]', elev=30, azim=30, alpha=0.8, bbox_inches='tight', transparent=True, ofile=None, colorbar=True):
+def plot_power_density_stl (P, title='Power Density [$W/mm^2$]', elev=None, azim=None, alpha=0.8, bbox_inches='tight', transparent=True, ofile=None, colorbar=True, figsize=None,
+        xlim=None, ylim=None, zlim=None,
+        xticks=None, yticks=None, zticks=None,
+        linewidths=0.05
+        ):
 
     pmax = max([p[1] for p in P])
     pmin = min([p[1] for p in P])
@@ -468,7 +472,7 @@ def plot_power_density_stl (P, title='Power Density [$W/mm^2$]', elev=30, azim=3
         ymax = max([ymax, p[0][0][2], p[0][1][2], p[0][2][2]])
         ymin = min([ymin, p[0][0][2], p[0][1][2], p[0][2][2]])
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=figsize)
     ax = Axes3D(fig)
     for p in P:
         pp = copy.deepcopy(p)
@@ -478,12 +482,22 @@ def plot_power_density_stl (P, title='Power Density [$W/mm^2$]', elev=30, azim=3
         pp[0][1][2] = p[0][1][1]
         pp[0][2][1] = p[0][2][2]
         pp[0][2][2] = p[0][2][1]
-        triangle = Poly3DCollection([pp[0]], alpha=alpha, edgecolors='b', linewidths=0.05)
+        triangle = Poly3DCollection([pp[0]], alpha=alpha, edgecolors='b', linewidths=linewidths)
         triangle.set_facecolor(m.to_rgba(pp[1]/pmax))
         #triangle.set_facecolor([1, 1-p[1]/pmax, 1-p[1]/pmax])
         ax.add_collection3d(triangle)
+
+    if xlim is not None:
+        xmin=xlim[0]
+        xmax=xlim[1]
+    if ylim is not None:
+        zmin=ylim[0]
+        zmax=ylim[1]
+    if zlim is not None:
+        ymin=zlim[0]
+        ymax=zlim[1]
  
-    #ax.view_init(elev=elev, azim=azim)
+    ax.view_init(elev=elev, azim=azim)
     plt.title(title)
     ax.invert_xaxis()
     ax.set_xlim([xmin, xmax])
@@ -492,6 +506,12 @@ def plot_power_density_stl (P, title='Power Density [$W/mm^2$]', elev=30, azim=3
     ax.set_xlabel('X [m]')
     ax.set_ylabel('Z [m]')
     ax.set_zlabel('Y [m]')
+    if xticks is not None:
+        ax.set_xticks(xticks)
+    if zticks is not None:
+        ax.set_yticks(zticks)
+    if yticks is not None:
+        ax.set_zticks(yticks)
 
     if colorbar is True:
         sm = plt.cm.ScalarMappable(cmap=cm.viridis, norm=plt.Normalize(vmin=pmin, vmax=pmax))

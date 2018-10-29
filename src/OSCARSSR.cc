@@ -3153,8 +3153,7 @@ void OSCARSSR::CalculatePowerDensityGPU (TSurfacePoints const& Surface,
 
 
 
-void OSCARSSR::CalculatePowerDensitySTL (TTriangle3DContainer& STLContainer,
-                                         double const Precision,
+void OSCARSSR::CalculatePowerDensitySTL (double const Precision,
                                          int    const MaxLevel,
                                          int    const MaxLevelExtended,
                                          int const NParticles,
@@ -3167,6 +3166,7 @@ void OSCARSSR::CalculatePowerDensitySTL (TTriangle3DContainer& STLContainer,
   // Calculates the power density in units of [W / mm^2]
   // THIS is the ENTRY POINT FOR STL Calculations typically
 
+  std::cout << "ENTRY POINT for CalculatePowerDensitySTL" << std::endl;
 
   // Check that particle has been set yet.  If fType is "" it has not been set yet
   if (fParticle.GetType() == "") {
@@ -3204,7 +3204,7 @@ void OSCARSSR::CalculatePowerDensitySTL (TTriangle3DContainer& STLContainer,
 
 
 
-  STLContainer.ClearValues();
+  fSTLContainer.ClearValues();
 
 
   // Which cpmpute method will we use, gpu, multi-thread, or single-thread
@@ -3213,8 +3213,9 @@ void OSCARSSR::CalculatePowerDensitySTL (TTriangle3DContainer& STLContainer,
   } else {
     if (NParticles == 0) {
       if (NThreadsToUse == 1) {
+        std::cout << "Sending as 1 thread" << std::endl;
         this->CalculatePowerDensitySTL(fParticle,
-                                       STLContainer,
+                                       fSTLContainer,
                                        Precision,
                                        MaxLevel,
                                        MaxLevelExtended,
@@ -3239,7 +3240,7 @@ void OSCARSSR::CalculatePowerDensitySTL (TTriangle3DContainer& STLContainer,
 
 
 void OSCARSSR::CalculatePowerDensitySTL (TParticleA& Particle,
-                                         TTriangle3DContainer& STLContainer,
+                                         TSTLContainer& STLContainer,
                                          double const Precision,
                                          int    const MaxLevel,
                                          int    const MaxLevelExtended,
@@ -3257,6 +3258,7 @@ void OSCARSSR::CalculatePowerDensitySTL (TParticleA& Particle,
   size_t const iFirst = 0;
   size_t const iLast = STLContainer.GetNPoints() - 1;
 
+  std::cout << "Sending to PointsSTL" << std::endl;
   // Calculate the power density
   CalculatePowerDensityPointsSTL(Particle,
                                  STLContainer,
@@ -3277,7 +3279,7 @@ void OSCARSSR::CalculatePowerDensitySTL (TParticleA& Particle,
 
 
 void OSCARSSR::CalculatePowerDensityPointsSTL (TParticleA& Particle,
-                                               TTriangle3DContainer& STLContainer,
+                                               TSTLContainer& STLContainer,
                                                size_t const iFirst,
                                                size_t const iLast,
                                                bool& Done,
@@ -3289,6 +3291,7 @@ void OSCARSSR::CalculatePowerDensityPointsSTL (TParticleA& Particle,
 {
   // Calculates the single particle power density in a range of points
   // in units of [watts / second / mm^2]
+  std::cout << "Entering: CalculatePowerDensityPointsSTL" << std::endl;
 
   // Check you are not requesting a level above the maximum
   if (MaxLevel > TParticleA::kMaxTrajectoryLevel) {
@@ -3313,17 +3316,18 @@ void OSCARSSR::CalculatePowerDensityPointsSTL (TParticleA& Particle,
   // FarField Origin
   TVector3D const Origin(0, 0, 0);
 
-  for (size_t ic = 0; ic < fSTLContainer.GetNSTL(); ++ic) {
-    TTriangle3DContainer const& ThisTT3DC = fSTLContainer.GetTTriangle3DContainer(ic);
+  //for (size_t ic = 0; ic < fSTLContainer.GetNSTL(); ++ic) {
+  //  TTriangle3DContainer const& ThisTT3DC = fSTLContainer.GetTTriangle3DContainer(ic);
 
-    for (size_t i = 0; i != ThisTT3DC.GetNPoints(); ++i) {
-      for (size_t jc = 0; jc < fSTLContainer.GetNSTL(); ++jc) {
-        // Is this box in the path of this ray, if so, check the inside elemaents
-      }
-    }
+  //  for (size_t i = 0; i != ThisTT3DC.GetNPoints(); ++i) {
+  //    for (size_t jc = 0; jc < fSTLContainer.GetNSTL(); ++jc) {
+  //      // Is this box in the path of this ray, if so, check the inside elemaents
+  //    }
+  //  }
 
-  }
+  //}
 
+  std::cout << "STLContainer.GetNPoints: " << STLContainer.GetNPoints() << std::endl;
 
   std::vector<bool> IsBlocked(STLContainer.GetNPoints(), false);
   for (size_t i = 0; i != STLContainer.GetNPoints(); ++i) {
