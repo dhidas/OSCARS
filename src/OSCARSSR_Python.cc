@@ -6938,7 +6938,7 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
 {
   // Calculate the spectrum given an observation point, and energy range
 
-  PyObject*   List_SourceOrigin = 0x0;
+  PyObject*   List_FarfieldOrigin = 0x0;
   int         NParticles = 0;
   int         GPU = -1;
   PyObject*   NGPU = 0x0;
@@ -6954,7 +6954,7 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
   int const Dim = 3;
 
 
-  static const char *kwlist[] = {"source_origin",
+  static const char *kwlist[] = {"farfield_origin",
                                  "ofile",
                                  "bofile",
                                  "stlofile",
@@ -6970,7 +6970,7 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
 
   if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|sssiOiidiis",
                                    const_cast<char **>(kwlist),
-                                   &List_SourceOrigin,
+                                   &List_FarfieldOrigin,
                                    &OutFileNameText,
                                    &OutFileNameBinary,
                                    &OutFileNameSTL,
@@ -6994,18 +6994,17 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
 
 
   // Vectors for FF source point
-  TVector3D SourceOrigin(0, 0, 0);
+  TVector3D FarfieldOrigin(0, 0, 0);
 
-  // Check for Rotations in the input
-  if (List_SourceOrigin != 0x0) {
+  // Check for FF Origin in the input
+  if (List_FarfieldOrigin != 0x0) {
     try {
-      SourceOrigin = OSCARSPY::ListAsTVector3D(List_SourceOrigin);
+      FarfieldOrigin = OSCARSPY::ListAsTVector3D(List_FarfieldOrigin);
     } catch (std::length_error e) {
-      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'source_origin'");
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'farfield_origin'");
       return NULL;
     }
   }
-
 
 
   // Check number of particles
@@ -7062,7 +7061,8 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
 
   try {
     std::cout << "Tryign calculation" << std::endl;
-    self->obj->CalculatePowerDensitySTL(Precision,
+    self->obj->CalculatePowerDensitySTL(FarfieldOrigin,
+                                        Precision,
                                         MaxLevel,
                                         MaxLevelExtended,
                                         NParticles,

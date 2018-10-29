@@ -386,7 +386,8 @@ class OSCARSSR
                                    int    const ReturnQuantity);
 
 
-    void CalculatePowerDensitySTL (double const Precision,
+    void CalculatePowerDensitySTL (TVector3D const& FarfieldOrigin,
+                                   double const Precision,
                                    int    const MaxLevel,
                                    int    const MaxLevelExtended,
                                    int const NParticles,
@@ -396,7 +397,8 @@ class OSCARSSR
                                    std::vector<int> VGPU,
                                    int const ReturnQuantity);
 
-    void CalculatePowerDensitySTL (TParticleA& Particle,
+    void CalculatePowerDensitySTL (TVector3D const& FarfieldOrigin,
+                                   TParticleA& Particle,
                                    TSTLContainer& STLContainer,
                                    double const Precision,
                                    int    const MaxLevel,
@@ -404,7 +406,8 @@ class OSCARSSR
                                    double const Weight,
                                    int    const ReturnQuantity);
 
-    void CalculatePowerDensityPointsSTL (TParticleA& Particle,
+    void CalculatePowerDensityPointsSTL (TVector3D const& FarfieldOrigin,
+                                         TParticleA& Particle,
                                          TSTLContainer& STLContainer,
                                          size_t const iFirst,
                                          size_t const iLast,
@@ -414,6 +417,16 @@ class OSCARSSR
                                          int    const MaxLevelExtended,
                                          double const Weight,
                                          int    const ReturnQuantity);
+
+    void CalculatePowerDensityThreadsSTL (TVector3D const& FarfieldOrigin,
+                                          TParticleA& Particle,
+                                          TSTLContainer& STLContainer,
+                                          int const NThreads,
+                                          double const Precision,
+                                          int    const MaxLevel,
+                                          int    const MaxLevelExtended,
+                                          double const Weight,
+                                          int    const ReturnQuantity);
 
     void AddSTLFile (std::string const& InFileName,
                      double const Scale = 1,

@@ -3153,7 +3153,8 @@ void OSCARSSR::CalculatePowerDensityGPU (TSurfacePoints const& Surface,
 
 
 
-void OSCARSSR::CalculatePowerDensitySTL (double const Precision,
+void OSCARSSR::CalculatePowerDensitySTL (TVector3D const& FarfieldOrigin,
+                                         double const Precision,
                                          int    const MaxLevel,
                                          int    const MaxLevelExtended,
                                          int const NParticles,
@@ -3214,7 +3215,8 @@ void OSCARSSR::CalculatePowerDensitySTL (double const Precision,
     if (NParticles == 0) {
       if (NThreadsToUse == 1) {
         std::cout << "Sending as 1 thread" << std::endl;
-        this->CalculatePowerDensitySTL(fParticle,
+        this->CalculatePowerDensitySTL(FarfieldOrigin,
+                                       fParticle,
                                        fSTLContainer,
                                        Precision,
                                        MaxLevel,
@@ -3222,7 +3224,15 @@ void OSCARSSR::CalculatePowerDensitySTL (double const Precision,
                                        1,
                                        ReturnQuantity);
       } else {
-        throw;
+        this->CalculatePowerDensityThreadsSTL(FarfieldOrigin,
+                                              fParticle,
+                                              fSTLContainer,
+                                              NThreadsToUse,
+                                              Precision,
+                                              MaxLevel,
+                                              MaxLevelExtended,
+                                              1,
+                                              ReturnQuantity);
       }
     } else {
       throw;
@@ -3239,7 +3249,8 @@ void OSCARSSR::CalculatePowerDensitySTL (double const Precision,
 
 
 
-void OSCARSSR::CalculatePowerDensitySTL (TParticleA& Particle,
+void OSCARSSR::CalculatePowerDensitySTL (TVector3D const& FarfieldOrigin,
+                                         TParticleA& Particle,
                                          TSTLContainer& STLContainer,
                                          double const Precision,
                                          int    const MaxLevel,
@@ -3260,7 +3271,8 @@ void OSCARSSR::CalculatePowerDensitySTL (TParticleA& Particle,
 
   std::cout << "Sending to PointsSTL" << std::endl;
   // Calculate the power density
-  CalculatePowerDensityPointsSTL(Particle,
+  CalculatePowerDensityPointsSTL(FarfieldOrigin,
+                                 Particle,
                                  STLContainer,
                                  iFirst,
                                  iLast,
@@ -3278,7 +3290,8 @@ void OSCARSSR::CalculatePowerDensitySTL (TParticleA& Particle,
 
 
 
-void OSCARSSR::CalculatePowerDensityPointsSTL (TParticleA& Particle,
+void OSCARSSR::CalculatePowerDensityPointsSTL (TVector3D const& FarfieldOrigin,
+                                               TParticleA& Particle,
                                                TSTLContainer& STLContainer,
                                                size_t const iFirst,
                                                size_t const iLast,
@@ -3313,9 +3326,6 @@ void OSCARSSR::CalculatePowerDensityPointsSTL (TParticleA& Particle,
   double Result_Precision = -1;
   int    Result_Level     = -1;
 
-  // FarField Origin
-  TVector3D const Origin(0, 0, 0);
-
   //for (size_t ic = 0; ic < fSTLContainer.GetNSTL(); ++ic) {
   //  TTriangle3DContainer const& ThisTT3DC = fSTLContainer.GetTTriangle3DContainer(ic);
 
@@ -3329,12 +3339,12 @@ void OSCARSSR::CalculatePowerDensityPointsSTL (TParticleA& Particle,
 
   std::cout << "STLContainer.GetNPoints: " << STLContainer.GetNPoints() << std::endl;
 
-  std::vector<bool> IsBlocked(STLContainer.GetNPoints(), false);
-  for (size_t i = 0; i != STLContainer.GetNPoints(); ++i) {
+  std::vector<bool> IsBlocked(iLast - iFirst + 1, false);
+  for (size_t i = iFirst; i != iLast; ++i) {
 
     // Get direction vector of ray
-    double const PointDistance = (STLContainer.GetPoint(i).GetCenter() - Origin).Mag();
-    TVector3D Dir = (STLContainer.GetPoint(i).GetCenter() - Origin).UnitVector();
+    double const PointDistance = (STLContainer.GetPoint(i).GetCenter() - FarfieldOrigin).Mag();
+    TVector3D Dir = (STLContainer.GetPoint(i).GetCenter() - FarfieldOrigin).UnitVector();
 
     for (size_t j = 0; j != STLContainer.GetNPoints(); ++j) {
       if (i == j) {
@@ -3342,9 +3352,9 @@ void OSCARSSR::CalculatePowerDensityPointsSTL (TParticleA& Particle,
       }
 
       // Test if in FF this triangle is blocked
-      double const IntersectionDistance = STLContainer.GetPoint(j).RayIntersectionDistance(Origin, Dir);
+      double const IntersectionDistance = STLContainer.GetPoint(j).RayIntersectionDistance(FarfieldOrigin, Dir);
       if (IntersectionDistance > 0 && IntersectionDistance < PointDistance) {
-        IsBlocked[i] = true;
+        IsBlocked[i - iFirst] = true;
         break;
       }
     }
@@ -3352,7 +3362,7 @@ void OSCARSSR::CalculatePowerDensityPointsSTL (TParticleA& Particle,
 
   // Loop over all points in the spectrum container
   for (size_t i = iFirst; i <= iLast; ++i) {
-    if (IsBlocked[i]) {
+    if (IsBlocked[i - iFirst]) {
       continue;
     }
 
@@ -3466,6 +3476,123 @@ void OSCARSSR::CalculatePowerDensityPointsSTL (TParticleA& Particle,
 
   return;
 }
+
+
+
+
+
+
+void OSCARSSR::CalculatePowerDensityThreadsSTL (TVector3D const& FarfieldOrigin,
+                                                TParticleA& Particle,
+                                                TSTLContainer& STLContainer,
+                                                int const NThreads,
+                                                double const Precision,
+                                                int    const MaxLevel,
+                                                int    const MaxLevelExtended,
+                                                double const Weight,
+                                                int    const ReturnQuantity)
+{
+  // Calculates the single particle power density on surface
+  // in units of [watts / second / mm^2]
+  //
+  // Surface - Observation Points
+
+  // Calculate trajectory if it doesn't exist
+  if (Particle.GetTrajectory().GetNPoints() == 0) {
+    this->CalculateTrajectory(Particle);
+  }
+
+
+
+  // Vector for storing threads to rejoin
+  std::vector<std::thread> Threads;
+
+  // Number of points in spectrum
+  size_t const NPoints = STLContainer.GetNPoints();
+
+  // How many threads to start in the first for loop
+  size_t const NThreadsActual = NPoints > (size_t) NThreads ? NThreads : NPoints;
+
+  // Keep track of which threads are finished and re-joined
+  bool *Done = new bool[NThreadsActual];
+  bool *Joined = new bool[NThreadsActual];
+
+  // Number per thread plus remainder to be added to first threads
+  size_t const NPerThread = NPoints / NThreadsActual;
+  size_t const NRemainder = NPoints % NThreadsActual;
+
+  // Start threads and keep in vector
+  for (size_t it = 0; it != NThreadsActual; ++it) {
+
+    // First and last points for each thread
+    size_t const iFirst = it < NRemainder ? NPerThread * it + it: NPerThread * it + NRemainder;
+    size_t const iLast  = it < NRemainder ? iFirst + NPerThread : iFirst + NPerThread - 1;
+
+    // Set Done and joined to false for this thread
+    Done[it] = false;
+    Joined[it] = false;
+
+    // Start thread for these points
+    Threads.push_back(std::thread(&OSCARSSR::CalculatePowerDensityPointsSTL,
+                                  this,
+                                  std::ref(FarfieldOrigin),
+                                  std::ref(Particle),
+                                  std::ref(STLContainer),
+                                  iFirst,
+                                  iLast,
+                                  std::ref(Done[it]),
+                                  Precision,
+                                  MaxLevel,
+                                  MaxLevelExtended,
+                                  Weight,
+                                  ReturnQuantity));
+  }
+
+  // Are all of the threads finished or not?  Continue loop until all come back.
+  bool AllThreadsFinished = false;
+  size_t NThreadsFinished = 0;
+  while (!AllThreadsFinished) {
+
+    // So as to not use the current thread at 100%
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+    // Check all threads
+    for (size_t it = 0; it != NThreadsActual; ++it) {
+
+      if (Done[it] && !Joined[it]) {
+        Threads[it].join();
+        Joined[it] = true;
+        ++NThreadsFinished;
+      }
+    }
+
+    // If the number finished is equal to the number of points total then we're done
+    if (NThreadsFinished == NThreadsActual) {
+      AllThreadsFinished = true;
+    }
+  }
+
+
+  // Clear all threads
+  Threads.clear();
+
+  // Delete my arrays, I hate new for this purpose
+  delete [] Done;
+  delete [] Joined;
+
+  return;
+}
+
+
+
+
+
+
+
+
+
+
+
 
 
 
