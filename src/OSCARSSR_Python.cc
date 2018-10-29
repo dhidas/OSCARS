@@ -7060,7 +7060,6 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
 
 
   try {
-    std::cout << "Tryign calculation" << std::endl;
     self->obj->CalculatePowerDensitySTL(FarfieldOrigin,
                                         Precision,
                                         MaxLevel,
@@ -7071,7 +7070,6 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
                                         NumberOfGPUs,
                                         GPUVector,
                                         ReturnQuantity);
-    std::cout << "after calculation" << std::endl;
 
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
@@ -7151,6 +7149,81 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
 
   return PList;
 }
+
+
+
+
+
+
+
+const char* DOC_OSCARSSR_ClearSTL = R"docstring(
+clear_stl()
+
+Remove all of the existing STL objects
+
+Parameters
+----------
+None
+
+Returns
+-------
+None
+)docstring";
+static PyObject* OSCARSSR_ClearSTL (OSCARSSRObject* self)
+{
+  // Clear all magnetic fields in the OSCARSSR object
+  self->obj->ClearSTL();
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
+
+const char* DOC_OSCARSSR_RemoveSTL = R"docstring(
+remove_stl(name)
+
+Remove all of the existing STL objects
+
+Parameters
+----------
+name : str
+    Name of stl object to remove
+
+Returns
+-------
+None
+)docstring";
+static PyObject* OSCARSSR_RemoveSTL (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
+{
+  // Remove stl objects by name
+
+  char const* Name = "";
+
+  // Input variables and parsing
+  static const char *kwlist[] = {"name",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char **>(kwlist),
+                                   &Name
+                                   )) {
+    return NULL;
+  }
+
+  // Remove fields with name name
+  self->obj->RemoveSTL(Name);
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 
 
 
@@ -9390,6 +9463,8 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   {"calculate_power_density_rectangle", (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensityRectangle},
   {"add_stl",                           (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddSTL},
   {"calculate_power_density_stl",       (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensitySTL},
+  {"clear_stl",                         (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_ClearSTL},
+  {"remove_stl",                        (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_RemoveSTL},
   {"print_stl",                         (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_PrintSTL},
   {"calculate_power_density_line",      (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensityLine},
 
@@ -9513,6 +9588,8 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"calculate_power_density_rectangle", (PyCFunction) OSCARSSR_CalculatePowerDensityRectangle,  METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensityRectangle},
   {"add_stl",                           (PyCFunction) OSCARSSR_AddSTL,                          METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddSTL},
   {"calculate_power_density_stl",       (PyCFunction) OSCARSSR_CalculatePowerDensitySTL,        METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensitySTL},
+  {"clear_stl",                         (PyCFunction) OSCARSSR_ClearSTL,                        METH_NOARGS,                  DOC_OSCARSSR_ClearSTL},
+  {"remove_stl",                        (PyCFunction) OSCARSSR_RemoveSTL,                       METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_RemoveSTL},
   {"print_stl",                         (PyCFunction) OSCARSSR_PrintSTL,                        METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_PrintSTL},
   {"calculate_power_density_line",      (PyCFunction) OSCARSSR_CalculatePowerDensityLine,       METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensityLine},
 

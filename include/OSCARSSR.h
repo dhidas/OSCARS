@@ -434,6 +434,8 @@ class OSCARSSR
                      TVector3D const& Translation = TVector3D(0, 0, 0),
                      std::string const& Name = "");
 
+    void ClearSTL ();
+    void RemoveSTL (std::string const& Name);
 
 
     double CalculateTotalPower (double const Precision = 0.01,

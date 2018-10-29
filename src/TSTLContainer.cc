@@ -181,3 +181,33 @@ void TSTLContainer::ClearValues ()
 
   return;
 }
+
+
+
+
+void TSTLContainer::Clear ()
+{
+  fSTL.clear();
+  fNPoints.clear();
+  fSTLMap.clear();
+
+  return;
+}
+
+
+
+
+void TSTLContainer::Remove (std::string const& Name)
+{
+  // Remove field that matches the input name
+
+  while (fSTLMap.count(Name) != 0) {
+    size_t const i = fSTLMap[Name];
+
+    fSTL.erase(fSTL.begin() + i);
+    fNPoints.erase(fNPoints.begin() + i);
+    fSTLMap.erase(Name);
+  }
+
+  return;
+}

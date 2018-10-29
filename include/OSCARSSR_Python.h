@@ -94,6 +94,12 @@ static PyObject* OSCARSSR_CalculateSpectrum (OSCARSSRObject* self, PyObject* arg
 static PyObject* OSCARSSR_CalculateTotalPower (OSCARSSRObject* self, PyObject* args, PyObject *keywds);
 static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject* args, PyObject *keywds);
 static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, PyObject* args, PyObject *keywds);
+
+static PyObject* OSCARSSR_AddSTL (OSCARSSRObject* self, PyObject* args, PyObject *keywds);
+static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObject* args, PyObject *keywds);
+static PyObject* OSCARSSR_ClearSTL (OSCARSSRObject* self);
+static PyObject* OSCARSSR_RemoveSTL (OSCARSSRObject* self, PyObject* args, PyObject* keywds);
+
 static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, PyObject *keywds);
 static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject* args, PyObject *keywds);
 static PyObject* OSCARSSR_WriteSpectrum (OSCARSSRObject* self, PyObject* args, PyObject *keywds);

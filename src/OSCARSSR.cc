@@ -3167,7 +3167,6 @@ void OSCARSSR::CalculatePowerDensitySTL (TVector3D const& FarfieldOrigin,
   // Calculates the power density in units of [W / mm^2]
   // THIS is the ENTRY POINT FOR STL Calculations typically
 
-  std::cout << "ENTRY POINT for CalculatePowerDensitySTL" << std::endl;
 
   // Check that particle has been set yet.  If fType is "" it has not been set yet
   if (fParticle.GetType() == "") {
@@ -3214,7 +3213,6 @@ void OSCARSSR::CalculatePowerDensitySTL (TVector3D const& FarfieldOrigin,
   } else {
     if (NParticles == 0) {
       if (NThreadsToUse == 1) {
-        std::cout << "Sending as 1 thread" << std::endl;
         this->CalculatePowerDensitySTL(FarfieldOrigin,
                                        fParticle,
                                        fSTLContainer,
@@ -3235,7 +3233,37 @@ void OSCARSSR::CalculatePowerDensitySTL (TVector3D const& FarfieldOrigin,
                                               ReturnQuantity);
       }
     } else {
-      throw;
+      // Weight this by the number of particles
+      double const Weight = 1.0 / (double) NParticles;
+
+      // Loop over particles
+      for (int i = 0; i != NParticles; ++i) {
+
+        // Set a new random particle
+        this->SetNewParticle();
+        this->CalculateTrajectory();
+
+        if (NThreadsToUse == 1) {
+        this->CalculatePowerDensitySTL(FarfieldOrigin,
+                                       fParticle,
+                                       fSTLContainer,
+                                       Precision,
+                                       MaxLevel,
+                                       MaxLevelExtended,
+                                       Weight,
+                                       ReturnQuantity);
+        } else {
+        this->CalculatePowerDensityThreadsSTL(FarfieldOrigin,
+                                              fParticle,
+                                              fSTLContainer,
+                                              NThreadsToUse,
+                                              Precision,
+                                              MaxLevel,
+                                              MaxLevelExtended,
+                                              Weight,
+                                              ReturnQuantity);
+        }
+      }
     }
   }
 
@@ -3269,7 +3297,6 @@ void OSCARSSR::CalculatePowerDensitySTL (TVector3D const& FarfieldOrigin,
   size_t const iFirst = 0;
   size_t const iLast = STLContainer.GetNPoints() - 1;
 
-  std::cout << "Sending to PointsSTL" << std::endl;
   // Calculate the power density
   CalculatePowerDensityPointsSTL(FarfieldOrigin,
                                  Particle,
@@ -3304,7 +3331,6 @@ void OSCARSSR::CalculatePowerDensityPointsSTL (TVector3D const& FarfieldOrigin,
 {
   // Calculates the single particle power density in a range of points
   // in units of [watts / second / mm^2]
-  std::cout << "Entering: CalculatePowerDensityPointsSTL" << std::endl;
 
   // Check you are not requesting a level above the maximum
   if (MaxLevel > TParticleA::kMaxTrajectoryLevel) {
@@ -3337,7 +3363,6 @@ void OSCARSSR::CalculatePowerDensityPointsSTL (TVector3D const& FarfieldOrigin,
 
   //}
 
-  std::cout << "STLContainer.GetNPoints: " << STLContainer.GetNPoints() << std::endl;
 
   std::vector<bool> IsBlocked(iLast - iFirst + 1, false);
   for (size_t i = iFirst; i != iLast; ++i) {
@@ -3613,7 +3638,25 @@ void OSCARSSR::AddSTLFile (std::string const& InFileName,
 
 
 
+void OSCARSSR::ClearSTL ()
+{
+  // Clear STL object info
+  fSTLContainer.Clear();
+  return;
+}
 
+
+
+
+
+void OSCARSSR::RemoveSTL (std::string const& Name)
+{
+  // Remove all STL with the given name
+
+  this->fSTLContainer.Remove(Name);
+
+  return;
+}
 
 
 

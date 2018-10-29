@@ -41,6 +41,8 @@ class TSTLContainer
     void AddToPoint (size_t const i, double const Value);
 
     void ClearValues ();
+    void Clear ();
+    void Remove (std::string const&);
     
 
   private:
