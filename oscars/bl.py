@@ -599,7 +599,7 @@ class bl(oscars.lut.lut1d):
         self.osr.clear_bfields()
         mapping = oscars.util.read_file_list_with_header(self.bfield_mapping_1d_filename)
 
-        translation = mapping[3]
+        translation = mapping.translation
         if 'translation' in self.bfield_kwargs:
             t = self.bfield_kwargs['translation']
             if len(t) != 3:
@@ -608,7 +608,14 @@ class bl(oscars.lut.lut1d):
             for i in range(3):
                 translation[i] += t[i]
 
-        self.osr.add_bfield_interpolated(mapping=mapping[0], iformat=mapping[1], rotations=mapping[2], translation=translation, scale=mapping[4], parameter=gap)
+        self.osr.add_bfield_interpolated(
+            mapping=mapping.mapping,
+            iformat=mapping.format,
+            rotations=mapping.rotations,
+            translation=translation,
+            scale=mapping.scale,
+            parameter=gap
+        )
 
         self.gap = gap
 
