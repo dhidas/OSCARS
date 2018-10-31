@@ -129,6 +129,7 @@ void OSCARSTH::DipoleSpectrumEnergyAngleIntegrated (double const BField,
     Spectrum.SetFlux(i, DipoleSpectrumAngleIntegrated(BField, BeamEnergy_GeV, Spectrum.GetEnergy(i)));
   }
 
+
   return;
 }
 

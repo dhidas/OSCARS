@@ -1557,7 +1557,7 @@ static PyObject* OSCARSTH_WigglerSpectrum (OSCARSTHObject* self, PyObject* args,
   PyObject*   List_EnergyRange_eV  = PyList_New(0);
   PyObject*   List_EnergyPoints_eV = PyList_New(0);
   double      Energy_eV            = 0;
-  bool        AngleIntegrated      = false;
+  int         AngleIntegratedInput = 0;
   PyObject*   List_AngleRange      = PyList_New(0);
   PyObject*   List_AnglePoints     = PyList_New(0);
   double      Angle                = 0;
@@ -1590,7 +1590,7 @@ static PyObject* OSCARSTH_WigglerSpectrum (OSCARSTHObject* self, PyObject* args,
                                    &List_EnergyRange_eV,
                                    &List_EnergyPoints_eV,
                                    &Energy_eV,
-                                   &AngleIntegrated,
+                                   &AngleIntegratedInput,
                                    &List_AngleRange,
                                    &List_AnglePoints,
                                    &Angle,
@@ -1599,6 +1599,8 @@ static PyObject* OSCARSTH_WigglerSpectrum (OSCARSTHObject* self, PyObject* args,
                                    &OutFileNameBinary)) {
     return NULL;
   }
+
+  bool const AngleIntegrated = AngleIntegratedInput == 1 ? true : false;
 
   // CHeck if beam is ok
   if (!self->obj->CheckBeam()) {
@@ -1677,6 +1679,7 @@ static PyObject* OSCARSTH_WigglerSpectrum (OSCARSTHObject* self, PyObject* args,
     PyErr_SetString(PyExc_ValueError, "Incorrect combination of or missing input parameters.  Please see documentation for this function");
     return NULL;
   }
+
 
   // Insert factor for Wiggler
   SpectrumContainer.Scale(2. * NPeriods);
