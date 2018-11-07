@@ -1,6 +1,7 @@
 #include "TTriangle3DContainer.h"
 
 #include <cstdint>
+#include <stdexcept>
 
 TTriangle3DContainer::TTriangle3DContainer ()
 {
