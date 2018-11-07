@@ -48,7 +48,7 @@ class bl(oscars.lut.lut1d):
         if base_path is not None:
             self.base_path = base_path
         else:
-            self.base_path = os.path.join(os.sep, 'Users', 'dhidas', 'OSCARSDATA')
+            self.base_path = os.path.join(os.sep, 'GPFS', 'APC', 'dhidas', 'OSCARSDATA')
 
         if facility is None or beamline is None or device is None:
             print('You can select from the available facility, beamline, and device list:')
