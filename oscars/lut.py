@@ -439,16 +439,13 @@ class lut1d:
                     v = line.split()
                     if len(v) == 0:
                         continue
-                    if len(v) != 5:
-                        raise IndexError('Incorrect number of elements found')
                         
                     h = int(v[0])
                     en = float(v[1])
                     fl = float(v[2])
                     w = float(v[3])
-                    d = v[4] in ['True', '1']
-                    if not d:
-                        print(d, gap_fn[1])
+                    if len(v) == 5 and v[4] not in ['True', '1']:
+                        print(v[4], gap_fn[1])
                     
                     if h not in harmonics:
                         harmonics[h] = []

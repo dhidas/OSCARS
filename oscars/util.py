@@ -12,6 +12,16 @@ import matplotlib.pyplot as plt
 from math import pi, sqrt, cos, sin, atan
 
 
+
+class mapping:
+    mapping=None
+    rotations=[0, 0, 0]
+    translation=[0, 0, 0]
+    scale=[]
+
+
+
+
 def read_file_list_with_header (ifile, idir=None):
     """
     read a list of parameters and filenames from a file.
@@ -64,8 +74,14 @@ def read_file_list_with_header (ifile, idir=None):
             fn = os.path.join(mydir, ' '.join(ls[1:]))
             
             mylist.append([pv, fn])
-            
-    return [mylist, iformat, rotations, translation, scale]
+    mymap = mapping()
+    mymap.mapping = mylist
+    mymap.format = iformat
+    mymap.rotations = rotations
+    mymap.translation = translation
+    mymap.scale = scale
+    return mymap
+    #return [mylist, iformat, rotations, translation, scale]
 
 
 
