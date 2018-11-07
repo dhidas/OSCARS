@@ -65,7 +65,7 @@ class bl(oscars.lut.lut1d):
         self.name = None
 
         self.gap = None
-        self.phase = None
+        self.phase = 0
         self.phase_mode = None
 
         self.osr = oscars.sr.sr(gpu=gpu, nthreads=nthreads)
