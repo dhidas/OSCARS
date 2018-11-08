@@ -10,6 +10,7 @@ import oscars.plots_mpl
 import warnings
 import configparser
 import os
+import glob
 
 
 class bl(oscars.lut.lut1d):
@@ -66,7 +67,7 @@ class bl(oscars.lut.lut1d):
 
         self.gap = None
         self.phase = 0
-        self.phase_mode = None
+        self.phase_mode = 'planar'
 
         self.osr = oscars.sr.sr(gpu=gpu, nthreads=nthreads)
         self.oth = oscars.th.th(gpu=gpu, nthreads=nthreads)
@@ -88,7 +89,7 @@ class bl(oscars.lut.lut1d):
         # Beamline and Device path
         self.beamline_path = os.path.join(self.base_path, 'Facilities', facility, beamline)
         self.device_path = os.path.join(self.beamline_path, device)
-        self.bfield_path = os.path.join(self.device_path, 'bfield')
+        self.bfield_path = os.path.join(self.device_path, 'bfield', self.phase_mode)
 
         # Setup beam
         if 'beam' in self.config:
@@ -138,7 +139,6 @@ class bl(oscars.lut.lut1d):
 
             self.bfield_kwargs = a
 
-        self.phase_mode = None
         if 'general' in self.config:
             g = self.config['general']
 
@@ -149,8 +149,7 @@ class bl(oscars.lut.lut1d):
                 self.name = self.device
 
             if 'default_mode' in g: self.phase_mode = g['default_mode']
-        else:
-            self.phase_mode = 'planar'
+        self.bfield_path = os.path.join(self.device_path, 'bfield', self.phase_mode)
 
 
         # Find all modes from directory
@@ -171,17 +170,19 @@ class bl(oscars.lut.lut1d):
                 self.bfield_mapping_1d_filename = os.path.join(self.bfield_path, self.phase_mode, 'file_list_1d.txt')
             if os.path.isfile(os.path.join(self.bfield_path, self.phase_mode, 'file_list_2d.txt')):
                 self.bfield_mapping_2d_filename = os.path.join(self.bfield_path, self.phase_mode, 'file_list_2d.txt')
-            if os.path.isfile(os.path.join(self.bfield_path, self.phase_mode, 'lut1d.txt')):
-                self.lut1d_filename = os.path.join(self.bfield_path, self.phase_mode, 'lut1d.txt')
+            if os.path.isfile(os.path.join(self.bfield_path, 'lut1d.txt')):
+                self.lut1d_filename = os.path.join(self.bfield_path, 'lut1d.txt')
                 self.read_file_lut1d(self.lut1d_filename)
                 self.has_lut1d = True
-            if os.path.isfile(os.path.join(self.bfield_path, self.phase_mode, 'lut2d.txt')):
-                self.lut2d_filename = os.path.join(self.bfield_path, self.phase_mode, 'lut2d.txt')
+            if os.path.isfile(os.path.join(self.bfield_path, 'lut2d.txt')):
+                self.lut2d_filename = os.path.join(self.bfield_path, 'lut2d.txt')
                 #self.read_file_lut2d( self.lut2d_filename)
                 self.has_lut2d = True
         else:
             warnings.warn('phase_mode is None.  no bfield or LUT setup')
 
+        self.spectrum_path = os.path.join(self.device_path, 'spectrum', self.phase_mode)
+        self.harmonics_path = os.path.join(self.device_path, 'harmonics', self.phase_mode)
 
         # Setup spectrum arguments
         self.spectrum_kwargs= None
@@ -696,7 +697,8 @@ class bl(oscars.lut.lut1d):
 
 
     def summary (self, gap=None):
-        """Print some summary information and plots
+        """
+        Print some summary information and plots
         
         Parameters
         ----------
@@ -735,3 +737,116 @@ class bl(oscars.lut.lut1d):
             print('Estimated total power radiated:', round(self.osr.calculate_total_power(), 3), '[W]')
 
         return
+
+
+    def get_spectrum_files (self, pattern='spec*', directory=None):
+        """
+        Get the list of spectrum files that exists for this phase_mode.  Used in energy/harmonics calculations (Not so useful for general users)
+        
+        Parameters
+        ----------
+        pattern : str
+            files will be matched to this pattern using glob
+
+        directory : str
+            Alternative directiry to look at.  Typically should use the default.
+
+        Returns
+        -------
+        Sorted list of files
+        """
+        if directory is None:
+            directory = self.spectrum_path
+
+        files = glob.glob(os.path.join(directory, pattern))
+        files.sort()
+
+        return files
+
+
+    def get_spectrum_file_gap (self, filename):
+        """
+        Get spectrum gap from filename (Not so useful for general users)
+        
+        Parameters
+        ----------
+        filename : str
+            Name of file to parse
+
+
+        Returns
+        -------
+        float - gap
+        """
+
+        return float(os.path.splitext(os.path.basename(filename).split('_')[-1])[0])
+
+
+    def get_spectrum_file_phase (self, filename):
+        """
+        Get spectrum phase from filename (Not so useful for general users)
+        
+        Parameters
+        ----------
+        filename : str
+            Name of file to parse
+
+
+        Returns
+        -------
+        float - gap
+        """
+
+        return float(os.path.basename(f).split('_')[-3])
+
+
+    def get_filename (self, gap, phase=0.0):
+        """
+        Get common output name (Not so useful for general users)
+        
+        Parameters
+        ----------
+        gap : float
+            gap
+
+        phase : float
+            phase - default is 0.0
+
+        Returns
+        -------
+        str : filename formated output
+        """
+
+        return '{}_{}_{}_phase_{:+08.3f}_gap_{:07.3f}'.format(self.beamline, self.device, self.phase_mode, phase, gap)
+
+
+
+    def parse_filename (self, filename):
+        """
+        parse common output name (Not so useful for general users)
+        
+        Parameters
+        ----------
+        filename : str
+            Name of file to parse
+
+        Returns
+        -------
+        obj : with gap, phase, phase_mode, device, beamline
+        """
+
+        class fileinfo:
+
+            def __init__ (self, filename):
+                fields = os.path.basename(filename).split('_')[-7:]
+                self.gap = float(os.path.splitext(fields[-1])[0])
+                self.phase = float(fields[-3])
+                self.phase_mode = fields[-5]
+                self.device = fields[-6]
+                self.beamline = fields[-7]
+
+                del fields
+
+        a = fileinfo(filename)
+
+        return a
