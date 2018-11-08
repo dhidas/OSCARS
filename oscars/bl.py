@@ -166,10 +166,10 @@ class bl(oscars.lut.lut1d):
 
         # Set bfield map and lookup table paths
         if self.phase_mode is not None:
-            if os.path.isfile(os.path.join(self.bfield_path, self.phase_mode, 'file_list_1d.txt')):
-                self.bfield_mapping_1d_filename = os.path.join(self.bfield_path, self.phase_mode, 'file_list_1d.txt')
-            if os.path.isfile(os.path.join(self.bfield_path, self.phase_mode, 'file_list_2d.txt')):
-                self.bfield_mapping_2d_filename = os.path.join(self.bfield_path, self.phase_mode, 'file_list_2d.txt')
+            if os.path.isfile(os.path.join(self.bfield_path, 'file_list_1d.txt')):
+                self.bfield_mapping_1d_filename = os.path.join(self.bfield_path, 'file_list_1d.txt')
+            if os.path.isfile(os.path.join(self.bfield_path, 'file_list_2d.txt')):
+                self.bfield_mapping_2d_filename = os.path.join(self.bfield_path, 'file_list_2d.txt')
             if os.path.isfile(os.path.join(self.bfield_path, 'lut1d.txt')):
                 self.lut1d_filename = os.path.join(self.bfield_path, 'lut1d.txt')
                 self.read_file_lut1d(self.lut1d_filename)
