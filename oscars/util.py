@@ -15,6 +15,7 @@ from math import pi, sqrt, cos, sin, atan
 
 class mapping:
     mapping=None
+    format=None
     rotations=[0, 0, 0]
     translation=[0, 0, 0]
     scale=[]
