@@ -23,8 +23,12 @@ source ~/venv/py3.6/bin/activate
 python setup.py bdist_wheel --dist-dir wheelhouse
 deactivate
 
+source ~/venv/py3.7/bin/activate
+python setup.py bdist_wheel --dist-dir wheelhouse
+deactivate
 
-source ~/venv/py3.6/bin/activate
+
+source ~/venv/py3.7/bin/activate
 twine upload -r pypi wheelhouse/*macosx*whl
 python setup.py sdist upload -r pypi
 deactivate
