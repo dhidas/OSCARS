@@ -3365,6 +3365,8 @@ void OSCARSSR::CalculatePowerDensityPointsSTL (TVector3D const& FarfieldOrigin,
 
 
   std::vector<bool> IsBlocked(iLast - iFirst + 1, false);
+  int const Mode = 2;
+  if (Mode == 1) {
   for (size_t i = iFirst; i != iLast; ++i) {
 
     // Get direction vector of ray
@@ -3384,10 +3386,11 @@ void OSCARSSR::CalculatePowerDensityPointsSTL (TVector3D const& FarfieldOrigin,
       }
     }
   }
+  }
 
   // Loop over all points in the spectrum container
   for (size_t i = iFirst; i <= iLast; ++i) {
-    if (IsBlocked[i - iFirst]) {
+    if (Mode == 1 && IsBlocked[i - iFirst]) {
       continue;
     }
 
@@ -3427,6 +3430,24 @@ void OSCARSSR::CalculatePowerDensityPointsSTL (TVector3D const& FarfieldOrigin,
         TVector3D const& X = PP.GetX();
         TVector3D const& B = PP.GetB();
         TVector3D const& AoverC = PP.GetAoverC();
+
+
+        bool one_blocked = false;
+        for (size_t j = 0; j != STLContainer.GetNPoints(); ++j) {
+          if (i == j) {
+            continue;
+          }
+
+          // Test if in FF this triangle is blocked
+          double const IntersectionDistance = STLContainer.GetPoint(j).RayIntersectionDistance(X, (STLContainer.GetPoint(i).GetCenter() - X).UnitVector());
+          if (IntersectionDistance > 0 && IntersectionDistance < (STLContainer.GetPoint(i).GetCenter() - X).Mag()) {
+            one_blocked = true;
+            break;
+          }
+        }
+        if (one_blocked == true) {
+          continue;
+        }
 
         double const BetaDiff = (B - Last_Beta).Mag();
         if (iT > 0 && BetaDiff > BetaDiffMax) {

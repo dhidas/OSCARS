@@ -824,7 +824,8 @@ def plot_undulator_flux_onaxis(oth, period, nperiods, harmonics, minimum=0, bfie
             period=period,
             nperiods=nperiods,
             harmonic=i,
-            npoints=npoints
+            npoints=npoints,
+            minimum=minimum
             )
 
         X = [f[0] for f in fl]
@@ -878,7 +879,7 @@ def plot_undulator_brightness(oth, period, nperiods, harmonics, minimum=0, bfiel
         
         R = []
         for k in np.linspace(K[1], K[0], 300):
-            ev_brightness = oth.undulator_brightness(K=k,
+            ev_brightness = oth.undulator_brightness(K=K,
                                                      period=period,
                                                      nperiods=nperiods,
                                                      harmonic=i
