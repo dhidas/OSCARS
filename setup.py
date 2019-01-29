@@ -27,6 +27,8 @@ with open('include/Version.h', 'r') as f:
                 v_rev = v_rev + '.' + s[-1].strip('"')
 
 VERSION=v_major+'.'+v_minor+'.'+v_rev
+if v_rel != '':
+    VERSION+='.'+v_rel
 
 #os.environ["CC"] = "nvcc"
 #os.environ["CXX"] = "nvcc"
