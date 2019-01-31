@@ -28,6 +28,20 @@ TFieldPythonFunction::TFieldPythonFunction (PyObject* Function,
   if (!PyCallable_Check(fPythonFunction)) {
     throw std::invalid_argument("python function not callable");
   }
+
+  PyObject* a = PyFunction_GetCode(fPythonFunction);
+  if (a == 0x0) {
+    throw std::invalid_argument("Incorrect definition of python function");
+  } 
+
+  PyObject* b = PyObject_GetAttrString(a, "co_argcount");
+  if (b == 0x0) {
+    throw std::invalid_argument("Incorrect definition of python function");
+  }
+
+  if (PyLong_AsLong(b) != 4) {
+    throw std::invalid_argument("Python function must contain have exactly 4 arguments: f(x,y,z,t)");
+  }
 }
 
 

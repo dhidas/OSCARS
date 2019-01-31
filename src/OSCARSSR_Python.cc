@@ -1114,7 +1114,7 @@ add_bfield_gaussian(bfield, sigma [, rotations, translation, frequency, frequenc
 
 Add a gaussian field in 3D with the peak field magnitude and direction given by *bfield*, centered about a point with a given sigma in each coordinate.  If any component of *sigma* is less than or equal to zero it is ignored (ie. spatial extent is infinite).
 
-The functional form for this is :math:`\exp(-(x - x_0)^2 / \sigma_x^2)`
+The functional form for this is :math:`B \exp(-(x - x_0)^2 / 2 \sigma_x^2)`
 
 
 Parameters
@@ -2457,7 +2457,7 @@ add_efield_gaussian(efield, sigma [, rotations, translation, Frequency, Frequenc
 
 Add a gaussian field in 3D with the peak field magnitude and direction given by *efield*, centered about a point with a given sigma in each coordinate.  If any component of *sigma* is less than or equal to zero it is ignored (ie. spatial extent is infinite).
 
-The functional form for this is :math:`\exp(-(x - x_0)^2 / \sigma_x^2)`
+The functional form for this is :math:`E \exp(-(x - x_0)^2 / 2 \sigma_x^2)`
 
 Parameters
 ----------
@@ -6423,8 +6423,8 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
   char const* SurfacePlane = "XY";
   size_t      NX1 = 51;
   size_t      NX2 = 51;
-  double      Width_X1 = 0;
-  double      Width_X2 = 0;
+  double      Width_X1 = 0.010;
+  double      Width_X2 = 0.010;
   PyObject*   List_NPoints     = PyList_New(0);
   PyObject*   List_Width       = PyList_New(0);
   PyObject*   List_Translation = PyList_New(0);
@@ -6563,7 +6563,11 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
 
 
   // If you are requesting a simple surface plane, check that you have widths
-  if (List_X0X1X2 == 0x0 && std::strlen(SurfacePlane) != 0 && Width_X1 > 0 && Width_X2 > 0) {
+  if (List_X0X1X2 == 0x0 && std::strlen(SurfacePlane) != 0) {
+    if (Width_X1 <= 0 || Width_X2 <= 0) {
+      PyErr_SetString(PyExc_ValueError, "must specify 'width' (positive only)");
+      return NULL;
+    }
     try {
       Surface.Init(SurfacePlane, (int) NX1, (int) NX2, Width_X1, Width_X2, Rotations, Translation, NormalDirection);
     } catch (std::invalid_argument e) {
