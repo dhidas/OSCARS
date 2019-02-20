@@ -690,6 +690,8 @@ bool OSCARSSR::SetUseGPUGlobal (int const in)
     return false;
   }
 
+  fUseGPUGlobal = 0;
+
   #ifdef CUDA
   if (this->CheckGPU() > 0) {
     fUseGPUGlobal = 1;
@@ -699,8 +701,6 @@ bool OSCARSSR::SetUseGPUGlobal (int const in)
     return false;
   }
   #endif
-
-  fUseGPUGlobal = 0;
 
   return false;
 }
@@ -1857,9 +1857,9 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
   }
 
   // Calculate trajectory if it doesn't exist
-  if (Particle.GetTrajectory().GetNPoints() == 0) {
-    this->CalculateTrajectory(Particle);
-  }
+  //if (Particle.GetTrajectory().GetNPoints() == 0) {
+  //  this->CalculateTrajectory(Particle);
+  //}
 
 
   // Check you are not requesting a level above the maximum
@@ -1965,6 +1965,7 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
       for (int iT = 0; iT != NTPoints; ++iT) {
         TParticleTrajectoryPoint const& PP = (iLevel <= LevelStopMemory ? TM.GetPoint(iT) : TE.GetTrajectoryPoint(iT));
 
+
         // Get position, Beta, and Acceleration (over c)
         TVector3D const& X = PP.GetX();
         TVector3D const& B = PP.GetB();
@@ -1993,6 +1994,7 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
         SumE += ThisEw;
 
       }
+
 
       TVector3DC ThisSumE = SumE * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(iLevel);
       if (PolarizationVector.Mag2() > 0.001) {
@@ -2080,14 +2082,9 @@ void OSCARSSR::CalculateSpectrumPoints_Y (TParticleA& Particle,
   }
 
   // Calculate trajectory if it doesn't exist
-  if (Particle.GetTrajectory().GetNPoints() == 0) {
-    this->CalculateTrajectory(Particle);
-  }
-
-  // Calculate trajectory if it doesn't exist
-  if (Particle.GetTrajectory().GetNPoints() == 0) {
-    this->CalculateTrajectory(Particle);
-  }
+  //if (Particle.GetTrajectory().GetNPoints() == 0) {
+  //  this->CalculateTrajectory(Particle);
+  //}
 
 
 
