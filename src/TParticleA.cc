@@ -422,8 +422,6 @@ TParticleTrajectoryInterpolated const& TParticleA::GetTrajectoryInterpolated () 
 
 TParticleTrajectoryInterpolatedPoints const TParticleA::GetTrajectoryExtendedLevel (int const Level)
 {
-
-
   return TParticleTrajectoryInterpolatedPoints(&fTrajectoryInterpolated, Level);
 }
 

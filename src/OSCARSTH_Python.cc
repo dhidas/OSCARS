@@ -405,6 +405,11 @@ static PyObject* OSCARSTH_DipoleSpectrum (OSCARSTHObject* self, PyObject* args, 
     }
   } else if (PyList_Size(List_EnergyPoints_eV) != 0) {
     SpectrumContainer.Init(VEnergyPoints_eV);
+    if (AngleIntegrated) {
+      self->obj->DipoleSpectrumEnergyAngleIntegrated(BField, SpectrumContainer);
+    } else {
+      self->obj->DipoleSpectrumEnergy(BField, SpectrumContainer, Angle);
+    }
   } else if (PyList_Size(List_AngleRange) != 0 && NPoints > 0) {
     TVector2D const AngleRange = OSCARSPY::ListAsTVector2D(List_AngleRange);
     SpectrumContainer.Init(NPoints, AngleRange[0], AngleRange[1]);

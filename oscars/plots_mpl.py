@@ -465,7 +465,7 @@ def plot_flux(V, title='Flux [$\gamma / mm^2 / 0.1\%bw / s$]', xlabel='X1 Axis [
     return
 
 
-def plot_spectrum(S, log=False, show=True, ofile='', title='Spectrum', xlabel='Energy [eV]', ylabel='$\gamma / mm^2 / 0.1\%bw / s$', figsize=None, ylim=None, xlim=None, transparent=True, ret=False, xticks=None, axhlines=None, axvlines=None, **kwargs):
+def plot_spectrum(S, log=False, loglog=False, show=True, ofile='', title='Spectrum', xlabel='Energy [eV]', ylabel='$\gamma / mm^2 / 0.1\%bw / s$', figsize=None, ylim=None, xlim=None, transparent=True, ret=False, xticks=None, axhlines=None, axvlines=None, **kwargs):
     """Plot the spectrum"""
 
     # Size and limits
@@ -478,6 +478,8 @@ def plot_spectrum(S, log=False, show=True, ofile='', title='Spectrum', xlabel='E
     plt.plot(X, Y, **kwargs)
     if log:
         plt.yscale('log')
+    if loglog:
+        plt.loglog()
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(title)
@@ -824,7 +826,8 @@ def plot_undulator_flux_onaxis(oth, period, nperiods, harmonics, minimum=0, bfie
             period=period,
             nperiods=nperiods,
             harmonic=i,
-            npoints=npoints
+            npoints=npoints,
+            minimum=minimum
             )
 
         X = [f[0] for f in fl]
@@ -878,7 +881,7 @@ def plot_undulator_brightness(oth, period, nperiods, harmonics, minimum=0, bfiel
         
         R = []
         for k in np.linspace(K[1], K[0], 300):
-            ev_brightness = oth.undulator_brightness(K=k,
+            ev_brightness = oth.undulator_brightness(K=K,
                                                      period=period,
                                                      nperiods=nperiods,
                                                      harmonic=i

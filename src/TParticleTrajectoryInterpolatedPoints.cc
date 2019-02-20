@@ -41,6 +41,7 @@ void TParticleTrajectoryInterpolatedPoints::Set (TParticleTrajectoryInterpolated
   fNPoints = fTPTI->GetNPointsThisLevel(Level);
   fTStart = fTPTI->GetTStartThisLevel(Level);
 
+  return;
 }
 
 

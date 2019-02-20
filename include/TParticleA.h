@@ -69,7 +69,7 @@ class TParticleA
     void ResetTrajectoryData ();
 
     // Static constants
-    static int const kMaxTrajectoryLevel = 24;
+    static int const kMaxTrajectoryLevel = 26;
 
 
   private:

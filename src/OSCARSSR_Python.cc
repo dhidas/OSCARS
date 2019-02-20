@@ -1114,7 +1114,7 @@ add_bfield_gaussian(bfield, sigma [, rotations, translation, frequency, frequenc
 
 Add a gaussian field in 3D with the peak field magnitude and direction given by *bfield*, centered about a point with a given sigma in each coordinate.  If any component of *sigma* is less than or equal to zero it is ignored (ie. spatial extent is infinite).
 
-The functional form for this is :math:`\exp(-(x - x_0)^2 / \sigma_x^2)`
+The functional form for this is :math:`B \exp(-(x - x_0)^2 / 2 \sigma_x^2)`
 
 
 Parameters
@@ -2457,7 +2457,7 @@ add_efield_gaussian(efield, sigma [, rotations, translation, Frequency, Frequenc
 
 Add a gaussian field in 3D with the peak field magnitude and direction given by *efield*, centered about a point with a given sigma in each coordinate.  If any component of *sigma* is less than or equal to zero it is ignored (ie. spatial extent is infinite).
 
-The functional form for this is :math:`\exp(-(x - x_0)^2 / \sigma_x^2)`
+The functional form for this is :math:`E \exp(-(x - x_0)^2 / 2 \sigma_x^2)`
 
 Parameters
 ----------
@@ -6327,7 +6327,7 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
 
 
 const char* DOC_OSCARSSR_CalculatePowerDensityRectangle = R"docstring(
-calculate_power_density_rectangle(npoints [, plane, width, x0x1x2, rotations, translation, ofile, bofile, normal, nparticles, gpu, ngpu, nthreads, precision, max_level, max_level_extended, dim, quantity])
+calculate_power_density_rectangle([, npoints, plane, width, x0x1x2, rotations, translation, ofile, bofile, normal, nparticles, gpu, ngpu, nthreads, precision, max_level, max_level_extended, dim, quantity])
 
 Calculate the power density in a rectangle either defined by three points, or by defining the plane the rectangle is in and the width, and then rotating and translating it to where it needs be.  The simplest is outlined in the first example below.  By default (dim=2) this returns a list whose position coordinates are in the local coordinate space x1 and x2 (*ie* they do not include the rotations and translation).  if dim=3 the coordinates in the return list are in absolute 3D space.
 
@@ -6341,7 +6341,7 @@ npoints: int
     number of in each dimension for surface
 
 plane : str
-    The plane to start in (XY, XZ, YZ, YX, ZX, ZY).  The normal to the surface is defined using the right handed cross product (ie the last three have opposite normal vectors from the first three).
+    The plane to start in (XY, XZ, YZ, YX, ZX, ZY).  Default is 'XY'.  The normal to the surface is defined using the right handed cross product (ie the last three have opposite normal vectors from the first three).
 
 width : list
     Width of rectangle in X1 and X2: [w1, w2]
@@ -6420,11 +6420,11 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
 {
   // Calculate the spectrum given an observation point, and energy range
 
-  char const* SurfacePlane = "";
-  size_t      NX1 = 0;
-  size_t      NX2 = 0;
-  double      Width_X1 = 0;
-  double      Width_X2 = 0;
+  char const* SurfacePlane = "XY";
+  size_t      NX1 = 51;
+  size_t      NX2 = 51;
+  double      Width_X1 = 0.010;
+  double      Width_X2 = 0.010;
   PyObject*   List_NPoints     = PyList_New(0);
   PyObject*   List_Width       = PyList_New(0);
   PyObject*   List_Translation = PyList_New(0);
@@ -6464,7 +6464,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
                                  "quantity",
                                   NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|sOOOOssiiiOidiiis",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|OsOOOOssiiiOidiiis",
                                    const_cast<char **>(kwlist),
                                    &List_NPoints,
                                    &SurfacePlane,
@@ -6487,14 +6487,14 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
     return NULL;
   }
 
-  if (List_X0X1X2 == 0x0 && SurfacePlane == "") {
-    PyErr_SetString(PyExc_ValueError, "Must define 'plane' or 'x0x1x2'");
-    return NULL;
-  }
-  if (List_X0X1X2 != 0x0 && SurfacePlane != "") {
-    PyErr_SetString(PyExc_ValueError, "Can not define both 'plane' and 'x0x1x2'");
-    return NULL;
-  }
+  //if (List_X0X1X2 == 0x0 && SurfacePlane == "") {
+  //  PyErr_SetString(PyExc_ValueError, "Must define 'plane' or 'x0x1x2'");
+  //  return NULL;
+  //}
+  //if (List_X0X1X2 != 0x0 && SurfacePlane != "") {
+  //  PyErr_SetString(PyExc_ValueError, "Can not define both 'plane' and 'x0x1x2'");
+  //  return NULL;
+  //}
 
   // Check if a beam is at least defined
   if (self->obj->GetNParticleBeams() < 1) {
@@ -6518,8 +6518,8 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
     NX1 = PyLong_AsSsize_t(PyList_GetItem(List_NPoints, 0));
     NX2 = PyLong_AsSsize_t(PyList_GetItem(List_NPoints, 1));
   } else {
-    PyErr_SetString(PyExc_ValueError, "'npoints' must be [int, int]");
-    return NULL;
+    //PyErr_SetString(PyExc_ValueError, "'npoints' must be [int, int]");
+    //return NULL;
   }
 
 
@@ -6563,7 +6563,11 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
 
 
   // If you are requesting a simple surface plane, check that you have widths
-  if (std::strlen(SurfacePlane) != 0 && Width_X1 > 0 && Width_X2 > 0) {
+  if (List_X0X1X2 == 0x0 && std::strlen(SurfacePlane) != 0) {
+    if (Width_X1 <= 0 || Width_X2 <= 0) {
+      PyErr_SetString(PyExc_ValueError, "must specify 'width' (positive only)");
+      return NULL;
+    }
     try {
       Surface.Init(SurfacePlane, (int) NX1, (int) NX2, Width_X1, Width_X2, Rotations, Translation, NormalDirection);
     } catch (std::invalid_argument e) {
@@ -7834,7 +7838,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
 
 
 const char* DOC_OSCARSSR_CalculateFluxRectangle = R"docstring(
-calculate_flux_rectangle(energy_eV, npoints [, plane, normal, dim, width, rotations, translation, x0x1x2, polarization, angle, horizontal_direction=[1, 0, 0], propogation_direction=[0, 0, 1], nparticles, nthreads, gpu, ngpu, precision, max_level, max_level_extended, quantity, ofile, bofile])
+calculate_flux_rectangle(energy_eV [, plane, npoints, normal, dim, width, rotations, translation, x0x1x2, polarization, angle, horizontal_direction=[1, 0, 0], propogation_direction=[0, 0, 1], nparticles, nthreads, gpu, ngpu, precision, max_level, max_level_extended, quantity, ofile, bofile])
 
 Calculate the flux density in a rectangle either defined by three points, or by defining the plane the rectangle is in and the width, and then rotating and translating it to where it needs be.  The simplest is outlined in the first example below.  By default (dim=2) this returns a list whose position coordinates are in the local coordinate space x1 and x2 (*ie* they do not include the rotations and translation).  if dim=3 the coordinates in the return list are in absolute 3D space.
 
@@ -7848,10 +7852,10 @@ energy_eV : float
     Photon energy of interest
 
 npoints : list [int, int]
-    Number of points in X1 and X2 dimension [n1, n2]
+    Number of points in X1 and X2 dimension [n1, n2], default to [51, 51]
 
 plane : str
-    The plane to start in (XY, XZ, YZ, YX, ZX, ZY).  The normal to the surface is defined using the right handed cross product (ie the last three have opposite normal vectors from the first three).
+    The plane to start in (XY, XZ, YZ, YX, ZX, ZY).  The normal to the surface is defined using the right handed cross product (ie the last three have opposite normal vectors from the first three), default to 'XY'
 
 normal : int
     -1 if you wish to reverse the normal vector, 0 if you wish to ignore the +/- direction in computations, 1 if you with to use the direction of the normal vector as given. 
@@ -7927,9 +7931,9 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
 {
   // Calculate the spectrum given an observation point, and energy range
 
-  char const* SurfacePlane = "";
-  size_t      NX1 = 0;
-  size_t      NX2 = 0;
+  char const* SurfacePlane = "XY";
+  size_t      NX1 = 51;
+  size_t      NX2 = 51;
   double      Width_X1 = 0;
   double      Width_X2 = 0;
   PyObject*   List_NPoints= PyList_New(0);
@@ -7981,7 +7985,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
                                  "bofile",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dO|siiOOOOsdOOiiiOdiisss",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|OsiiOOOOsdOOiiiOdiisss",
                                    const_cast<char **>(kwlist),
                                    &Energy_eV,
                                    &List_NPoints,
@@ -8006,15 +8010,6 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
                                    &ReturnQuantityChars,
                                    &OutFileNameText,
                                    &OutFileNameBinary)) {
-    return NULL;
-  }
-
-  if (List_X0X1X2 == 0x0 && SurfacePlane == "") {
-    PyErr_SetString(PyExc_ValueError, "Must define 'plane' or 'x0x1x2'");
-    return NULL;
-  }
-  if (List_X0X1X2 != 0x0 && SurfacePlane != "") {
-    PyErr_SetString(PyExc_ValueError, "Can not define both 'plane' and 'x0x1x2'");
     return NULL;
   }
 
@@ -8090,7 +8085,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
 
 
   // If you are requesting a simple surface plane, check that you have widths
-  if (std::strlen(SurfacePlane) != 0 && Width_X1 > 0 && Width_X2 > 0) {
+  if (List_X0X1X2 == 0x0 && std::strlen(SurfacePlane) != 0 && Width_X1 > 0 && Width_X2 > 0) {
     try {
       Surface.Init(SurfacePlane, (int) NX1, (int) NX2, Width_X1, Width_X2, Rotations, Translation, NormalDirection);
     } catch (std::invalid_argument e) {

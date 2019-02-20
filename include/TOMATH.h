@@ -48,6 +48,7 @@ template <class T> class TSpline1D3
 
     void Set (std::vector<double> const& X, std::vector<T> const& Y)
     {
+      std::cout << "setting TSpline" << std::endl;
       fX.clear();
       fY.clear();
       fYPP.clear();
@@ -68,6 +69,7 @@ template <class T> class TSpline1D3
 
     void Set (double const* X, T const* Y, int const N)
     {
+      std::cout << "setting TSpline meth2" << std::endl;
       fX.clear();
       fY.clear();
       fYPP.clear();
@@ -98,9 +100,9 @@ template <class T> class TSpline1D3
       //size_t const klo = std::distance(fX.begin(), ilo) - 0;
       //size_t const khi = klo + 1;
 
-      static int klo=0;
-      static int khi = (int) fX.size() - 1;
-      static int k;
+      int klo=0;
+      int khi = (int) fX.size() - 1;
+      int k;
 
       // This if statement is to speed up
       if ((khi - klo == 1 && fX[khi] <= x)) {
@@ -138,7 +140,7 @@ template <class T> class TSpline1D3
 
       // Distance between points, check that it isn't zero!
       double const h = fX[khi] - fX[klo];
-      if (h == 0) {
+      if (fabs(h) < 1e-50) {
         throw std::out_of_range("TSpline1D3 sees that the stepsize h is zero");
       }
 
