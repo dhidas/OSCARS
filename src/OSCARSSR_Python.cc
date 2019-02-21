@@ -422,7 +422,7 @@ mandelbrot_set : list
 static PyObject* OSCARSSR_MandelbrotSet (OSCARSSRObject* self, PyObject* arg)
 {
   // Grab the value from input
-  int const NThreads = (int) PyLong_AsLong(arg);
+  //int const NThreads = (int) PyLong_AsLong(arg);
 
   PyErr_SetString(PyExc_ValueError, "Not implemented yet");
   return NULL;
