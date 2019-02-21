@@ -1570,7 +1570,6 @@ void OSCARSSR::PropogateRKAS (std::array<double, 6>& XStart,
   double hActual;
 
   TParticleTrajectoryPoints& ParticleTrajectory = P.GetTrajectory();
-  double DeltaT = ParticleTrajectory.GetDeltaT();
 
   std::array<double, 6> xScale;
   std::array<double, 6> x;
@@ -2201,7 +2200,6 @@ void OSCARSSR::CalculateSpectrumPoints_Y (TParticleA& Particle,
         // Get position, Beta, and Acceleration (over c)
         TVector3D const& X = PP.GetX();
         TVector3D const& B = PP.GetB();
-        TVector3D const& AoverC = PP.GetAoverC();
         double    const  Time = iLevel <= LevelStopMemory ? TM.GetT(iT) : TE.GetT(iT);
 
         // Define R and unit vector in direction of R, and D (distance to observer)
