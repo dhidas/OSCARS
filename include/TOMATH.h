@@ -48,7 +48,6 @@ template <class T> class TSpline1D3
 
     void Set (std::vector<double> const& X, std::vector<T> const& Y)
     {
-      std::cout << "setting TSpline" << std::endl;
       fX.clear();
       fY.clear();
       fYPP.clear();
@@ -69,7 +68,6 @@ template <class T> class TSpline1D3
 
     void Set (double const* X, T const* Y, int const N)
     {
-      std::cout << "setting TSpline meth2" << std::endl;
       fX.clear();
       fY.clear();
       fYPP.clear();

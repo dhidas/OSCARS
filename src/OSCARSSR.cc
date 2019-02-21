@@ -1652,6 +1652,7 @@ void OSCARSSR::CalculateSpectrum (TParticleA& Particle,
   // Extra inpts for calculation
   bool Done = false;
 
+
   this->CalculateSpectrumPoints(Particle,
                                 ObservationPoint,
                                 Spectrum,
