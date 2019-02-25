@@ -42,7 +42,7 @@ class bl(oscars.lut.lut1d):
     None
     """
 
-    def __init__ (self, facility=None, beamline=None, device=None, current=None, base_path=None, gpu=1, nthreads=8):
+    def __init__ (self, facility=None, beamline=None, device=None, mode=None, current=None, base_path=None, gpu=1, nthreads=8):
         oscars.lut.lut1d.__init__(self)
 
         # Set base path if defined, otherwise default
@@ -67,7 +67,7 @@ class bl(oscars.lut.lut1d):
 
         self.gap = None
         self.phase = 0
-        self.phase_mode = 'planar'
+        self.phase_mode = 'planar' if mode is None else mode
 
         self.osr = oscars.sr.sr(gpu=gpu, nthreads=nthreads)
         self.oth = oscars.th.th(gpu=gpu, nthreads=nthreads)
