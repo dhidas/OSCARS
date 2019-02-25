@@ -101,38 +101,12 @@ template <class T> class TSpline1D3
       int klo=0;
       int khi = (int) fX.size() - 1;
       int k;
-
-      // This if statement is to speed up
-      if ((khi - klo == 1 && fX[khi] <= x)) {
-        if (khi < (int) fX.size() - 2) {
-          ++khi;
-          ++klo;
-        }
-        if (fX[khi] < x) {
-          ++klo;
-          khi = (int) fX.size() - 1;
-          while (khi - klo > 1) {
-            k = (khi + klo) >> 1;
-            if (fX[k] > x) {
-              khi = k;
-            } else {
-              klo = k;
-            }
-          }
-        }
-      }
-
-      if ((khi - klo == 1 && (fX[khi] < x || fX[klo] > x)) || khi - klo > 1) {
-        klo=0;
-        khi = (int) fX.size() - 1;
-
-        while (khi - klo > 1) {
-          k = (khi + klo) >> 1;
-          if (fX[k] > x) {
-            khi = k;
-          } else {
-            klo = k;
-          }
+      while (khi - klo > 1) {
+        k = (khi + klo) >> 1;
+        if (fX[k] > x) {
+          khi = k;
+        } else {
+          klo = k;
         }
       }
 
