@@ -11,6 +11,7 @@ import warnings
 import configparser
 import os
 import glob
+import uuid
 
 
 class bl(oscars.lut.lut1d):
@@ -42,7 +43,7 @@ class bl(oscars.lut.lut1d):
     None
     """
 
-    def __init__ (self, facility=None, beamline=None, device=None, mode=None, current=None, base_path=None, gpu=1, nthreads=8):
+    def __init__ (self, facility=None, beamline=None, device=None, phase_mode=None, current=None, base_path=None, gpu=1, nthreads=8):
         oscars.lut.lut1d.__init__(self)
 
         # Set base path if defined, otherwise default
@@ -67,7 +68,9 @@ class bl(oscars.lut.lut1d):
 
         self.gap = None
         self.phase = 0
-        self.phase_mode = 'planar' if mode is None else mode
+
+        self.phase_mode = 'planar'
+
 
         self.osr = oscars.sr.sr(gpu=gpu, nthreads=nthreads)
         self.oth = oscars.th.th(gpu=gpu, nthreads=nthreads)
@@ -148,7 +151,10 @@ class bl(oscars.lut.lut1d):
             else:
                 self.name = self.device
 
-            if 'default_mode' in g: self.phase_mode = g['default_mode']
+            if phase_mode is not None:
+                self.phase_mode = phase_mode
+            elif 'phase_mode' in g:
+                self.phase_mode = g['phase_mode']
         self.bfield_path = os.path.join(self.device_path, 'bfield', self.phase_mode)
 
 
@@ -298,7 +304,7 @@ class bl(oscars.lut.lut1d):
 
         if os.path.isfile(ifile):
             try:
-                self.clear_lut1d()
+                super(lut1d, self).clear()
                 self.read_file_lut1d(ifile)
                 self.lut1d_filename = ifile
                 self.has_lut1d = True
@@ -491,13 +497,16 @@ class bl(oscars.lut.lut1d):
 
         return
 
-    def spectrum (self, gap=None, ret=None, show=None, **kwargs):
+    def spectrum (self, gap=None, phase=None, ret=None, show=None, **kwargs):
         """Calculate and plot spectrum
         
         Parameters
         ----------
-        gap : str
+        gap : float
             Gap of device - optional
+
+        phase : float
+            If used, default None
 
         All other parameters can be found in the function:
             oscars.sr.calculate_spectrum()
@@ -507,8 +516,8 @@ class bl(oscars.lut.lut1d):
         None
         """
 
-        if gap is not None:
-            self.set_gap(gap)
+        if gap is not None or phase is not None:
+            self.set_gap(gap, phase)
 
         if self.gap is None:
             raise RuntimeError('gap is not set.  try set_gap() first')
@@ -544,13 +553,16 @@ class bl(oscars.lut.lut1d):
 
 
 
-    def flux (self, gap=None, ret=None, show=None, **kwargs):
+    def flux (self, gap=None, phase=None, ret=None, show=None, **kwargs):
         """Calculate the flux
         
         Parameters
         ----------
-        gap : str
+        gap : float
             Gap of device - optional
+
+        phase : float
+            If used, default None
 
         All other parameters can be found in the function:
             oscars.sr.calculate_flux_rectangle()
@@ -560,7 +572,7 @@ class bl(oscars.lut.lut1d):
         None
         """
 
-        if gap is not None:
+        if gap is not None or phase is not None:
             self.set_gap(gap)
 
         if self.gap is None:
@@ -592,13 +604,33 @@ class bl(oscars.lut.lut1d):
         return
 
 
-    def set_gap (self, gap):
+    def set_phase (self, gap=None, phase=None):
+        return set_gap(gap=gap, phase=phase)
+
+    def set_gap (self, gap=None, phase=None):
         """Set the gap for a device.  Sets basic magnetic field data"""
 
-        self.gap = None
+        if gap is None and phase is None:
+            raise RuntimeError('gap or phase must be something')
+
+        if gap is None:
+            gap = self.gap
+        if phase is None:
+            phase = self.phase
+
+        if phase is None:
+            phase = self.phase
 
         self.osr.clear_bfields()
-        mapping = oscars.util.read_file_list_with_header(self.bfield_mapping_1d_filename)
+
+        if self.bfield_mapping_1d_filename is not None:
+            mapping = oscars.util.read_file_list_with_header(self.bfield_mapping_1d_filename)
+        elif self.bfield_mapping_2d_filename is not None:
+            if phase is None:
+                phase = 0
+            mapping = oscars.util.read_file_list_2d_with_header(self.bfield_mapping_2d_filename)
+        else:
+            raise RuntimeError('no mapping found.  make sure phase_mode is set correctly')
 
         translation = mapping.translation
         if 'translation' in self.bfield_kwargs:
@@ -609,16 +641,31 @@ class bl(oscars.lut.lut1d):
             for i in range(3):
                 translation[i] += t[i]
 
-        self.osr.add_bfield_interpolated(
-            mapping=mapping.mapping,
-            iformat=mapping.format,
-            rotations=mapping.rotations,
-            translation=translation,
-            scale=mapping.scale,
-            parameter=gap
-        )
+        if self.bfield_mapping_1d_filename is not None:
+            self.osr.add_bfield_interpolated(
+                mapping=mapping.mapping,
+                iformat=mapping.format,
+                rotations=mapping.rotations,
+                translation=translation,
+                scale=mapping.scale,
+                parameter=gap
+            )
+        elif self.bfield_mapping_2d_filename is not None:
+            newfname = '.OSCARS_tmp_' + str(uuid.uuid4())
+            newfile = oscars.util.interpolate_file_list_2d (mapping=mapping, gap=gap, phase=phase, ofile=newfname)
+            self.osr.add_bfield_file(
+                ifile=newfname,
+                iformat=mapping.format,
+                rotations=mapping.rotations,
+                translation=translation,
+                scale=mapping.scale
+            )
+
+            if os.path.exists(newfname): os.remove(newfname)
+
 
         self.gap = gap
+        self.phase = phase
 
         return
 
@@ -647,13 +694,16 @@ class bl(oscars.lut.lut1d):
 
 
 
-    def power_density (self, gap=None, ret=None, show=None, **kwargs):
+    def power_density (self, gap=None, phase=None, ret=None, show=None, **kwargs):
         """Calculate the power_density
         
         Parameters
         ----------
-        gap : str
+        gap : foat
             Gap of device - optional
+
+        phase : float
+            Desired phase if phase mode allows
 
         All other parameters can be found in the function:
             oscars.sr.calculate_power_density_rectangle()
@@ -663,8 +713,8 @@ class bl(oscars.lut.lut1d):
         None
         """
 
-        if gap is not None:
-            self.set_gap(gap)
+        if gap is not None or phase is not None:
+            self.set_gap(gap, phase)
 
         if self.gap is None:
             raise RuntimeError('gap is not set.  try set_gap() first')
