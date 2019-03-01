@@ -1916,8 +1916,14 @@ static PyObject* OSCARSSR_GetBField (OSCARSSRObject* self, PyObject* args, PyObj
     return NULL;
   }
 
-  // Set the object variable
-  TVector3D const B = self->obj->GetB(X, T, Name);
+  TVector3D B;
+  try {
+    // Set the object variable
+    B = self->obj->GetB(X, T, Name);
+  } catch (std::logic_error e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
+  }
 
   // Create a python list
   PyObject *PList = OSCARSPY::TVector3DAsList(B);
@@ -3024,7 +3030,14 @@ static PyObject* OSCARSSR_GetEField (OSCARSSRObject* self, PyObject* args, PyObj
   }
 
   // Set the object variable
-  TVector3D const F = self->obj->GetE(X, T, Name);
+  TVector3D F;
+  try {
+    // Set the object variable
+    F = self->obj->GetE(X, T, Name);
+  } catch (std::logic_error e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
+  }
 
   // Create a python list
   PyObject *PList = OSCARSPY::TVector3DAsList(F);

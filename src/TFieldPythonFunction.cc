@@ -87,7 +87,7 @@ TVector3D TFieldPythonFunction::GetF (TVector3D const& X, double const T) const
   // Get a python list from output tuple
   PyObject* OutputList;
   if (!PyArg_Parse(OutputTuple, "O!", &PyList_Type, &OutputList)) {
-    throw std::logic_error("TFieldPythonFunction::GetF cannot get from output tuple.  Please report this.");
+    throw std::logic_error("TFieldPythonFunction::GetF cannot get from output tuple from field.  Check return value is [Bx, By, Bz] from python field function");
   }
 
   // Rotate field
