@@ -304,7 +304,7 @@ class bl(oscars.lut.lut1d):
 
         if os.path.isfile(ifile):
             try:
-                super(lut1d, self).clear()
+                super(bl, self).clear()
                 self.read_file_lut1d(ifile)
                 self.lut1d_filename = ifile
                 self.has_lut1d = True
