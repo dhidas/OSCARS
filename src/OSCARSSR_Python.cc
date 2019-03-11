@@ -1026,8 +1026,8 @@ Create a function in python and use it as a field in OSCARS
     >>> def myfunc(x, y, z, t):
     ...     "Do not forget to write a docstring"
     ...     if z > 0:
-    ...         return 1
-    ...     return 0
+    ...         return [0, 1, 0]
+    ...     return [0, 0, 0]
     >>> osr.add_bfield_function(myfunc)
 )docstring";
 static PyObject* OSCARSSR_AddMagneticFieldFunction (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
