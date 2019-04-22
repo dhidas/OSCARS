@@ -84,6 +84,17 @@ class OSCARSTH
                               int    const N
                               ) const;
 
+    double UndulatorTotalPower (double const K,
+                                double const Period,
+                                int const NPeriods
+                                ) const;
+
+    TVector2D UndulatorPowerDensity (double const K,
+                                     double const Period,
+                                     int    const NPeriods,
+                                     T3DScalarContainer& PowerDensityContainer
+                                     ) const;
+
     double UndulatorFluxWeak (double const K,
                               double const Period,
                               double const NPeriods,

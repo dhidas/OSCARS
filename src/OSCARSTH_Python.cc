@@ -615,7 +615,31 @@ static PyObject* OSCARSTH_DipoleCriticalWavelength (OSCARSTHObject* self, PyObje
 
 
 
-const char* DOC_OSCARSTH_DipoleBrightness = "Not Implemented";
+const char* DOC_OSCARSTH_DipoleBrightness = R"docstring(
+dipole_brightness(bfield, [energy_eV, energy_range_eV, npoints])
+
+Get the brightness for a dipole.  Must have a beam defined.
+
+Parameters
+----------
+bfield : float
+    Magnetic field of dipole in [T]
+
+energy_eV : float
+    Energy of a point where you would like to calculate the brightness
+
+energy_range_eV : float
+    Energy range where you would like to calculate the brightness
+
+npoints : float
+    Number of points to calculate if using energy_range_eV.  Points will be linearly spaced.
+
+Returns
+-------
+brightness : [float, float]
+    [energy eV, brightness]
+
+)docstring";
 static PyObject* OSCARSTH_DipoleBrightness (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
 {
   // Return a list of points corresponding to the flux in a given energy range for a given vertical angle.
@@ -625,7 +649,7 @@ static PyObject* OSCARSTH_DipoleBrightness (OSCARSTHObject* self, PyObject* args
   double BField = 0;
   double Energy_eV = 0;
   PyObject* List_EnergyRange_eV = 0x0;
-  int    NPoints = 0;
+  int    NPoints = 200;
 
   // Input variables and parsing
   static const char *kwlist[] = {"bfield",
@@ -1156,6 +1180,345 @@ static PyObject* OSCARSTH_UndulatorFluxOnAxis (OSCARSTHObject* self, PyObject* a
   // Return the spectrum
   return OSCARSPY::GetSpectrumAsList(SpectrumContainer);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+const char* DOC_OSCARSTH_UndulatorTotalPower = R"docstring(
+undulator_total_power(period, nperiods, [, bfield, K])
+
+Get the total power output for an undulator.  Specify either K or bfield
+
+Parameters
+----------
+period : float
+    Undulator period length [m]
+
+nperiods : int
+    Number of periods
+
+bfield : float
+    Peak bfield
+
+K : float
+    Undulator deflection parameter
+
+Returns
+-------
+power density in [W/mrad^2] : float
+
+)docstring";
+static PyObject* OSCARSTH_UndulatorTotalPower (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
+{
+  // Return a list of points corresponding to the brightness.
+
+  // Require 2 arguments
+  double      Period            = 0;
+  int         NPeriods          = 0;
+  double      BField            = 0;
+  double      K                 = 0;
+
+  // Input variable list
+  static const char *kwlist[] = {"period",
+                                 "nperiods",
+                                 "bfield",
+                                 "K",
+                                 NULL};
+
+  // Parse inputs
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "di|dd",
+                                   const_cast<char **>(kwlist),
+                                   &Period,
+                                   &NPeriods,
+                                   &BField,
+                                   &K)) {
+    return NULL;
+  }
+
+  // CHeck if beam is ok
+  if (!self->obj->CheckBeam()) {
+    PyErr_SetString(PyExc_ValueError, "particle beam not correctly defined");
+    return NULL;
+  }
+
+  if (BField == 0 && K == 0) {
+    PyErr_SetString(PyExc_ValueError, "must define either K or bfield");
+    return NULL;
+  }
+
+  if (BField > 0 && K > 0) {
+    PyErr_SetString(PyExc_ValueError, "only define either K or bfield");
+    return NULL;
+  }
+
+  // Check period
+  if (Period <= 0) {
+    PyErr_SetString(PyExc_ValueError, "'period' must be > 0");
+    return NULL;
+  }
+
+  // Check nperiods
+  if (NPeriods <= 0) {
+    PyErr_SetString(PyExc_ValueError, "'nperiod' must be > 0");
+    return NULL;
+  }
+
+  double result = 0;
+  if (BField == 0) {
+    result = self->obj->UndulatorTotalPower(K, Period, NPeriods);
+  } else {
+    result = self->obj->UndulatorTotalPower( self->obj->UndulatorK(BField, Period), Period, NPeriods);
+  }
+
+
+  // Return the spectrum
+  return Py_BuildValue("d", result);
+}
+
+
+
+
+
+
+
+const char* DOC_OSCARSTH_UndulatorPowerDensity = R"docstring(
+undulator_power_density(period, nperiods, theta_range, psi_range, [, bfield, K, ntheta, npsi])
+
+Get the power density for a horizontal planar undulator (vertical magnetic field, horizontal electron beam deflection) in a given theta and psi range.  Specify either K or bfield.
+
+Parameters
+----------
+period : float
+    Undulator period length [m]
+
+nperiods : int
+    Number of periods
+
+theta_range : [float, float]
+    Range of the horizontal angle in radian
+
+psi_range : [float, float]
+    Range of the vertical angle in radian
+
+bfield : float
+    Peak bfield
+
+K : float
+    Undulator deflection parameter
+
+ntheta : int
+    Number of points in the horizontal plane
+
+npsi : int
+    Number of points in the vertical plane
+
+Returns
+-------
+power density in [W/mrad^2] : list[[theta, psi, z], power density]
+
+)docstring";
+static PyObject* OSCARSTH_UndulatorPowerDensity (OSCARSTHObject* self, PyObject* args, PyObject* keywds)
+{
+  // Return a list of points corresponding to the brightness.
+
+  // Require 2 arguments
+  double      Period            = 0;
+  int         NPeriods          = 0;
+  PyObject*   List_ThetaRange   = 0x0;
+  PyObject*   List_PsiRange     = 0x0;
+  double      BField            = 0;
+  double      K                 = 0;
+  int         NTheta            = 101;
+  int         NPsi              = 101;
+
+  // Input variable list
+  static const char *kwlist[] = {"period",
+                                 "nperiods",
+                                 "theta_range",
+                                 "psi_range",
+                                 "bfield",
+                                 "K",
+                                 "ntheta",
+                                 "npsi",
+                                 NULL};
+
+  // Parse inputs
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "di|OOddii",
+                                   const_cast<char **>(kwlist),
+                                   &Period,
+                                   &NPeriods,
+                                   &List_ThetaRange,
+                                   &List_PsiRange,
+                                   &BField,
+                                   &K,
+                                   &NTheta,
+                                   &NPsi
+                                   )) {
+    return NULL;
+  }
+
+
+  TVector2D ThetaRange(0, 0);
+  TVector2D PsiRange(0, 0);
+
+  // CHeck if beam is ok
+  if (!self->obj->CheckBeam()) {
+    PyErr_SetString(PyExc_ValueError, "particle beam not correctly defined");
+    return NULL;
+  }
+
+  if (BField == 0 && K == 0) {
+    PyErr_SetString(PyExc_ValueError, "must define either K or bfield");
+    return NULL;
+  }
+
+  if (BField > 0 && K > 0) {
+    PyErr_SetString(PyExc_ValueError, "only define either K or bfield");
+    return NULL;
+  }
+
+  // Check period
+  if (Period <= 0) {
+    PyErr_SetString(PyExc_ValueError, "'period' must be > 0");
+    return NULL;
+  }
+
+  // Check nperiods
+  if (NPeriods <= 0) {
+    PyErr_SetString(PyExc_ValueError, "'nperiod' must be > 0");
+    return NULL;
+  }
+
+  // Check ThetaRange
+  if (List_ThetaRange != 0x0) {
+    try {
+      ThetaRange = OSCARSPY::ListAsTVector2D(List_ThetaRange);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'theta_range'");
+      return NULL;
+    }
+  } else {
+    NTheta = 1;
+  }
+
+  // Check PsiRange
+  if (List_PsiRange != 0x0) {
+    try {
+      PsiRange = OSCARSPY::ListAsTVector2D(List_PsiRange);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'theta_range'");
+      return NULL;
+    }
+  } else {
+    NPsi = 1;
+  }
+
+
+  // Check ntheta
+  if (NTheta < 0) {
+    PyErr_SetString(PyExc_ValueError, "'ntheta' must be >= 0");
+    return NULL;
+  }
+
+  // Check npsi
+  if (NPsi < 0) {
+    PyErr_SetString(PyExc_ValueError, "'npsi' must be >= 0");
+    return NULL;
+  }
+
+  if (NTheta == 0) {
+    NTheta = 1;
+  }
+  if (NPsi == 0) {
+    NPsi = 1;
+  }
+
+
+
+  // Container for Point plus scalar
+  T3DScalarContainer PowerDensityContainer;
+
+  if (NTheta == 1 && NPsi == 1) {
+    double const theta = ThetaRange[0] + (ThetaRange[1] - ThetaRange[0])/2;
+    double const psi    = PsiRange[0] + (PsiRange[1] - PsiRange[0])/2;
+    PowerDensityContainer.AddPoint(TVector3D(theta, psi, 1), 0);
+  } else if (NTheta == 1) {
+    double const theta = ThetaRange[0] + (ThetaRange[1] - ThetaRange[0])/2;
+    double const dpsi = (PsiRange[1] - PsiRange[0]) / (NPsi - 1);
+    for (int ipsi = 0; ipsi != NPsi; ++ipsi) {
+      double const psi = PsiRange[0] + ipsi * dpsi;
+      PowerDensityContainer.AddPoint(TVector3D(theta, psi, 1), 0);
+    }
+  } else if (NPsi == 1) {
+    double const psi = PsiRange[0] + (PsiRange[1] - PsiRange[0])/2;
+    double const dtheta = (ThetaRange[1] - ThetaRange[0]) / (NTheta - 1);
+    for (int itheta = 0; itheta != NTheta; ++itheta) {
+      double const theta = ThetaRange[0] + itheta * dtheta;
+      PowerDensityContainer.AddPoint(TVector3D(theta, psi, 1), 0);
+    }
+  } else {
+    double const dtheta = (ThetaRange[1] - ThetaRange[0]) / (NTheta - 1);
+    double const dpsi = (PsiRange[1] - PsiRange[0]) / (NPsi - 1);
+    for (int itheta = 0; itheta != NTheta; ++itheta) {
+      double const theta = ThetaRange[0] + itheta * dtheta;
+      for (int ipsi = 0; ipsi != NPsi; ++ipsi) {
+        double const psi = PsiRange[0] + ipsi * dpsi;
+        PowerDensityContainer.AddPoint(TVector3D(theta, psi, 1), 0);
+      }
+    }
+  }
+
+
+
+
+  double result = 0;
+  if (BField != 0) {
+    K = self->obj->UndulatorK(BField, Period);
+  }
+
+  self->obj->UndulatorPowerDensity(K, Period, NPeriods, PowerDensityContainer);
+
+  // Build the output list of: [[[x, y, z], PowerDensity], [...]]
+  // Create a python list
+  PyObject *PList = PyList_New(0);
+
+  // UPDATE: URGENT: PD output ofile, bofile
+  size_t const NPoints = PowerDensityContainer.GetNPoints();
+
+  PyObject* Value;
+
+  for (size_t i = 0; i != NPoints; ++i) {
+    T3DScalar P = PowerDensityContainer.GetPoint(i);
+
+    // Inner list for each point
+    PyObject *PList2 = PyList_New(0);
+
+
+    // Add position and value to list
+    Value = OSCARSPY::TVector3DAsList(P.GetX());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
+    Value = Py_BuildValue("f", P.GetV());
+    PyList_Append(PList2, Value);
+    Py_DECREF(Value);
+
+    PyList_Append(PList, PList2);
+    Py_DECREF(PList2);
+
+  }
+
+  return PList;
+}
+
 
 
 
@@ -2731,6 +3094,8 @@ static PyMethodDef OSCARSTH_methods[] = {
 
   {"undulator_flux",                             (PyCFunction) OSCARSTH_UndulatorFlux,                           METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorFlux},
   {"undulator_flux_onaxis",                      (PyCFunction) OSCARSTH_UndulatorFluxOnAxis,                     METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorFluxOnAxis},
+  {"undulator_total_power",                      (PyCFunction) OSCARSTH_UndulatorTotalPower,                     METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorTotalPower},
+  {"undulator_power_density",                    (PyCFunction) OSCARSTH_UndulatorPowerDensity,                   METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorPowerDensity},
   {"undulator_brightness",                       (PyCFunction) OSCARSTH_UndulatorBrightness,                     METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorBrightness},
   {"undulator_energy_harmonic",                  (PyCFunction) OSCARSTH_UndulatorEnergyHarmonic,                 METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorEnergyHarmonic},
 
@@ -2767,6 +3132,8 @@ static PyMethodDef OSCARSTH_methods_fake[] = {
 
   {"undulator_flux",                             (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorFlux},
   {"undulator_flux_onaxis",                      (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorFluxOnAxis},
+  {"undulator_total_power",                      (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorTotalPower},
+  {"undulator_power_density",                    (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorPowerDensity},
   {"undulator_brightness",                       (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorBrightness},
   {"undulator_energy_harmonic",                  (PyCFunction) OSCARSTH_Fake, METH_VARARGS | METH_KEYWORDS,                  DOC_OSCARSTH_UndulatorEnergyHarmonic},
 

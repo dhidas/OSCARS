@@ -387,6 +387,87 @@ TVector2D OSCARSTH::UndulatorFluxK (double const K,
 
 
 
+double OSCARSTH::UndulatorTotalPower (double const K,
+                                      double const Period,
+                                      int const NPeriods
+                                      ) const
+{
+  // This function is taken from Kwang-Je KIM
+  // Nuclear Instruments and Methods in Physics Research A246 (1986) 67-70
+  // ANGULAR DISTRIBUTION OF UNDULATOR POWER FOR AN ARBITRARY DEFLECTION PARAMETER K *
+
+  // Properties from beam
+  double    const Gamma          = fParticleBeam.GetGamma();
+  double    const Current        = fParticleBeam.GetCurrent();
+
+  double const Z0 = 376.73031346177; // This is the vacuum impedence of free space
+
+  // Check that we can do this calculation, else reject
+  if (Gamma == 0 || Current == 0) {
+    throw std::invalid_argument("Beam definition incorrect for this calculation: Check gamma, current");
+  }
+
+  return NPeriods / 6 * Z0 * Current * TOSCARSSR::TwoPi() * TOSCARSSR::Qe() * TOSCARSSR::C() / Period * Gamma*Gamma * K*K;
+}
+
+
+
+TVector2D OSCARSTH::UndulatorPowerDensity (double const        K,
+                                           double const        Period,
+                                           int    const        NPeriods,
+                                           T3DScalarContainer& PowerDensityContainer
+                                           ) const
+{
+  // Return the on-axis theoretical brightness for a planar undulator
+
+
+  // Properties from beam
+  double    const Gamma          = fParticleBeam.GetGamma();
+  double    const Current        = fParticleBeam.GetCurrent();
+
+  // Check that we can do this calculation, else reject
+  if (Gamma == 0 || Current == 0) {
+    throw std::invalid_argument("Beam definition incorrect for this calculation: Check energy, current, beta, emittance");
+  }
+
+  // Get total power
+  double const TotalPower = this->UndulatorTotalPower(K, Period, NPeriods);
+
+  double const Factor = 21 * Gamma*Gamma * TotalPower / (7 * TOSCARSSR::Pi2());
+
+  int const N = 1000;
+  double const dalpha = TOSCARSSR::TwoPi() / (double) N;
+
+
+  for (int ip = 0; ip != PowerDensityContainer.GetNPoints(); ++ip) {
+    double const Theta = PowerDensityContainer.GetPoint(ip).GetX().GetX();
+    double const Psi   = PowerDensityContainer.GetPoint(ip).GetX().GetY();
+
+    double const D1 = 1 + pow(Gamma*Psi, 2);
+    double const GammaTimesTheta = Gamma*Theta;
+
+    double Integral = 0;
+    for (int i = 0; i != N; ++i) {
+      double const alpha = -TOSCARSSR::Pi() + i*dalpha;
+
+      double const D = D1 + pow(GammaTimesTheta - K*cos(alpha), 2);
+
+      Integral += (1/pow(D, 3) - (4*pow(GammaTimesTheta - K*cos(alpha), 2)/pow(D, 5))) * pow(sin(alpha), 2);
+    }
+    Integral *= dalpha * Factor;
+
+    Integral *= 1e-6; // To urad^2
+
+    PowerDensityContainer.AddToPoint(ip, Integral);
+  }
+  return TVector2D(0, 0);
+}
+
+
+
+
+
+
 
 
 
