@@ -5255,7 +5255,7 @@ static PyObject* OSCARSSR_GetTrajectory (OSCARSSRObject* self)
     PyList_Append(PList2, Value);
     Py_DECREF(Value);
 
-    Value = OSCARSPY::TVector3DAsList(T.GetA(iT));
+    Value = OSCARSPY::TVector3DAsList(T.GetAoverC(iT));
     PyList_Append(PList2, Value);
     Py_DECREF(Value);
 
