@@ -117,6 +117,17 @@ class lut1d:
         return
 
 
+    def get_energy (self, gap, harmonic=1):
+        """
+        Return the energy for a given gap and harmonic
+        """
+
+        if harmonic in self.splines_energy_vs_gap and gap >= self.gap_range[harmonic][0] and gap <= self.gap_range[harmonic][1]:
+            return self.splines_energy_vs_gap[harmonic](gap).item()
+        else:
+            raise ValueError('gap out of range or harmonic does not exist')
+        return
+
 
     def summary (self, **kwargs):
         """Show the summary plots for this lut1d.  See get_gaps() for arguments"""
@@ -143,7 +154,8 @@ class lut1d:
                   xlim=None,
                   gap_ylim=None,
                   flux_ylim=None,
-                  grid=False
+                  grid=False,
+                  figsize=None
                  ):
         """Get the gaps at which to find the given energy
 
@@ -231,10 +243,13 @@ class lut1d:
 
         # If show, create the two plots
         if len(plots) != 0 and (show == True or ofile is not None):
-            if len(plots) == 2:
-                plt.figure(figsize=[12, 8])
+            if figsize is None:
+                if len(plots) == 2:
+                    plt.figure(figsize=[12, 8])
+                else:
+                    plt.figure()
             else:
-                plt.figure()
+                plt.figure(figsize=figsize)
 
            # Check for subplotting
             if len(plots) > 1 and 'gap' in plots:
