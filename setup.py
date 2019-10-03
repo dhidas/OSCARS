@@ -200,9 +200,10 @@ setup(
   license = 'LICENSE.txt',
   long_description = '''The OSCARS Package.''',
   ext_modules = [moduleOSCARSSR, moduleOSCARSTH],
-  data_files=[('oscars', ['LICENSE.txt', 'COPYRIGHT.txt'])],
-  package_data = {'' : ['LICENSE.txt']},
-  #package_dir = {'oscars': 'python'},
+  #data_files=[('oscars', ['LICENSE.txt', 'COPYRIGHT.txt'])],
+  data_files=[('oscars/data/srw/brilliance', ['oscars/data/srw/brilliance/gwSrwBrilUndHarmUnivDiv.txt',  'oscars/data/srw/brilliance/gwSrwBrilUndHarmUnivFlux.txt', 'oscars/data/srw/brilliance/gwSrwBrilUndHarmUnivSize.txt'])],
   #include_package_data=True,
-  py_modules = ['oscars.plots_mpl', 'oscars.plots3d_mpl', 'oscars.parametric_surfaces', 'oscars.util', 'oscars.fit', 'oscars.bl', 'oscars.lut', 'oscars.brightness', 'oscars.twiss', 'oscars.me']
+  package_data = {'oscars' : ['data/srw/brilliance/*txt']  },
+  #package_dir = {'': 'oscars'},
+  py_modules = ['oscars.plots_mpl', 'oscars.plots3d_mpl', 'oscars.parametric_surfaces', 'oscars.util', 'oscars.fit', 'oscars.bl', 'oscars.lut', 'oscars.brightness', 'oscars.twiss', 'oscars.me', 'oscars.srwl_uti_brightness']
 )
