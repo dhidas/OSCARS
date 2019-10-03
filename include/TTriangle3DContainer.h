@@ -77,7 +77,8 @@ inline std::ostream& operator << (std::ostream& os, TTriangle3DContainer& o)
      << "FilenName:        " << o.GetFileName() << "\n"
      << "Scale:            " << o.GetScale() << "\n"
      << "Rotations:        " << o.GetRotations() << "\n"
-     << "Translation:      " << o.GetTranslation() << std::endl;
+     << "Translation:      " << o.GetTranslation() << "\n"
+     << "NTriangles:       " << o.GetNPoints() << std::endl;
 
 
   return os;

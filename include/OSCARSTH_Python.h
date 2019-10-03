@@ -40,12 +40,20 @@ static PyObject* OSCARSTH_UndulatorFluxOnAxis (OSCARSTHObject* self, PyObject* a
 static PyObject* OSCARSTH_UndulatorBrightness (OSCARSTHObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSTH_UndulatorEnergyHarmonic (OSCARSTHObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSTH_WigglerSpectrum (OSCARSTHObject* self, PyObject* args, PyObject* keywds);
+static PyObject* OSCARSTH_WigglerBrightness (OSCARSTHObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSTH_WigglerFluxRectangle (OSCARSTHObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSTH_BesselJ (OSCARSTHObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSTH_BesselK (OSCARSTHObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSTH_SetParticleBeam (OSCARSTHObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSTH_AddParticleBeam (OSCARSTHObject* self, PyObject* args, PyObject* keywds);
 static PyObject* OSCARSTH_PrintAll (OSCARSTHObject* self);
+
+static PyObject* OSCARSTH_GetEmittance (OSCARSTHObject* self);
+static PyObject* OSCARSTH_GetTwissBeta (OSCARSTHObject* self);
+static PyObject* OSCARSTH_GetBeamEnergy (OSCARSTHObject* self);
+static PyObject* OSCARSTH_GetBeamEnergySigma (OSCARSTHObject* self);
+static PyObject* OSCARSTH_GetBeamCurrent (OSCARSTHObject* self);
+
 static PyObject* OSCARSTH_Fake (OSCARSTHObject* self, PyObject* args, PyObject *keywds);
 
 

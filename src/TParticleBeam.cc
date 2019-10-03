@@ -726,41 +726,46 @@ TParticleA TParticleBeam::GetNewParticle ()
     double const GammaE = ENew / TOSCARSSR::kgToGeV(this->GetM()) < 1 ? 1 : ENew / TOSCARSSR::kgToGeV(this->GetM());
     double const Beta = GammaE != 1 ? sqrt(1.0 - 1.0 / (GammaE * GammaE)) : 0;
 
-    // Converging or diverging
-    int const hConverge = fTwissAlphaX0[0] > 0 ? -1 : 1;
-    int const vConverge = fTwissAlphaX0[1] > 0 ? -1 : 1;
-
-    // For sampling
-    double const hSigX  = sqrt(fEmittance[0] *  fTwissBetaX0[0]);
-    double const hSigXP = sqrt(fEmittance[0] * fTwissGammaX0[0]);
-    double const hRho   = sqrt(1 - pow(fEmittance[0] / (hSigX * hSigXP), 2));
-
-    double const vSigX  = sqrt(fEmittance[1] *  fTwissBetaX0[1]);
-    double const vSigXP = sqrt(fEmittance[1] * fTwissGammaX0[1]);
-    double const vRho   = sqrt(1 - pow(fEmittance[1] / (vSigX * vSigXP), 2));
-
-
-    // Horizontal x and xp
-    double const hu  = gRandomA->Uniform();
-    double const hv  = gRandomA->Uniform();
-    double const hX  = hSigX * sqrt(-2 * log(hu)) * (sqrt(1 - hRho*hRho) * cos(2 * PI * hv) + hRho * sin(2 * PI * hv));
-    double const hXP = hConverge * hSigXP * sqrt(-2 * log(hu)) * sin(2 * PI * hv);
-
-    // Vertical x and xp
-    double const vu  = gRandomA->Uniform();
-    double const vv  = gRandomA->Uniform();
-    double const vX  = vSigX * sqrt(-2 * log(vu)) * (sqrt(1 - vRho*vRho) * cos(2 * PI * vv) + vRho * sin(2 * PI * vv));
-    double const vXP = vConverge * vSigXP * sqrt(-2 * log(vu)) * sin(2 * PI * vv);
 
     // New X0 location for this particle
     TVector3D XNew = this->GetX0();
-    XNew += fHorizontalDirection * hX;
-    XNew += fVerticalDirection   * vX;
 
     // Beta vector from randomization and energy spread
     TVector3D BetaNew = fHorizontalDirection.Cross(fVerticalDirection) * Beta;
-    BetaNew.RotateSelf(hXP, fVerticalDirection);
-    BetaNew.RotateSelf(vXP, -fHorizontalDirection);
+
+    if (fEmittance.Mag2() > 1e-99) {
+      // Converging or diverging
+      int const hConverge = fTwissAlphaX0[0] > 0 ? -1 : 1;
+      int const vConverge = fTwissAlphaX0[1] > 0 ? -1 : 1;
+
+      // For sampling
+      double const hSigX  = sqrt(fEmittance[0] *  fTwissBetaX0[0]);
+      double const hSigXP = sqrt(fEmittance[0] * fTwissGammaX0[0]);
+      double const hRho   = sqrt(1 - pow(fEmittance[0] / (hSigX * hSigXP), 2));
+
+      double const vSigX  = sqrt(fEmittance[1] *  fTwissBetaX0[1]);
+      double const vSigXP = sqrt(fEmittance[1] * fTwissGammaX0[1]);
+      double const vRho   = sqrt(1 - pow(fEmittance[1] / (vSigX * vSigXP), 2));
+
+
+      // Horizontal x and xp
+      double const hu  = gRandomA->Uniform();
+      double const hv  = gRandomA->Uniform();
+      double const hX  = hSigX * sqrt(-2 * log(hu)) * (sqrt(1 - hRho*hRho) * cos(2 * PI * hv) + hRho * sin(2 * PI * hv));
+      double const hXP = hConverge * hSigXP * sqrt(-2 * log(hu)) * sin(2 * PI * hv);
+
+      // Vertical x and xp
+      double const vu  = gRandomA->Uniform();
+      double const vv  = gRandomA->Uniform();
+      double const vX  = vSigX * sqrt(-2 * log(vu)) * (sqrt(1 - vRho*vRho) * cos(2 * PI * vv) + vRho * sin(2 * PI * vv));
+      double const vXP = vConverge * vSigXP * sqrt(-2 * log(vu)) * sin(2 * PI * vv);
+
+      XNew += fHorizontalDirection * hX;
+      XNew += fVerticalDirection   * vX;
+
+      BetaNew.RotateSelf(hXP, fVerticalDirection);
+      BetaNew.RotateSelf(vXP, -fHorizontalDirection);
+    }
 
     // Possibility to shift the time
     double const TNew = fT0;

@@ -70,7 +70,8 @@ namespace TOSCARSSR {
    inline double AngularFrequencyToEv  (double const w) { return w * Hbar() / Qe(); } // eV
    inline double EvToAngularFrequency  (double const e) { return e * Qe() / Hbar(); } // rad s^-1
    inline double EvToFrequency         (double const e) { return e * Qe() / H();    } // s^-1
-   inline double EvToWavelength        (double const e) { return H() * C() / (e * Qe());    } // s^-1
+   inline double EvToWavelength        (double const e) { return H() * C() / (e * Qe());    } // m
+   inline double WavelengthToEv        (double const w) { return H() * C() / (w * Qe());    } // eV
    inline double kgToGeV               (double const m) { return 1e-9 * m * C() * C() / Qe(); } // GeV 
    inline double GeVTokg               (double const m) { return Qe() * m / (1e-9 * C() * C()); } // GeV
 
