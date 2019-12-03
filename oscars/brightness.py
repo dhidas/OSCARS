@@ -829,6 +829,87 @@ def plot_flux (experiments, energy_range_eV=None, figsize=None, xlim=None, ylim=
     return plt
 
 
+def plot_flux_onaxis_diff (experiments, energy_range_eV=None, figsize=None, xlim=None, ylim=None, title='', ofile='', energy_eV=None):
+
+    plt.figure(1, figsize=figsize)
+    
+    cc = cycle(['C0','C1','C2','C3','C4','C5','C6','C7','C8','C9'])
+
+    if energy_range_eV is None:
+        energy_range_eV = [1e99, 1]
+        for exp in experiments:
+            if exp.energy_range_eV[0] < energy_range_eV[0]:
+                energy_range_eV[0] = exp.energy_range_eV[0]
+            if exp.energy_range_eV[1] > energy_range_eV[1]:
+                energy_range_eV[1] = exp.energy_range_eV[1]
+
+
+    X = np.logspace(np.log10(energy_range_eV[0]), np.log10(energy_range_eV[1]), 5000)
+
+    for exp in experiments:
+        exp.get_flux_onaxis_curves(energy_range_eV)
+    A = experiments[0]
+    B = experiments[1]
+    # get points for A
+    Y0 = []
+    for xx in X:
+        yy = 0
+        for curve in A.curves:
+            if xx >= curve[1][0] and xx <= curve[1][1] and curve[2](xx) > yy:
+                yy = curve[2](xx)
+
+        Y0.append(yy)
+
+    # get points for B
+    Y1 = []
+    for xx in X:
+        yy = 0
+        for curve in B.curves:
+            if xx >= curve[1][0] and xx <= curve[1][1] and curve[2](xx) > yy:
+                yy = curve[2](xx)
+
+        Y1.append(yy)
+
+    # I am lazy right now so pop off the end
+    X = X[0:-1]
+    Y0 = Y0[0:-1]
+    Y1 = Y1[0:-1]
+
+    # check for zeros
+    if 0 in Y0 or 0 in Y1:
+        for i in range(len(X)):
+            print(X[i], Y0[i], Y1[i])
+        raise ValueError('zero found in Y0 or Y1')
+
+    Y = [(a-b)/b for a, b in zip(Y0, Y1)]
+    #for i in range(len(X)):
+    #    print(X[i], Y0[i], Y1[i], Y[i])
+
+
+    #plt.plot(X, Y, color=color, linestyle=exp.linestyle, linewidth=exp.linewidth)
+    plt.plot(X, Y)
+
+    yl = plt.ylim()
+    if xlim is not None:
+        plt.xlim(xlim)
+    if ylim is not None:
+        plt.ylim(ylim)
+    plt.grid()
+    plt.semilogx()
+    #plt.loglog()
+    plt.legend()
+    plt.title(title)
+    plt.xlabel('Photon Energy [eV]')
+    plt.ylabel('Flux Ratio')
+
+    if ofile != '':
+        plt.savefig(ofile, bbox_inches='tight')
+
+    plt.show()
+    return plt
+
+
+
 
 
 def plot_flux_onaxis (experiments, energy_range_eV=None, figsize=None, xlim=None, ylim=None, title='', ofile='', energy_eV=None):
