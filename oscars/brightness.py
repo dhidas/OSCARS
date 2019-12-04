@@ -5,6 +5,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 from itertools import cycle
+import pickle
 
 from oscars.srwl_uti_brightness import srw_und_brightness, srw_epu_brightness, srw_und_flux, srw_epu_flux, srw_und_flux_onaxis, srw_epu_flux_onaxis
 
@@ -126,7 +127,6 @@ class Synchrotron:
     linestyle = None
     linewidth = 1
     marker = None
-    oth = None
     
     def __init__ (self, name, beam_energy_GeV, sigma_energy_GeV, current, emittance, devices, energy_range_eV=[10, 200000], color=None, linestyle=None, linewidth=1, marker=None):
         self.name = name
@@ -137,7 +137,6 @@ class Synchrotron:
         self.energy_range_eV = energy_range_eV
         self.devices = devices
         self.curves = []
-        self.oth = oscars.th.th()
         self.color = color
         self.linestyle = linestyle
         self.linewidth = linewidth
@@ -160,10 +159,11 @@ class Synchrotron:
     def add_devices(self, devices):
         self.devices += devices
         
-    def get_brightness_curves (self, energy_range_eV=None):
+    def get_brightness_curves (self, energy_range_eV=None, ofile=None):
         self.curves = []
+        oth = oscars.th.th()
         for d in self.devices:
-            self.oth.set_particle_beam(
+            oth.set_particle_beam(
                 energy_GeV=self.beam_energy_GeV,
                 sigma_energy_GeV=self.sigma_energy_GeV,
                 current=self.current,
@@ -177,7 +177,7 @@ class Synchrotron:
                 energy_range_eV = self.energy_range_eV
 
             if isinstance(d, BendingMagnet):
-                bm = self.oth.dipole_brightness(
+                bm = oth.dipole_brightness(
                     bfield=d.bfield,
                     energy_range_eV=energy_range_eV,
                     npoints=d.npoints
@@ -191,7 +191,7 @@ class Synchrotron:
 
 
             elif isinstance(d, Wiggler):
-                br = self.oth.dipole_brightness(
+                br = oth.dipole_brightness(
                     bfield=d.bfield,
                     energy_range_eV=energy_range_eV,
                     npoints=d.npoints
@@ -213,7 +213,7 @@ class Synchrotron:
 
                     if d.calculation is 'SRW':
                         br = srw_und_brightness(
-                            oth=self.oth,
+                            oth=oth,
                             Kx_range=d.k_range,
                             period=d.period,
                             length=d.length,
@@ -224,7 +224,7 @@ class Synchrotron:
                         x.reverse()
                         y.reverse()
                     else:
-                        br = self.oth.undulator_brightness(
+                        br = oth.undulator_brightness(
                             K_range=d.k_range,
                             period=d.period,
                             nperiods=nperiods,
@@ -240,7 +240,7 @@ class Synchrotron:
             elif isinstance(d, EPU):
                 if d.calculation is 'SRW':
                     br = srw_epu_brightness(
-                        oth=self.oth,
+                        oth=oth,
                         Kx_range=d.kx_range,
                         Ky_range=d.ky_range,
                         period=d.period,
@@ -261,14 +261,18 @@ class Synchrotron:
             else:
                 raise ValueError(d.__class__.__name__ + ' is an invalid type.  please check')
 
+        if ofile is not None:
+            pickle.dump(self, open(ofile, 'wb'))
+
         return
 
 
 
     def get_flux_onaxis_curves (self, energy_range_eV=None):
         self.curves = []
+        oth = oscars.th.th()
         for d in self.devices:
-            self.oth.set_particle_beam(
+            oth.set_particle_beam(
                 energy_GeV=self.beam_energy_GeV,
                 sigma_energy_GeV=self.sigma_energy_GeV,
                 current=self.current,
@@ -282,7 +286,7 @@ class Synchrotron:
                 energy_range_eV = self.energy_range_eV
 
             if isinstance(d, BendingMagnet):
-                bm = self.oth.dipole_spectrum(
+                bm = oth.dipole_spectrum(
                     bfield=d.bfield,
                     energy_range_eV=energy_range_eV,
                     npoints=d.npoints
@@ -294,7 +298,7 @@ class Synchrotron:
 
 
             elif isinstance(d, Wiggler):
-                br = self.oth.dipole_spectrum(
+                br = oth.dipole_spectrum(
                     bfield=d.bfield,
                     energy_range_eV=energy_range_eV,
                     npoints=d.npoints
@@ -311,7 +315,7 @@ class Synchrotron:
                     if i % 2 == 0:
                         continue
 
-                    #fl = self.oth.undulator_flux_onaxis(
+                    #fl = oth.undulator_flux_onaxis(
                     #    K_range=d.k_range,
                     #    period=d.period,
                     #    nperiods=nperiods,
@@ -323,7 +327,7 @@ class Synchrotron:
                     #y = [b[1] for b in fl]
 
                     fl = srw_und_flux_onaxis(
-                            self.oth,
+                            oth,
                             d.k_range,
                             d.period,
                             d.length,
@@ -341,7 +345,7 @@ class Synchrotron:
 
             elif isinstance(d, EPU):
                 fl = srw_epu_flux_onaxis(
-                        self.oth,
+                        oth,
                         d.kx_range,
                         d.ky_range,
                         d.period,
@@ -367,8 +371,9 @@ class Synchrotron:
 
     def get_flux_curves (self, energy_range_eV=None):
         self.curves = []
+        oth = oscars.th.th()
         for d in self.devices:
-            self.oth.set_particle_beam(
+            oth.set_particle_beam(
                 energy_GeV=self.beam_energy_GeV,
                 sigma_energy_GeV=self.sigma_energy_GeV,
                 current=self.current,
@@ -382,7 +387,7 @@ class Synchrotron:
                 energy_range_eV = self.energy_range_eV
 
             if isinstance(d, BendingMagnet):
-                bm = self.oth.dipole_spectrum(
+                bm = oth.dipole_spectrum(
                     bfield=d.bfield,
                     energy_range_eV=energy_range_eV,
                     npoints=d.npoints,
@@ -395,7 +400,7 @@ class Synchrotron:
 
 
             elif isinstance(d, Wiggler):
-                fl = self.oth.dipole_spectrum(
+                fl = oth.dipole_spectrum(
                     bfield=d.bfield,
                     energy_range_eV=energy_range_eV,
                     npoints=d.npoints,
@@ -412,7 +417,7 @@ class Synchrotron:
                     if i % 2 == 0:
                         continue
 
-                    #fl = self.oth.undulator_flux(
+                    #fl = oth.undulator_flux(
                     #    K_range=d.k_range,
                     #    period=d.period,
                     #    nperiods=nperiods,
@@ -424,7 +429,7 @@ class Synchrotron:
                     #y = [b[1] for b in fl]
 
                     fl = srw_und_flux(
-                            self.oth,
+                            oth,
                             d.k_range,
                             d.period,
                             d.length,
@@ -442,7 +447,7 @@ class Synchrotron:
 
             elif isinstance(d, EPU):
                 fl = srw_epu_flux(
-                        self.oth,
+                        oth,
                         d.kx_range,
                         d.ky_range,
                         d.period,
@@ -468,8 +473,9 @@ class Synchrotron:
 
     def get_coherentflux_curves (self, energy_range_eV=None):
         self.curves = []
+        oth = oscars.th.th()
         for d in self.devices:
-            self.oth.set_particle_beam(
+            oth.set_particle_beam(
                 energy_GeV=self.beam_energy_GeV,
                 sigma_energy_GeV=self.sigma_energy_GeV,
                 current=self.current,
@@ -484,7 +490,7 @@ class Synchrotron:
 
             if isinstance(d, BendingMagnet):
                 pass
-                #bm = self.oth.dipole_spectrum(
+                #bm = oth.dipole_spectrum(
                 #    bfield=d.bfield,
                 #    energy_range_eV=energy_range_eV,
                 #    npoints=d.npoints
@@ -499,7 +505,7 @@ class Synchrotron:
 
             elif isinstance(d, Wiggler):
                 pass
-                #br = self.oth.dipole_spectrum(
+                #br = oth.dipole_spectrum(
                 #    bfield=d.bfield,
                 #    energy_range_eV=energy_range_eV,
                 #    npoints=d.npoints
@@ -519,7 +525,7 @@ class Synchrotron:
                         continue
 
                     fl = srw_und_flux(
-                            self.oth,
+                            oth,
                             d.k_range,
                             d.period,
                             d.length,
@@ -533,7 +539,7 @@ class Synchrotron:
                     x.reverse()
                     y.reverse()
                     z.reverse()
-                    cff = self.oth.undulator_coherentflux_fraction(
+                    cff = oth.undulator_coherentflux_fraction(
                         K_points=z,
                         period=d.period,
                         nperiods=nperiods,
@@ -548,7 +554,7 @@ class Synchrotron:
             elif isinstance(d, EPU):
                 nperiods = int(d.length / d.period)
                 fl = srw_epu_flux(
-                        self.oth,
+                        oth,
                         d.kx_range,
                         d.ky_range,
                         d.period,
@@ -561,7 +567,7 @@ class Synchrotron:
                 x.reverse()
                 y.reverse()
                 z.reverse()
-                cff = self.oth.undulator_coherentflux_fraction(
+                cff = oth.undulator_coherentflux_fraction(
                     K_points=z,
                     period=d.period,
                     nperiods=nperiods,
@@ -588,8 +594,9 @@ class Synchrotron:
 
     def get_coherentflux_fraction_curves (self, energy_range_eV=None):
         self.curves = []
+        oth = oscars.th.th()
         for d in self.devices:
-            self.oth.set_particle_beam(
+            oth.set_particle_beam(
                 energy_GeV=self.beam_energy_GeV,
                 sigma_energy_GeV=self.sigma_energy_GeV,
                 current=self.current,
@@ -604,7 +611,7 @@ class Synchrotron:
 
             if isinstance(d, BendingMagnet):
                 pass
-                #bm = self.oth.dipole_spectrum(
+                #bm = oth.dipole_spectrum(
                 #    bfield=d.bfield,
                 #    energy_range_eV=energy_range_eV,
                 #    npoints=d.npoints
@@ -619,7 +626,7 @@ class Synchrotron:
 
             elif isinstance(d, Wiggler):
                 pass
-                #br = self.oth.dipole_spectrum(
+                #br = oth.dipole_spectrum(
                 #    bfield=d.bfield,
                 #    energy_range_eV=energy_range_eV,
                 #    npoints=d.npoints
@@ -638,7 +645,7 @@ class Synchrotron:
                     if i % 2 == 0:
                         continue
 
-                    br = self.oth.undulator_coherentflux_fraction(
+                    br = oth.undulator_coherentflux_fraction(
                         K_range=d.k_range,
                         period=d.period,
                         nperiods=nperiods,
@@ -1170,10 +1177,11 @@ def plot_brightness_all (experiments, energy_range_eV, title='Brightness', figsi
 
     for exp in experiments:
         print(exp.name)
+        oth = oscars.th.th()
         for d in exp.devices:
             color = next(cc) if d.color is None else d.color
             linestyle = next(ll) if d.linestyle is None else d.linestyle
-            exp.oth.set_particle_beam(
+            oth.set_particle_beam(
                 energy_GeV=exp.beam_energy_GeV,
                 sigma_energy_GeV=exp.sigma_energy_GeV,
                 current=exp.current,
@@ -1187,7 +1195,7 @@ def plot_brightness_all (experiments, energy_range_eV, title='Brightness', figsi
             if isinstance(d, BendingMagnet):
                 pass
                 #print('BM')
-                #fl = exp.oth.dipole_spectrum(
+                #fl = oth.dipole_spectrum(
                 #    bfield=d.bfield,
                 #    energy_range_eV=exp.energy_range_eV,
                 #    npoints=d.npoints,
@@ -1202,7 +1210,7 @@ def plot_brightness_all (experiments, energy_range_eV, title='Brightness', figsi
             elif isinstance(d, Wiggler):
                 pass
                 #print('WG')
-                #fl = exp.oth.dipole_spectrum(
+                #fl = oth.dipole_spectrum(
                 #    bfield=d.bfield,
                 #    energy_range_eV=exp.energy_range_eV,
                 #    npoints=d.npoints,
@@ -1226,7 +1234,7 @@ def plot_brightness_all (experiments, energy_range_eV, title='Brightness', figsi
 
                     if d.calculation is 'SRW':
                         br = srw_und_brightness(
-                            oth=exp.oth,
+                            oth=oth,
                             Kx_range=d.k_range,
                             period=d.period,
                             length=d.length,
@@ -1237,7 +1245,7 @@ def plot_brightness_all (experiments, energy_range_eV, title='Brightness', figsi
                         x.reverse()
                         y.reverse()
                     else:
-                        br = exp.oth.undulator_brightness(
+                        br = oth.undulator_brightness(
                             K_range=d.k_range,
                             period=d.period,
                             nperiods=nperiods,
@@ -1284,7 +1292,7 @@ def plot_brightness_all (experiments, energy_range_eV, title='Brightness', figsi
 
                 if d.calculation is 'SRW':
                     br = srw_epu_brightness(
-                        oth=exp.oth,
+                        oth=oth,
                         Kx_range=d.kx_range,
                         Ky_range=d.ky_range,
                         period=d.period,
@@ -1381,10 +1389,11 @@ def plot_flux_all (experiments, energy_range_eV, title='Spectral Flux', figsize=
 
     for exp in experiments:
         print(exp.name)
+        oth = oscars.th.th()
         for d in exp.devices:
             color = next(cc) if d.color is None else d.color
             linestyle = next(ll) if d.linestyle is None else d.linestyle
-            exp.oth.set_particle_beam(
+            oth.set_particle_beam(
                 energy_GeV=exp.beam_energy_GeV,
                 sigma_energy_GeV=exp.sigma_energy_GeV,
                 current=exp.current,
@@ -1396,7 +1405,7 @@ def plot_flux_all (experiments, energy_range_eV, title='Spectral Flux', figsize=
 
             fl = []
             if isinstance(d, BendingMagnet):
-                fl = exp.oth.dipole_spectrum(
+                fl = oth.dipole_spectrum(
                     bfield=d.bfield,
                     energy_range_eV=exp.energy_range_eV,
                     npoints=d.npoints,
@@ -1409,7 +1418,7 @@ def plot_flux_all (experiments, energy_range_eV, title='Spectral Flux', figsize=
                 plt.plot(x, y, color=color, linestyle=linestyle, label=d.name)
 
             elif isinstance(d, Wiggler):
-                fl = exp.oth.dipole_spectrum(
+                fl = oth.dipole_spectrum(
                     bfield=d.bfield,
                     energy_range_eV=exp.energy_range_eV,
                     npoints=d.npoints,
@@ -1431,7 +1440,7 @@ def plot_flux_all (experiments, energy_range_eV, title='Spectral Flux', figsize=
                     if i % 2 == 0:
                         continue
 
-                    #fl = exp.oth.undulator_flux(
+                    #fl = oth.undulator_flux(
                     #    K_range=d.k_range,
                     #    period=d.period,
                     #    nperiods=nperiods,
@@ -1440,7 +1449,7 @@ def plot_flux_all (experiments, energy_range_eV, title='Spectral Flux', figsize=
                     #    minimum=d.minimum
                     #)
                     fl = srw_und_flux(
-                            exp.oth,
+                            oth,
                             d.k_range,
                             d.period,
                             d.length,
@@ -1487,7 +1496,7 @@ def plot_flux_all (experiments, energy_range_eV, title='Spectral Flux', figsize=
                 nperiods = int(d.length / d.period)
                 curves = []
                 fl = srw_epu_flux(
-                        exp.oth,
+                        oth,
                         d.kx_range,
                         d.ky_range,
                         d.period,
@@ -1602,10 +1611,11 @@ def plot_flux_onaxis_all (experiments, energy_range_eV, title='Peak Flux / mrad$
 
     for exp in experiments:
         print(exp.name)
+        oth = oscars.th.th()
         for d in exp.devices:
             color = next(cc) if d.color is None else d.color
             linestyle = next(ll) if d.linestyle is None else d.linestyle
-            exp.oth.set_particle_beam(
+            oth.set_particle_beam(
                 energy_GeV=exp.beam_energy_GeV,
                 sigma_energy_GeV=exp.sigma_energy_GeV,
                 current=exp.current,
@@ -1617,7 +1627,7 @@ def plot_flux_onaxis_all (experiments, energy_range_eV, title='Peak Flux / mrad$
 
             fl = []
             if isinstance(d, BendingMagnet):
-                fl = exp.oth.dipole_spectrum(
+                fl = oth.dipole_spectrum(
                     bfield=d.bfield,
                     energy_range_eV=exp.energy_range_eV,
                     npoints=d.npoints,
@@ -1629,7 +1639,7 @@ def plot_flux_onaxis_all (experiments, energy_range_eV, title='Peak Flux / mrad$
                 plt.plot(x, y, color=color, linestyle=linestyle, label=d.name)
 
             elif isinstance(d, Wiggler):
-                fl = exp.oth.dipole_spectrum(
+                fl = oth.dipole_spectrum(
                     bfield=d.bfield,
                     energy_range_eV=exp.energy_range_eV,
                     npoints=d.npoints,
@@ -1650,7 +1660,7 @@ def plot_flux_onaxis_all (experiments, energy_range_eV, title='Peak Flux / mrad$
                     if i % 2 == 0:
                         continue
 
-                    #fl = exp.oth.undulator_flux_onaxis(
+                    #fl = oth.undulator_flux_onaxis(
                     #    K_range=d.k_range,
                     #    period=d.period,
                     #    nperiods=nperiods,
@@ -1659,7 +1669,7 @@ def plot_flux_onaxis_all (experiments, energy_range_eV, title='Peak Flux / mrad$
                     #    minimum=d.minimum
                     #)
                     fl = srw_und_flux_onaxis(
-                            exp.oth,
+                            oth,
                             d.k_range,
                             d.period,
                             d.length,
@@ -1706,7 +1716,7 @@ def plot_flux_onaxis_all (experiments, energy_range_eV, title='Peak Flux / mrad$
                 nperiods = int(d.length / d.period)
                 curves = []
                 fl = srw_epu_flux_onaxis(
-                        exp.oth,
+                        oth,
                         d.kx_range,
                         d.ky_range,
                         d.period,
