@@ -6,6 +6,7 @@ from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 from itertools import cycle
 import pickle
+import os
 
 from oscars.srwl_uti_brightness import srw_und_brightness, srw_epu_brightness, srw_und_flux, srw_epu_flux, srw_und_flux_onaxis, srw_epu_flux_onaxis
 
@@ -159,8 +160,16 @@ class Synchrotron:
     def add_devices(self, devices):
         self.devices += devices
         
-    def get_brightness_curves (self, energy_range_eV=None, ofile=None):
+    def get_brightness_curves (self, energy_range_eV=None, odir='data'):
         self.curves = []
+
+        try:
+            print('reading from file', self.name, os.path.join(odir, self.name + '_brightness.dat'))
+            self.curves = pickle.load(open( os.path.join(odir, self.name + '_brightness.dat'), 'rb'))
+            return
+        except:
+            pass
+
         oth = oscars.th.th()
         for d in self.devices:
             oth.set_particle_beam(
@@ -261,15 +270,23 @@ class Synchrotron:
             else:
                 raise ValueError(d.__class__.__name__ + ' is an invalid type.  please check')
 
-        if ofile is not None:
-            pickle.dump(self, open(ofile, 'wb'))
+        if odir is not None:
+            pickle.dump(self.curves, open( os.path.join(odir, self.name + '_brightness.dat'), 'wb'))
 
         return
 
 
 
-    def get_flux_onaxis_curves (self, energy_range_eV=None):
+    def get_flux_onaxis_curves (self, energy_range_eV=None, odir='data'):
         self.curves = []
+
+        try:
+            print('reading from file', self.name, os.path.join(odir, self.name + '_fluxonaxis.dat'))
+            self.curves = pickle.load(open( os.path.join(odir, self.name + '_fluxonaxis.dat'), 'rb'))
+            return
+        except:
+            pass
+
         oth = oscars.th.th()
         for d in self.devices:
             oth.set_particle_beam(
@@ -364,13 +381,25 @@ class Synchrotron:
             else:
                 raise ValueError(d.__class__.__name__ + ' is an invalid type.  please check')
 
+        if odir is not None:
+            pickle.dump(self.curves, open( os.path.join(odir, self.name + '_fluxonaxis.dat'), 'wb'))
+
+
         return
 
 
 
 
-    def get_flux_curves (self, energy_range_eV=None):
+    def get_flux_curves (self, energy_range_eV=None, odir='data'):
         self.curves = []
+
+        try:
+            print('reading from file', self.name, os.path.join(odir, self.name + '_flux.dat'))
+            self.curves = pickle.load(open( os.path.join(odir, self.name + '_flux.dat'), 'rb'))
+            return
+        except:
+            pass
+
         oth = oscars.th.th()
         for d in self.devices:
             oth.set_particle_beam(
@@ -466,13 +495,24 @@ class Synchrotron:
             else:
                 raise ValueError(d.__class__.__name__ + ' is an invalid type.  please check')
 
+        if odir is not None:
+            pickle.dump(self.curves, open( os.path.join(odir, self.name + '_flux.dat'), 'wb'))
+
         return
 
 
 
 
-    def get_coherentflux_curves (self, energy_range_eV=None):
+    def get_coherentflux_curves (self, energy_range_eV=None, odir='data'):
         self.curves = []
+
+        try:
+            print('reading from file', self.name, os.path.join(odir, self.name + '_coherentflux.dat'))
+            self.curves = pickle.load(open( os.path.join(odir, self.name + '_coherentflux.dat'), 'rb'))
+            return
+        except:
+            pass
+
         oth = oscars.th.th()
         for d in self.devices:
             oth.set_particle_beam(
@@ -582,6 +622,10 @@ class Synchrotron:
             else:
                 raise ValueError(d.__class__.__name__ + ' is an invalid type.  please check')
 
+        if odir is not None:
+            pickle.dump(self.curves, open( os.path.join(odir, self.name + '_coherentflux.dat'), 'wb'))
+
+
         return
 
 
@@ -592,8 +636,16 @@ class Synchrotron:
 
 
 
-    def get_coherentflux_fraction_curves (self, energy_range_eV=None):
+    def get_coherentflux_fraction_curves (self, energy_range_eV=None, odir='data'):
         self.curves = []
+
+        try:
+            print('reading from file', self.name, os.path.join(odir, self.name + '_coherentfluxfraction.dat'))
+            self.curves = pickle.load(open( os.path.join(odir, self.name + '_coherentfluxfraction.dat'), 'rb'))
+            return
+        except:
+            pass
+
         oth = oscars.th.th()
         for d in self.devices:
             oth.set_particle_beam(
@@ -662,6 +714,10 @@ class Synchrotron:
                 pass
             else:
                 raise ValueError(d.__class__.__name__ + ' is an invalid type.  please check')
+
+
+        if odir is not None:
+            pickle.dump(self.curves, open( os.path.join(odir, self.name + '_coherentfluxfraction.dat'), 'wb'))
 
         return
 
