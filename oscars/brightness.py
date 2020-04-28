@@ -6,6 +6,7 @@ from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 from itertools import cycle
 import pickle
+import os
 
 from oscars.srwl_uti_brightness import srw_und_brightness, srw_epu_brightness, srw_und_flux, srw_epu_flux, srw_und_flux_onaxis, srw_epu_flux_onaxis
 
@@ -159,8 +160,16 @@ class Synchrotron:
     def add_devices(self, devices):
         self.devices += devices
         
-    def get_brightness_curves (self, energy_range_eV=None, ofile=None):
+    def get_brightness_curves (self, energy_range_eV=None, odir='data'):
         self.curves = []
+
+        try:
+            self.curves = pickle.load(open( os.path.join(odir, self.name + '_brightness.dat'), 'rb'))
+            print('read from file', self.name, os.path.join(odir, self.name + '_brightness.dat'))
+            return
+        except:
+            pass
+
         oth = oscars.th.th()
         for d in self.devices:
             oth.set_particle_beam(
@@ -261,15 +270,23 @@ class Synchrotron:
             else:
                 raise ValueError(d.__class__.__name__ + ' is an invalid type.  please check')
 
-        if ofile is not None:
-            pickle.dump(self, open(ofile, 'wb'))
+        if odir is not None:
+            pickle.dump(self.curves, open( os.path.join(odir, self.name + '_brightness.dat'), 'wb'))
 
         return
 
 
 
-    def get_flux_onaxis_curves (self, energy_range_eV=None):
+    def get_flux_onaxis_curves (self, energy_range_eV=None, odir='data'):
         self.curves = []
+
+        try:
+            self.curves = pickle.load(open( os.path.join(odir, self.name + '_fluxonaxis.dat'), 'rb'))
+            print('read from file', self.name, os.path.join(odir, self.name + '_fluxonaxis.dat'))
+            return
+        except:
+            pass
+
         oth = oscars.th.th()
         for d in self.devices:
             oth.set_particle_beam(
@@ -364,13 +381,25 @@ class Synchrotron:
             else:
                 raise ValueError(d.__class__.__name__ + ' is an invalid type.  please check')
 
+        if odir is not None:
+            pickle.dump(self.curves, open( os.path.join(odir, self.name + '_fluxonaxis.dat'), 'wb'))
+
+
         return
 
 
 
 
-    def get_flux_curves (self, energy_range_eV=None):
+    def get_flux_curves (self, energy_range_eV=None, odir='data'):
         self.curves = []
+
+        try:
+            self.curves = pickle.load(open( os.path.join(odir, self.name + '_flux.dat'), 'rb'))
+            print('read from file', self.name, os.path.join(odir, self.name + '_flux.dat'))
+            return
+        except:
+            pass
+
         oth = oscars.th.th()
         for d in self.devices:
             oth.set_particle_beam(
@@ -466,13 +495,24 @@ class Synchrotron:
             else:
                 raise ValueError(d.__class__.__name__ + ' is an invalid type.  please check')
 
+        if odir is not None:
+            pickle.dump(self.curves, open( os.path.join(odir, self.name + '_flux.dat'), 'wb'))
+
         return
 
 
 
 
-    def get_coherentflux_curves (self, energy_range_eV=None):
+    def get_coherentflux_curves (self, energy_range_eV=None, odir='data'):
         self.curves = []
+
+        try:
+            self.curves = pickle.load(open( os.path.join(odir, self.name + '_coherentflux.dat'), 'rb'))
+            print('read from file', self.name, os.path.join(odir, self.name + '_coherentflux.dat'))
+            return
+        except:
+            pass
+
         oth = oscars.th.th()
         for d in self.devices:
             oth.set_particle_beam(
@@ -582,6 +622,10 @@ class Synchrotron:
             else:
                 raise ValueError(d.__class__.__name__ + ' is an invalid type.  please check')
 
+        if odir is not None:
+            pickle.dump(self.curves, open( os.path.join(odir, self.name + '_coherentflux.dat'), 'wb'))
+
+
         return
 
 
@@ -592,8 +636,16 @@ class Synchrotron:
 
 
 
-    def get_coherentflux_fraction_curves (self, energy_range_eV=None):
+    def get_coherentflux_fraction_curves (self, energy_range_eV=None, odir='data'):
         self.curves = []
+
+        try:
+            self.curves = pickle.load(open( os.path.join(odir, self.name + '_coherentfluxfraction.dat'), 'rb'))
+            print('read from file', self.name, os.path.join(odir, self.name + '_coherentfluxfraction.dat'))
+            return
+        except:
+            pass
+
         oth = oscars.th.th()
         for d in self.devices:
             oth.set_particle_beam(
@@ -662,6 +714,10 @@ class Synchrotron:
                 pass
             else:
                 raise ValueError(d.__class__.__name__ + ' is an invalid type.  please check')
+
+
+        if odir is not None:
+            pickle.dump(self.curves, open( os.path.join(odir, self.name + '_coherentfluxfraction.dat'), 'wb'))
 
         return
 
@@ -836,65 +892,85 @@ def plot_flux (experiments, energy_range_eV=None, figsize=None, xlim=None, ylim=
     return plt
 
 
-def plot_flux_onaxis_diff (experiments, energy_range_eV=None, figsize=None, xlim=None, ylim=None, title='', ofile='', energy_eV=None):
+def plot_diff (experiment_sets, kind='flux_onaxis', energy_range_eV=None, figsize=None, xlim=None, ylim=None, title='', ofile='', energy_eV=None, ylabel=None):
 
     plt.figure(1, figsize=figsize)
     
     cc = cycle(['C0','C1','C2','C3','C4','C5','C6','C7','C8','C9'])
 
-    if energy_range_eV is None:
-        energy_range_eV = [1e99, 1]
+    for experiments in experiment_sets:
+        A = experiments[0]
+        B = experiments[1]
+        color = next(cc) if A.color is None else A.color
+        if energy_range_eV is None:
+            energy_range_eV = [1e99, 1]
+            for exp in experiments:
+                if exp.energy_range_eV[0] < energy_range_eV[0]:
+                    energy_range_eV[0] = exp.energy_range_eV[0]
+                if exp.energy_range_eV[1] > energy_range_eV[1]:
+                    energy_range_eV[1] = exp.energy_range_eV[1]
+    
+    
+        X = np.logspace(np.log10(energy_range_eV[0]), np.log10(energy_range_eV[1]), 2000)
+    
         for exp in experiments:
-            if exp.energy_range_eV[0] < energy_range_eV[0]:
-                energy_range_eV[0] = exp.energy_range_eV[0]
-            if exp.energy_range_eV[1] > energy_range_eV[1]:
-                energy_range_eV[1] = exp.energy_range_eV[1]
-
-
-    X = np.logspace(np.log10(energy_range_eV[0]), np.log10(energy_range_eV[1]), 5000)
-
-    for exp in experiments:
-        exp.get_flux_onaxis_curves(energy_range_eV)
-    A = experiments[0]
-    B = experiments[1]
-    # get points for A
-    Y0 = []
-    for xx in X:
-        yy = 0
-        for curve in A.curves:
-            if xx >= curve[1][0] and xx <= curve[1][1] and curve[2](xx) > yy:
-                yy = curve[2](xx)
-
-        Y0.append(yy)
-
-    # get points for B
-    Y1 = []
-    for xx in X:
-        yy = 0
-        for curve in B.curves:
-            if xx >= curve[1][0] and xx <= curve[1][1] and curve[2](xx) > yy:
-                yy = curve[2](xx)
-
-        Y1.append(yy)
-
-    # I am lazy right now so pop off the end
-    X = X[0:-1]
-    Y0 = Y0[0:-1]
-    Y1 = Y1[0:-1]
-
-    # check for zeros
-    if 0 in Y0 or 0 in Y1:
-        for i in range(len(X)):
-            print(X[i], Y0[i], Y1[i])
-        raise ValueError('zero found in Y0 or Y1')
-
-    Y = [(a-b)/b for a, b in zip(Y0, Y1)]
-    #for i in range(len(X)):
-    #    print(X[i], Y0[i], Y1[i], Y[i])
-
-
-    #plt.plot(X, Y, color=color, linestyle=exp.linestyle, linewidth=exp.linewidth)
-    plt.plot(X, Y)
+            if kind is 'flux_onaxis':
+                exp.get_flux_onaxis_curves(energy_range_eV)
+                if ylabel is None:
+                    ylabel = 'Fractional On-Axis Flux Difference\n(A-B)/A'
+            elif kind is 'flux':
+                exp.get_flux_curves(energy_range_eV)
+                if ylabel is None:
+                    ylabel = 'Fractional Flux Difference\n(A-B)/A'
+            elif kind is 'brightness':
+                exp.get_brightness_curves(energy_range_eV)
+                if ylabel is None:
+                    ylabel = 'Fractional Brightness Difference\n(A-B)/A'
+            elif kind is 'coherentflux':
+                exp.get_coherentflux_curves(energy_range_eV)
+                if ylabel is None:
+                    ylabel = 'Fractional Coherent Flux Difference\n(A-B)/A'
+            elif kind is 'coherentflux_fraction':
+                exp.get_coherentflux_fraction_curves(energy_range_eV)
+                if ylabel is None:
+                    ylabel = 'Fractional Coherent Flux Fraction Difference\n(A-B)/A'
+            else:
+                raise ValueError('kind is incorrect', kind)
+        # get points for A
+        Y0 = []
+        for xx in X:
+            yy = 0
+            for curve in A.curves:
+                if xx >= curve[1][0] and xx <= curve[1][1] and curve[2](xx) > yy:
+                    yy = curve[2](xx)
+    
+            Y0.append(yy)
+    
+        # get points for B
+        Y1 = []
+        for xx in X:
+            yy = 0
+            for curve in B.curves:
+                if xx >= curve[1][0] and xx <= curve[1][1] and curve[2](xx) > yy:
+                    yy = curve[2](xx)
+    
+            Y1.append(yy)
+    
+        # I am lazy right now so pop off the end
+        X = X[0:-1]
+        Y0 = Y0[0:-1]
+        Y1 = Y1[0:-1]
+    
+        # check for zeros
+        if 0 in Y0 or 0 in Y1:
+            for i in range(len(X)):
+                print(X[i], Y0[i], Y1[i])
+            raise ValueError('zero found in Y0 or Y1')
+    
+        Y = [(a-b)/b for a, b in zip(Y0, Y1)]
+    
+    
+        plt.plot(X, Y, color=color, linestyle=A.linestyle, linewidth=A.linewidth, label=A.name)
 
     yl = plt.ylim()
     if xlim is not None:
@@ -907,7 +983,7 @@ def plot_flux_onaxis_diff (experiments, energy_range_eV=None, figsize=None, xlim
     plt.legend()
     plt.title(title)
     plt.xlabel('Photon Energy [eV]')
-    plt.ylabel('Flux Ratio')
+    plt.ylabel(ylabel)
 
     if ofile != '':
         plt.savefig(ofile, bbox_inches='tight')
