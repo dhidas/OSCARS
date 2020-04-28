@@ -890,6 +890,9 @@ void TParticleTrajectoryPoints::Clear ()
   fP.clear();
   fT.clear();
 
+  fP.shrink_to_fit();
+  fT.shrink_to_fit();
+
   return;
 }
 

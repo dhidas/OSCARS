@@ -850,6 +850,7 @@ void TField3D_Grid::ReadFile_OSCARS1D (std::string         const& InFileName,
 
   // Clear array data
   InputData.clear();
+  InputData.shrink_to_fit();
 
   // Store Rotations and Translation
   fRotated = Rotations;

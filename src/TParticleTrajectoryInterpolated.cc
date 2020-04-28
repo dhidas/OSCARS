@@ -145,8 +145,9 @@ void TParticleTrajectoryInterpolated::FillTParticleTrajectoryPointsLevel (TParti
 
 
 
-  // Set the deltaT of the particle trajectory points
+  // Set the deltaT of the particle trajectory points, reserve NPoints
   TPTP.SetDeltaT(ThisTSpacing);
+  TPTP.Reserve(NPoints);
 
   // First point of this trajectory is at:
   double const ThisTStart = this->GetTStartThisLevel(Level);

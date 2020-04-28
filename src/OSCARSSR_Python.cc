@@ -7521,11 +7521,6 @@ static PyObject* OSCARSSR_CalculatePowerDensityLine (OSCARSSRObject* self, PyObj
 
 
 
-
-
-
-
-
 const char* DOC_OSCARSSR_CalculateFlux = R"docstring(
 calculate_flux(energy_eV, points [, normal, rotations, translation, nparticles, nthreads, gpu, ngpu, precision, max_level, max_level_extended, ofile, bofile, quantity])
 

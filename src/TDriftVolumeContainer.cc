@@ -109,6 +109,7 @@ void TDriftVolumeContainer::Clear ()
   }
 
   fDriftVolumes.clear();
+  fDriftVolumes.shrink_to_fit();
 
   return;
 }

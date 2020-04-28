@@ -2378,6 +2378,7 @@ void OSCARSSR::CalculateSpectrumThreads (TParticleA& Particle,
 
   // Clear all threads
   Threads.clear();
+  Threads.shrink_to_fit();
 
   // Delete my arrays, I hate new for this purpose
   delete [] Done;
@@ -3072,6 +3073,7 @@ void OSCARSSR::CalculatePowerDensityThreads (TParticleA& Particle,
 
   // Clear all threads
   Threads.clear();
+  Threads.shrink_to_fit();
 
   // Delete my arrays, I hate new for this purpose
   delete [] Done;
@@ -3617,6 +3619,7 @@ void OSCARSSR::CalculatePowerDensityThreadsSTL (TVector3D const& FarfieldOrigin,
 
   // Clear all threads
   Threads.clear();
+  Threads.shrink_to_fit();
 
   // Delete my arrays, I hate new for this purpose
   delete [] Done;
@@ -4374,6 +4377,7 @@ void OSCARSSR::CalculateFluxThreads (TParticleA& Particle,
 
   // Clear all threads
   Threads.clear();
+  Threads.shrink_to_fit();
 
   // Delete my arrays, I hate new for this purpose
   delete [] Done;
