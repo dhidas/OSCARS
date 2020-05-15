@@ -199,6 +199,7 @@ setup(
   url = 'http://oscars.bnl.gov/',
   license = 'LICENSE.txt',
   long_description = '''The OSCARS Package.''',
+  scripts=['bin/plot_spectra.py', 'bin/plot_flux.py'],
   ext_modules = [moduleOSCARSSR, moduleOSCARSTH],
   #data_files=[('oscars', ['LICENSE.txt', 'COPYRIGHT.txt'])],
   data_files=[('oscars/data/srw/brilliance', ['oscars/data/srw/brilliance/gwSrwBrilUndHarmUnivDiv.txt',  'oscars/data/srw/brilliance/gwSrwBrilUndHarmUnivFlux.txt', 'oscars/data/srw/brilliance/gwSrwBrilUndHarmUnivSize.txt'])],
