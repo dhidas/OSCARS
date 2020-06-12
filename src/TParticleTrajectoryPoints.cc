@@ -9,7 +9,7 @@
 
 #include "TParticleTrajectoryPoints.h"
 
-#include "TOSCARSSR.h"
+#include "TOSCARS.h"
 #include "TOMATH.h"
 
 #include <algorithm>
@@ -104,7 +104,7 @@ void TParticleTrajectoryPoints::SetB (size_t const i, TVector3D const& B)
 
 TVector3D TParticleTrajectoryPoints::GetV (size_t const i) const
 {
-  return this->GetB(i) * TOSCARSSR::C();
+  return this->GetB(i) * TOSCARS::C();
 }
 
 
@@ -132,7 +132,7 @@ void TParticleTrajectoryPoints::SetAoverC (size_t const i, TVector3D const& Aove
 
 TVector3D TParticleTrajectoryPoints::GetA (size_t const i) const
 {
-  return this->GetAoverC(i) * TOSCARSSR::C();
+  return this->GetAoverC(i) * TOSCARS::C();
 }
 
 
@@ -830,7 +830,7 @@ void TParticleTrajectoryPoints::ConstructBetaAtPoints ()
   }
   TOMATH::TSpline1D3<TVector3D> S(Times, Pos);
   for (size_t i = 0; i != this->GetNPoints(); ++i) {
-    this->SetB(i, S.GetDerivative(i) / TOSCARSSR::C());
+    this->SetB(i, S.GetDerivative(i) / TOSCARS::C());
   }
 
   return;

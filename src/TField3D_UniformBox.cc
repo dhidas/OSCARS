@@ -9,7 +9,7 @@
 ////////////////////////////////////////////////////////////////////
 
 #include "TField3D_UniformBox.h"
-#include "TOSCARSSR.h"
+#include "TOSCARS.h"
 
 #include <cmath>
 
@@ -116,7 +116,7 @@ TVector3D TField3D_UniformBox::GetF (TVector3D const& X, double const T) const
     // It has no time dependence
     return fField;
   }
-  return fField * cos(TOSCARSSR::TwoPi() * fFrequency * (T + fTimeOffset) + fFrequencyPhase);
+  return fField * cos(TOSCARS::TwoPi() * fFrequency * (T + fTimeOffset) + fFrequencyPhase);
 }
 
 

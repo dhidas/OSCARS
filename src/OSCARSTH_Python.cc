@@ -20,7 +20,7 @@
 
 #include "TOMATH.h"
 
-#include "TOSCARSSR.h"
+#include "TOSCARS.h"
 #include "TVector2D.h"
 #include "TSurfacePoints_Rectangle.h"
 
@@ -606,7 +606,7 @@ static PyObject* OSCARSTH_DipoleCriticalWavelength (OSCARSTHObject* self, PyObje
   }
 
   // Calculate the spectrum
-  double const Result = TOSCARSSR::EvToWavelength(self->obj->DipoleCriticalEnergy(BField));
+  double const Result = TOSCARS::EvToWavelength(self->obj->DipoleCriticalEnergy(BField));
 
   return Py_BuildValue("d", Result);
 }

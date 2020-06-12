@@ -8,7 +8,7 @@
 
 #include "TParticleBeam.h"
 
-#include "TOSCARSSR.h"
+#include "TOSCARS.h"
 #include "TRandomA.h"
 
 #include <cmath>
@@ -52,9 +52,9 @@ TParticleBeam::TParticleBeam (std::string const& ParticleType, std::string const
 
   this->SetParticleType(ParticleType);
   this->SetName(Name);
-  fE0 = Energy < TOSCARSSR::kgToGeV(this->GetM()) ? this->GetM() : Energy;
+  fE0 = Energy < TOSCARS::kgToGeV(this->GetM()) ? this->GetM() : Energy;
 
-  double const Gamma = this->GetE0() / TOSCARSSR::kgToGeV(this->GetM());
+  double const Gamma = this->GetE0() / TOSCARS::kgToGeV(this->GetM());
   double const Beta = sqrt(1.0 - 1.0 / (Gamma * Gamma));
 
   this->SetU0(TVector3D(0, 0, 1));
@@ -79,10 +79,10 @@ TParticleBeam::TParticleBeam (std::string const& ParticleType, std::string const
 
   fX0 = X0;
   fU0 = D0.Mag2() > 0 ? D0.UnitVector() : TVector3D(0, 0, 0);
-  fE0 = Energy < TOSCARSSR::kgToGeV(this->GetM()) ? this->GetM() : Energy;
+  fE0 = Energy < TOSCARS::kgToGeV(this->GetM()) ? this->GetM() : Energy;
   fT0 = 0;
 
-  double const Gamma = this->GetE0() / TOSCARSSR::kgToGeV(this->GetM());
+  double const Gamma = this->GetE0() / TOSCARS::kgToGeV(this->GetM());
   double const Beta = sqrt(1.0 - 1.0 / (Gamma * Gamma));
 
   this->SetU0(TVector3D(0, 0, 1));
@@ -110,10 +110,10 @@ TParticleBeam::TParticleBeam (std::string const& ParticleType, std::string const
   this->SetName(Name);
   fX0 = X0;
   fU0 = D0.Mag2() > 0 ? D0.UnitVector() : TVector3D(0, 0, 0);
-  fE0 = Energy < TOSCARSSR::kgToGeV(this->GetM()) ? this->GetM() : Energy;
+  fE0 = Energy < TOSCARS::kgToGeV(this->GetM()) ? this->GetM() : Energy;
   fT0 = T0;
 
-  double const Gamma = this->GetE0() / TOSCARSSR::kgToGeV(this->GetM());
+  double const Gamma = this->GetE0() / TOSCARS::kgToGeV(this->GetM());
   double const Beta = sqrt(1.0 - 1.0 / (Gamma * Gamma));
 
   this->SetU0(TVector3D(0, 0, 1));
@@ -146,7 +146,7 @@ void TParticleBeam::SetPredefinedBeam (std::string const& Beam)
     this->SetCurrent(0.500);
     this->SetE0(3);
 
-    double const Gamma = this->GetE0() / TOSCARSSR::kgToGeV(this->GetM());
+    double const Gamma = this->GetE0() / TOSCARS::kgToGeV(this->GetM());
     double const Beta = sqrt(1.0 - 1.0 / (Gamma * Gamma));
 
     this->SetU0(TVector3D(0, 0, 1));
@@ -165,7 +165,7 @@ void TParticleBeam::SetPredefinedBeam (std::string const& Beam)
     this->SetCurrent(0.500);
     this->SetE0(3);
 
-    double const Gamma = this->GetE0() / TOSCARSSR::kgToGeV(this->GetM());
+    double const Gamma = this->GetE0() / TOSCARS::kgToGeV(this->GetM());
     double const Beta = sqrt(1.0 - 1.0 / (Gamma * Gamma));
 
     this->SetU0(TVector3D(0, 0, 1));
@@ -184,7 +184,7 @@ void TParticleBeam::SetPredefinedBeam (std::string const& Beam)
     this->SetCurrent(0.500);
     this->SetE0(3);
 
-    double const Gamma = this->GetE0() / TOSCARSSR::kgToGeV(this->GetM());
+    double const Gamma = this->GetE0() / TOSCARS::kgToGeV(this->GetM());
     double const Beta = sqrt(1.0 - 1.0 / (Gamma * Gamma));
 
     this->SetU0(TVector3D(0, 0, 1));
@@ -363,7 +363,7 @@ void TParticleBeam::SetInitialConditions (TVector3D const& X, TVector3D const& D
 
   this->fX0 = X;
   this->fU0 = D.Mag2() > 0.001 ? D.UnitVector() : TVector3D(0, 0, 1);
-  this->fE0 = E0 < TOSCARSSR::kgToGeV(this->GetM()) ? this->GetM() : E0;
+  this->fE0 = E0 < TOSCARS::kgToGeV(this->GetM()) ? this->GetM() : E0;
   this->fT0 = T0;
 
   return;
@@ -606,7 +606,7 @@ void TParticleBeam::SetU0 (TVector3D const& U)
 void TParticleBeam::SetE0 (double const En)
 {
   // Set energy of the beam [GeV]
-  fE0 = En < TOSCARSSR::kgToGeV(this->GetM()) ? this->GetM() : En;
+  fE0 = En < TOSCARS::kgToGeV(this->GetM()) ? this->GetM() : En;
   return;
 }
 
@@ -677,7 +677,7 @@ TParticleA TParticleBeam::GetNewParticle (std::string const& IdealOrRandom)
   // The ideal trajectory
   if (idor == "ideal") {
     // Calculate Beta from original beam E0
-    double const Gamma = fE0 / TOSCARSSR::kgToGeV(this->GetM()) < 1 ? 1 : fE0 / TOSCARSSR::kgToGeV(this->GetM());
+    double const Gamma = fE0 / TOSCARS::kgToGeV(this->GetM()) < 1 ? 1 : fE0 / TOSCARS::kgToGeV(this->GetM());
     double const Beta = Gamma != 1 ? sqrt(1.0 - 1.0 / (Gamma * Gamma)) : 0;
 
     // Copy this particle and set ideal conditions
@@ -706,7 +706,7 @@ TParticleA TParticleBeam::GetNewParticle ()
   }
 
   // Constant PI
-  double const PI = TOSCARSSR::Pi();
+  double const PI = TOSCARS::Pi();
 
   // The new particle to return
   TParticleA NewParticle((TParticleA) *this);
@@ -716,14 +716,14 @@ TParticleA TParticleBeam::GetNewParticle ()
 
     // New energy
     double ENew = fE0 + fSigmaEnergyGeV * gRandomA->Normal();
-    if (ENew < TOSCARSSR::kgToGeV(this->GetM())) {
+    if (ENew < TOSCARS::kgToGeV(this->GetM())) {
       std::cerr << "WARNING in TParticleBeam::GetNewParticle(): ENew < mc^2.  Setting to mc^2" << std::endl;
       std::cerr << "  ENew fSigmaEnergyGeV: " << ENew << "  " << fSigmaEnergyGeV << std::endl;
-      ENew = TOSCARSSR::kgToGeV(this->GetM());
+      ENew = TOSCARS::kgToGeV(this->GetM());
     }
 
     // Gamma and Beta magnitude from energy distribution
-    double const GammaE = ENew / TOSCARSSR::kgToGeV(this->GetM()) < 1 ? 1 : ENew / TOSCARSSR::kgToGeV(this->GetM());
+    double const GammaE = ENew / TOSCARS::kgToGeV(this->GetM()) < 1 ? 1 : ENew / TOSCARS::kgToGeV(this->GetM());
     double const Beta = GammaE != 1 ? sqrt(1.0 - 1.0 / (GammaE * GammaE)) : 0;
 
 
@@ -777,14 +777,14 @@ TParticleA TParticleBeam::GetNewParticle ()
 
     // New energy
     double ENew = fE0 + fSigmaEnergyGeV * gRandomA->Normal();
-    if (ENew < TOSCARSSR::kgToGeV(this->GetM())) {
+    if (ENew < TOSCARS::kgToGeV(this->GetM())) {
       std::cerr << "WARNING in TParticleBeam::GetNewParticle(): ENew < mc^2.  Setting to mc^2" << std::endl;
       std::cerr << "  ENew fSigmaEnergyGeV: " << ENew << "  " << fSigmaEnergyGeV << std::endl;
-      ENew = TOSCARSSR::kgToGeV(this->GetM());
+      ENew = TOSCARS::kgToGeV(this->GetM());
     }
 
     // Gamma and Beta magnitude from energy distribution
-    double const GammaE = ENew / TOSCARSSR::kgToGeV(this->GetM()) < 1 ? 1 : ENew / TOSCARSSR::kgToGeV(this->GetM());
+    double const GammaE = ENew / TOSCARS::kgToGeV(this->GetM()) < 1 ? 1 : ENew / TOSCARS::kgToGeV(this->GetM());
     double const Beta = GammaE != 1 ? sqrt(1.0 - 1.0 / (GammaE * GammaE)) : 0;
 
     // Converging or diverging

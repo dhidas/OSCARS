@@ -110,10 +110,6 @@ static PyObject* OSCARSSR_new (PyTypeObject* type, PyObject* args, PyObject* key
 
 
 
-//static int sr_init(OSCARSSRObject* self, PyObject* args, PyObject* kwds)
-//{
-//  return 0;
-//}
 
 
 
@@ -128,158 +124,8 @@ static PyObject* OSCARSSR_new (PyTypeObject* type, PyObject* args, PyObject* key
 
 
 
-const char* DOC_OSCARSSR_Version = R"docstring(
-version()
 
-Version ID
 
-Returns
--------
-version : str
-)docstring";
-static PyObject* OSCARSSR_Version (OSCARSSRObject* self, PyObject* arg)
-{
-  return Py_BuildValue("s", OSCARSPY::GetVersionString().c_str());
-}
-
-
-
-
-
-
-const char* DOC_OSCARSSR_Pi = R"docstring(
-pi()
-
-The value of pi
-
-Returns
--------
-pi : float
-)docstring";
-static PyObject* OSCARSSR_Pi (OSCARSSRObject* self, PyObject* arg)
-{
-  // Return the internal OSCARSSR number constant pi
-  return Py_BuildValue("d", TOSCARSSR::Pi());
-}
-
-
-
-
-
-
-const char* DOC_OSCARSSR_Qe = R"docstring(
-qe()
-
-Get the value of elementary charge: +1.602176462e-19 [C]
-
-Returns
--------
-charge of electron : float
-)docstring";
-static PyObject* OSCARSSR_Qe (OSCARSSRObject* self, PyObject* arg)
-{
-  // Return the internal OSCARSSR number for elementary charge
-  return Py_BuildValue("d", TOSCARSSR::Qe());
-}
-
-
-
-
-const char* DOC_OSCARSSR_Me = R"docstring(
-me()
-
-Get the value of the mass of the electron 9.10938356e-31 [kg]
-
-Returns
--------
-electron mass : float
-)docstring";
-static PyObject* OSCARSSR_Me (OSCARSSRObject* self, PyObject* arg)
-{
-  // Return the internal OSCARSSR number for mass of the electron [kg]
-  return Py_BuildValue("d", TOSCARSSR::Me());
-}
-
-
-
-
-const char* DOC_OSCARSSR_C = R"docstring(
-c()
-
-Get the value of the speed of light in [m/s]
-
-Returns
--------
-speed of light : float
-)docstring";
-static PyObject* OSCARSSR_C (OSCARSSRObject* self, PyObject* arg)
-{
-  // Return the internal OSCARSSR number for mass of the electron [kg]
-  return Py_BuildValue("d", TOSCARSSR::C());
-}
-
-
-
-
-const char* DOC_OSCARSSR_Random = R"docstring(
-rand()
-
-Uniformally distributed random float in the range [0, 1)
-
-Returns
--------
-float
-)docstring";
-static PyObject* OSCARSSR_Random (OSCARSSRObject* self, PyObject* arg)
-{
-  return Py_BuildValue("d", gRandomA->Uniform());
-}
-
-
-
-
-const char* DOC_OSCARSSR_RandomNormal = R"docstring(
-norm()
-
-Random float from the normal distribution centered at 0 with a sigma of 1
-
-Returns
--------
-float
-)docstring";
-static PyObject* OSCARSSR_RandomNormal (OSCARSSRObject* self, PyObject* arg)
-{
-  return Py_BuildValue("d", gRandomA->Normal());
-}
-
-
-
-
-const char* DOC_OSCARSSR_SetSeed = R"docstring(
-set_seed(n)
-
-Set the internal random seed
-
-Parameters
-----------
-n : float
-    Seed number you wish to use
-
-Returns
--------
-None
-)docstring";
-static PyObject* OSCARSSR_SetSeed (OSCARSSRObject* self, PyObject* arg)
-{
-  // Grab the value from input
-  double Seed = PyFloat_AsDouble(arg);
-
-  gRandomA->SetSeed(Seed);
-
-  // Must return python object None in a special way
-  Py_INCREF(Py_None);
-  return Py_None;
-}
 
 
 
@@ -9279,78 +9125,6 @@ static PyObject* OSCARSSR_PrintAll (OSCARSSRObject* self)
 
 
 
-const char* DOC_OSCARSSR_COUT = R"docstring(
-cout(out)
-
-Print input to std::cout (mostly useful for debugging)
-
-Parameters
-----------
-out : str
-    Any string you want to output
-
-Returns
--------
-None
-)docstring";
-static PyObject* OSCARSSR_COUT (OSCARSSRObject* self, PyObject* args, PyObject *keywds)
-{
-  char const* Out = "";
-  static const char *kwlist[] = {"out",
-                                 NULL};
-
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
-                                   const_cast<char **>(kwlist),
-                                   &Out)) {
-    return NULL;
-  }
-
-  std::cout << Out << std::endl;
-
-  // Must return python object None in a special way
-  Py_INCREF(Py_None);
-  return Py_None;
-}
-
-
-
-
-
-
-
-
-const char* DOC_OSCARSSR_CERR = R"docstring(
-cout(out)
-
-Print input to std::cerr (mostly useful for debugging)
-
-Parameters
-----------
-out : str
-    Any string you want to output
-
-Returns
--------
-None
-)docstring";
-static PyObject* OSCARSSR_CERR (OSCARSSRObject* self, PyObject* args, PyObject *keywds)
-{
-  char const* Out = "";
-  static const char *kwlist[] = {"out",
-                                 NULL};
-
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
-                                   const_cast<char **>(kwlist),
-                                   &Out)) {
-    return NULL;
-  }
-
-  std::cerr << Out << std::endl;
-
-  // Must return python object None in a special way
-  Py_INCREF(Py_None);
-  return Py_None;
-}
 
 
 
@@ -9379,14 +9153,23 @@ static PyObject* OSCARSSR_Fake (OSCARSSRObject* self, PyObject* args, PyObject *
 
 
 static PyMethodDef OSCARSSR_methods_fake[] = {
-  {"version",                           (PyCFunction) OSCARSSR_Version, METH_NOARGS,               DOC_OSCARSSR_Version},
-  {"pi",                                (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_Pi},
-  {"qe",                                (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_Qe},
-  {"me",                                (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_Me},
-  {"c",                                 (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_C},
-  {"rand",                              (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_Random},
-  {"norm",                              (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_RandomNormal},
-  {"set_seed",                          (PyCFunction) OSCARSSR_Fake, METH_O,                       DOC_OSCARSSR_SetSeed},
+  {"version",                           (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  "get version"},
+  {"pi",                                (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  "return pi"},
+  {"alpha",                             (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  "fine structure const"},
+  {"e",                                 (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  "base of natural log"},
+  {"c",                                 (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  "speed of light (m/s)"},
+  {"h",                                 (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  "plank constant (Js)"},
+  {"hbar",                              (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  "plank constant/2pi (Js)"},
+  {"qe",                                (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  "fundamental charge (C)"},
+  {"me",                                (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  "electron mass (kg)"},
+  {"epsilon0",                          (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  "Vacuum permittivity (F/m)"},
+  {"mu0",                               (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  "Vacuum permeability (H/m)"},
+  {"rand",                              (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  "Uniformly distributed[0, 1)"},
+  {"norm",                              (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  "random normal dist center=0 sigma=1"},
+  {"set_seed",                          (PyCFunction) OSCARSSR_Fake, METH_O,                       "set global random seed"},
+  {"cout",                              (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, "print string to cout"},
+  {"cerr",                              (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, "print string to cerr"},
+
   {"set_gpu_global",                    (PyCFunction) OSCARSSR_Fake, METH_O,                       DOC_OSCARSSR_SetGPUGlobal},
   {"check_gpu",                         (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_CheckGPU},
   {"set_nthreads_global",               (PyCFunction) OSCARSSR_Fake, METH_O,                       DOC_OSCARSSR_SetNThreadsGlobal},
@@ -9493,8 +9276,6 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   {"print_gpu",                         (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_PrintGPU},
 
   {"print_all",                         (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_PrintAll},
-  {"cout",                              (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_COUT},
-  {"cerr",                              (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CERR},
 
   {NULL, NULL, 0, NULL}  /* Sentinel */
 };
@@ -9504,14 +9285,23 @@ static PyMethodDef OSCARSSR_methods[] = {
   // We must tell python about the function we allow access as well as give them nice
   // python names, and tell python the method of input parameters.
 
-  {"version",                           (PyCFunction) OSCARSSR_Version,                         METH_NOARGS,                  DOC_OSCARSSR_Version},
-  {"pi",                                (PyCFunction) OSCARSSR_Pi,                              METH_NOARGS,                  DOC_OSCARSSR_Pi},
-  {"qe",                                (PyCFunction) OSCARSSR_Qe,                              METH_NOARGS,                  DOC_OSCARSSR_Qe},
-  {"me",                                (PyCFunction) OSCARSSR_Me,                              METH_NOARGS,                  DOC_OSCARSSR_Me},
-  {"c",                                 (PyCFunction) OSCARSSR_C,                               METH_NOARGS,                  DOC_OSCARSSR_C},
-  {"rand",                              (PyCFunction) OSCARSSR_Random,                          METH_NOARGS,                  DOC_OSCARSSR_Random},
-  {"norm",                              (PyCFunction) OSCARSSR_RandomNormal,                    METH_NOARGS,                  DOC_OSCARSSR_RandomNormal},
-  {"set_seed",                          (PyCFunction) OSCARSSR_SetSeed,                         METH_O,                       DOC_OSCARSSR_SetSeed},
+  {"version",                           (PyCFunction) OSCARSPY::Py_Version,                     METH_NOARGS,                  "get version"},
+  {"pi",                                (PyCFunction) OSCARSPY::Py_Pi,                          METH_NOARGS,                  "return pi"},
+  {"alpha",                             (PyCFunction) OSCARSPY::Py_Alpha,                       METH_NOARGS,                  "fine structure const"},
+  {"e",                                 (PyCFunction) OSCARSPY::Py_E,                           METH_NOARGS,                  "base of natural log"},
+  {"c",                                 (PyCFunction) OSCARSPY::Py_C,                           METH_NOARGS,                  "speed of light (m/s)"},
+  {"h",                                 (PyCFunction) OSCARSPY::Py_H,                           METH_NOARGS,                  "plank constant (Js)"},
+  {"hbar",                              (PyCFunction) OSCARSPY::Py_Hbar,                        METH_NOARGS,                  "plank constant/2pi (Js)"},
+  {"qe",                                (PyCFunction) OSCARSPY::Py_Qe,                          METH_NOARGS,                  "fundamental charge (C)"},
+  {"me",                                (PyCFunction) OSCARSPY::Py_Me,                          METH_NOARGS,                  "electron mass (kg)"},
+  {"epsilon0",                          (PyCFunction) OSCARSPY::Py_Epsilon0,                    METH_NOARGS,                  "Vacuum permittivity (F/m)"},
+  {"mu0",                               (PyCFunction) OSCARSPY::Py_Mu0,                         METH_NOARGS,                  "Vacuum permeability (H/m)"},
+  {"rand",                              (PyCFunction) OSCARSPY::Py_Random,                      METH_NOARGS,                  "Uniformly distributed[0, 1)"},
+  {"norm",                              (PyCFunction) OSCARSPY::Py_RandomNormal,                METH_NOARGS,                  "random normal dist center=0 sigma=1"},
+  {"set_seed",                          (PyCFunction) OSCARSPY::Py_SetSeed,                     METH_O,                       "set global random seed"},
+  {"cout",                              (PyCFunction) OSCARSPY::Py_COUT,                        METH_VARARGS | METH_KEYWORDS, "print string to cout"},
+  {"cerr",                              (PyCFunction) OSCARSPY::Py_CERR,                        METH_VARARGS | METH_KEYWORDS, "print string to cerr"},
+
   {"set_gpu_global",                    (PyCFunction) OSCARSSR_SetGPUGlobal,                    METH_O,                       DOC_OSCARSSR_SetGPUGlobal},
   {"check_gpu",                         (PyCFunction) OSCARSSR_CheckGPU,                        METH_NOARGS,                  DOC_OSCARSSR_CheckGPU},
   {"set_nthreads_global",               (PyCFunction) OSCARSSR_SetNThreadsGlobal,               METH_O,                       DOC_OSCARSSR_SetNThreadsGlobal},
@@ -9618,8 +9408,6 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"print_gpu",                         (PyCFunction) OSCARSSR_PrintGPU,                        METH_NOARGS,                  DOC_OSCARSSR_PrintGPU},
 
   {"print_all",                         (PyCFunction) OSCARSSR_PrintAll,                        METH_NOARGS,                  DOC_OSCARSSR_PrintAll},
-  {"cout",                              (PyCFunction) OSCARSSR_COUT,                            METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_COUT},
-  {"cerr",                              (PyCFunction) OSCARSSR_CERR,                            METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CERR},
 
   {NULL, NULL, 0, NULL}  /* Sentinel */
 };

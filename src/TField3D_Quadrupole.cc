@@ -1,6 +1,6 @@
 #include "TField3D_Quadrupole.h"
 
-#include "TOSCARSSR.h"
+#include "TOSCARS.h"
 
 #include <cmath>
 
@@ -78,7 +78,7 @@ TVector3D TField3D_Quadrupole::GetF (TVector3D const& X, double const T) const
     // It has no time dependence
     return Ret;
   }
-  return Ret * cos(TOSCARSSR::TwoPi() * fFrequency * (T + fTimeOffset) + fFrequencyPhase);
+  return Ret * cos(TOSCARS::TwoPi() * fFrequency * (T + fTimeOffset) + fFrequencyPhase);
 }
 
 
