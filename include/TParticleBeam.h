@@ -202,7 +202,7 @@ inline std::ostream& operator << (std::ostream& os, TParticleBeam const& o)
      << "Weight:           " << o.GetWeight() << "\n"
      << "X0:               " << o.GetX0() << "\n"
      << "U0:               " << o.GetU0() << "\n"
-     << "T0:               " << o.GetT0() << " [m]  " << o.GetT0() / TOSCARSSR::C() << " [s]\n"
+     << "T0:               " << o.GetT0() << " [m]  " << o.GetT0() / TOSCARS::C() << " [s]\n"
      << "E0:               " << o.GetE0() << "\n"
      << "SigmaE:           " << o.GetSigmaEnergyGeV() << "\n"
      << "Current           " << o.GetCurrent() << "\n"

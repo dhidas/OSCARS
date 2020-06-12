@@ -14,7 +14,7 @@
 #include <array>
 
 #include "TOMATH.h"
-#include "TOSCARSSR.h"
+#include "TOSCARS.h"
 
 TField3D_Grid::TField3D_Grid (std::string const& Name)
 {
@@ -274,7 +274,7 @@ TVector3D TField3D_Grid::GetF (TVector3D const& XIN, double const T) const
       throw std::out_of_range("unknown dimension");
   }
 
-  return Field * cos(TOSCARSSR::TwoPi() * fFrequency * (T + fTimeOffset) + fFrequencyPhase);
+  return Field * cos(TOSCARS::TwoPi() * fFrequency * (T + fTimeOffset) + fFrequencyPhase);
 }
 
 
@@ -851,6 +851,7 @@ void TField3D_Grid::ReadFile_OSCARS1D (std::string         const& InFileName,
 
   // Clear array data
   InputData.clear();
+  InputData.shrink_to_fit();
 
   // Store Rotations and Translation
   fRotated = Rotations;

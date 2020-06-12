@@ -20,7 +20,7 @@
 
 #include "TOMATH.h"
 
-#include "TOSCARSSR.h"
+#include "TOSCARS.h"
 #include "TVector2D.h"
 #include "TSurfacePoints_Rectangle.h"
 
@@ -606,7 +606,7 @@ static PyObject* OSCARSTH_DipoleCriticalWavelength (OSCARSTHObject* self, PyObje
   }
 
   // Calculate the spectrum
-  double const Result = TOSCARSSR::EvToWavelength(self->obj->DipoleCriticalEnergy(BField));
+  double const Result = TOSCARS::EvToWavelength(self->obj->DipoleCriticalEnergy(BField));
 
   return Py_BuildValue("d", Result);
 }
@@ -925,6 +925,7 @@ static PyObject* OSCARSTH_UndulatorFlux (OSCARSTHObject* self, PyObject* args, P
 
   // Don't need to hold on to this any longer
   Points.clear();
+  Points.shrink_to_fit();
 
   // Write to file if output is requested
   if (std::string(OutFileNameText) != "") {
@@ -1168,6 +1169,7 @@ static PyObject* OSCARSTH_UndulatorFluxOnAxis (OSCARSTHObject* self, PyObject* a
 
   // Don't need to hold on to this any longer
   Points.clear();
+  Points.shrink_to_fit();
 
   // Write to file if output is requested
   if (std::string(OutFileNameText) != "") {
@@ -1743,6 +1745,7 @@ static PyObject* OSCARSTH_UndulatorCoherentFluxFraction (OSCARSTHObject* self, P
 
   // Don't need to hold on to this any longer
   Points.clear();
+  Points.shrink_to_fit();
 
   // Write to file if output is requested
   if (std::string(OutFileNameText) != "") {
@@ -1980,6 +1983,7 @@ static PyObject* OSCARSTH_UndulatorCoherentFlux (OSCARSTHObject* self, PyObject*
 
   // Don't need to hold on to this any longer
   Points.clear();
+  Points.shrink_to_fit();
 
   // Write to file if output is requested
   if (std::string(OutFileNameText) != "") {
@@ -2217,6 +2221,7 @@ static PyObject* OSCARSTH_UndulatorBrightness (OSCARSTHObject* self, PyObject* a
 
   // Don't need to hold on to this any longer
   Points.clear();
+  Points.shrink_to_fit();
 
   // Write to file if output is requested
   if (std::string(OutFileNameText) != "") {

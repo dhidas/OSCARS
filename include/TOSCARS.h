@@ -1,17 +1,17 @@
-#ifndef GUARD_TOSCARSSR_h
-#define GUARD_TOSCARSSR_h
+#ifndef GUARD_TOSCARS_h
+#define GUARD_TOSCARS_h
 ////////////////////////////////////////////////////////////////////
 //
 // Dean Andrew Hidas <dhidas@bnl.gov>
 //
 // Created on: Wed May 18 20:34:55 EDT 2016
 //
-// Namespace constants for OSCARS (denoted TOSCARSSR)
+// Namespace constants for OSCARS (denoted TOSCARS)
 //
 ////////////////////////////////////////////////////////////////////
 
 
-namespace TOSCARSSR {
+namespace TOSCARS {
 
    /* ************************* */
    /* * Fundamental constants * */
@@ -62,8 +62,8 @@ namespace TOSCARSSR {
    inline double QeOverMe() { return Qe() / Me(); }         // C kg^-1
 
    // Permitivity of vacuum
-   inline double Epsilon0() { return 8.854187817E-12; }     // Add units
-   inline double Mu0()      { return 1.2566370614E-6; }     // Add units
+   inline double Epsilon0() { return 8.854187817E-12; }     // F m^-1
+   inline double Mu0()      { return 1.2566370614E-6; }     // H m^-1
 
    inline double FrequencyToWavelength (double const f) { return C() / f;           } // m
    inline double FrequencyToEv         (double const f) { return f * H() / Qe();    } // eV

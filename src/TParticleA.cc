@@ -78,25 +78,25 @@ void TParticleA::SetParticleType (std::string const& Type)
   // Leptons first
   // UPDATE: values
   if (type == "electron" || type == "anti-positron") {
-    this->SetQM( -TOSCARSSR::Qe(), TOSCARSSR::Me() );
+    this->SetQM( -TOSCARS::Qe(), TOSCARS::Me() );
   } else if (type == "positron" || type == "anti-electron") {
-    this->SetQM(  TOSCARSSR::Qe(), TOSCARSSR::Me() );
+    this->SetQM(  TOSCARS::Qe(), TOSCARS::Me() );
 
   } else if (type == "muon") {
-    this->SetQM( -TOSCARSSR::Qe(), TOSCARSSR::GeVTokg(0.1056583715) );
+    this->SetQM( -TOSCARS::Qe(), TOSCARS::GeVTokg(0.1056583715) );
   } else if (type == "anti-muon") {
-    this->SetQM(  TOSCARSSR::Qe(), TOSCARSSR::GeVTokg(0.1056583715) );
+    this->SetQM(  TOSCARS::Qe(), TOSCARS::GeVTokg(0.1056583715) );
 
 
   } else if (type == "proton") {
-    this->SetQM(  TOSCARSSR::Qe(), TOSCARSSR::GeVTokg(0.938272046) );
+    this->SetQM(  TOSCARS::Qe(), TOSCARS::GeVTokg(0.938272046) );
   } else if (type == "anti-proton") {
-    this->SetQM( -TOSCARSSR::Qe(), TOSCARSSR::GeVTokg(0.938272046) );
+    this->SetQM( -TOSCARS::Qe(), TOSCARS::GeVTokg(0.938272046) );
 
   } else if (type == "pi+") {
-    this->SetQM(  TOSCARSSR::Qe(), TOSCARSSR::GeVTokg(0.13957018) );
+    this->SetQM(  TOSCARS::Qe(), TOSCARS::GeVTokg(0.13957018) );
   } else if (type == "pi-") {
-    this->SetQM( -TOSCARSSR::Qe(), TOSCARSSR::GeVTokg(0.13957018) );
+    this->SetQM( -TOSCARS::Qe(), TOSCARS::GeVTokg(0.13957018) );
 
   } else if (type == "custom") {
     // Don't do anything.  Q and M are set elsewhere for custom particles
@@ -314,7 +314,7 @@ TVector3D const& TParticleA::GetB0 () const
 double TParticleA::GetE0 () const
 {
   // Get initial energy for this particle
-  return TOSCARSSR::kgToGeV(fM) * fGamma;
+  return TOSCARS::kgToGeV(fM) * fGamma;
 }
 
 

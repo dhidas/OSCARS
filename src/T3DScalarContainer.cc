@@ -88,8 +88,11 @@ void T3DScalarContainer::Clear ()
   // Clear all contents from the container
 
   fValues.clear();
+  fValues.shrink_to_fit();
   fCompensation.clear();
+  fCompensation.shrink_to_fit();
   fNotConverged.clear();
+  fNotConverged.shrink_to_fit();
 
   return;
 }
