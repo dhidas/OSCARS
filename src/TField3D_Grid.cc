@@ -672,6 +672,7 @@ void TField3D_Grid::ReadFile_OSCARS1D (std::string         const& InFileName,
       continue;
     }
 
+    std::replace( L.begin(), L.end(), ',', ' '); 
     // Clear and set the istringstream for this line
     S.clear();
     S.str(L);

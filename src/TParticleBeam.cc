@@ -726,6 +726,8 @@ TParticleA TParticleBeam::GetNewParticle ()
     double const GammaE = ENew / TOSCARSSR::kgToGeV(this->GetM()) < 1 ? 1 : ENew / TOSCARSSR::kgToGeV(this->GetM());
     double const Beta = GammaE != 1 ? sqrt(1.0 - 1.0 / (GammaE * GammaE)) : 0;
 
+    // Energy deviation
+    double const dEoverE = (ENew - fE0)/ fE0;
 
     // New X0 location for this particle
     TVector3D XNew = this->GetX0();
@@ -760,8 +762,8 @@ TParticleA TParticleBeam::GetNewParticle ()
       double const vX  = vSigX * sqrt(-2 * log(vu)) * (sqrt(1 - vRho*vRho) * cos(2 * PI * vv) + vRho * sin(2 * PI * vv));
       double const vXP = vConverge * vSigXP * sqrt(-2 * log(vu)) * sin(2 * PI * vv);
 
-      XNew += fHorizontalDirection * hX;
-      XNew += fVerticalDirection   * vX;
+      XNew += fHorizontalDirection * hX + fEta[0] * dEoverE;
+      XNew += fVerticalDirection   * vX + fEta[1] * dEoverE;
 
       BetaNew.RotateSelf(hXP, fVerticalDirection);
       BetaNew.RotateSelf(vXP, -fHorizontalDirection);

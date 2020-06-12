@@ -4,6 +4,7 @@ import oscars.th
 import numpy as np
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 from itertools import cycle
 import pickle
 import os
@@ -731,7 +732,7 @@ class Synchrotron:
 
 
 
-def plot_brightness (experiments, title='Brightness', energy_range_eV=None, figsize=None, xlim=None, ylim=None, ofile='', show=True, energy_eV=None):
+def plot_brightness (experiments, title='Brightness', energy_range_eV=None, figsize=None, xlim=None, ylim=None, ofile='', show=True, energy_eV=None, legendloc=''):
 
     plt.figure(figsize=figsize)
 
@@ -799,7 +800,7 @@ def plot_brightness (experiments, title='Brightness', energy_range_eV=None, figs
         plt.ylim(ylim)
     plt.grid()
     plt.loglog()
-    plt.legend()
+    plt.legend(loc=legendloc)
     plt.title(title)
     plt.xlabel('Photon Energy [eV]')
     plt.ylabel('Brightness [$photons/s/0.1\%bw/mm^2/mrad^2$]')
@@ -811,6 +812,57 @@ def plot_brightness (experiments, title='Brightness', energy_range_eV=None, figs
         plt.show()
 
     return plt
+
+
+def get_brightness_points (experiments, title='Brightness', energy_range_eV=None, figsize=None, xlim=None, ylim=None, ofile='', show=True, energy_eV=None, legendloc=''):
+
+
+
+    if energy_range_eV is None:
+        energy_range_eV = [1e99, 1]
+        for exp in experiments:
+            if exp.energy_range_eV[0] < energy_range_eV[0]:
+                energy_range_eV[0] = exp.energy_range_eV[0]
+            if exp.energy_range_eV[1] > energy_range_eV[1]:
+                energy_range_eV[1] = exp.energy_range_eV[1]
+
+
+    points = []
+    for exp in experiments:
+
+        max_br_at_eV = 0
+        print(exp.name)
+        exp.get_brightness_curves(energy_range_eV)
+        X = []
+        Y = []
+
+
+        for xx in np.logspace(np.log10(energy_range_eV[0]), np.log10(energy_range_eV[1]), 5000):
+            yy = 0
+
+            for curve in exp.curves:
+                if xx >= curve[1][0] and xx <= curve[1][1] and curve[2](xx) > yy:
+                    yy = curve[2](xx)
+                    
+                
+            X.append(xx)
+            Y.append(yy)
+            #elif yy is 0 and len(X) is not 0:
+            #    X=[]
+            #    Y=[]
+
+        if energy_eV is not None:
+            for curve in exp.curves:
+                if energy_eV >= curve[1][0] and energy_eV <= curve[1][1] and curve[2](energy_eV) > max_br_at_eV:
+                    max_br_at_eV = curve[2](energy_eV)
+                    max_br_at_eV_name = curve[0].name
+            print(f'Brightness max at {energy_eV} [eV] is {max_br_at_eV:1.2e} for {max_br_at_eV_name}')
+
+        points.append([exp.name, X, Y])
+
+    return points
+
+
 
 
 
@@ -890,6 +942,53 @@ def plot_flux (experiments, energy_range_eV=None, figsize=None, xlim=None, ylim=
 
     plt.show()
     return plt
+
+
+
+def get_flux_points (experiments, energy_range_eV=None, figsize=None, xlim=None, ylim=None, title='', ofile='', energy_eV=None):
+
+
+    if energy_range_eV is None:
+        energy_range_eV = [1e99, 1]
+        for exp in experiments:
+            if exp.energy_range_eV[0] < energy_range_eV[0]:
+                energy_range_eV[0] = exp.energy_range_eV[0]
+            if exp.energy_range_eV[1] > energy_range_eV[1]:
+                energy_range_eV[1] = exp.energy_range_eV[1]
+
+    points = []
+    for exp in experiments:
+        max_br_at_eV = 0
+        print(exp.name)
+        exp.get_flux_curves(energy_range_eV)
+        X = []
+        Y = []
+        
+        for xx in np.logspace(np.log10(energy_range_eV[0]), np.log10(energy_range_eV[1]), 5000):
+            yy = 0
+
+            for curve in exp.curves:
+                try:
+                    if xx >= curve[1][0] and xx <= curve[1][1] and curve[2](xx) > yy:
+                        yy = curve[2](xx)
+                except:
+                    print('ERROR in', exp.name, curve)
+                
+            X.append(xx)
+            Y.append(yy)
+
+        if energy_eV is not None:
+            for curve in exp.curves:
+                if energy_eV >= curve[1][0] and energy_eV <= curve[1][1] and curve[2](energy_eV) > max_br_at_eV:
+                    max_br_at_eV = curve[2](energy_eV)
+                    max_br_at_eV_name = curve[0].name
+            print(f'Flux max at {energy_eV} [eV] is {max_br_at_eV:1.2e} for {max_br_at_eV_name}')
+        
+        points.append([exp.name, X, Y])
+    return points
+
+
+
 
 
 def plot_diff (experiment_sets, kind='flux_onaxis', energy_range_eV=None, figsize=None, xlim=None, ylim=None, title='', ofile='', energy_eV=None, ylabel=None):

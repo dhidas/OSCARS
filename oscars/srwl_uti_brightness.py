@@ -308,20 +308,20 @@ def srwl_und_bright_en(Ib,kx,kz,phix,phiz,n,E_elec,lam_u,nPer,epeak,enDetPar,rel
     #compute kvals and Evals
     #lam_u: undulator wavelength in cm
     kmax = math.sqrt(kxmax**2+kzmax**2)
-    dk = (kmax - kmin)/numkpts
-    kvals=np.arange(kmin, kmax,dk)
+    dk = (kmax - kmin)/(numkpts-1)
+    kvals=np.arange(kmin, kmax+1e-9,dk)
     #compute Evals
     Evals = KtoE(kvals,E_elec,lam_u,n)
     #compute kxvals and kzvals
     if kxmax > kmin:
-        dkx = (kxmax-kmin)/numkpts
-        kxvals = np.arange(kmin,kxmax,dkx)
+        dkx = (kxmax-kmin)/(numkpts-1)
+        kxvals = np.arange(kmin,kxmax+1e-9,dkx)
     else:
         kxvals = np.zeros(numkpts)
 
     if kzmax > kmin:
-        dkz = (kzmax-kmin)/numkpts
-        kzvals = np.arange(kmin,kzmax,dkz)
+        dkz = (kzmax-kmin)/(numkpts-1)
+        kzvals = np.arange(kmin,kzmax+1e-9,dkz)
     else:
         kzvals = np.zeros(numkpts)
 
