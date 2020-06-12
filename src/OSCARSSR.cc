@@ -2926,6 +2926,7 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
       Result_Precision = fabs(ThisSum - LastSum) / LastSum;
       if ( (iLevel > 8 && Result_Precision < Precision && BetaDiffMax < 2. / (Particle.GetGamma())) || (iLevel > 8 && BetaDiffMax < 2. / (Particle.GetGamma()) && ThisSum == LastSum) ) {
         Result_Level = iLevel;
+        LastSum = ThisSum;
         break;
       } else if (iLevel > 8 && ThisSum == LastSum) {
         // The assumption here is that zero is last and now
@@ -3805,6 +3806,7 @@ double OSCARSSR::CalculateTotalPower (TParticleA& Particle,
     Result_Precision = fabs(ThisSum - LastSum) / LastSum;
     if (iLevel > 8 && Result_Precision < Precision && BetaDiffMax < 2. / (Particle.GetGamma())) {
       Result_Level = iLevel;
+      LastSum = ThisSum;
       break;
     } else if (iLevel > 8 && ThisSum == LastSum) {
       // The assumption here is that zero is last and now

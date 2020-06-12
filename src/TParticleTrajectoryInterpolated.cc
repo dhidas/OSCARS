@@ -232,7 +232,7 @@ double TParticleTrajectoryInterpolated::GetDeltaTInclusiveToLevel (int const Lev
   // Level checking
   this->LevelCheck(Level);
     
-  return (fTStop - fTStart) / pow(2., Level + 1);
+  return (fTStop - fTStart) / (pow(2., Level + 1) - 1);
 
 }
 
@@ -246,7 +246,7 @@ double TParticleTrajectoryInterpolated::GetDeltaTThisLevel (int const Level) con
   // Level checking
   this->LevelCheck(Level);
     
-  return (fTStop - fTStart) / pow(2., Level); 
+  return (fTStop - fTStart) / (pow(2., Level) - 1); 
 
 }
 
