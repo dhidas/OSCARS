@@ -814,7 +814,7 @@ def plot_brightness (experiments, title='Brightness', energy_range_eV=None, figs
     return plt
 
 
-def get_brightness_points (experiments, title='Brightness', energy_range_eV=None, figsize=None, xlim=None, ylim=None, ofile='', show=True, energy_eV=None, legendloc=''):
+def get_brightness_points (experiments, title='Brightness', energy_range_eV=None, figsize=None, xlim=None, ylim=None, ofile='', show=True, energy_eV=None, legendloc='', energy_points_eV=None):
 
 
 
@@ -837,7 +837,8 @@ def get_brightness_points (experiments, title='Brightness', energy_range_eV=None
         Y = []
 
 
-        for xx in np.logspace(np.log10(energy_range_eV[0]), np.log10(energy_range_eV[1]), 5000):
+        xxpoints = energy_points_eV if energy_points_eV is not None else np.logspace(np.log10(energy_range_eV[0]), np.log10(energy_range_eV[1]), 5000)
+        for xx in xxpoints:
             yy = 0
 
             for curve in exp.curves:
@@ -945,7 +946,7 @@ def plot_flux (experiments, energy_range_eV=None, figsize=None, xlim=None, ylim=
 
 
 
-def get_flux_points (experiments, energy_range_eV=None, figsize=None, xlim=None, ylim=None, title='', ofile='', energy_eV=None):
+def get_flux_points (experiments, energy_range_eV=None, figsize=None, xlim=None, ylim=None, title='', ofile='', energy_eV=None, energy_points_eV=None):
 
 
     if energy_range_eV is None:
@@ -964,7 +965,8 @@ def get_flux_points (experiments, energy_range_eV=None, figsize=None, xlim=None,
         X = []
         Y = []
         
-        for xx in np.logspace(np.log10(energy_range_eV[0]), np.log10(energy_range_eV[1]), 5000):
+        xxpoints = energy_points_eV if energy_points_eV is not None else np.logspace(np.log10(energy_range_eV[0]), np.log10(energy_range_eV[1]), 5000)
+        for xx in xxpoints:
             yy = 0
 
             for curve in exp.curves:

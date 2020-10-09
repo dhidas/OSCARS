@@ -85,7 +85,6 @@ TParticleBeam::TParticleBeam (std::string const& ParticleType, std::string const
   double const Gamma = this->GetE0() / TOSCARS::kgToGeV(this->GetM());
   double const Beta = sqrt(1.0 - 1.0 / (Gamma * Gamma));
 
-  this->SetU0(TVector3D(0, 0, 1));
   this->SetB0(this->GetU0() * Beta);
 
   this->SetCurrent(Current);
@@ -116,7 +115,6 @@ TParticleBeam::TParticleBeam (std::string const& ParticleType, std::string const
   double const Gamma = this->GetE0() / TOSCARS::kgToGeV(this->GetM());
   double const Beta = sqrt(1.0 - 1.0 / (Gamma * Gamma));
 
-  this->SetU0(TVector3D(0, 0, 1));
   this->SetB0(this->GetU0() * Beta);
 
   this->SetCurrent(Current);
