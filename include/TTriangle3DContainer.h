@@ -16,6 +16,7 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
+#include <ostream>
 
 class TTriangle3DContainer
 {
