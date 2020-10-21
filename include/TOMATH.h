@@ -98,47 +98,21 @@ template <class T> class TSpline1D3
       //size_t const klo = std::distance(fX.begin(), ilo) - 0;
       //size_t const khi = klo + 1;
 
-      static int klo=0;
-      static int khi = (int) fX.size() - 1;
-      static int k;
-
-      // This if statement is to speed up
-      if ((khi - klo == 1 && fX[khi] <= x)) {
-        if (khi < (int) fX.size() - 2) {
-          ++khi;
-          ++klo;
-        }
-        if (fX[khi] < x) {
-          ++klo;
-          khi = (int) fX.size() - 1;
-          while (khi - klo > 1) {
-            k = (khi + klo) >> 1;
-            if (fX[k] > x) {
-              khi = k;
-            } else {
-              klo = k;
-            }
-          }
-        }
-      }
-
-      if ((khi - klo == 1 && (fX[khi] < x || fX[klo] > x)) || khi - klo > 1) {
-        klo=0;
-        khi = (int) fX.size() - 1;
-
-        while (khi - klo > 1) {
-          k = (khi + klo) >> 1;
-          if (fX[k] > x) {
-            khi = k;
-          } else {
-            klo = k;
-          }
+      int klo=0;
+      int khi = (int) fX.size() - 1;
+      int k;
+      while (khi - klo > 1) {
+        k = (khi + klo) >> 1;
+        if (fX[k] > x) {
+          khi = k;
+        } else {
+          klo = k;
         }
       }
 
       // Distance between points, check that it isn't zero!
       double const h = fX[khi] - fX[klo];
-      if (h == 0) {
+      if (fabs(h) < 1e-50) {
         throw std::out_of_range("TSpline1D3 sees that the stepsize h is zero");
       }
 

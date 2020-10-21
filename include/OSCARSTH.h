@@ -49,9 +49,18 @@ class OSCARSTH
                            double const Angle,
                            double const Energy_eV) const;
 
+    double WigglerFlux (double const BField,
+                        double const Period,
+                        double const Angle,
+                        double const Energy_eV) const;
+
     double DipoleSpectrumAngleIntegrated (double const BField,
                                           double const BeamEnergy_GeV,
                                           double const Energy_eV) const;
+
+    double WigglerFluxAngleIntegrated (double const BField,
+                                       double const Period,
+                                       double const Energy_eV) const;
 
     double UndulatorFlux (double const BField,
                           double const Period,
@@ -65,12 +74,12 @@ class OSCARSTH
     TVector2D UndulatorFluxOnAxisK (double const K,
                                     double const Period,
                                     double const NPeriods,
-                                    int    const Harmonic) const;
+                                    int    const N) const;
 
     TVector2D UndulatorFluxOnAxisB (double const BField,
                                     double const Period,
                                     double const NPeriods,
-                                    int    const Harmonic) const;
+                                    int    const N) const;
 
     TVector2D UndulatorFluxB (double const BField,
                               double const Period,
@@ -84,6 +93,17 @@ class OSCARSTH
                               int    const N
                               ) const;
 
+    double UndulatorTotalPower (double const K,
+                                double const Period,
+                                int const NPeriods
+                                ) const;
+
+    TVector2D UndulatorPowerDensity (double const K,
+                                     double const Period,
+                                     int    const NPeriods,
+                                     T3DScalarContainer& PowerDensityContainer
+                                     ) const;
+
     double UndulatorFluxWeak (double const K,
                               double const Period,
                               double const NPeriods,
@@ -93,6 +113,16 @@ class OSCARSTH
     void DipoleBrightness (double const BField,
                            TSpectrumContainer& SpectrumContainer) const;
 
+    void WigglerBrightnessK (double const K,
+                             double const Period,
+                             int    const NPeriods,
+                             TSpectrumContainer& SpectrumContainer) const;
+
+    void WigglerBrightnessBField (double const BField,
+                                  double const Period,
+                                  int    const NPeriods,
+                                  TSpectrumContainer& SpectrumContainer) const;
+
     double UndulatorEnergyAtHarmonicK (double const K,
                                        double const Period,
                                        int    const Harmonic) const;
@@ -100,6 +130,26 @@ class OSCARSTH
     double UndulatorEnergyAtHarmonicB (double const BField,
                                        double const Period,
                                        int    const Harmonic) const;
+
+    TVector2D UndulatorCoherentFluxFractionK (double const BField,
+                                              double const Period,
+                                              int    const NPeriods,
+                                              int    const N) const;
+                                       
+    TVector2D UndulatorCoherentFluxFractionB (double const BField,
+                                              double const Period,
+                                              int    const NPeriods,
+                                              int    const N) const;
+                                           
+    TVector2D UndulatorCoherentFluxK (double const BField,
+                                      double const Period,
+                                      int    const NPeriods,
+                                      int    const N) const;
+
+    TVector2D UndulatorCoherentFluxB (double const BField,
+                                      double const Period,
+                                      int    const NPeriods,
+                                      int    const N) const;
 
     TVector2D UndulatorBrightnessK (double const BField,
                                     double const Period,

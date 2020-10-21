@@ -236,7 +236,7 @@ def plot_power_density(V, title=None, xlabel='X1 Axis [$m$]', ylabel='X2 Axis [$
     plt.ylabel(ylabel)
     plt.title(title)
 
-    if ofile != '':
+    if ofile != '' and ofile is not None:
         plt.savefig(ofile, bbox_inches='tight')
 
     if show == True:
@@ -414,6 +414,98 @@ def plot_power_density_1d(V, title='Power Density [$W / mm^2$]', xlabel='[$m$]',
     return
 
 
+def plot_power_density_fancy (V, x1=0, x2=0, title='Power Density', ofile=None):
+    
+    X = [item[0][0] for item in V]
+    Y = [item[0][1] for item in V]
+    P = [item[1]    for item in V]
+
+    XValues = np.unique(X).tolist()
+    YValues = np.unique(Y).tolist()
+
+    NX = len(XValues)
+    NY = len(YValues)
+    
+
+    # Set up the axes with gridspec
+    fig = plt.figure(figsize=(6, 6), )
+    grid = plt.GridSpec(4, 4, hspace=0.5, wspace=1.0)
+    
+    main_ax = fig.add_subplot(grid[:-1, 1:])
+
+    plt.title(title)
+
+
+    y_hist = fig.add_subplot(grid[:-1, 0], sharey=main_ax)
+    x_hist = fig.add_subplot(grid[-1, 1:], sharex=main_ax)
+
+    # scatter points on the main axes
+    asd = main_ax.hist2d(X, Y, bins=[NX, NY], weights=P)
+
+    x1_index0 = -1
+    x1_index1 = -1
+    x1_frac0 = 0.5
+    x2_index0 = -1
+    x2_index1 = -1
+    x2_frac0 = 0.5
+
+    XC = []
+    YP = []
+    XC2 = []
+    YP2 = []
+
+
+    if x1 in XValues:
+        x1_index0 = XValues.index(x1)
+        x1_index1 = x1_index0
+    else:
+        x1_index1 = next(x[0] for x in enumerate(XValues) if x[1] > x1)
+        x1_index0 = x1_index1 - 1
+        if x1_index0 < 0:
+            raise ValueError('x1 is not in range')
+    for iy in range(NY):
+        v0 = P[NY*x1_index0 + iy] * x1_frac0
+        v1 = P[NY*x1_index1 + iy] * (1 - x1_frac0)
+        YP.append(Y[NY*x1_index0 + iy])
+        XC.append(v0 + v1)
+
+    y_hist.plot(XC, YP)
+    y_hist.invert_xaxis()
+    
+    if x2 in YValues:
+        x2_index0 = YValues.index(x2)
+        x2_index1 = x2_index0
+    else:
+        x2_index1 = next(x[0] for x in enumerate(YValues) if x[1] > x2)
+        x2_index0 = x2_index1 - 1
+        if x2_index0 < 0:
+            raise ValueError('x2 is not in range')
+    for ix in range(NX):
+        v0 = P[NY*ix + x2_index0] * x2_frac0
+        v1 = P[NY*ix + x2_index1] * (1 - x2_frac0)
+        YP2.append(X[NY*ix + x2_index0])
+        XC2.append(v0 + v1)
+
+    x_hist.plot(YP2, XC2)
+    x_hist.invert_yaxis()
+
+    x_hist.set_xlabel('x [m]')
+    x_hist.set_ylabel('[w/mm$^2$]')
+    y_hist.set_ylabel('y [m]')
+    y_hist.set_xlabel('[w/mm$^2$]')
+    
+    if ofile is not None:
+        plt.savefig(ofile)
+    plt.show()
+    return
+
+
+
+
+
+
+
+
 def plot_flux(V, title='Flux [$\gamma / mm^2 / 0.1\%bw / s$]', xlabel='X1 Axis [$m$]', ylabel='X2 Axis [$m$]', clim=None, show=True, ofile='', figsize=None, ylim=None, xlim=None, colorbar=True, ret=False, nticks_cb=None):
     """Plot a 2D histogram with equal spacing"""
         
@@ -451,7 +543,7 @@ def plot_flux(V, title='Flux [$\gamma / mm^2 / 0.1\%bw / s$]', xlabel='X1 Axis [
     if clim is not None:
       plt.clim(clim)
 
-    if ofile != '':
+    if ofile != '' and ofile is not None:
         plt.savefig(ofile, bbox_inches='tight')
 
     if show == True:
@@ -465,7 +557,7 @@ def plot_flux(V, title='Flux [$\gamma / mm^2 / 0.1\%bw / s$]', xlabel='X1 Axis [
     return
 
 
-def plot_spectrum(S, log=False, show=True, ofile='', title='Spectrum', xlabel='Energy [eV]', ylabel='$\gamma / mm^2 / 0.1\%bw / s$', figsize=None, ylim=None, xlim=None, transparent=True, ret=False, xticks=None, axhlines=None, axvlines=None, **kwargs):
+def plot_spectrum(S, log=False, loglog=False, show=True, ofile='', title='Spectrum', xlabel='Energy [eV]', ylabel='$\gamma / mm^2 / 0.1\%bw / s$', figsize=None, ylim=None, xlim=None, transparent=True, ret=False, xticks=None, axhlines=None, axvlines=None, **kwargs):
     """Plot the spectrum"""
 
     # Size and limits
@@ -478,6 +570,8 @@ def plot_spectrum(S, log=False, show=True, ofile='', title='Spectrum', xlabel='E
     plt.plot(X, Y, **kwargs)
     if log:
         plt.yscale('log')
+    if loglog:
+        plt.loglog()
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(title)
@@ -492,7 +586,7 @@ def plot_spectrum(S, log=False, show=True, ofile='', title='Spectrum', xlabel='E
         for line in axhlines:
             plt.axhline(y=line, color='green', linestyle='--')
 
-    if ofile != '':
+    if ofile != None and ofile != '':
         plt.savefig(ofile, bbox_inches='tight', transparent=transparent)
 
     if show == True:
@@ -824,7 +918,8 @@ def plot_undulator_flux_onaxis(oth, period, nperiods, harmonics, minimum=0, bfie
             period=period,
             nperiods=nperiods,
             harmonic=i,
-            npoints=npoints
+            npoints=npoints,
+            minimum=minimum
             )
 
         X = [f[0] for f in fl]
@@ -878,7 +973,7 @@ def plot_undulator_brightness(oth, period, nperiods, harmonics, minimum=0, bfiel
         
         R = []
         for k in np.linspace(K[1], K[0], 300):
-            ev_brightness = oth.undulator_brightness(K=k,
+            ev_brightness = oth.undulator_brightness(K=K,
                                                      period=period,
                                                      nperiods=nperiods,
                                                      harmonic=i
@@ -957,7 +1052,7 @@ def plot_flux_spectrum(F, S, energy=None, title='Flux [$\gamma / mm^2 / 0.1\%bw 
         plt.axvline(x=energy, color='red')
 
     plt.figure(1)
-    if ofile != '':
+    if ofile != '' and ofile != None:
         plt.savefig(ofile, bbox_inches='tight')
 
     if show == True:

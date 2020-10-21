@@ -12,7 +12,7 @@
 ////////////////////////////////////////////////////////////////////
 
 
-#include "TOSCARSSR.h"
+#include "TOSCARS.h"
 
 #include <string>
 
@@ -25,6 +25,8 @@
 #include "T3DScalarContainer.h"
 #include "TParticleTrajectoryInterpolated.h"
 #include "TRandomA.h"
+#include "TTriangle3DContainer.h"
+#include "TSTLContainer.h"
 
 
 class OSCARSSR
@@ -383,6 +385,59 @@ class OSCARSSR
                                    int    const MaxLevelExtended,
                                    int    const ReturnQuantity);
 
+
+    void CalculatePowerDensitySTL (TVector3D const& FarfieldOrigin,
+                                   double const Precision,
+                                   int    const MaxLevel,
+                                   int    const MaxLevelExtended,
+                                   int const NParticles,
+                                   int const NThreads,
+                                   int const GPU,
+                                   int const NGPU,
+                                   std::vector<int> VGPU,
+                                   int const ReturnQuantity);
+
+    void CalculatePowerDensitySTL (TVector3D const& FarfieldOrigin,
+                                   TParticleA& Particle,
+                                   TSTLContainer& STLContainer,
+                                   double const Precision,
+                                   int    const MaxLevel,
+                                   int    const MaxLevelExtended,
+                                   double const Weight,
+                                   int    const ReturnQuantity);
+
+    void CalculatePowerDensityPointsSTL (TVector3D const& FarfieldOrigin,
+                                         TParticleA& Particle,
+                                         TSTLContainer& STLContainer,
+                                         size_t const iFirst,
+                                         size_t const iLast,
+                                         bool& Done,
+                                         double const Precision,
+                                         int    const MaxLevel,
+                                         int    const MaxLevelExtended,
+                                         double const Weight,
+                                         int    const ReturnQuantity);
+
+    void CalculatePowerDensityThreadsSTL (TVector3D const& FarfieldOrigin,
+                                          TParticleA& Particle,
+                                          TSTLContainer& STLContainer,
+                                          int const NThreads,
+                                          double const Precision,
+                                          int    const MaxLevel,
+                                          int    const MaxLevelExtended,
+                                          double const Weight,
+                                          int    const ReturnQuantity);
+
+    void AddSTLFile (std::string const& InFileName,
+                     double const Scale = 1,
+                     TVector3D const& Rotations = TVector3D(0, 0, 0),
+                     TVector3D const& Translation = TVector3D(0, 0, 0),
+                     std::string const& Name = "");
+
+    void ClearSTL ();
+    void RemoveSTL (std::string const& Name);
+
+
     double CalculateTotalPower (double const Precision = 0.01,
                                 int    const MaxLevel = TParticleA::kMaxTrajectoryLevel,
                                 int    const MaxLevelExtended = 0,
@@ -496,6 +551,7 @@ class OSCARSSR
     TFieldContainer const& GetBFieldContainer () const;
     TFieldContainer const& GetEFieldContainer () const;
     TDriftVolumeContainer const& GetDriftVolumeContainer () const;
+    TSTLContainer const& GetSTLContainer () const;
 
   private:
     TFieldContainer  fBFieldContainer;
@@ -504,6 +560,8 @@ class OSCARSSR
     TParticleBeamContainer fParticleBeamContainer;
 
     TDriftVolumeContainer fDriftVolumeContainer;
+
+    TSTLContainer fSTLContainer;
 
     void SetDerivativesFunction ();
 

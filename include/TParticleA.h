@@ -14,7 +14,7 @@
 #include <string>
 #include <map>
 
-#include "TOSCARSSR.h"
+#include "TOSCARS.h"
 #include "TVector3D.h"
 #include "TParticleTrajectoryPoints.h"
 #include "TParticleTrajectoryInterpolated.h"
@@ -69,7 +69,7 @@ class TParticleA
     void ResetTrajectoryData ();
 
     // Static constants
-    static int const kMaxTrajectoryLevel = 24;
+    static int const kMaxTrajectoryLevel = 26;
 
 
   private:
@@ -114,7 +114,7 @@ inline std::ostream& operator << (std::ostream& os, TParticleA const& o)
      << "QoverMGamma:  " << o.GetQoverMGamma()  << "\n"
      << "X0:           " << o.GetX0() << "\n"
      << "U0:           " << o.GetB0() << "\n"
-     << "T0:           " << o.GetT0() << " [m]  " << o.GetT0() / TOSCARSSR::C() << " [s]\n";
+     << "T0:           " << o.GetT0() << " [m]  " << o.GetT0() / TOSCARS::C() << " [s]\n";
 
   return os;
 }

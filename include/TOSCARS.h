@@ -1,17 +1,17 @@
-#ifndef GUARD_TOSCARSSR_h
-#define GUARD_TOSCARSSR_h
+#ifndef GUARD_TOSCARS_h
+#define GUARD_TOSCARS_h
 ////////////////////////////////////////////////////////////////////
 //
 // Dean Andrew Hidas <dhidas@bnl.gov>
 //
 // Created on: Wed May 18 20:34:55 EDT 2016
 //
-// Namespace constants for OSCARS (denoted TOSCARSSR)
+// Namespace constants for OSCARS (denoted TOSCARS)
 //
 ////////////////////////////////////////////////////////////////////
 
 
-namespace TOSCARSSR {
+namespace TOSCARS {
 
    /* ************************* */
    /* * Fundamental constants * */
@@ -62,15 +62,16 @@ namespace TOSCARSSR {
    inline double QeOverMe() { return Qe() / Me(); }         // C kg^-1
 
    // Permitivity of vacuum
-   inline double Epsilon0() { return 8.854187817E-12; }     // Add units
-   inline double Mu0()      { return 1.2566370614E-6; }     // Add units
+   inline double Epsilon0() { return 8.854187817E-12; }     // F m^-1
+   inline double Mu0()      { return 1.2566370614E-6; }     // H m^-1
 
    inline double FrequencyToWavelength (double const f) { return C() / f;           } // m
    inline double FrequencyToEv         (double const f) { return f * H() / Qe();    } // eV
    inline double AngularFrequencyToEv  (double const w) { return w * Hbar() / Qe(); } // eV
    inline double EvToAngularFrequency  (double const e) { return e * Qe() / Hbar(); } // rad s^-1
    inline double EvToFrequency         (double const e) { return e * Qe() / H();    } // s^-1
-   inline double EvToWavelength        (double const e) { return H() * C() / (e * Qe());    } // s^-1
+   inline double EvToWavelength        (double const e) { return H() * C() / (e * Qe());    } // m
+   inline double WavelengthToEv        (double const w) { return H() * C() / (w * Qe());    } // eV
    inline double kgToGeV               (double const m) { return 1e-9 * m * C() * C() / Qe(); } // GeV 
    inline double GeVTokg               (double const m) { return Qe() * m / (1e-9 * C() * C()); } // GeV
 

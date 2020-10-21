@@ -690,6 +690,8 @@ bool OSCARSSR::SetUseGPUGlobal (int const in)
     return false;
   }
 
+  fUseGPUGlobal = 0;
+
   #ifdef CUDA
   if (this->CheckGPU() > 0) {
     fUseGPUGlobal = 1;
@@ -699,8 +701,6 @@ bool OSCARSSR::SetUseGPUGlobal (int const in)
     return false;
   }
   #endif
-
-  fUseGPUGlobal = 0;
 
   return false;
 }
@@ -874,9 +874,8 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
   // This function uses the internal Trajectory member to store results
 
   // Check that CTStart is not after T0 of particle
-  if (this->GetCTStart() > P.GetT0()) {
-    std::cerr << "GetCTStart() P.GetT0(): " << this->GetCTStart() << " " << P.GetT0() << std::endl;
-    throw std::out_of_range("start time is greater than T0");
+  if (this->GetCTStart() > P.GetT0() || this->GetCTStop() < P.GetT0()) {
+    throw std::out_of_range("start time is greater than T0 or stop time is less than T0");
   }
 
   // Check that CTStart and CTStop are not the same (probably not defined if this is the case)
@@ -912,12 +911,12 @@ void OSCARSSR::CalculateTrajectoryRK4 (TParticleA& P)
 {
 
   // Calculate the total DeltaT in seconds
-  double const DeltaT = ((this->GetCTStop() - this->GetCTStart()) / TOSCARSSR::C() / (fNPointsTrajectory - 1));
+  double const DeltaT = ((this->GetCTStop() - this->GetCTStart()) / TOSCARS::C() / (fNPointsTrajectory - 1));
 
 
   // The number of points in the forward and backward direction
-  size_t NPointsForward  = 1 + (this->GetCTStop() - P.GetT0()) / TOSCARSSR::C() / DeltaT;
-  size_t NPointsBackward = (P.GetT0() - this->GetCTStart()) / TOSCARSSR::C() / DeltaT;
+  size_t NPointsForward  = 1 + (this->GetCTStop() - P.GetT0()) / TOSCARS::C() / DeltaT;
+  size_t NPointsBackward = (P.GetT0() - this->GetCTStart()) / TOSCARS::C() / DeltaT;
 
 
   // Arrays to be sent for RK calculation
@@ -926,11 +925,11 @@ void OSCARSSR::CalculateTrajectoryRK4 (TParticleA& P)
 
   // Initial conditions for the forward propogation
   x[0] = P.GetX0().GetX();
-  x[1] = P.GetB0().GetX() * TOSCARSSR::C();
+  x[1] = P.GetB0().GetX() * TOSCARS::C();
   x[2] = P.GetX0().GetY();
-  x[3] = P.GetB0().GetY() * TOSCARSSR::C();
+  x[3] = P.GetB0().GetY() * TOSCARS::C();
   x[4] = P.GetX0().GetZ();
-  x[5] = P.GetB0().GetZ() * TOSCARSSR::C();
+  x[5] = P.GetB0().GetZ() * TOSCARS::C();
 
 
   // Grap the particle trajectory object
@@ -940,13 +939,13 @@ void OSCARSSR::CalculateTrajectoryRK4 (TParticleA& P)
   // Set delta T for the trajectory
   ParticleTrajectory.SetDeltaT(DeltaT);
 
-  (this->*fDerivativesFunction)(P.GetT0() / TOSCARSSR::C(), x, dxdt, P);
+  (this->*fDerivativesFunction)(P.GetT0() / TOSCARS::C(), x, dxdt, P);
 
   // Loop over points in the forward direction
   for (size_t i = 0; i != NPointsForward; ++i) {
 
     // This time
-    double t = P.GetT0() / TOSCARSSR::C() + DeltaT * i;
+    double t = P.GetT0() / TOSCARS::C() + DeltaT * i;
 
 
     // UPDATE: Possibly take this away
@@ -959,7 +958,7 @@ void OSCARSSR::CalculateTrajectoryRK4 (TParticleA& P)
       if (i == 0) {
         (this->*fDerivativesFunction)(t, x, dxdt, P);
       }
-      ParticleTrajectory.AddPoint(x[0], x[2], x[4], x[1] / TOSCARSSR::C(), x[3] / TOSCARSSR::C(), x[5] / TOSCARSSR::C(), dxdt[1] / TOSCARSSR::C(), dxdt[3] / TOSCARSSR::C(), dxdt[5] / TOSCARSSR::C(), t);
+      ParticleTrajectory.AddPoint(x[0], x[2], x[4], x[1] / TOSCARS::C(), x[3] / TOSCARS::C(), x[5] / TOSCARS::C(), dxdt[1] / TOSCARS::C(), dxdt[3] / TOSCARS::C(), dxdt[5] / TOSCARS::C(), t);
 
       // Propogate
       (this->*fDerivativesFunction)(t, x, dxdt, P);
@@ -973,11 +972,11 @@ void OSCARSSR::CalculateTrajectoryRK4 (TParticleA& P)
 
   // Set initial conditions for propogating backwards
   x[0] =  P.GetX0().GetX();
-  x[1] =  P.GetB0().GetX() * TOSCARSSR::C();
+  x[1] =  P.GetB0().GetX() * TOSCARS::C();
   x[2] =  P.GetX0().GetY();
-  x[3] =  P.GetB0().GetY() * TOSCARSSR::C();
+  x[3] =  P.GetB0().GetY() * TOSCARS::C();
   x[4] =  P.GetX0().GetZ();
-  x[5] =  P.GetB0().GetZ() * TOSCARSSR::C();
+  x[5] =  P.GetB0().GetZ() * TOSCARS::C();
 
   // Reverse time
   double const DeltaTReversed = -DeltaT;
@@ -986,8 +985,8 @@ void OSCARSSR::CalculateTrajectoryRK4 (TParticleA& P)
   for (size_t i = 0; i != NPointsBackward; ++i) {
 
     // This time
-    double t1 = P.GetT0() / TOSCARSSR::C() + DeltaTReversed * (i);
-    double t2 = P.GetT0() / TOSCARSSR::C() + DeltaTReversed * (i+1);
+    double t1 = P.GetT0() / TOSCARS::C() + DeltaTReversed * (i);
+    double t2 = P.GetT0() / TOSCARS::C() + DeltaTReversed * (i+1);
 
     if (fDriftVolumeContainer.IsInside(TVector3D(x[0], x[2], x[4]))) {
       x[0] += DeltaTReversed * x[1];
@@ -999,7 +998,7 @@ void OSCARSSR::CalculateTrajectoryRK4 (TParticleA& P)
       RK4(x, dxdt, t1, DeltaTReversed, x, P);
 
       // Add the point to the trajectory
-      ParticleTrajectory.AddPoint(x[0], x[2], x[4], x[1] / TOSCARSSR::C(), x[3] / TOSCARSSR::C(), x[5] / TOSCARSSR::C(), dxdt[1] / TOSCARSSR::C(), dxdt[3] / TOSCARSSR::C(), dxdt[5] / TOSCARSSR::C(), t2);
+      ParticleTrajectory.AddPoint(x[0], x[2], x[4], x[1] / TOSCARS::C(), x[3] / TOSCARS::C(), x[5] / TOSCARS::C(), dxdt[1] / TOSCARS::C(), dxdt[3] / TOSCARS::C(), dxdt[5] / TOSCARS::C(), t2);
     }
   }
 
@@ -1020,7 +1019,7 @@ void OSCARSSR::CalculateTrajectoryRKAS (TParticleA& P)
 
 
   // Calculate the total DeltaT in seconds
-  double const DeltaT = ((this->GetCTStop() - this->GetCTStart()) / TOSCARSSR::C() / (fNPointsTrajectory - 1));
+  double const DeltaT = ((this->GetCTStop() - this->GetCTStart()) / TOSCARS::C() / (fNPointsTrajectory - 1));
 
 
   // Arrays to be sent for RK calculation
@@ -1029,11 +1028,11 @@ void OSCARSSR::CalculateTrajectoryRKAS (TParticleA& P)
 
   // Initial conditions for the forward propogation
   x[0] = P.GetX0().GetX();
-  x[1] = P.GetB0().GetX() * TOSCARSSR::C();
+  x[1] = P.GetB0().GetX() * TOSCARS::C();
   x[2] = P.GetX0().GetY();
-  x[3] = P.GetB0().GetY() * TOSCARSSR::C();
+  x[3] = P.GetB0().GetY() * TOSCARS::C();
   x[4] = P.GetX0().GetZ();
-  x[5] = P.GetB0().GetZ() * TOSCARSSR::C();
+  x[5] = P.GetB0().GetZ() * TOSCARS::C();
 
 
   // Grap the particle trajectory object
@@ -1043,28 +1042,28 @@ void OSCARSSR::CalculateTrajectoryRKAS (TParticleA& P)
   // Set delta T for the trajectory
   ParticleTrajectory.SetDeltaT(DeltaT);
 
-  (this->*fDerivativesFunction)(P.GetT0() / TOSCARSSR::C(), x, dxdt, P);
+  (this->*fDerivativesFunction)(P.GetT0() / TOSCARS::C(), x, dxdt, P);
 
   double const Precision = fTrajectoryPrecision;
   double const MinimumStepSize = 1e-30;
 
   // Propogate forward in time
-  this->PropogateRKAS(x, P.GetT0() / TOSCARSSR::C(), this->GetCTStop() / TOSCARSSR::C(), Precision, DeltaT, MinimumStepSize, P);
+  this->PropogateRKAS(x, P.GetT0() / TOSCARS::C(), this->GetCTStop() / TOSCARS::C(), Precision, DeltaT, MinimumStepSize, P);
 
   // Reverse trajectory elements for backward propogation
   ParticleTrajectory.ReverseArrays();
 
   // Set initial conditions for propogating backwards
   x[0] =  P.GetX0().GetX();
-  x[1] =  P.GetB0().GetX() * TOSCARSSR::C();
+  x[1] =  P.GetB0().GetX() * TOSCARS::C();
   x[2] =  P.GetX0().GetY();
-  x[3] =  P.GetB0().GetY() * TOSCARSSR::C();
+  x[3] =  P.GetB0().GetY() * TOSCARS::C();
   x[4] =  P.GetX0().GetZ();
-  x[5] =  P.GetB0().GetZ() * TOSCARSSR::C();
+  x[5] =  P.GetB0().GetZ() * TOSCARS::C();
 
   // Propogate backward in time
-  (this->*fDerivativesFunction)(P.GetT0() / TOSCARSSR::C(), x, dxdt, P);
-  this->PropogateRKAS(x, P.GetT0() / TOSCARSSR::C(), this->GetCTStart() / TOSCARSSR::C(), Precision, DeltaT, MinimumStepSize, P);
+  (this->*fDerivativesFunction)(P.GetT0() / TOSCARS::C(), x, dxdt, P);
+  this->PropogateRKAS(x, P.GetT0() / TOSCARS::C(), this->GetCTStart() / TOSCARS::C(), Precision, DeltaT, MinimumStepSize, P);
 
   // Re-Reverse the trajectory to be in the proper time order
   ParticleTrajectory.ReverseArrays();
@@ -1221,7 +1220,7 @@ void OSCARSSR::DerivativesE (double t, std::array<double, 6>& x, std::array<doub
   // x[4] - z
   // x[5] - Vz
 
-  double const OneMinus = (1. - (x[1]*x[1] + x[3]*x[3] + x[5]*x[5]) / (TOSCARSSR::C() * TOSCARSSR::C()));
+  double const OneMinus = (1. - (x[1]*x[1] + x[3]*x[3] + x[5]*x[5]) / (TOSCARS::C() * TOSCARS::C()));
   if (OneMinus <= 0) {
     fErrorGamma = true;
     return;
@@ -1230,15 +1229,15 @@ void OSCARSSR::DerivativesE (double t, std::array<double, 6>& x, std::array<doub
   // EField at this point
   TVector3D const E = this->GetE(x[0], x[2], x[4], t);
 
-  double const QoverMTimesSqrtOneMinusBetaSquared = P.GetQ() / P.GetM() * sqrt(1. - (x[1]*x[1] + x[3]*x[3] + x[5]*x[5]) / (TOSCARSSR::C() * TOSCARSSR::C()));
-  double const BetaDotE = (x[1] * E.GetX() + x[3] * E.GetY() + x[5] * E.GetZ()) / TOSCARSSR::C();
+  double const QoverMTimesSqrtOneMinusBetaSquared = P.GetQ() / P.GetM() * sqrt(1. - (x[1]*x[1] + x[3]*x[3] + x[5]*x[5]) / (TOSCARS::C() * TOSCARS::C()));
+  double const BetaDotE = (x[1] * E.GetX() + x[3] * E.GetY() + x[5] * E.GetZ()) / TOSCARS::C();
 
   dxdt[0] = x[1];
-  dxdt[1] = QoverMTimesSqrtOneMinusBetaSquared * (E.GetX() - x[1] * BetaDotE / TOSCARSSR::C());
+  dxdt[1] = QoverMTimesSqrtOneMinusBetaSquared * (E.GetX() - x[1] * BetaDotE / TOSCARS::C());
   dxdt[2] = x[3];                                          
-  dxdt[3] = QoverMTimesSqrtOneMinusBetaSquared * (E.GetY() - x[3] * BetaDotE / TOSCARSSR::C());
+  dxdt[3] = QoverMTimesSqrtOneMinusBetaSquared * (E.GetY() - x[3] * BetaDotE / TOSCARS::C());
   dxdt[4] = x[5];                                          
-  dxdt[5] = QoverMTimesSqrtOneMinusBetaSquared * (E.GetZ() - x[5] * BetaDotE / TOSCARSSR::C());
+  dxdt[5] = QoverMTimesSqrtOneMinusBetaSquared * (E.GetZ() - x[5] * BetaDotE / TOSCARS::C());
 
   return;
 }
@@ -1258,7 +1257,7 @@ void OSCARSSR::DerivativesB (double t, std::array<double, 6>& x, std::array<doub
   // x[4] - z
   // x[5] - Vz
 
-  double const OneMinus = (1. - (x[1]*x[1] + x[3]*x[3] + x[5]*x[5]) / (TOSCARSSR::C() * TOSCARSSR::C()));
+  double const OneMinus = (1. - (x[1]*x[1] + x[3]*x[3] + x[5]*x[5]) / (TOSCARS::C() * TOSCARS::C()));
   if (OneMinus <= 0) {
     fErrorGamma = true;
     return;
@@ -1294,7 +1293,7 @@ void OSCARSSR::DerivativesEB (double t, std::array<double, 6>& x, std::array<dou
   // x[4] - z
   // x[5] - Vz
 
-  double const OneMinus = (1. - (x[1]*x[1] + x[3]*x[3] + x[5]*x[5]) / (TOSCARSSR::C() * TOSCARSSR::C()));
+  double const OneMinus = (1. - (x[1]*x[1] + x[3]*x[3] + x[5]*x[5]) / (TOSCARS::C() * TOSCARS::C()));
   if (OneMinus <= 0) {
     fErrorGamma = true;
   }
@@ -1303,15 +1302,15 @@ void OSCARSSR::DerivativesEB (double t, std::array<double, 6>& x, std::array<dou
   TVector3D const B = this->GetB(x[0], x[2], x[4], t);
   TVector3D const E = this->GetE(x[0], x[2], x[4], t);
 
-  double const QoverMTimesSqrtOneMinusBetaSquared = P.GetQ() / P.GetM() * sqrt(1. - (x[1]*x[1] + x[3]*x[3] + x[5]*x[5]) / (TOSCARSSR::C() * TOSCARSSR::C()));
-  double const BetaDotE = (x[1] * E.GetX() + x[3] * E.GetY() + x[5] * E.GetZ()) / TOSCARSSR::C();
+  double const QoverMTimesSqrtOneMinusBetaSquared = P.GetQ() / P.GetM() * sqrt(1. - (x[1]*x[1] + x[3]*x[3] + x[5]*x[5]) / (TOSCARS::C() * TOSCARS::C()));
+  double const BetaDotE = (x[1] * E.GetX() + x[3] * E.GetY() + x[5] * E.GetZ()) / TOSCARS::C();
 
   dxdt[0] = x[1];
-  dxdt[1] = QoverMTimesSqrtOneMinusBetaSquared * (E.GetX() - x[5] * B.GetY() + x[3] * B.GetZ() - x[1] * BetaDotE / TOSCARSSR::C());
+  dxdt[1] = QoverMTimesSqrtOneMinusBetaSquared * (E.GetX() - x[5] * B.GetY() + x[3] * B.GetZ() - x[1] * BetaDotE / TOSCARS::C());
   dxdt[2] = x[3];                                                                          
-  dxdt[3] = QoverMTimesSqrtOneMinusBetaSquared * (E.GetY() + x[5] * B.GetX() - x[1] * B.GetZ() - x[3] * BetaDotE / TOSCARSSR::C());
+  dxdt[3] = QoverMTimesSqrtOneMinusBetaSquared * (E.GetY() + x[5] * B.GetX() - x[1] * B.GetZ() - x[3] * BetaDotE / TOSCARS::C());
   dxdt[4] = x[5];                                                                          
-  dxdt[5] = QoverMTimesSqrtOneMinusBetaSquared * (E.GetZ() + x[1] * B.GetY() - x[3] * B.GetX() - x[5] * BetaDotE / TOSCARSSR::C());
+  dxdt[5] = QoverMTimesSqrtOneMinusBetaSquared * (E.GetZ() + x[1] * B.GetY() - x[3] * B.GetX() - x[5] * BetaDotE / TOSCARS::C());
 
 
   return;
@@ -1361,7 +1360,7 @@ void OSCARSSR::RK4 (std::array<double, 6>& y, std::array<double, 6>& dydx, doubl
   }
 
   // Check final beta/gamma
-  bool const ThisErrorGamma = 1.-(yout_test[1]*yout_test[1] + yout_test[3]*yout_test[3] + yout_test[5]*yout_test[5]) / (TOSCARSSR::C()*TOSCARSSR::C()) <= 0 ? true : false;
+  bool const ThisErrorGamma = 1.-(yout_test[1]*yout_test[1] + yout_test[3]*yout_test[3] + yout_test[5]*yout_test[5]) / (TOSCARS::C()*TOSCARS::C()) <= 0 ? true : false;
 
   // Split if Gamma is in error state
   if (fErrorGamma || ThisErrorGamma) {
@@ -1570,7 +1569,6 @@ void OSCARSSR::PropogateRKAS (std::array<double, 6>& XStart,
   double hActual;
 
   TParticleTrajectoryPoints& ParticleTrajectory = P.GetTrajectory();
-  double DeltaT = ParticleTrajectory.GetDeltaT();
 
   std::array<double, 6> xScale;
   std::array<double, 6> x;
@@ -1590,7 +1588,7 @@ void OSCARSSR::PropogateRKAS (std::array<double, 6>& XStart,
       xScale[i] = fabs(x[i]) + fabs(dxdt[i] * h) + 1.0e-30; // Plus some very small number
     }
 
-    ParticleTrajectory.AddPoint(x[0], x[2], x[4], x[1] / TOSCARSSR::C(), x[3] / TOSCARSSR::C(), x[5] / TOSCARSSR::C(), dxdt[1] / TOSCARSSR::C(), dxdt[3] / TOSCARSSR::C(), dxdt[5] / TOSCARSSR::C(), t);
+    ParticleTrajectory.AddPoint(x[0], x[2], x[4], x[1] / TOSCARS::C(), x[3] / TOSCARS::C(), x[5] / TOSCARS::C(), dxdt[1] / TOSCARS::C(), dxdt[3] / TOSCARS::C(), dxdt[5] / TOSCARS::C(), t);
 
     if ((t + h - T2) * (t + h - T1) > 0.0) {
       h = T2 - t;
@@ -1603,7 +1601,7 @@ void OSCARSSR::PropogateRKAS (std::array<double, 6>& XStart,
         XStart[i] = x[i];
       }
 
-      ParticleTrajectory.AddPoint(x[0], x[2], x[4], x[1] / TOSCARSSR::C(), x[3] / TOSCARSSR::C(), x[5] / TOSCARSSR::C(), dxdt[1] / TOSCARSSR::C(), dxdt[3] / TOSCARSSR::C(), dxdt[5] / TOSCARSSR::C(), t);
+      ParticleTrajectory.AddPoint(x[0], x[2], x[4], x[1] / TOSCARS::C(), x[3] / TOSCARS::C(), x[5] / TOSCARS::C(), dxdt[1] / TOSCARS::C(), dxdt[3] / TOSCARS::C(), dxdt[5] / TOSCARS::C(), t);
 
 
       return;
@@ -1652,6 +1650,7 @@ void OSCARSSR::CalculateSpectrum (TParticleA& Particle,
 
   // Extra inpts for calculation
   bool Done = false;
+
 
   this->CalculateSpectrumPoints(Particle,
                                 ObservationPoint,
@@ -1857,9 +1856,9 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
   }
 
   // Calculate trajectory if it doesn't exist
-  if (Particle.GetTrajectory().GetNPoints() == 0) {
-    this->CalculateTrajectory(Particle);
-  }
+  //if (Particle.GetTrajectory().GetNPoints() == 0) {
+  //  this->CalculateTrajectory(Particle);
+  //}
 
 
   // Check you are not requesting a level above the maximum
@@ -1880,10 +1879,10 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
   }
 
   // Constant C0 for calculation
-  double const C0 = Particle.GetQ() / (TOSCARSSR::FourPi() * TOSCARSSR::C() * TOSCARSSR::Epsilon0() * TOSCARSSR::Sqrt2Pi());
+  double const C0 = Particle.GetQ() / (TOSCARS::FourPi() * TOSCARS::C() * TOSCARS::Epsilon0() * TOSCARS::Sqrt2Pi());
 
   // Constant for flux calculation at the end
-  double const C2 = TOSCARSSR::FourPi() * fabs(Particle.GetCurrent()) / (TOSCARSSR::H() * fabs(Particle.GetQ()) * TOSCARSSR::Mu0() * TOSCARSSR::C()) * 1e-6 * 0.001;
+  double const C2 = TOSCARS::FourPi() * fabs(Particle.GetCurrent()) / (TOSCARS::H() * fabs(Particle.GetQ()) * TOSCARS::Mu0() * TOSCARS::C()) * 1e-6 * 0.001;
 
   // Imaginary "i" and complxe 1+0i
   std::complex<double> const I(0, 1);
@@ -1965,6 +1964,7 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
       for (int iT = 0; iT != NTPoints; ++iT) {
         TParticleTrajectoryPoint const& PP = (iLevel <= LevelStopMemory ? TM.GetPoint(iT) : TE.GetTrajectoryPoint(iT));
 
+
         // Get position, Beta, and Acceleration (over c)
         TVector3D const& X = PP.GetX();
         TVector3D const& B = PP.GetB();
@@ -1977,7 +1977,7 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
         double const D = R.Mag();
 
         // Exponent in transformed field
-        ThisPhase = -Omega * (Time + D / TOSCARSSR::C());
+        ThisPhase = -Omega * (Time + D / TOSCARS::C());
         double const PhaseTestValue = fabs(ThisPhase - LastPhase);
         if (iT != 0 && PhaseTestValue > MaxDPhase) {
           MaxDPhase = PhaseTestValue;
@@ -1994,6 +1994,7 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
 
       }
 
+
       TVector3DC ThisSumE = SumE * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(iLevel);
       if (PolarizationVector.Mag2() > 0.001) {
         ThisSumE = ThisSumE.Dot(PolarizationVector) * PolarizationVector;
@@ -2002,7 +2003,7 @@ void OSCARSSR::CalculateSpectrumPoints (TParticleA& Particle,
 
 
       Result_Precision = fabs(ThisMag - LastMag) / LastMag;
-      if ( (iLevel > 8 && Result_Precision < Precision && MaxDPhase < TOSCARSSR::Pi()) || (iLevel > 8 && MaxDPhase < TOSCARSSR::Pi() && ThisMag == LastMag)) {
+      if ( (iLevel > 8 && Result_Precision < Precision && MaxDPhase < TOSCARS::Pi()) || (iLevel > 8 && MaxDPhase < TOSCARS::Pi() && ThisMag == LastMag)) {
         Result_Level = iLevel;
         break;
       }
@@ -2080,14 +2081,9 @@ void OSCARSSR::CalculateSpectrumPoints_Y (TParticleA& Particle,
   }
 
   // Calculate trajectory if it doesn't exist
-  if (Particle.GetTrajectory().GetNPoints() == 0) {
-    this->CalculateTrajectory(Particle);
-  }
-
-  // Calculate trajectory if it doesn't exist
-  if (Particle.GetTrajectory().GetNPoints() == 0) {
-    this->CalculateTrajectory(Particle);
-  }
+  //if (Particle.GetTrajectory().GetNPoints() == 0) {
+  //  this->CalculateTrajectory(Particle);
+  //}
 
 
 
@@ -2109,10 +2105,10 @@ void OSCARSSR::CalculateSpectrumPoints_Y (TParticleA& Particle,
   }
 
   // Constant C0 for calculation
-  double const C0 = Particle.GetQ() / (TOSCARSSR::FourPi() * TOSCARSSR::C() * TOSCARSSR::Epsilon0() * TOSCARSSR::Sqrt2Pi());
+  double const C0 = Particle.GetQ() / (TOSCARS::FourPi() * TOSCARS::C() * TOSCARS::Epsilon0() * TOSCARS::Sqrt2Pi());
 
   // Constant for flux calculation at the end
-  double const C2 = TOSCARSSR::FourPi() * Particle.GetCurrent() / (TOSCARSSR::H() * fabs(Particle.GetQ()) * TOSCARSSR::Mu0() * TOSCARSSR::C()) * 1e-6 * 0.001;
+  double const C2 = TOSCARS::FourPi() * Particle.GetCurrent() / (TOSCARS::H() * fabs(Particle.GetQ()) * TOSCARS::Mu0() * TOSCARS::C()) * 1e-6 * 0.001;
 
   // Imaginary "i" and complxe 1+0i
   std::complex<double> const I(0, 1);
@@ -2167,7 +2163,7 @@ void OSCARSSR::CalculateSpectrumPoints_Y (TParticleA& Particle,
     double const Omega = Spectrum.GetAngularFrequency(i);
 
     // Constant for field calculation
-    std::complex<double> ICoverOmega = I * TOSCARSSR::C() / Omega;
+    std::complex<double> ICoverOmega = I * TOSCARS::C() / Omega;
 
     // Constant for calculation
     std::complex<double> const C1(0, C0 * Omega);
@@ -2204,7 +2200,6 @@ void OSCARSSR::CalculateSpectrumPoints_Y (TParticleA& Particle,
         // Get position, Beta, and Acceleration (over c)
         TVector3D const& X = PP.GetX();
         TVector3D const& B = PP.GetB();
-        TVector3D const& AoverC = PP.GetAoverC();
         double    const  Time = iLevel <= LevelStopMemory ? TM.GetT(iT) : TE.GetT(iT);
 
         // Define R and unit vector in direction of R, and D (distance to observer)
@@ -2212,7 +2207,7 @@ void OSCARSSR::CalculateSpectrumPoints_Y (TParticleA& Particle,
         TVector3D const N = R.UnitVector();
         double const D = R.Mag();
 
-        ThisPhase = -Omega * (Time + D / TOSCARSSR::C());
+        ThisPhase = -Omega * (Time + D / TOSCARS::C());
         double const PhaseTestValue = fabs(ThisPhase - LastPhase);
         if (iT != 0 && PhaseTestValue > MaxDPhase) {
           MaxDPhase = PhaseTestValue;
@@ -2232,7 +2227,7 @@ void OSCARSSR::CalculateSpectrumPoints_Y (TParticleA& Particle,
 
 
       Result_Precision = fabs(ThisMag - LastMag) / LastMag;
-      if ( (iLevel > 8 && Result_Precision < Precision && MaxDPhase < TOSCARSSR::Pi()) || (iLevel > 8 && MaxDPhase < TOSCARSSR::Pi() && ThisMag == LastMag)) {
+      if ( (iLevel > 8 && Result_Precision < Precision && MaxDPhase < TOSCARS::Pi()) || (iLevel > 8 && MaxDPhase < TOSCARS::Pi() && ThisMag == LastMag)) {
         Result_Level = iLevel;
         break;
       }
@@ -2382,6 +2377,7 @@ void OSCARSSR::CalculateSpectrumThreads (TParticleA& Particle,
 
   // Clear all threads
   Threads.clear();
+  Threads.shrink_to_fit();
 
   // Delete my arrays, I hate new for this purpose
   delete [] Done;
@@ -2929,6 +2925,7 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
       Result_Precision = fabs(ThisSum - LastSum) / LastSum;
       if ( (iLevel > 8 && Result_Precision < Precision && BetaDiffMax < 2. / (Particle.GetGamma())) || (iLevel > 8 && BetaDiffMax < 2. / (Particle.GetGamma()) && ThisSum == LastSum) ) {
         Result_Level = iLevel;
+        LastSum = ThisSum;
         break;
       } else if (iLevel > 8 && ThisSum == LastSum) {
         // The assumption here is that zero is last and now
@@ -2945,7 +2942,7 @@ void OSCARSSR::CalculatePowerDensityPoints (TParticleA& Particle,
       PowerDensityContainer.SetNotConverged(i);
     }
 
-    Sum *= fabs(Particle.GetQ() * Particle.GetCurrent()) / (16 * TOSCARSSR::Pi2() * TOSCARSSR::Epsilon0() * TOSCARSSR::C()) * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(LastLevel);
+    Sum *= fabs(Particle.GetQ() * Particle.GetCurrent()) / (16 * TOSCARS::Pi2() * TOSCARS::Epsilon0() * TOSCARS::C()) * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(LastLevel);
 
     // m^2 to mm^2
     Sum /= 1e6;
@@ -3076,6 +3073,7 @@ void OSCARSSR::CalculatePowerDensityThreads (TParticleA& Particle,
 
   // Clear all threads
   Threads.clear();
+  Threads.shrink_to_fit();
 
   // Delete my arrays, I hate new for this purpose
   delete [] Done;
@@ -3138,6 +3136,564 @@ void OSCARSSR::CalculatePowerDensityGPU (TSurfacePoints const& Surface,
 
   return;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void OSCARSSR::CalculatePowerDensitySTL (TVector3D const& FarfieldOrigin,
+                                         double const Precision,
+                                         int    const MaxLevel,
+                                         int    const MaxLevelExtended,
+                                         int const NParticles,
+                                         int const NThreads,
+                                         int const GPU,
+                                         int const NGPU,
+                                         std::vector<int> VGPU,
+                                         int const ReturnQuantity)
+{
+  // Calculates the power density in units of [W / mm^2]
+  // THIS is the ENTRY POINT FOR STL Calculations typically
+
+
+  // Check that particle has been set yet.  If fType is "" it has not been set yet
+  if (fParticle.GetType() == "") {
+    try {
+      this->SetNewParticle();
+    } catch (std::exception e) {
+      throw std::out_of_range("no beam defined");
+    }
+  }
+
+  // Number of threads to possibly use
+  int const NThreadsToUse = NThreads < 1 ? fNThreadsGlobal : NThreads;
+  if (NThreadsToUse <= 0) {
+    throw std::out_of_range("NThreads or NThreadsGlobal must be >= 1");
+  }
+
+  // Should we use the GPU or not?
+  int const NGPUAvailable = this->CheckGPU();
+  bool const UseGPU = GPU == 0 ? false : this->GetUseGPUGlobal() && (NGPUAvailable > 0) ? true : (GPU == 1) && (NGPUAvailable > 0);
+
+  // If use GPU, let's check the GPU vector, or construct one if we must
+  std::vector<int> GPUVector;
+  for (std::vector<int>::const_iterator it = VGPU.begin(); it != VGPU.end(); ++it) {
+    GPUVector.push_back(*it);
+  }
+  if (GPUVector.size() == 0) {
+    for (int i = 0; i < NGPU; ++i) {
+      GPUVector.push_back(i);
+    }
+  }
+  if (NGPU != -1 && NGPU < (int) GPUVector.size()) {
+    GPUVector.resize(NGPU);
+  }
+
+
+
+
+  fSTLContainer.ClearValues();
+
+
+  // Which cpmpute method will we use, gpu, multi-thread, or single-thread
+  if (UseGPU) {
+    throw;
+  } else {
+    if (NParticles == 0) {
+      if (NThreadsToUse == 1) {
+        this->CalculatePowerDensitySTL(FarfieldOrigin,
+                                       fParticle,
+                                       fSTLContainer,
+                                       Precision,
+                                       MaxLevel,
+                                       MaxLevelExtended,
+                                       1,
+                                       ReturnQuantity);
+      } else {
+        this->CalculatePowerDensityThreadsSTL(FarfieldOrigin,
+                                              fParticle,
+                                              fSTLContainer,
+                                              NThreadsToUse,
+                                              Precision,
+                                              MaxLevel,
+                                              MaxLevelExtended,
+                                              1,
+                                              ReturnQuantity);
+      }
+    } else {
+      // Weight this by the number of particles
+      double const Weight = 1.0 / (double) NParticles;
+
+      // Loop over particles
+      for (int i = 0; i != NParticles; ++i) {
+
+        // Set a new random particle
+        this->SetNewParticle();
+        this->CalculateTrajectory();
+
+        if (NThreadsToUse == 1) {
+        this->CalculatePowerDensitySTL(FarfieldOrigin,
+                                       fParticle,
+                                       fSTLContainer,
+                                       Precision,
+                                       MaxLevel,
+                                       MaxLevelExtended,
+                                       Weight,
+                                       ReturnQuantity);
+        } else {
+        this->CalculatePowerDensityThreadsSTL(FarfieldOrigin,
+                                              fParticle,
+                                              fSTLContainer,
+                                              NThreadsToUse,
+                                              Precision,
+                                              MaxLevel,
+                                              MaxLevelExtended,
+                                              Weight,
+                                              ReturnQuantity);
+        }
+      }
+    }
+  }
+
+  return;
+}
+
+
+
+
+
+
+
+
+void OSCARSSR::CalculatePowerDensitySTL (TVector3D const& FarfieldOrigin,
+                                         TParticleA& Particle,
+                                         TSTLContainer& STLContainer,
+                                         double const Precision,
+                                         int    const MaxLevel,
+                                         int    const MaxLevelExtended,
+                                         double const Weight,
+                                         int    const ReturnQuantity)
+{
+
+  // Calculate trajectory if it doesn't exist
+  if (Particle.GetTrajectory().GetNPoints() == 0) {
+    this->CalculateTrajectory(Particle);
+  }
+
+  // Extra inpts for calculation
+  bool Done = false;
+  size_t const iFirst = 0;
+  size_t const iLast = STLContainer.GetNPoints() - 1;
+
+  // Calculate the power density
+  CalculatePowerDensityPointsSTL(FarfieldOrigin,
+                                 Particle,
+                                 STLContainer,
+                                 iFirst,
+                                 iLast,
+                                 Done,
+                                 Precision,
+                                 MaxLevel,
+                                 MaxLevelExtended,
+                                 Weight,
+                                 ReturnQuantity);
+
+  return;
+}
+
+
+
+
+
+void OSCARSSR::CalculatePowerDensityPointsSTL (TVector3D const& FarfieldOrigin,
+                                               TParticleA& Particle,
+                                               TSTLContainer& STLContainer,
+                                               size_t const iFirst,
+                                               size_t const iLast,
+                                               bool& Done,
+                                               double const Precision,
+                                               int    const MaxLevel,
+                                               int    const MaxLevelExtended,
+                                               double const Weight,
+                                               int    const ReturnQuantity)
+{
+  // Calculates the single particle power density in a range of points
+  // in units of [watts / second / mm^2]
+
+  // Check you are not requesting a level above the maximum
+  if (MaxLevel > TParticleA::kMaxTrajectoryLevel) {
+    std::cerr << "WARNING: MaxLevel > TParticleA::kMaxTrajectoryLevel.  Setting MaxLevel to TParticleA::kMaxTrajectoryLevel" << std::endl;
+  }
+
+  // Set the level to stop at if requested, but not above the hard limit
+  int const LevelStopMemory = MaxLevel >= -1  && MaxLevel <= TParticleA::kMaxTrajectoryLevel ? MaxLevel : TParticleA::kMaxTrajectoryLevel;
+  int const LevelStopWithExtended = MaxLevelExtended > LevelStopMemory ? MaxLevelExtended : LevelStopMemory;
+
+  // Variables for parts of the numerator and denominator of power density equation
+  TVector3D Numerator;
+  double Denominator;
+
+  // Extended trajectory (not using memory for storage of arrays
+  TParticleTrajectoryInterpolatedPoints TE;
+
+  // Alternative outputs
+  double Result_Precision = -1;
+  int    Result_Level     = -1;
+
+  //for (size_t ic = 0; ic < fSTLContainer.GetNSTL(); ++ic) {
+  //  TTriangle3DContainer const& ThisTT3DC = fSTLContainer.GetTTriangle3DContainer(ic);
+
+  //  for (size_t i = 0; i != ThisTT3DC.GetNPoints(); ++i) {
+  //    for (size_t jc = 0; jc < fSTLContainer.GetNSTL(); ++jc) {
+  //      // Is this box in the path of this ray, if so, check the inside elemaents
+  //    }
+  //  }
+
+  //}
+
+
+  std::vector<bool> IsBlocked(iLast - iFirst + 1, false);
+  int const Mode = 2;
+  if (Mode == 1) {
+  for (size_t i = iFirst; i != iLast; ++i) {
+
+    // Get direction vector of ray
+    double const PointDistance = (STLContainer.GetPoint(i).GetCenter() - FarfieldOrigin).Mag();
+    TVector3D Dir = (STLContainer.GetPoint(i).GetCenter() - FarfieldOrigin).UnitVector();
+
+    for (size_t j = 0; j != STLContainer.GetNPoints(); ++j) {
+      if (i == j) {
+        continue;
+      }
+
+      // Test if in FF this triangle is blocked
+      double const IntersectionDistance = STLContainer.GetPoint(j).RayIntersectionDistance(FarfieldOrigin, Dir);
+      if (IntersectionDistance > 0 && IntersectionDistance < PointDistance) {
+        IsBlocked[i - iFirst] = true;
+        break;
+      }
+    }
+  }
+  }
+
+  // Loop over all points in the spectrum container
+  for (size_t i = iFirst; i <= iLast; ++i) {
+    if (Mode == 1 && IsBlocked[i - iFirst]) {
+      continue;
+    }
+
+    // Obs point
+    TVector3D const Obs    = STLContainer.GetPoint(i).GetCenter();
+    TVector3D const Normal = STLContainer.GetPoint(i).GetNormal();
+
+    double ThisSum = -1;
+    double LastSum = -1;
+    int    LastLevel = 0;
+
+    // Summing for this power density
+    double Sum = 0;
+
+    for (int iLevel = 0; iLevel <= LevelStopWithExtended; ++iLevel) {
+      LastLevel = iLevel;
+
+      // Keep track of Beta for precision
+      TVector3D Last_Beta(0, 0, 0);
+      double BetaDiffMax = -1;
+
+      // Grab the Trajectory (using memory arrays) if below level threshold, else set NULL
+      TParticleTrajectoryPoints const& TM = Particle.GetTrajectoryLevel(iLevel <= LevelStopMemory ? iLevel : 0);
+      if (iLevel > LevelStopMemory) {
+        TE = Particle.GetTrajectoryExtendedLevel(iLevel);
+      }
+
+      // Number of points in the trajectory
+      size_t const NTPoints = iLevel <= LevelStopMemory ? TM.GetNPoints() : TE.GetNPoints();
+
+      // Loop over trajectory points
+      for (int iT = 0; iT != NTPoints; ++iT) {
+
+        TParticleTrajectoryPoint const& PP = (iLevel <= LevelStopMemory ? TM.GetPoint(iT) : TE.GetTrajectoryPoint(iT));
+
+        // Get position, Beta, and Acceleration (over c)
+        TVector3D const& X = PP.GetX();
+        TVector3D const& B = PP.GetB();
+        TVector3D const& AoverC = PP.GetAoverC();
+
+
+        bool one_blocked = false;
+        for (size_t j = 0; j != STLContainer.GetNPoints(); ++j) {
+          if (i == j) {
+            continue;
+          }
+
+          // Test if in FF this triangle is blocked
+          double const IntersectionDistance = STLContainer.GetPoint(j).RayIntersectionDistance(X, (STLContainer.GetPoint(i).GetCenter() - X).UnitVector());
+          if (IntersectionDistance > 0 && IntersectionDistance < (STLContainer.GetPoint(i).GetCenter() - X).Mag()) {
+            one_blocked = true;
+            break;
+          }
+        }
+        if (one_blocked == true) {
+          continue;
+        }
+
+        double const BetaDiff = (B - Last_Beta).Mag();
+        if (iT > 0 && BetaDiff > BetaDiffMax) {
+          BetaDiffMax = BetaDiff;
+        }
+        Last_Beta = B;
+
+        // Define the three normal vectors.  N1 is in the direction of propogation,
+        // N2 and N3 are in a plane perpendicular to N1
+        TVector3D const N1 = (Obs - X).UnitVector();
+        TVector3D const N2 = N1.Orthogonal().UnitVector();
+        TVector3D const N3 = N1.Cross(N2).UnitVector();
+
+        // For computing non-normally incidence
+        double const N1DotNormal = fabs(N1.Dot(Normal));
+
+        // Compute Numerator and denominator
+        Numerator = N1.Cross( ( (N1 - B).Cross((AoverC)) ) );
+        Denominator = pow(1 - (B).Dot(N1), 5);
+
+        // Add contributions from both N2 and N3
+        Sum += pow(Numerator.Dot(N2), 2) / Denominator / (Obs - X).Mag2() * N1DotNormal;
+        Sum += pow(Numerator.Dot(N3), 2) / Denominator / (Obs - X).Mag2() * N1DotNormal;
+
+      }
+
+      double const ThisSum = Sum * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(iLevel);
+
+      Result_Precision = fabs(ThisSum - LastSum) / LastSum;
+      if ( (iLevel > 8 && Result_Precision < Precision && BetaDiffMax < 2. / (Particle.GetGamma())) || (iLevel > 8 && BetaDiffMax < 2. / (Particle.GetGamma()) && ThisSum == LastSum) ) {
+        Result_Level = iLevel;
+        break;
+      } else if (iLevel > 8 && ThisSum == LastSum) {
+        // The assumption here is that zero is last and now
+        Result_Level = iLevel;
+        Result_Precision = 0;
+        break;
+      }
+
+      LastSum = ThisSum;
+    }
+
+    // If a point does not converge mark it
+    if (Result_Level == -1) {
+      //PowerDensityContainer.SetNotConverged(i);
+    }
+
+    Sum *= fabs(Particle.GetQ() * Particle.GetCurrent()) / (16 * TOSCARS::Pi2() * TOSCARS::Epsilon0() * TOSCARS::C()) * Particle.GetTrajectoryInterpolated().GetDeltaTInclusiveToLevel(LastLevel);
+
+    // m^2 to mm^2
+    Sum /= 1e6;
+
+
+    // Add to container
+    switch (ReturnQuantity) {
+      case 1:
+        STLContainer.AddToPoint(i, Result_Precision * Weight);
+        break;
+      case 2:
+        STLContainer.AddToPoint(i, ((double) Result_Level) * Weight);
+        break;
+      default:
+        STLContainer.AddToPoint(i, Sum * Weight);
+        break;
+    }
+
+  } // POINTS
+
+
+  // Set done to true
+  Done = true;
+
+  return;
+}
+
+
+
+
+
+
+void OSCARSSR::CalculatePowerDensityThreadsSTL (TVector3D const& FarfieldOrigin,
+                                                TParticleA& Particle,
+                                                TSTLContainer& STLContainer,
+                                                int const NThreads,
+                                                double const Precision,
+                                                int    const MaxLevel,
+                                                int    const MaxLevelExtended,
+                                                double const Weight,
+                                                int    const ReturnQuantity)
+{
+  // Calculates the single particle power density on surface
+  // in units of [watts / second / mm^2]
+  //
+  // Surface - Observation Points
+
+  // Calculate trajectory if it doesn't exist
+  if (Particle.GetTrajectory().GetNPoints() == 0) {
+    this->CalculateTrajectory(Particle);
+  }
+
+
+
+  // Vector for storing threads to rejoin
+  std::vector<std::thread> Threads;
+
+  // Number of points in spectrum
+  size_t const NPoints = STLContainer.GetNPoints();
+
+  // How many threads to start in the first for loop
+  size_t const NThreadsActual = NPoints > (size_t) NThreads ? NThreads : NPoints;
+
+  // Keep track of which threads are finished and re-joined
+  bool *Done = new bool[NThreadsActual];
+  bool *Joined = new bool[NThreadsActual];
+
+  // Number per thread plus remainder to be added to first threads
+  size_t const NPerThread = NPoints / NThreadsActual;
+  size_t const NRemainder = NPoints % NThreadsActual;
+
+  // Start threads and keep in vector
+  for (size_t it = 0; it != NThreadsActual; ++it) {
+
+    // First and last points for each thread
+    size_t const iFirst = it < NRemainder ? NPerThread * it + it: NPerThread * it + NRemainder;
+    size_t const iLast  = it < NRemainder ? iFirst + NPerThread : iFirst + NPerThread - 1;
+
+    // Set Done and joined to false for this thread
+    Done[it] = false;
+    Joined[it] = false;
+
+    // Start thread for these points
+    Threads.push_back(std::thread(&OSCARSSR::CalculatePowerDensityPointsSTL,
+                                  this,
+                                  std::ref(FarfieldOrigin),
+                                  std::ref(Particle),
+                                  std::ref(STLContainer),
+                                  iFirst,
+                                  iLast,
+                                  std::ref(Done[it]),
+                                  Precision,
+                                  MaxLevel,
+                                  MaxLevelExtended,
+                                  Weight,
+                                  ReturnQuantity));
+  }
+
+  // Are all of the threads finished or not?  Continue loop until all come back.
+  bool AllThreadsFinished = false;
+  size_t NThreadsFinished = 0;
+  while (!AllThreadsFinished) {
+
+    // So as to not use the current thread at 100%
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+    // Check all threads
+    for (size_t it = 0; it != NThreadsActual; ++it) {
+
+      if (Done[it] && !Joined[it]) {
+        Threads[it].join();
+        Joined[it] = true;
+        ++NThreadsFinished;
+      }
+    }
+
+    // If the number finished is equal to the number of points total then we're done
+    if (NThreadsFinished == NThreadsActual) {
+      AllThreadsFinished = true;
+    }
+  }
+
+
+  // Clear all threads
+  Threads.clear();
+  Threads.shrink_to_fit();
+
+  // Delete my arrays, I hate new for this purpose
+  delete [] Done;
+  delete [] Joined;
+
+  return;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void OSCARSSR::AddSTLFile (std::string const& InFileName,
+                           double const Scale,
+                           TVector3D const& Rotations,
+                           TVector3D const& Translation,
+                           std::string const& Name)
+{
+  fSTLContainer.AddFile(InFileName, Scale, Rotations, Translation, Name);
+  return;
+}
+
+
+
+
+
+void OSCARSSR::ClearSTL ()
+{
+  // Clear STL object info
+  fSTLContainer.Clear();
+  return;
+}
+
+
+
+
+
+void OSCARSSR::RemoveSTL (std::string const& Name)
+{
+  // Remove all STL with the given name
+
+  this->fSTLContainer.Remove(Name);
+
+  return;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3249,6 +3805,7 @@ double OSCARSSR::CalculateTotalPower (TParticleA& Particle,
     Result_Precision = fabs(ThisSum - LastSum) / LastSum;
     if (iLevel > 8 && Result_Precision < Precision && BetaDiffMax < 2. / (Particle.GetGamma())) {
       Result_Level = iLevel;
+      LastSum = ThisSum;
       break;
     } else if (iLevel > 8 && ThisSum == LastSum) {
       // The assumption here is that zero is last and now
@@ -3260,7 +3817,7 @@ double OSCARSSR::CalculateTotalPower (TParticleA& Particle,
     LastSum = ThisSum;
   }
 
-  double const ResultPower = LastSum * fabs(Particle.GetQ() * Particle.GetCurrent()) / (6 * TOSCARSSR::Pi() * TOSCARSSR::Epsilon0() * TOSCARSSR::C());
+  double const ResultPower = LastSum * fabs(Particle.GetQ() * Particle.GetCurrent()) / (6 * TOSCARS::Pi() * TOSCARS::Epsilon0() * TOSCARS::C());
 
   double ReturnValue = 0;
 
@@ -3552,10 +4109,10 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
   int const LevelStopWithExtended = MaxLevelExtended > LevelStopMemory ? MaxLevelExtended : LevelStopMemory;
 
   // Constant C0 for calculation
-  double const C0 = Particle.GetQ() / (TOSCARSSR::FourPi() * TOSCARSSR::C() * TOSCARSSR::Epsilon0() * TOSCARSSR::Sqrt2Pi());
+  double const C0 = Particle.GetQ() / (TOSCARS::FourPi() * TOSCARS::C() * TOSCARS::Epsilon0() * TOSCARS::Sqrt2Pi());
 
   // Constant for flux calculation at the end
-  double const C2 = TOSCARSSR::FourPi() * Particle.GetCurrent() / (TOSCARSSR::H() * fabs(Particle.GetQ()) * TOSCARSSR::Mu0() * TOSCARSSR::C()) * 1e-6 * 0.001;
+  double const C2 = TOSCARS::FourPi() * Particle.GetCurrent() / (TOSCARS::H() * fabs(Particle.GetQ()) * TOSCARS::Mu0() * TOSCARS::C()) * 1e-6 * 0.001;
 
   // Imaginary "i" and complxe 1+0i
   std::complex<double> const I(0, 1);
@@ -3593,7 +4150,7 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
 
 
   // Angular frequency
-  double const Omega = TOSCARSSR::EvToAngularFrequency(Energy_eV);;
+  double const Omega = TOSCARS::EvToAngularFrequency(Energy_eV);;
 
   // Extended trajectory (not using memory for storage of arrays
   TParticleTrajectoryInterpolatedPoints TE;
@@ -3651,7 +4208,7 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
         double const D = R.Mag();
 
         // Exponent in transformed field
-        ThisPhase = -Omega * (Time + D / TOSCARSSR::C());
+        ThisPhase = -Omega * (Time + D / TOSCARS::C());
         double const PhaseTestValue = fabs(ThisPhase - LastPhase);
         if (iT != 0 && PhaseTestValue > MaxDPhase) {
           MaxDPhase = PhaseTestValue;
@@ -3675,7 +4232,7 @@ void OSCARSSR::CalculateFluxPoints (TParticleA& Particle,
       ThisMag = ThisSumE.Dot( ThisSumE.CC() ).real();
 
       Result_Precision = fabs(ThisMag - LastMag) / LastMag;
-      if ( (iLevel > 8 && Result_Precision < Precision && MaxDPhase < TOSCARSSR::Pi()) || (iLevel > 8 && MaxDPhase < TOSCARSSR::Pi() && ThisMag == LastMag)) {
+      if ( (iLevel > 8 && Result_Precision < Precision && MaxDPhase < TOSCARS::Pi()) || (iLevel > 8 && MaxDPhase < TOSCARS::Pi() && ThisMag == LastMag)) {
         Result_Level = iLevel;
         break;
       }
@@ -3821,6 +4378,7 @@ void OSCARSSR::CalculateFluxThreads (TParticleA& Particle,
 
   // Clear all threads
   Threads.clear();
+  Threads.shrink_to_fit();
 
   // Delete my arrays, I hate new for this purpose
   delete [] Done;
@@ -3929,7 +4487,7 @@ void OSCARSSR::CalculateElectricFieldTimeDomain (TVector3D const& Observer, T3DS
 
   double const DeltaT = T.GetDeltaT();
 
-  double const C0 = Particle.GetQ() / (TOSCARSSR::FourPi() * TOSCARSSR::Epsilon0());
+  double const C0 = Particle.GetQ() / (TOSCARS::FourPi() * TOSCARS::Epsilon0());
   // Loop over trajectory points
   for (size_t iT = 0; iT != NTPoints; ++iT) {
 
@@ -3947,10 +4505,10 @@ void OSCARSSR::CalculateElectricFieldTimeDomain (TVector3D const& Observer, T3DS
 
     double    const      Mult = C0 * pow(1.0 / (1.0 - N.Dot(B)), 3);
     TVector3D const NearField = ((1.0 - B.Mag2() ) * (N - B)) / R.Mag2();
-    TVector3D const  FarField = (1.0 / TOSCARSSR::C()) * (N.Cross(  (N - B).Cross(AoverC))  ) / R.Mag();
+    TVector3D const  FarField = (1.0 / TOSCARS::C()) * (N.Cross(  (N - B).Cross(AoverC))  ) / R.Mag();
 
     TVector3D const EField = Mult * (NearField + FarField);
-    double    const Time = iT * DeltaT + D / TOSCARSSR::C();
+    double    const Time = iT * DeltaT + D / TOSCARS::C();
 
     XYZT.AddPoint(EField, Time);
   }
@@ -3986,4 +4544,12 @@ TDriftVolumeContainer const& OSCARSSR::GetDriftVolumeContainer () const
 {
   // Return the drift volume container
   return fDriftVolumeContainer;
+}
+
+
+
+TSTLContainer const& OSCARSSR::GetSTLContainer () const
+{
+  // Return the STL container
+  return fSTLContainer;
 }

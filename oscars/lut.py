@@ -117,6 +117,17 @@ class lut1d:
         return
 
 
+    def get_energy (self, gap, harmonic=1):
+        """
+        Return the energy for a given gap and harmonic
+        """
+
+        if harmonic in self.splines_energy_vs_gap and gap >= self.gap_range[harmonic][0] and gap <= self.gap_range[harmonic][1]:
+            return self.splines_energy_vs_gap[harmonic](gap).item()
+        else:
+            raise ValueError('gap out of range or harmonic does not exist')
+        return
+
 
     def summary (self, **kwargs):
         """Show the summary plots for this lut1d.  See get_gaps() for arguments"""
@@ -143,7 +154,8 @@ class lut1d:
                   xlim=None,
                   gap_ylim=None,
                   flux_ylim=None,
-                  grid=False
+                  grid=False,
+                  figsize=None
                  ):
         """Get the gaps at which to find the given energy
 
@@ -231,10 +243,13 @@ class lut1d:
 
         # If show, create the two plots
         if len(plots) != 0 and (show == True or ofile is not None):
-            if len(plots) == 2:
-                plt.figure(figsize=[12, 8])
+            if figsize is None:
+                if len(plots) == 2:
+                    plt.figure(figsize=[12, 8])
+                else:
+                    plt.figure()
             else:
-                plt.figure()
+                plt.figure(figsize=figsize)
 
            # Check for subplotting
             if len(plots) > 1 and 'gap' in plots:
@@ -377,3 +392,98 @@ class lut1d:
             plt.close()
             
         return gap_list
+
+
+
+
+    def create_lut1d_from_file_list (file_list, ofile=None, header=None):
+        """
+        Create a lut1d lookup table from the list of gap values and filenames.  Will
+        output to a file if ofile is specified, otherwise will output to the standard
+        out.
+        
+        The format of the input files is as follows:
+            Any line beginning with # is a comment and ignored.  Data lines must be of the form:
+            harmonic energy flux fwhm True/False
+            
+            harmonic - harmonic number (int)
+            energy - peak photon energy (suggested eV)
+            flux - intensity (suggested ph/s/0.1%bw/mm^2)
+            fwhm - energy width, if not wanted just put a 0
+            True/False - convergence, if desired
+            
+        
+        Parameters
+        ----------
+        file_list : list of lists
+            A list of lists each of which is [float(gap), str(filename)].
+            The files should be of the format output by oscars.me.calculate_harmonics_me
+            
+        ofile : str
+            Name of output file if needed
+            
+        Returns
+        -------
+        None
+        
+        """
+        
+        # Add # to header if it does not begin with one
+        if header is not None and not header.split()[0].startswith('#'):
+            header = '# ' + header
+    
+        # dict for harmonic enrty appends
+        harmonics = dict()
+        
+        # Loop over all gap-filename entries in the list
+        for gap_fn in file_list:
+            
+            # In case gap str is input, make it a float
+            gap = float(gap_fn[0])
+            
+            # Try to open file
+            with open(gap_fn[1]) as fi:
+                
+                # Read line by line
+                for line in fi:
+                    
+                    # Any line beginning with 
+                    if line.split()[0].startswith('#'):
+                        continue
+                    
+                    v = line.split()
+                    if len(v) == 0:
+                        continue
+                        
+                    h = int(v[0])
+                    en = float(v[1])
+                    fl = float(v[2])
+                    w = float(v[3])
+                    if len(v) == 5 and v[4] not in ['True', '1']:
+                        print(v[4], gap_fn[1])
+                    
+                    if h not in harmonics:
+                        harmonics[h] = []
+                    harmonics[h].append([en, gap, fl, w])
+        
+        if ofile is None:
+            if header is not None:
+                print(header)
+            for key in sorted(harmonics):
+                print('harmonic', key)
+                for v in sorted(harmonics[key], key=lambda x: x[0]):
+                    print(v[0], v[1], v[2])
+                print()
+        else:
+            with open(ofile, 'w') as fo:
+                if header is not None:
+                    fo.write(header + '\n')
+                for key in sorted(harmonics):
+                    fo.write('harmonic ' + str(key) + '\n')
+                    for v in sorted(harmonics[key], key=lambda x: x[0]):
+                        fo.write('{} {} {}\n'.format(v[0], v[1], v[2]))
+                    fo.write('\n')
+    
+        return
+    
+    

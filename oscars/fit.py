@@ -42,9 +42,7 @@ def find_harmonics (spectrum, first=None, xwidth=50, parity='all', figsize=None,
     #fits = fit_spectrum_gaussian(spectrum, xranges=xranges, figsize=figsize, quiet=quiet, show=show, ofile=ofile)
     fits = find_peaks_parabola(spectrum, xranges)
 
-    make_plot = show or ofile
-
-    if make_plot:
+    if show:
         plt = oscars.plots_mpl.plot_spectrum(spectrum, figsize=figsize, show=False, ret=True)
         for fit in fits:
             plt.axvline(x=fit[1], linestyle='dashed')
@@ -60,8 +58,15 @@ def find_harmonics (spectrum, first=None, xwidth=50, parity='all', figsize=None,
 
 
 def find_odd_harmonics (spectrum, first=None, xwidth=50, figsize=None, quiet=True, ofile=None, show=True):
+    fits = find_harmonics(spectrum=spectrum, first=first, xwidth=xwidth, parity='odd', figsize=figsize, quiet=quiet, ofile=ofile, show=show)
+    if ofile is not None:
+        with open(ofile, 'w') as fo:
+            fo.write('# Harmonic energy flux fwhm\n')
+            for i in range(len(fits)):
+                fo.write(str(i*2+1) + ' ' + str(fits[i][1]) + ' ' + str(fits[i][0]) + ' ' + str(fits[i][2]) + '\n')
 
-    return find_harmonics(spectrum=spectrum, first=first, xwidth=xwidth, parity='odd', figsize=figsize, quiet=quiet, ofile=ofile, show=show)
+    return fits
+
 
 
 def find_even_harmonics (spectrum, first=None, xwidth=50, figsize=None, quiet=True, ofile=None, show=True):

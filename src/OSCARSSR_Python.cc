@@ -25,6 +25,7 @@
 #include "TField3D_Gaussian.h"
 #include "TField3D_UniformBox.h"
 #include "TField3D_IdealUndulator.h"
+#include "TField3D_IdealEPU.h"
 #include "TField3D_Halbach.h"
 #include "TField3D_Quadrupole.h"
 #include "TDriftBox.h"
@@ -110,10 +111,6 @@ static PyObject* OSCARSSR_new (PyTypeObject* type, PyObject* args, PyObject* key
 
 
 
-//static int sr_init(OSCARSSRObject* self, PyObject* args, PyObject* kwds)
-//{
-//  return 0;
-//}
 
 
 
@@ -128,158 +125,8 @@ static PyObject* OSCARSSR_new (PyTypeObject* type, PyObject* args, PyObject* key
 
 
 
-const char* DOC_OSCARSSR_Version = R"docstring(
-version()
 
-Version ID
 
-Returns
--------
-version : str
-)docstring";
-static PyObject* OSCARSSR_Version (OSCARSSRObject* self, PyObject* arg)
-{
-  return Py_BuildValue("s", OSCARSPY::GetVersionString().c_str());
-}
-
-
-
-
-
-
-const char* DOC_OSCARSSR_Pi = R"docstring(
-pi()
-
-The value of pi
-
-Returns
--------
-pi : float
-)docstring";
-static PyObject* OSCARSSR_Pi (OSCARSSRObject* self, PyObject* arg)
-{
-  // Return the internal OSCARSSR number constant pi
-  return Py_BuildValue("d", TOSCARSSR::Pi());
-}
-
-
-
-
-
-
-const char* DOC_OSCARSSR_Qe = R"docstring(
-qe()
-
-Get the value of elementary charge: +1.602176462e-19 [C]
-
-Returns
--------
-charge of electron : float
-)docstring";
-static PyObject* OSCARSSR_Qe (OSCARSSRObject* self, PyObject* arg)
-{
-  // Return the internal OSCARSSR number for elementary charge
-  return Py_BuildValue("d", TOSCARSSR::Qe());
-}
-
-
-
-
-const char* DOC_OSCARSSR_Me = R"docstring(
-me()
-
-Get the value of the mass of the electron 9.10938356e-31 [kg]
-
-Returns
--------
-electron mass : float
-)docstring";
-static PyObject* OSCARSSR_Me (OSCARSSRObject* self, PyObject* arg)
-{
-  // Return the internal OSCARSSR number for mass of the electron [kg]
-  return Py_BuildValue("d", TOSCARSSR::Me());
-}
-
-
-
-
-const char* DOC_OSCARSSR_C = R"docstring(
-c()
-
-Get the value of the speed of light in [m/s]
-
-Returns
--------
-speed of light : float
-)docstring";
-static PyObject* OSCARSSR_C (OSCARSSRObject* self, PyObject* arg)
-{
-  // Return the internal OSCARSSR number for mass of the electron [kg]
-  return Py_BuildValue("d", TOSCARSSR::C());
-}
-
-
-
-
-const char* DOC_OSCARSSR_Random = R"docstring(
-rand()
-
-Uniformally distributed random float in the range [0, 1)
-
-Returns
--------
-float
-)docstring";
-static PyObject* OSCARSSR_Random (OSCARSSRObject* self, PyObject* arg)
-{
-  return Py_BuildValue("d", gRandomA->Uniform());
-}
-
-
-
-
-const char* DOC_OSCARSSR_RandomNormal = R"docstring(
-norm()
-
-Random float from the normal distribution centered at 0 with a sigma of 1
-
-Returns
--------
-float
-)docstring";
-static PyObject* OSCARSSR_RandomNormal (OSCARSSRObject* self, PyObject* arg)
-{
-  return Py_BuildValue("d", gRandomA->Normal());
-}
-
-
-
-
-const char* DOC_OSCARSSR_SetSeed = R"docstring(
-set_seed(n)
-
-Set the internal random seed
-
-Parameters
-----------
-n : float
-    Seed number you wish to use
-
-Returns
--------
-None
-)docstring";
-static PyObject* OSCARSSR_SetSeed (OSCARSSRObject* self, PyObject* arg)
-{
-  // Grab the value from input
-  double Seed = PyFloat_AsDouble(arg);
-
-  gRandomA->SetSeed(Seed);
-
-  // Must return python object None in a special way
-  Py_INCREF(Py_None);
-  return Py_None;
-}
 
 
 
@@ -422,7 +269,7 @@ mandelbrot_set : list
 static PyObject* OSCARSSR_MandelbrotSet (OSCARSSRObject* self, PyObject* arg)
 {
   // Grab the value from input
-  int const NThreads = (int) PyLong_AsLong(arg);
+  //int const NThreads = (int) PyLong_AsLong(arg);
 
   PyErr_SetString(PyExc_ValueError, "Not implemented yet");
   return NULL;
@@ -1026,8 +873,8 @@ Create a function in python and use it as a field in OSCARS
     >>> def myfunc(x, y, z, t):
     ...     "Do not forget to write a docstring"
     ...     if z > 0:
-    ...         return 1
-    ...     return 0
+    ...         return [0, 1, 0]
+    ...     return [0, 0, 0]
     >>> osr.add_bfield_function(myfunc)
 )docstring";
 static PyObject* OSCARSSR_AddMagneticFieldFunction (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
@@ -1114,7 +961,7 @@ add_bfield_gaussian(bfield, sigma [, rotations, translation, frequency, frequenc
 
 Add a gaussian field in 3D with the peak field magnitude and direction given by *bfield*, centered about a point with a given sigma in each coordinate.  If any component of *sigma* is less than or equal to zero it is ignored (ie. spatial extent is infinite).
 
-The functional form for this is :math:`\exp(-(x - x_0)^2 / \sigma_x^2)`
+The functional form for this is :math:`B \exp(-(x - x_0)^2 / 2 \sigma_x^2)`
 
 
 Parameters
@@ -1576,6 +1423,198 @@ static PyObject* OSCARSSR_AddMagneticFieldIdealUndulator (OSCARSSRObject* self, 
 
 
 
+const char* DOC_OSCARSSR_AddMagneticFieldIdealEPU = R"docstring(
+add_bfield_epu(bfieldA, bfieldB, period, nperiods [, phase, rotations, translation, taper, frequency, frequency_phase, time_offset, name])
+
+Adds an ideal sinusoidal EPU field with given maximum bfield amplitudes, period, and number of periods.  Optionally one can specify the phase offset (in [rad]), rotations and translation.  The number of periods given is the full number of fields not counting the terminating fields.
+
+Parameters
+----------
+bfieldA : list
+    A list representing the peak fieldA [Bx, By, Bz] in [T]
+
+bfieldB : list
+    A list representing the peak fieldB [Bx, By, Bz] in [T]
+
+period : list
+    Length of one period
+
+nperiods : int
+    Number of periods
+
+phase : float
+    Phase offset in [rad] which is split between fieldA and fieldB
+
+rotations : list, optional
+    3-element list representing rotations around x, y, and z axes: [:math:`\theta_x, \theta_y, \theta_z`]
+
+translation : list, optional
+    3-element list representing a translation in space [x, y, z]
+
+taper : float
+    The fractional change of the bfield per meter along the magnetic axis
+
+frequency : float
+    Frequency in [Hz] where the ampliture is multiplied by cos(2 pi frequency (t + time_offset) + frequency_phase).  Default is 0, for no frequency dependence
+
+frequency_phase: float
+    The phase offset for a time varying field.  Only used if frequency is non-zero.  See frequency input for more.
+
+time_offset: float
+    The time for a time varying field.  Only used if frequency is non-zero.  See frequency input for more.
+
+name : str
+    Name of this field
+
+Returns
+-------
+None
+
+Examples
+--------
+Add an idealized undulator with 41 periods having a period of 0.050 [m] with a maximum field of 1 [T] in the y-direction where the magnetic axis is along the z-axis
+
+    >>> osr.add_bfield_epu(bfieldA=[0, 1, 0], bfieldB=[1, 0, 0], period=[0, 0, 0.050], nperiods=41)
+)docstring";
+static PyObject* OSCARSSR_AddMagneticFieldIdealEPU (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
+{
+  // Add a magnetic field for undulator
+
+  // Lists and variables
+  PyObject*   List_FieldA       = PyList_New(0);
+  PyObject*   List_FieldB       = PyList_New(0);
+  PyObject*   List_Period      = PyList_New(0);
+  PyObject*   List_Rotations   = PyList_New(0);
+  PyObject*   List_Translation = PyList_New(0);
+  int         NPeriods         = 0;
+  double      Phase            = 0;
+  double      Taper            = 0;
+  double      Frequency        = 0;
+  double      FrequencyPhase   = 0;
+  double      TimeOffset       = 0;
+  char const* Name             = "";
+
+  TVector3D FieldA(0, 0, 0);
+  TVector3D FieldB(0, 0, 0);
+  TVector3D Period(0, 0, 0);
+  TVector3D Rotations(0, 0, 0);
+  TVector3D Translation(0, 0, 0);
+
+  // Input variables and parsing
+  static const char *kwlist[] = {
+                                 "period",
+                                 "nperiods",
+                                 "bfieldA",
+                                 "bfieldB",
+                                 "phase",
+                                 "rotations",
+                                 "translation",
+                                 "taper",
+                                 "frequency",
+                                 "frequency_phase",
+                                 "time_offset",
+                                 "name",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "Oi|OOdOOdddds",
+                                   const_cast<char **>(kwlist),
+                                   &List_Period,
+                                   &NPeriods,
+                                   &List_FieldA,
+                                   &List_FieldB,
+                                   &Phase,
+                                   &List_Rotations,
+                                   &List_Translation,
+                                   &Taper,
+                                   &Frequency,
+                                   &FrequencyPhase,
+                                   &TimeOffset,
+                                   &Name
+                                   )) {
+    return NULL;
+  }
+
+
+  // Check that at least one field is defined
+  if (PyList_Size(List_FieldA) == 0 && PyList_Size(List_FieldB) == 0) {
+    PyErr_SetString(PyExc_ValueError, "Must define at least one of 'bfieldA', 'bfieldB'");
+    return NULL;
+  }
+
+  // Check Field
+  if (PyList_Size(List_FieldA) != 0) {
+    try {
+      FieldA = OSCARSPY::ListAsTVector3D(List_FieldA);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'bfieldA'");
+      return NULL;
+    }
+  }
+  if (PyList_Size(List_FieldB) != 0) {
+    try {
+      FieldB = OSCARSPY::ListAsTVector3D(List_FieldB);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'bfieldB'");
+      return NULL;
+    }
+  }
+
+  // Check Period
+  try {
+    Period = OSCARSPY::ListAsTVector3D(List_Period);
+  } catch (std::length_error e) {
+    PyErr_SetString(PyExc_ValueError, "Incorrect format in 'period'");
+    return NULL;
+  }
+
+  // Check for Rotations in the input
+  if (PyList_Size(List_Rotations) != 0) {
+    try {
+      Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
+      return NULL;
+    }
+  }
+
+  // Check for Translation in the input
+  if (PyList_Size(List_Translation) != 0) {
+    try {
+      Translation = OSCARSPY::ListAsTVector3D(List_Translation);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
+      return NULL;
+    }
+  }
+
+  // Name check
+  if (std::string(Name).size() > 0 && Name[0] == '_') {
+    PyErr_SetString(PyExc_ValueError, "'name' cannot begin with '_'.  This is reserved for internal use.  Please pick a different name");
+    return NULL;
+  }
+
+
+  // Rotate field and sigma
+  // UPDATE: check this
+  FieldA.RotateSelfXYZ(Rotations);
+  FieldB.RotateSelfXYZ(Rotations);
+  Period.RotateSelfXYZ(Rotations);
+
+
+  // Add field
+  self->obj->AddMagneticField( (TField*) new TField3D_IdealEPU(FieldA, FieldB, Period, NPeriods, Translation, Phase, Taper, Frequency, FrequencyPhase, TimeOffset, Name));
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
+
 const char* DOC_OSCARSSR_AddMagneticFieldHalbach = R"docstring(
 add_bfield_halbach()
 
@@ -1916,8 +1955,14 @@ static PyObject* OSCARSSR_GetBField (OSCARSSRObject* self, PyObject* args, PyObj
     return NULL;
   }
 
-  // Set the object variable
-  TVector3D const B = self->obj->GetB(X, T, Name);
+  TVector3D B;
+  try {
+    // Set the object variable
+    B = self->obj->GetB(X, T, Name);
+  } catch (std::logic_error e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
+  }
 
   // Create a python list
   PyObject *PList = OSCARSPY::TVector3DAsList(B);
@@ -2457,7 +2502,7 @@ add_efield_gaussian(efield, sigma [, rotations, translation, Frequency, Frequenc
 
 Add a gaussian field in 3D with the peak field magnitude and direction given by *efield*, centered about a point with a given sigma in each coordinate.  If any component of *sigma* is less than or equal to zero it is ignored (ie. spatial extent is infinite).
 
-The functional form for this is :math:`\exp(-(x - x_0)^2 / \sigma_x^2)`
+The functional form for this is :math:`E \exp(-(x - x_0)^2 / 2 \sigma_x^2)`
 
 Parameters
 ----------
@@ -3024,7 +3069,14 @@ static PyObject* OSCARSSR_GetEField (OSCARSSRObject* self, PyObject* args, PyObj
   }
 
   // Set the object variable
-  TVector3D const F = self->obj->GetE(X, T, Name);
+  TVector3D F;
+  try {
+    // Set the object variable
+    F = self->obj->GetE(X, T, Name);
+  } catch (std::logic_error e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
+  }
 
   // Create a python list
   PyObject *PList = OSCARSPY::TVector3DAsList(F);
@@ -3250,6 +3302,15 @@ static PyObject* OSCARSSR_WriteMagneticField (OSCARSSRObject* self, PyObject* ar
   if (std::strlen(OutFileName) > 0) {
     try {
       self->obj->WriteField("B", OutFileName, OutFormat, XLim, NX, YLim, NY, ZLim, NZ, Comment);
+    } catch (std::ifstream::failure e) {
+      PyErr_SetString(PyExc_ValueError, e.what());
+      return NULL;
+    } catch (std::out_of_range e) {
+      PyErr_SetString(PyExc_ValueError, e.what());
+      return NULL;
+    } catch (std::invalid_argument e) {
+      PyErr_SetString(PyExc_ValueError, e.what());
+      return NULL;
     } catch (...) {
       PyErr_SetString(PyExc_ValueError, "could not write output file");
       return NULL;
@@ -3601,7 +3662,7 @@ charge : float
     Charge of a *custom* particle.  This is only used if *type* = 'custom'.  Must be non-zero.
 
 ctstartstop : [float, float]
-    Initial start and stop times for the calculation.  Not technically a beam parameter here, but the ability to set it in this function.  It will default to [0, 1e-99] if not specified.  This is to accomodate input trajectories which have their own start and stop times.
+    Initial start and stop times for the calculation.  Not technically a beam parameter here, but the ability to set it in this function.  It will default to [-3, 3] if not specified.
 
 distribution : str
     Which particle beam distribution you want to use for non-zero emittance beams.
@@ -3996,7 +4057,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
       return NULL;
     }
   } else {
-    self->obj->SetCTStartStop(0, 1e-99);
+    self->obj->SetCTStartStop(-3, 3);
   }
 
   // Set the initial particle as ideal if this is the first beam
@@ -5233,7 +5294,7 @@ static PyObject* OSCARSSR_GetTrajectory (OSCARSSRObject* self)
     PyList_Append(PList2, Value);
     Py_DECREF(Value);
 
-    Value = OSCARSPY::TVector3DAsList(T.GetA(iT));
+    Value = OSCARSPY::TVector3DAsList(T.GetAoverC(iT));
     PyList_Append(PList2, Value);
     Py_DECREF(Value);
 
@@ -6318,7 +6379,7 @@ static PyObject* OSCARSSR_CalculatePowerDensity (OSCARSSRObject* self, PyObject*
 
 
 const char* DOC_OSCARSSR_CalculatePowerDensityRectangle = R"docstring(
-calculate_power_density_rectangle(npoints [, plane, width, x0x1x2, rotations, translation, ofile, bofile, normal, nparticles, gpu, ngpu, nthreads, precision, max_level, max_level_extended, dim, quantity])
+calculate_power_density_rectangle([, npoints, plane, width, x0x1x2, rotations, translation, ofile, bofile, normal, nparticles, gpu, ngpu, nthreads, precision, max_level, max_level_extended, dim, quantity])
 
 Calculate the power density in a rectangle either defined by three points, or by defining the plane the rectangle is in and the width, and then rotating and translating it to where it needs be.  The simplest is outlined in the first example below.  By default (dim=2) this returns a list whose position coordinates are in the local coordinate space x1 and x2 (*ie* they do not include the rotations and translation).  if dim=3 the coordinates in the return list are in absolute 3D space.
 
@@ -6332,7 +6393,7 @@ npoints: int
     number of in each dimension for surface
 
 plane : str
-    The plane to start in (XY, XZ, YZ, YX, ZX, ZY).  The normal to the surface is defined using the right handed cross product (ie the last three have opposite normal vectors from the first three).
+    The plane to start in (XY, XZ, YZ, YX, ZX, ZY).  Default is 'XY'.  The normal to the surface is defined using the right handed cross product (ie the last three have opposite normal vectors from the first three).
 
 width : list
     Width of rectangle in X1 and X2: [w1, w2]
@@ -6411,11 +6472,11 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
 {
   // Calculate the spectrum given an observation point, and energy range
 
-  char const* SurfacePlane = "";
-  size_t      NX1 = 0;
-  size_t      NX2 = 0;
-  double      Width_X1 = 0;
-  double      Width_X2 = 0;
+  char const* SurfacePlane = "XY";
+  size_t      NX1 = 51;
+  size_t      NX2 = 51;
+  double      Width_X1 = 0.010;
+  double      Width_X2 = 0.010;
   PyObject*   List_NPoints     = PyList_New(0);
   PyObject*   List_Width       = PyList_New(0);
   PyObject*   List_Translation = PyList_New(0);
@@ -6455,7 +6516,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
                                  "quantity",
                                   NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|sOOOOssiiiOidiiis",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|OsOOOOssiiiOidiiis",
                                    const_cast<char **>(kwlist),
                                    &List_NPoints,
                                    &SurfacePlane,
@@ -6478,14 +6539,14 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
     return NULL;
   }
 
-  if (List_X0X1X2 == 0x0 && SurfacePlane == "") {
-    PyErr_SetString(PyExc_ValueError, "Must define 'plane' or 'x0x1x2'");
-    return NULL;
-  }
-  if (List_X0X1X2 != 0x0 && SurfacePlane != "") {
-    PyErr_SetString(PyExc_ValueError, "Can not define both 'plane' and 'x0x1x2'");
-    return NULL;
-  }
+  //if (List_X0X1X2 == 0x0 && SurfacePlane == "") {
+  //  PyErr_SetString(PyExc_ValueError, "Must define 'plane' or 'x0x1x2'");
+  //  return NULL;
+  //}
+  //if (List_X0X1X2 != 0x0 && SurfacePlane != "") {
+  //  PyErr_SetString(PyExc_ValueError, "Can not define both 'plane' and 'x0x1x2'");
+  //  return NULL;
+  //}
 
   // Check if a beam is at least defined
   if (self->obj->GetNParticleBeams() < 1) {
@@ -6509,8 +6570,8 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
     NX1 = PyLong_AsSsize_t(PyList_GetItem(List_NPoints, 0));
     NX2 = PyLong_AsSsize_t(PyList_GetItem(List_NPoints, 1));
   } else {
-    PyErr_SetString(PyExc_ValueError, "'npoints' must be [int, int]");
-    return NULL;
+    //PyErr_SetString(PyExc_ValueError, "'npoints' must be [int, int]");
+    //return NULL;
   }
 
 
@@ -6554,7 +6615,11 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
 
 
   // If you are requesting a simple surface plane, check that you have widths
-  if (std::strlen(SurfacePlane) != 0 && Width_X1 > 0 && Width_X2 > 0) {
+  if (List_X0X1X2 == 0x0 && std::strlen(SurfacePlane) != 0) {
+    if (Width_X1 <= 0 || Width_X2 <= 0) {
+      PyErr_SetString(PyExc_ValueError, "must specify 'width' (positive only)");
+      return NULL;
+    }
     try {
       Surface.Init(SurfacePlane, (int) NX1, (int) NX2, Width_X1, Width_X2, Rotations, Translation, NormalDirection);
     } catch (std::invalid_argument e) {
@@ -6750,8 +6815,120 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
 
 
 
+const char* DOC_OSCARSSR_AddSTL = R"docstring(
+add_stl(ifile [, rotations, translation, scale, name])
+
+Add an STL object, typically from a file.  One can scale, rotate, translate, and name the object.  All input objects will be used when calculating power density for STL.
+
+
+Parameters
+----------
+ifile : str
+    The STL file to import
+
+rotations : list, optional
+    3-element list representing rotations around x, y, and z axes: [:math:`\theta_x, \theta_y, \theta_z`]
+
+translation : list, optional
+    3-element list representing a translation in space [x, y, z]
+
+scale : float
+    What to scale the dimensions by.  Default input is in meters.
+
+name : str
+    Name of the object
+
+Returns
+-------
+None
+
+
+
+
+Examples
+--------
+coming
+)docstring";
+static PyObject* OSCARSSR_AddSTL (OSCARSSRObject* self, PyObject* args, PyObject *keywds)
+{
+  // Calculate the spectrum given an observation point, and energy range
+
+  const char* InFileName = "";
+  PyObject*   List_Translation = 0x0;
+  PyObject*   List_Rotations   = 0x0;
+  double      Scale = 1;
+  const char* Name = "";
+
+
+  static const char *kwlist[] = {"ifile",
+                                 "rotations",
+                                 "translation",
+                                 "scale",
+                                 "name",
+                                  NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s|OOds",
+                                   const_cast<char **>(kwlist),
+                                   &InFileName,
+                                   &List_Rotations,
+                                   &List_Translation,
+                                   &Scale,
+                                   &Name)) {
+    return NULL;
+  }
+
+
+  // Vectors for rotations and translations.  Default to 0
+  TVector3D Rotations(0, 0, 0);
+  TVector3D Translation(0, 0, 0);
+
+  // Check for Rotations in the input
+  if (List_Rotations != 0x0) {
+    try {
+      Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
+      return NULL;
+    }
+  }
+
+
+  // Check for Translation in the input
+  if (List_Translation != 0x0) {
+    try {
+      Translation = OSCARSPY::ListAsTVector3D(List_Translation);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
+      return NULL;
+    }
+  }
+
+
+
+  try {
+    self->obj->AddSTLFile(InFileName, Scale, Rotations, Translation, Name);
+  } catch (std::invalid_argument e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
+  }
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
+
+
+
+
+
 const char* DOC_OSCARSSR_CalculatePowerDensitySTL = R"docstring(
-calculate_power_density_stl(ifiles [, rotations, translation, ofile, bofile, stlofile, normal, scale, nparticles, gpu, ngpu, nthreads, precision, max_level, max_level_extended, quantity])
+calculate_power_density_stl(source_origin [, ofile, bofile, stlofile, nparticles, gpu, ngpu, nthreads, precision, max_level, max_level_extended, quantity])
 
 Calculate the power density on surfaces described in STL format input files
 
@@ -6761,14 +6938,8 @@ You **must** specify either both (*plane* and *width*) or *x0x1x2*
 
 Parameters
 ----------
-ifiles : list[str]
-    A list of STL files to import.
-
-rotations : list, optional
-    3-element list representing rotations around x, y, and z axes: [:math:`\theta_x, \theta_y, \theta_z`]
-
-translation : list, optional
-    3-element list representing a translation in space [x, y, z]
+source_origin: list[float, float, float]
+    Far-field origin source point in [x, y, z]
 
 ofile : str
     Output file name
@@ -6779,12 +6950,6 @@ bofile : str
 stlofile : str
     STL output file name.  Will include RGB color information in the attribute byte count, maybe
 
-normal : int
-    -1 if you wish to reverse the normal vector, 0 if you wish to ignore the +/- direction in computations, 1 if you with to use the direction of the normal vector as given. 
-
-scale : float
-    What to scale the dimensions by.  Default input is in meters.
-
 nparticles : int
     Number of particles to use for multi-particle calculations
 
@@ -6794,7 +6959,6 @@ gpu : int
 ngpu : int or list
     If ngpu is an int, use that number of gpus (if available).
     If ngpu is a list, the list should be a list of gpus you wish to use
-
 
 nthreads : int
     Number of threads to use
@@ -6830,12 +6994,7 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
 {
   // Calculate the spectrum given an observation point, and energy range
 
-  PyObject*   List_Files = PyList_New(0);
-  const char* InFileName = "";
-  PyObject*   List_Translation = PyList_New(0);
-  PyObject*   List_Rotations   = PyList_New(0);
-  int         NormalDirection = -1;    // Default to -1 for STL
-  double      Scale = 1;
+  PyObject*   List_FarfieldOrigin = 0x0;
   int         NParticles = 0;
   int         GPU = -1;
   PyObject*   NGPU = 0x0;
@@ -6851,15 +7010,10 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
   int const Dim = 3;
 
 
-  static const char *kwlist[] = {"ifiles",
-                                 "ifile",
-                                 "rotations",
-                                 "translation",
+  static const char *kwlist[] = {"farfield_origin",
                                  "ofile",
                                  "bofile",
                                  "stlofile",
-                                 "normal",
-                                 "scale",
                                  "nparticles",
                                  "gpu",
                                  "ngpu",
@@ -6870,17 +7024,12 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
                                  "quantity",
                                   NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|OsOOsssidiiOidiii",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|sssiOiidiis",
                                    const_cast<char **>(kwlist),
-                                   &List_Files,
-                                   &InFileName,
-                                   &List_Rotations,
-                                   &List_Translation,
+                                   &List_FarfieldOrigin,
                                    &OutFileNameText,
                                    &OutFileNameBinary,
                                    &OutFileNameSTL,
-                                   &NormalDirection,
-                                   &Scale,
                                    &NParticles,
                                    &GPU,
                                    &NGPU,
@@ -6900,31 +7049,18 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
 
 
 
-  // Vectors for rotations and translations.  Default to 0
-  TVector3D Rotations(0, 0, 0);
-  TVector3D Translation(0, 0, 0);
+  // Vectors for FF source point
+  TVector3D FarfieldOrigin(0, 0, 0);
 
-  // Check for Rotations in the input
-  if (PyList_Size(List_Rotations) != 0) {
+  // Check for FF Origin in the input
+  if (List_FarfieldOrigin != 0x0) {
     try {
-      Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
+      FarfieldOrigin = OSCARSPY::ListAsTVector3D(List_FarfieldOrigin);
     } catch (std::length_error e) {
-      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'farfield_origin'");
       return NULL;
     }
   }
-
-
-  // Check for Translation in the input
-  if (PyList_Size(List_Translation) != 0) {
-    try {
-      Translation = OSCARSPY::ListAsTVector3D(List_Translation);
-    } catch (std::length_error e) {
-      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
-      return NULL;
-    }
-  }
-
 
 
   // Check number of particles
@@ -6977,47 +7113,19 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
     return NULL;
   }
 
-  TTriangle3DContainer STLContainer;
+
+
   try {
-    STLContainer.ReadSTLFile(InFileName, Scale);
-  } catch (...) {
-    PyErr_SetString(PyExc_ValueError, "Cannot read STL file");
-    return NULL;
-  }
-  STLContainer.RotateSelfXYZ(Rotations);
-  STLContainer.TranslateSelf(Translation);
-
-
-  TSurfacePoints_3D Surface;
-
-  for (size_t istl = 0; istl != STLContainer.GetNPoints(); ++istl) {
-    TVector3D Center = STLContainer.GetPoint(istl).GetCenter();
-    if (NormalDirection < 0) {
-      Surface.AddPoint(Center, -STLContainer.GetPoint(istl).GetNormal());
-    } else {
-      Surface.AddPoint(Center, STLContainer.GetPoint(istl).GetNormal());
-    }
-  }
-
-  // Container for Point plus scalar
-  T3DScalarContainer PowerDensityContainer;
-
-  // Actually calculate the spectrum
-  bool const Directional = NormalDirection == 0 ? false : true;
-  try {
-    self->obj->CalculatePowerDensity(Surface,
-                                     PowerDensityContainer,
-                                     Dim,
-                                     Directional,
-                                     Precision,
-                                     MaxLevel,
-                                     MaxLevelExtended,
-                                     NParticles,
-                                     NThreads,
-                                     GPU,
-                                     NumberOfGPUs,
-                                     GPUVector,
-                                     ReturnQuantity);
+    self->obj->CalculatePowerDensitySTL(FarfieldOrigin,
+                                        Precision,
+                                        MaxLevel,
+                                        MaxLevelExtended,
+                                        NParticles,
+                                        NThreads,
+                                        GPU,
+                                        NumberOfGPUs,
+                                        GPUVector,
+                                        ReturnQuantity);
 
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, e.what());
@@ -7037,14 +7145,15 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
   // Write the output file if requested
   // Text output
   if (std::string(OutFileNameText) != "") {
-    PowerDensityContainer.WriteToFileText(OutFileNameText, Dim);
+    //PowerDensityContainer.WriteToFileText(OutFileNameText, Dim);
   }
 
   // Binary output
   if (std::string(OutFileNameBinary) != "") {
-    PowerDensityContainer.WriteToFileBinary(OutFileNameBinary, Dim);
+    //PowerDensityContainer.WriteToFileBinary(OutFileNameBinary, Dim);
   }
 
+  TSTLContainer const&  STLContainer = self->obj->GetSTLContainer();
   if (std::string(OutFileNameSTL) != "") {
     STLContainer.WriteSTLFile(OutFileNameSTL);
   }
@@ -7056,12 +7165,12 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
   PyObject *PList = PyList_New(0);
 
   // UPDATE: URGENT: PD output ofile, bofile
-  size_t const NPoints = PowerDensityContainer.GetNPoints();
+  size_t const NPoints = STLContainer.GetNPoints();
 
   PyObject* Value;
 
   for (size_t i = 0; i != NPoints; ++i) {
-    T3DScalar P = PowerDensityContainer.GetPoint(i);
+    //T3DScalar P = PowerDensityContainer.GetPoint(i);
     TTriangle3D T = STLContainer.GetPoint(i);
 
     // Inner list for each point
@@ -7085,7 +7194,7 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
     PyList_Append(PList2, PListT);
     Py_DECREF(PListT);
 
-    Value = Py_BuildValue("f", P.GetV());
+    Value = Py_BuildValue("f", T.GetValue());
     PyList_Append(PList2, Value);
     Py_DECREF(Value);
 
@@ -7096,6 +7205,81 @@ static PyObject* OSCARSSR_CalculatePowerDensitySTL (OSCARSSRObject* self, PyObje
 
   return PList;
 }
+
+
+
+
+
+
+
+const char* DOC_OSCARSSR_ClearSTL = R"docstring(
+clear_stl()
+
+Remove all of the existing STL objects
+
+Parameters
+----------
+None
+
+Returns
+-------
+None
+)docstring";
+static PyObject* OSCARSSR_ClearSTL (OSCARSSRObject* self)
+{
+  // Clear all magnetic fields in the OSCARSSR object
+  self->obj->ClearSTL();
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
+
+const char* DOC_OSCARSSR_RemoveSTL = R"docstring(
+remove_stl(name)
+
+Remove all of the existing STL objects
+
+Parameters
+----------
+name : str
+    Name of stl object to remove
+
+Returns
+-------
+None
+)docstring";
+static PyObject* OSCARSSR_RemoveSTL (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
+{
+  // Remove stl objects by name
+
+  char const* Name = "";
+
+  // Input variables and parsing
+  static const char *kwlist[] = {"name",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
+                                   const_cast<char **>(kwlist),
+                                   &Name
+                                   )) {
+    return NULL;
+  }
+
+  // Remove fields with name name
+  self->obj->RemoveSTL(Name);
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
 
 
 
@@ -7361,11 +7545,6 @@ static PyObject* OSCARSSR_CalculatePowerDensityLine (OSCARSSRObject* self, PyObj
 
   return PList;
 }
-
-
-
-
-
 
 
 
@@ -7706,7 +7885,7 @@ static PyObject* OSCARSSR_CalculateFlux (OSCARSSRObject* self, PyObject* args, P
 
 
 const char* DOC_OSCARSSR_CalculateFluxRectangle = R"docstring(
-calculate_flux_rectangle(energy_eV, npoints [, plane, normal, dim, width, rotations, translation, x0x1x2, polarization, angle, horizontal_direction=[1, 0, 0], propogation_direction=[0, 0, 1], nparticles, nthreads, gpu, ngpu, precision, max_level, max_level_extended, quantity, ofile, bofile])
+calculate_flux_rectangle(energy_eV [, plane, npoints, normal, dim, width, rotations, translation, x0x1x2, polarization, angle, horizontal_direction=[1, 0, 0], propogation_direction=[0, 0, 1], nparticles, nthreads, gpu, ngpu, precision, max_level, max_level_extended, quantity, ofile, bofile])
 
 Calculate the flux density in a rectangle either defined by three points, or by defining the plane the rectangle is in and the width, and then rotating and translating it to where it needs be.  The simplest is outlined in the first example below.  By default (dim=2) this returns a list whose position coordinates are in the local coordinate space x1 and x2 (*ie* they do not include the rotations and translation).  if dim=3 the coordinates in the return list are in absolute 3D space.
 
@@ -7720,10 +7899,10 @@ energy_eV : float
     Photon energy of interest
 
 npoints : list [int, int]
-    Number of points in X1 and X2 dimension [n1, n2]
+    Number of points in X1 and X2 dimension [n1, n2], default to [51, 51]
 
 plane : str
-    The plane to start in (XY, XZ, YZ, YX, ZX, ZY).  The normal to the surface is defined using the right handed cross product (ie the last three have opposite normal vectors from the first three).
+    The plane to start in (XY, XZ, YZ, YX, ZX, ZY).  The normal to the surface is defined using the right handed cross product (ie the last three have opposite normal vectors from the first three), default to 'XY'
 
 normal : int
     -1 if you wish to reverse the normal vector, 0 if you wish to ignore the +/- direction in computations, 1 if you with to use the direction of the normal vector as given. 
@@ -7799,9 +7978,9 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
 {
   // Calculate the spectrum given an observation point, and energy range
 
-  char const* SurfacePlane = "";
-  size_t      NX1 = 0;
-  size_t      NX2 = 0;
+  char const* SurfacePlane = "XY";
+  size_t      NX1 = 51;
+  size_t      NX2 = 51;
   double      Width_X1 = 0;
   double      Width_X2 = 0;
   PyObject*   List_NPoints= PyList_New(0);
@@ -7853,7 +8032,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
                                  "bofile",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "dO|siiOOOOsdOOiiiOdiisss",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|OsiiOOOOsdOOiiiOdiisss",
                                    const_cast<char **>(kwlist),
                                    &Energy_eV,
                                    &List_NPoints,
@@ -7878,15 +8057,6 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
                                    &ReturnQuantityChars,
                                    &OutFileNameText,
                                    &OutFileNameBinary)) {
-    return NULL;
-  }
-
-  if (List_X0X1X2 == 0x0 && SurfacePlane == "") {
-    PyErr_SetString(PyExc_ValueError, "Must define 'plane' or 'x0x1x2'");
-    return NULL;
-  }
-  if (List_X0X1X2 != 0x0 && SurfacePlane != "") {
-    PyErr_SetString(PyExc_ValueError, "Can not define both 'plane' and 'x0x1x2'");
     return NULL;
   }
 
@@ -7962,7 +8132,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
 
 
   // If you are requesting a simple surface plane, check that you have widths
-  if (std::strlen(SurfacePlane) != 0 && Width_X1 > 0 && Width_X2 > 0) {
+  if (List_X0X1X2 == 0x0 && std::strlen(SurfacePlane) != 0 && Width_X1 > 0 && Width_X2 > 0) {
     try {
       Surface.Init(SurfacePlane, (int) NX1, (int) NX2, Width_X1, Width_X2, Rotations, Translation, NormalDirection);
     } catch (std::invalid_argument e) {
@@ -9076,6 +9246,42 @@ static PyObject* OSCARSSR_PrintTrajectory (OSCARSSRObject* self)
 
 
 
+const char* DOC_OSCARSSR_PrintSTL = R"docstring(
+print_stl()
+
+Print information about stl files to standard out
+
+Parameters
+----------
+None
+
+Returns
+-------
+None
+)docstring";
+static PyObject* OSCARSSR_PrintSTL (OSCARSSRObject* self)
+{
+  // Print STL information
+
+  // Out string stream for printing information
+  std::ostringstream ostream;
+  ostream << "*STL Information*\n";
+
+  ostream << self->obj->GetSTLContainer() << std::endl;
+
+  OSCARSPY::PyPrint_stdout(ostream.str());
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
+
 const char* DOC_OSCARSSR_PrintAll = R"docstring(
 print_all()
 
@@ -9100,6 +9306,7 @@ static PyObject* OSCARSSR_PrintAll (OSCARSSRObject* self)
   OSCARSSR_PrintGPU(self);
   OSCARSSR_PrintNThreads(self);
   OSCARSSR_PrintTrajectory(self);
+  OSCARSSR_PrintSTL(self);
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -9111,78 +9318,6 @@ static PyObject* OSCARSSR_PrintAll (OSCARSSRObject* self)
 
 
 
-const char* DOC_OSCARSSR_COUT = R"docstring(
-cout(out)
-
-Print input to std::cout (mostly useful for debugging)
-
-Parameters
-----------
-out : str
-    Any string you want to output
-
-Returns
--------
-None
-)docstring";
-static PyObject* OSCARSSR_COUT (OSCARSSRObject* self, PyObject* args, PyObject *keywds)
-{
-  char const* Out = "";
-  static const char *kwlist[] = {"out",
-                                 NULL};
-
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
-                                   const_cast<char **>(kwlist),
-                                   &Out)) {
-    return NULL;
-  }
-
-  std::cout << Out << std::endl;
-
-  // Must return python object None in a special way
-  Py_INCREF(Py_None);
-  return Py_None;
-}
-
-
-
-
-
-
-
-
-const char* DOC_OSCARSSR_CERR = R"docstring(
-cout(out)
-
-Print input to std::cerr (mostly useful for debugging)
-
-Parameters
-----------
-out : str
-    Any string you want to output
-
-Returns
--------
-None
-)docstring";
-static PyObject* OSCARSSR_CERR (OSCARSSRObject* self, PyObject* args, PyObject *keywds)
-{
-  char const* Out = "";
-  static const char *kwlist[] = {"out",
-                                 NULL};
-
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "s",
-                                   const_cast<char **>(kwlist),
-                                   &Out)) {
-    return NULL;
-  }
-
-  std::cerr << Out << std::endl;
-
-  // Must return python object None in a special way
-  Py_INCREF(Py_None);
-  return Py_None;
-}
 
 
 
@@ -9211,14 +9346,23 @@ static PyObject* OSCARSSR_Fake (OSCARSSRObject* self, PyObject* args, PyObject *
 
 
 static PyMethodDef OSCARSSR_methods_fake[] = {
-  {"version",                           (PyCFunction) OSCARSSR_Version, METH_NOARGS,               DOC_OSCARSSR_Version},
-  {"pi",                                (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_Pi},
-  {"qe",                                (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_Qe},
-  {"me",                                (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_Me},
-  {"c",                                 (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_C},
-  {"rand",                              (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_Random},
-  {"norm",                              (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_RandomNormal},
-  {"set_seed",                          (PyCFunction) OSCARSSR_Fake, METH_O,                       DOC_OSCARSSR_SetSeed},
+  {"version",                           (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  "get version"},
+  {"pi",                                (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  "return pi"},
+  {"alpha",                             (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  "fine structure const"},
+  {"e",                                 (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  "base of natural log"},
+  {"c",                                 (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  "speed of light (m/s)"},
+  {"h",                                 (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  "plank constant (Js)"},
+  {"hbar",                              (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  "plank constant/2pi (Js)"},
+  {"qe",                                (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  "fundamental charge (C)"},
+  {"me",                                (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  "electron mass (kg)"},
+  {"epsilon0",                          (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  "Vacuum permittivity (F/m)"},
+  {"mu0",                               (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  "Vacuum permeability (H/m)"},
+  {"rand",                              (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  "Uniformly distributed[0, 1)"},
+  {"norm",                              (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  "random normal dist center=0 sigma=1"},
+  {"set_seed",                          (PyCFunction) OSCARSSR_Fake, METH_O,                       "set global random seed"},
+  {"cout",                              (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, "print string to cout"},
+  {"cerr",                              (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, "print string to cerr"},
+
   {"set_gpu_global",                    (PyCFunction) OSCARSSR_Fake, METH_O,                       DOC_OSCARSSR_SetGPUGlobal},
   {"check_gpu",                         (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_CheckGPU},
   {"set_nthreads_global",               (PyCFunction) OSCARSSR_Fake, METH_O,                       DOC_OSCARSSR_SetNThreadsGlobal},
@@ -9237,6 +9381,7 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   {"add_bfield_gaussian",               (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldGaussian},
   {"add_bfield_uniform",                (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldUniform},
   {"add_bfield_undulator",              (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldIdealUndulator},
+  {"add_bfield_epu",                    (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldIdealEPU},
   //{"add_bfield_halbach",                (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldHalbach},
   {"add_bfield_quadrupole",             (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldQuadrupole},
   {"remove_bfield",                     (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_RemoveMagneticField},
@@ -9296,7 +9441,11 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   {"calculate_total_power",             (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateTotalPower},
   {"calculate_power_density",           (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensity},
   {"calculate_power_density_rectangle", (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensityRectangle},
+  {"add_stl",                           (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddSTL},
   {"calculate_power_density_stl",       (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensitySTL},
+  {"clear_stl",                         (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_ClearSTL},
+  {"remove_stl",                        (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_RemoveSTL},
+  {"print_stl",                         (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_PrintSTL},
   {"calculate_power_density_line",      (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensityLine},
 
   //{"calculate_flux",                    (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateFlux},
@@ -9321,8 +9470,6 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   {"print_gpu",                         (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_PrintGPU},
 
   {"print_all",                         (PyCFunction) OSCARSSR_Fake, METH_NOARGS,                  DOC_OSCARSSR_PrintAll},
-  {"cout",                              (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_COUT},
-  {"cerr",                              (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CERR},
 
   {NULL, NULL, 0, NULL}  /* Sentinel */
 };
@@ -9332,14 +9479,23 @@ static PyMethodDef OSCARSSR_methods[] = {
   // We must tell python about the function we allow access as well as give them nice
   // python names, and tell python the method of input parameters.
 
-  {"version",                           (PyCFunction) OSCARSSR_Version,                         METH_NOARGS,                  DOC_OSCARSSR_Version},
-  {"pi",                                (PyCFunction) OSCARSSR_Pi,                              METH_NOARGS,                  DOC_OSCARSSR_Pi},
-  {"qe",                                (PyCFunction) OSCARSSR_Qe,                              METH_NOARGS,                  DOC_OSCARSSR_Qe},
-  {"me",                                (PyCFunction) OSCARSSR_Me,                              METH_NOARGS,                  DOC_OSCARSSR_Me},
-  {"c",                                 (PyCFunction) OSCARSSR_C,                               METH_NOARGS,                  DOC_OSCARSSR_C},
-  {"rand",                              (PyCFunction) OSCARSSR_Random,                          METH_NOARGS,                  DOC_OSCARSSR_Random},
-  {"norm",                              (PyCFunction) OSCARSSR_RandomNormal,                    METH_NOARGS,                  DOC_OSCARSSR_RandomNormal},
-  {"set_seed",                          (PyCFunction) OSCARSSR_SetSeed,                         METH_O,                       DOC_OSCARSSR_SetSeed},
+  {"version",                           (PyCFunction) OSCARSPY::Py_Version,                     METH_NOARGS,                  "get version"},
+  {"pi",                                (PyCFunction) OSCARSPY::Py_Pi,                          METH_NOARGS,                  "return pi"},
+  {"alpha",                             (PyCFunction) OSCARSPY::Py_Alpha,                       METH_NOARGS,                  "fine structure const"},
+  {"e",                                 (PyCFunction) OSCARSPY::Py_E,                           METH_NOARGS,                  "base of natural log"},
+  {"c",                                 (PyCFunction) OSCARSPY::Py_C,                           METH_NOARGS,                  "speed of light (m/s)"},
+  {"h",                                 (PyCFunction) OSCARSPY::Py_H,                           METH_NOARGS,                  "plank constant (Js)"},
+  {"hbar",                              (PyCFunction) OSCARSPY::Py_Hbar,                        METH_NOARGS,                  "plank constant/2pi (Js)"},
+  {"qe",                                (PyCFunction) OSCARSPY::Py_Qe,                          METH_NOARGS,                  "fundamental charge (C)"},
+  {"me",                                (PyCFunction) OSCARSPY::Py_Me,                          METH_NOARGS,                  "electron mass (kg)"},
+  {"epsilon0",                          (PyCFunction) OSCARSPY::Py_Epsilon0,                    METH_NOARGS,                  "Vacuum permittivity (F/m)"},
+  {"mu0",                               (PyCFunction) OSCARSPY::Py_Mu0,                         METH_NOARGS,                  "Vacuum permeability (H/m)"},
+  {"rand",                              (PyCFunction) OSCARSPY::Py_Random,                      METH_NOARGS,                  "Uniformly distributed[0, 1)"},
+  {"norm",                              (PyCFunction) OSCARSPY::Py_RandomNormal,                METH_NOARGS,                  "random normal dist center=0 sigma=1"},
+  {"set_seed",                          (PyCFunction) OSCARSPY::Py_SetSeed,                     METH_O,                       "set global random seed"},
+  {"cout",                              (PyCFunction) OSCARSPY::Py_COUT,                        METH_VARARGS | METH_KEYWORDS, "print string to cout"},
+  {"cerr",                              (PyCFunction) OSCARSPY::Py_CERR,                        METH_VARARGS | METH_KEYWORDS, "print string to cerr"},
+
   {"set_gpu_global",                    (PyCFunction) OSCARSSR_SetGPUGlobal,                    METH_O,                       DOC_OSCARSSR_SetGPUGlobal},
   {"check_gpu",                         (PyCFunction) OSCARSSR_CheckGPU,                        METH_NOARGS,                  DOC_OSCARSSR_CheckGPU},
   {"set_nthreads_global",               (PyCFunction) OSCARSSR_SetNThreadsGlobal,               METH_O,                       DOC_OSCARSSR_SetNThreadsGlobal},
@@ -9358,6 +9514,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"add_bfield_gaussian",               (PyCFunction) OSCARSSR_AddMagneticFieldGaussian,        METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldGaussian},
   {"add_bfield_uniform",                (PyCFunction) OSCARSSR_AddMagneticFieldUniform,         METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldUniform},
   {"add_bfield_undulator",              (PyCFunction) OSCARSSR_AddMagneticFieldIdealUndulator,  METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldIdealUndulator},
+  {"add_bfield_epu",                    (PyCFunction) OSCARSSR_AddMagneticFieldIdealEPU,        METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldIdealEPU},
   //{"add_bfield_halbach",                (PyCFunction) OSCARSSR_AddMagneticFieldHalbach,         METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldHalbach},
   {"add_bfield_quadrupole",             (PyCFunction) OSCARSSR_AddMagneticFieldQuadrupole,      METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldQuadrupole},
   {"remove_bfield",                     (PyCFunction) OSCARSSR_RemoveMagneticField,             METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_RemoveMagneticField},
@@ -9417,7 +9574,11 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"calculate_total_power",             (PyCFunction) OSCARSSR_CalculateTotalPower,             METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateTotalPower},
   {"calculate_power_density",           (PyCFunction) OSCARSSR_CalculatePowerDensity,           METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensity},
   {"calculate_power_density_rectangle", (PyCFunction) OSCARSSR_CalculatePowerDensityRectangle,  METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensityRectangle},
+  {"add_stl",                           (PyCFunction) OSCARSSR_AddSTL,                          METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddSTL},
   {"calculate_power_density_stl",       (PyCFunction) OSCARSSR_CalculatePowerDensitySTL,        METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensitySTL},
+  {"clear_stl",                         (PyCFunction) OSCARSSR_ClearSTL,                        METH_NOARGS,                  DOC_OSCARSSR_ClearSTL},
+  {"remove_stl",                        (PyCFunction) OSCARSSR_RemoveSTL,                       METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_RemoveSTL},
+  {"print_stl",                         (PyCFunction) OSCARSSR_PrintSTL,                        METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_PrintSTL},
   {"calculate_power_density_line",      (PyCFunction) OSCARSSR_CalculatePowerDensityLine,       METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculatePowerDensityLine},
 
   //{"calculate_flux",                    (PyCFunction) OSCARSSR_CalculateFlux,                   METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CalculateFlux},
@@ -9442,8 +9603,6 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"print_gpu",                         (PyCFunction) OSCARSSR_PrintGPU,                        METH_NOARGS,                  DOC_OSCARSSR_PrintGPU},
 
   {"print_all",                         (PyCFunction) OSCARSSR_PrintAll,                        METH_NOARGS,                  DOC_OSCARSSR_PrintAll},
-  {"cout",                              (PyCFunction) OSCARSSR_COUT,                            METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_COUT},
-  {"cerr",                              (PyCFunction) OSCARSSR_CERR,                            METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_CERR},
 
   {NULL, NULL, 0, NULL}  /* Sentinel */
 };

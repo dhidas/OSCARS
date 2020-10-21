@@ -145,8 +145,9 @@ void TParticleTrajectoryInterpolated::FillTParticleTrajectoryPointsLevel (TParti
 
 
 
-  // Set the deltaT of the particle trajectory points
+  // Set the deltaT of the particle trajectory points, reserve NPoints
   TPTP.SetDeltaT(ThisTSpacing);
+  TPTP.Reserve(NPoints);
 
   // First point of this trajectory is at:
   double const ThisTStart = this->GetTStartThisLevel(Level);
@@ -231,7 +232,7 @@ double TParticleTrajectoryInterpolated::GetDeltaTInclusiveToLevel (int const Lev
   // Level checking
   this->LevelCheck(Level);
     
-  return (fTStop - fTStart) / pow(2., Level + 1);
+  return (fTStop - fTStart) / (pow(2., Level + 1) - 1);
 
 }
 
@@ -245,7 +246,7 @@ double TParticleTrajectoryInterpolated::GetDeltaTThisLevel (int const Level) con
   // Level checking
   this->LevelCheck(Level);
     
-  return (fTStop - fTStart) / pow(2., Level); 
+  return (fTStop - fTStart) / (pow(2., Level) - 1); 
 
 }
 

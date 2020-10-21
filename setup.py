@@ -27,6 +27,8 @@ with open('include/Version.h', 'r') as f:
                 v_rev = v_rev + '.' + s[-1].strip('"')
 
 VERSION=v_major+'.'+v_minor+'.'+v_rev
+if v_rel != '':
+    VERSION+='.'+v_rel
 
 #os.environ["CC"] = "nvcc"
 #os.environ["CXX"] = "nvcc"
@@ -107,6 +109,7 @@ moduleOSCARSSR = Extension('oscars.sr',
                                  'src/TField3D_Gaussian.cc',
                                  'src/TFieldContainer.cc',
                                  'src/TField3D_IdealUndulator.cc',
+                                 'src/TField3D_IdealEPU.cc',
                                  'src/TField3D_Halbach.cc',
                                  'src/TField3D_UniformBox.cc',
                                  'src/TFieldPythonFunction.cc',
@@ -132,6 +135,7 @@ moduleOSCARSSR = Extension('oscars.sr',
                                  'src/TDriftBox.cc',
                                  'src/TTriangle3D.cc',
                                  'src/TTriangle3DContainer.cc',
+                                 'src/TSTLContainer.cc',
                                  'src/TDriftVolumeContainer.cc',
                                  'src/OSCARSPY.cc'],
                       extra_compile_args=extra_compile_args,
@@ -150,6 +154,7 @@ moduleOSCARSTH = Extension('oscars.th',
                                  'src/TField3D_Gaussian.cc',
                                  'src/TFieldContainer.cc',
                                  'src/TField3D_IdealUndulator.cc',
+                                 'src/TField3D_IdealEPU.cc',
                                  'src/TField3D_Halbach.cc',
                                  'src/TField3D_UniformBox.cc',
                                  'src/TFieldPythonFunction.cc',
@@ -175,6 +180,7 @@ moduleOSCARSTH = Extension('oscars.th',
                                  'src/TDriftBox.cc',
                                  'src/TTriangle3D.cc',
                                  'src/TTriangle3DContainer.cc',
+                                 'src/TSTLContainer.cc',
                                  'src/TDriftVolumeContainer.cc',
                                  'src/OSCARSPY.cc'],
                       extra_compile_args=extra_compile_args,
@@ -195,10 +201,12 @@ setup(
   url = 'http://oscars.bnl.gov/',
   license = 'LICENSE.txt',
   long_description = '''The OSCARS Package.''',
+  scripts=['bin/plot_spectra.py', 'bin/plot_flux.py'],
   ext_modules = [moduleOSCARSSR, moduleOSCARSTH],
-  data_files=[('oscars', ['LICENSE.txt', 'COPYRIGHT.txt'])],
-  package_data = {'' : ['LICENSE.txt']},
-  #package_dir = {'oscars': 'python'},
+  #data_files=[('oscars', ['LICENSE.txt', 'COPYRIGHT.txt'])],
+  data_files=[('oscars/data/srw/brilliance', ['oscars/data/srw/brilliance/gwSrwBrilUndHarmUnivDiv.txt',  'oscars/data/srw/brilliance/gwSrwBrilUndHarmUnivFlux.txt', 'oscars/data/srw/brilliance/gwSrwBrilUndHarmUnivSize.txt'])],
   #include_package_data=True,
-  py_modules = ['oscars.plots_mpl', 'oscars.plots3d_mpl', 'oscars.parametric_surfaces', 'oscars.util', 'oscars.fit', 'oscars.bl', 'oscars.lut', 'oscars.brightness', 'oscars.twiss', 'oscars.me']
+  package_data = {'oscars' : ['data/srw/brilliance/*txt']  },
+  #package_dir = {'': 'oscars'},
+  py_modules = ['oscars.plots_mpl', 'oscars.plots3d_mpl', 'oscars.parametric_surfaces', 'oscars.util', 'oscars.fit', 'oscars.bl', 'oscars.lut', 'oscars.brightness', 'oscars.twiss', 'oscars.me', 'oscars.srwl_uti_brightness']
 )

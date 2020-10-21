@@ -7,7 +7,7 @@
 ////////////////////////////////////////////////////////////////////
 
 #include "TField3D_Gaussian.h"
-#include "TOSCARSSR.h"
+#include "TOSCARS.h"
 
 #include <cmath>
 
@@ -108,7 +108,7 @@ TVector3D TField3D_Gaussian::GetF (TVector3D const& X, double const T) const
     // It has no time dependence
     return Fraction * fPeakField;
   }
-  return Fraction * fPeakField * cos(TOSCARSSR::TwoPi() * fFrequency * (T + fTimeOffset) + fFrequencyPhase);
+  return Fraction * fPeakField * cos(TOSCARS::TwoPi() * fFrequency * (T + fTimeOffset) + fFrequencyPhase);
 }
 
 

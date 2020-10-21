@@ -9,7 +9,7 @@
 
 #include "TSpectrumContainer.h"
 
-#include "TOSCARSSR.h"
+#include "TOSCARS.h"
 
 #include <iostream>
 #include <fstream>
@@ -263,7 +263,7 @@ double TSpectrumContainer::GetAngularFrequency (size_t const i) const
 {
   // Get the angular frequency of this index (from energy)
   // UPDATE: consider removing this function
-  return TOSCARSSR::EvToAngularFrequency(fSpectrumPoints[i].first);
+  return TOSCARS::EvToAngularFrequency(fSpectrumPoints[i].first);
 }
 
 

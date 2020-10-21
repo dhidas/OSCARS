@@ -1,6 +1,7 @@
 #include "TTriangle3DContainer.h"
 
 #include <cstdint>
+#include <stdexcept>
 
 TTriangle3DContainer::TTriangle3DContainer ()
 {
@@ -48,11 +49,46 @@ void TTriangle3DContainer::Clear ()
 
 
 
+void TTriangle3DContainer::ClearValues ()
+{
+  // Set all values to zero
+  for (std::vector<TTriangle3D>::iterator it = fT.begin(); it != fT.end(); ++it) {
+    it->SetValue(0);
+  }
+  return;
+}
+
+
+
+
+void TTriangle3DContainer::AddToPoint (size_t const i, double const V)
+{
+  // Compensated sum for adding to points
+
+  // Check that the point is within range
+  if (i >= fT.size()) {
+    throw std::length_error("TTriangle3DContainer::AddtoPoint index out of range");
+  }
+
+  fT[i].AddToValue(V);
+
+  return;
+}
+
+
+
+
+
+
+
+
 void TTriangle3DContainer::RotateSelfXYZ (TVector3D const& R)
 {
   for (std::vector<TTriangle3D>::iterator it = fT.begin(); it != fT.end(); ++it) {
     it->RotateSelfXYZ(R);
   }
+
+  fRotations = R;
   return;
 }
 
@@ -64,13 +100,18 @@ void TTriangle3DContainer::TranslateSelf (TVector3D const& T)
   for (std::vector<TTriangle3D>::iterator it = fT.begin(); it != fT.end(); ++it) {
     *it += T;
   }
+
+  fTranslation += T;
   return;
 }
 
 
 
 void TTriangle3DContainer::ReadSTLFile (std::string const& FileName,
-                                        double const Scale)
+                                        double const Scale,
+                                        TVector3D const& Rotations,
+                                        TVector3D const& Translation,
+                                        std::string const& Name)
 {
   // Read an STL file and add all points to self
 
@@ -92,12 +133,51 @@ void TTriangle3DContainer::ReadSTLFile (std::string const& FileName,
   float C[3];
   short S;
 
+  TVector2D XRange, YRange, ZRange;
   for (int i = 0; i < NTriangles; ++i) {
     fi.read((char*)  N, 3 * sizeof(float));
     fi.read((char*)  A, 3 * sizeof(float));
     fi.read((char*)  B, 3 * sizeof(float));
     fi.read((char*)  C, 3 * sizeof(float));
     fi.read((char*) &S ,    sizeof(short));
+
+    if (i == 0) {
+      XRange[0] = std::min(A[0], B[0]);
+      XRange[0] = std::min(A[0], C[0]);
+      XRange[1] = std::max(A[0], B[0]);
+      XRange[1] = std::max(A[0], C[0]);
+
+      YRange[0] = std::min(A[1], B[1]);
+      YRange[0] = std::min(A[1], C[1]);
+      YRange[1] = std::max(A[1], B[1]);
+      YRange[1] = std::max(A[1], C[1]);
+
+      ZRange[0] = std::min(A[2], B[2]);
+      ZRange[0] = std::min(A[2], C[2]);
+      ZRange[1] = std::max(A[2], B[2]);
+      ZRange[1] = std::max(A[2], C[2]);
+    } else {
+      XRange[0] = std::min((float) XRange[0], A[0]);
+      XRange[1] = std::max((float) XRange[1], A[0]);
+      XRange[0] = std::min((float) XRange[0], B[0]);
+      XRange[1] = std::max((float) XRange[1], B[0]);
+      XRange[0] = std::min((float) XRange[0], C[0]);
+      XRange[1] = std::max((float) XRange[1], C[0]);
+
+      YRange[0] = std::min((float) YRange[0], A[1]);
+      YRange[1] = std::max((float) YRange[1], A[1]);
+      YRange[0] = std::min((float) YRange[0], B[1]);
+      YRange[1] = std::max((float) YRange[1], B[1]);
+      YRange[0] = std::min((float) YRange[0], C[1]);
+      YRange[1] = std::max((float) YRange[1], C[1]);
+
+      ZRange[0] = std::min((float) ZRange[0], A[2]);
+      ZRange[1] = std::max((float) ZRange[1], A[2]);
+      ZRange[0] = std::min((float) ZRange[0], B[2]);
+      ZRange[1] = std::max((float) ZRange[1], B[2]);
+      ZRange[0] = std::min((float) ZRange[0], C[2]);
+      ZRange[1] = std::max((float) ZRange[1], C[2]);
+    }
 
     fT.push_back(TTriangle3D(A[0] * Scale, A[1] * Scale, A[2] * Scale,
                              B[0] * Scale, B[1] * Scale, B[2] * Scale,
@@ -108,6 +188,37 @@ void TTriangle3DContainer::ReadSTLFile (std::string const& FileName,
   }
 
   fi.close();
+
+  // Scale and transform ranges for correct BBox
+  XRange *= Scale;
+  YRange *= Scale;
+  ZRange *= Scale;
+
+  // 4 vectors that define BBox
+  TVector3D ToCorner(XRange[0], YRange[0], ZRange[0]);
+  TVector3D ToXMax = TVector3D(XRange[1], YRange[0], ZRange[0]) - ToCorner;
+  TVector3D ToYMax = TVector3D(XRange[0], YRange[1], ZRange[0]) - ToCorner;
+  TVector3D ToZMax = TVector3D(XRange[0], YRange[0], ZRange[1]) - ToCorner;
+
+  ToCorner.RotateSelfXYZ(fRotations);
+  ToXMax.RotateSelfXYZ(fRotations);
+  ToYMax.RotateSelfXYZ(fRotations);
+  ToZMax.RotateSelfXYZ(fRotations);
+
+  ToCorner += fTranslation;
+  ToXMax += fTranslation;
+  ToYMax += fTranslation;
+  ToZMax += fTranslation;
+
+
+  fFileName = FileName;
+  fScale = Scale;
+  fRotations = TVector3D(0, 0, 0);
+  fTranslation = TVector3D(0, 0, 0);
+  fName = Name;
+
+  this->RotateSelfXYZ(fRotations);
+  this->TranslateSelf(Translation);
 
   return;
 }
@@ -158,4 +269,44 @@ void TTriangle3DContainer::WriteSTLFile (std::string const& FileName)
   fi.close();
 
   return;
+}
+
+
+
+
+
+
+
+
+std::string TTriangle3DContainer::GetFileName () const
+{
+  return fFileName;
+}
+
+
+
+double TTriangle3DContainer::GetScale () const
+{
+  return fScale;
+}
+
+
+
+TVector3D TTriangle3DContainer::GetRotations () const
+{
+  return fRotations;
+}
+
+
+
+TVector3D TTriangle3DContainer::GetTranslation () const
+{
+  return fTranslation;
+}
+
+
+
+std::string TTriangle3DContainer::GetName () const
+{
+  return fName;
 }

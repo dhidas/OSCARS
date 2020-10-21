@@ -5,10 +5,10 @@ NVCC = nvcc
 
 # The following python variables MUST be updated for YOUR system if you wish to compile the c++ test routines
 # ... Most people will not want to do this.  It is intended for development
-PYPATH = /Library/Frameworks/Python.framework/Versions/3.6
-PYINCLUDE = $(PYPATH)/include/python3.6m
+PYPATH = /Library/Frameworks/Python.framework/Versions/3.7
+PYINCLUDE = $(PYPATH)/include/python3.7m
 PYLIBDIR = $(PYPATH)/lib
-PYLIB = python3.6m
+PYLIB = python3.7m
 
 # CUDA Objects for the nvcc compiler
 CUDAOBJS  = $(patsubst src/%.cu,lib/%.o,$(wildcard src/*.cu))

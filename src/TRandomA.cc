@@ -43,6 +43,8 @@ void TRandomA::SetSeed (int const Seed)
 {
   delete fMT;
   fMT = new std::mt19937(Seed);
+  fNormalDist  = std::normal_distribution<double>(0, 1);
+  fUniformDist = std::uniform_real_distribution<double>(0, 1);
 
   return;
 }

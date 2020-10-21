@@ -28,6 +28,20 @@ TFieldPythonFunction::TFieldPythonFunction (PyObject* Function,
   if (!PyCallable_Check(fPythonFunction)) {
     throw std::invalid_argument("python function not callable");
   }
+
+  PyObject* a = PyFunction_GetCode(fPythonFunction);
+  if (a == 0x0) {
+    throw std::invalid_argument("Incorrect definition of python function");
+  } 
+
+  PyObject* b = PyObject_GetAttrString(a, "co_argcount");
+  if (b == 0x0) {
+    throw std::invalid_argument("Incorrect definition of python function");
+  }
+
+  if (PyLong_AsLong(b) != 4) {
+    throw std::invalid_argument("Python function must contain have exactly 4 arguments: f(x,y,z,t)");
+  }
 }
 
 
@@ -73,7 +87,7 @@ TVector3D TFieldPythonFunction::GetF (TVector3D const& X, double const T) const
   // Get a python list from output tuple
   PyObject* OutputList;
   if (!PyArg_Parse(OutputTuple, "O!", &PyList_Type, &OutputList)) {
-    throw std::logic_error("TFieldPythonFunction::GetF cannot get from output tuple.  Please report this.");
+    throw std::logic_error("TFieldPythonFunction::GetF cannot get from output tuple from field.  Check return value is [Bx, By, Bz] from python field function");
   }
 
   // Rotate field

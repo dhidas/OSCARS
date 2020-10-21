@@ -10,6 +10,8 @@ import oscars.plots_mpl
 import warnings
 import configparser
 import os
+import glob
+import uuid
 
 
 class bl(oscars.lut.lut1d):
@@ -41,14 +43,14 @@ class bl(oscars.lut.lut1d):
     None
     """
 
-    def __init__ (self, facility=None, beamline=None, device=None, current=None, base_path=None, gpu=1, nthreads=8):
+    def __init__ (self, facility=None, beamline=None, device=None, phase_mode=None, current=None, base_path=None, gpu=1, nthreads=8):
         oscars.lut.lut1d.__init__(self)
 
         # Set base path if defined, otherwise default
         if base_path is not None:
             self.base_path = base_path
         else:
-            self.base_path = os.path.join(os.sep, 'Users', 'dhidas', 'OSCARSDATA')
+            self.base_path = os.path.join(os.sep, 'GPFS', 'APC', 'dhidas', 'OSCARSDATA')
 
         if facility is None or beamline is None or device is None:
             print('You can select from the available facility, beamline, and device list:')
@@ -65,8 +67,10 @@ class bl(oscars.lut.lut1d):
         self.name = None
 
         self.gap = None
-        self.phase = None
-        self.phase_mode = None
+        self.phase = 0
+
+        self.phase_mode = 'planar'
+
 
         self.osr = oscars.sr.sr(gpu=gpu, nthreads=nthreads)
         self.oth = oscars.th.th(gpu=gpu, nthreads=nthreads)
@@ -88,7 +92,7 @@ class bl(oscars.lut.lut1d):
         # Beamline and Device path
         self.beamline_path = os.path.join(self.base_path, 'Facilities', facility, beamline)
         self.device_path = os.path.join(self.beamline_path, device)
-        self.bfield_path = os.path.join(self.device_path, 'bfield')
+        self.bfield_path = os.path.join(self.device_path, 'bfield', self.phase_mode)
 
         # Setup beam
         if 'beam' in self.config:
@@ -138,7 +142,6 @@ class bl(oscars.lut.lut1d):
 
             self.bfield_kwargs = a
 
-        self.phase_mode = None
         if 'general' in self.config:
             g = self.config['general']
 
@@ -148,9 +151,11 @@ class bl(oscars.lut.lut1d):
             else:
                 self.name = self.device
 
-            if 'default_mode' in g: self.phase_mode = g['default_mode']
-        else:
-            self.phase_mode = 'planar'
+            if phase_mode is not None:
+                self.phase_mode = phase_mode
+            elif 'phase_mode' in g:
+                self.phase_mode = g['phase_mode']
+        self.bfield_path = os.path.join(self.device_path, 'bfield', self.phase_mode)
 
 
         # Find all modes from directory
@@ -167,21 +172,23 @@ class bl(oscars.lut.lut1d):
 
         # Set bfield map and lookup table paths
         if self.phase_mode is not None:
-            if os.path.isfile(os.path.join(self.bfield_path, self.phase_mode, 'file_list_1d.txt')):
-                self.bfield_mapping_1d_filename = os.path.join(self.bfield_path, self.phase_mode, 'file_list_1d.txt')
-            if os.path.isfile(os.path.join(self.bfield_path, self.phase_mode, 'file_list_2d.txt')):
-                self.bfield_mapping_2d_filename = os.path.join(self.bfield_path, self.phase_mode, 'file_list_2d.txt')
-            if os.path.isfile(os.path.join(self.bfield_path, self.phase_mode, 'lut1d.txt')):
-                self.lut1d_filename = os.path.join(self.bfield_path, self.phase_mode, 'lut1d.txt')
+            if os.path.isfile(os.path.join(self.bfield_path, 'file_list_1d.txt')):
+                self.bfield_mapping_1d_filename = os.path.join(self.bfield_path, 'file_list_1d.txt')
+            if os.path.isfile(os.path.join(self.bfield_path, 'file_list_2d.txt')):
+                self.bfield_mapping_2d_filename = os.path.join(self.bfield_path, 'file_list_2d.txt')
+            if os.path.isfile(os.path.join(self.bfield_path, 'lut1d.txt')):
+                self.lut1d_filename = os.path.join(self.bfield_path, 'lut1d.txt')
                 self.read_file_lut1d(self.lut1d_filename)
                 self.has_lut1d = True
-            if os.path.isfile(os.path.join(self.bfield_path, self.phase_mode, 'lut2d.txt')):
-                self.lut2d_filename = os.path.join(self.bfield_path, self.phase_mode, 'lut2d.txt')
+            if os.path.isfile(os.path.join(self.bfield_path, 'lut2d.txt')):
+                self.lut2d_filename = os.path.join(self.bfield_path, 'lut2d.txt')
                 #self.read_file_lut2d( self.lut2d_filename)
                 self.has_lut2d = True
         else:
             warnings.warn('phase_mode is None.  no bfield or LUT setup')
 
+        self.spectrum_path = os.path.join(self.device_path, 'spectrum', self.phase_mode)
+        self.harmonics_path = os.path.join(self.device_path, 'harmonics', self.phase_mode)
 
         # Setup spectrum arguments
         self.spectrum_kwargs= None
@@ -297,7 +304,7 @@ class bl(oscars.lut.lut1d):
 
         if os.path.isfile(ifile):
             try:
-                self.clear_lut1d()
+                super(bl, self).clear()
                 self.read_file_lut1d(ifile)
                 self.lut1d_filename = ifile
                 self.has_lut1d = True
@@ -490,13 +497,16 @@ class bl(oscars.lut.lut1d):
 
         return
 
-    def spectrum (self, gap=None, ret=None, show=None, **kwargs):
+    def spectrum (self, gap=None, phase=None, ret=None, show=None, **kwargs):
         """Calculate and plot spectrum
         
         Parameters
         ----------
-        gap : str
+        gap : float
             Gap of device - optional
+
+        phase : float
+            If used, default None
 
         All other parameters can be found in the function:
             oscars.sr.calculate_spectrum()
@@ -506,8 +516,8 @@ class bl(oscars.lut.lut1d):
         None
         """
 
-        if gap is not None:
-            self.set_gap(gap)
+        if gap is not None or phase is not None:
+            self.set_gap(gap, phase)
 
         if self.gap is None:
             raise RuntimeError('gap is not set.  try set_gap() first')
@@ -543,13 +553,16 @@ class bl(oscars.lut.lut1d):
 
 
 
-    def flux (self, gap=None, ret=None, show=None, **kwargs):
+    def flux (self, gap=None, phase=None, ret=None, show=None, **kwargs):
         """Calculate the flux
         
         Parameters
         ----------
-        gap : str
+        gap : float
             Gap of device - optional
+
+        phase : float
+            If used, default None
 
         All other parameters can be found in the function:
             oscars.sr.calculate_flux_rectangle()
@@ -559,7 +572,7 @@ class bl(oscars.lut.lut1d):
         None
         """
 
-        if gap is not None:
+        if gap is not None or phase is not None:
             self.set_gap(gap)
 
         if self.gap is None:
@@ -591,15 +604,35 @@ class bl(oscars.lut.lut1d):
         return
 
 
-    def set_gap (self, gap):
+    def set_phase (self, gap=None, phase=None):
+        return set_gap(gap=gap, phase=phase)
+
+    def set_gap (self, gap=None, phase=None):
         """Set the gap for a device.  Sets basic magnetic field data"""
 
-        self.gap = None
+        if gap is None and phase is None:
+            raise RuntimeError('gap or phase must be something')
+
+        if gap is None:
+            gap = self.gap
+        if phase is None:
+            phase = self.phase
+
+        if phase is None:
+            phase = self.phase
 
         self.osr.clear_bfields()
-        mapping = oscars.util.read_file_list_with_header(self.bfield_mapping_1d_filename)
 
-        translation = mapping[3]
+        if self.bfield_mapping_1d_filename is not None:
+            mapping = oscars.util.read_file_list_with_header(self.bfield_mapping_1d_filename)
+        elif self.bfield_mapping_2d_filename is not None:
+            if phase is None:
+                phase = 0
+            mapping = oscars.util.read_file_list_2d_with_header(self.bfield_mapping_2d_filename)
+        else:
+            raise RuntimeError('no mapping found.  make sure phase_mode is set correctly')
+
+        translation = mapping.translation
         if 'translation' in self.bfield_kwargs:
             t = self.bfield_kwargs['translation']
             if len(t) != 3:
@@ -608,9 +641,31 @@ class bl(oscars.lut.lut1d):
             for i in range(3):
                 translation[i] += t[i]
 
-        self.osr.add_bfield_interpolated(mapping=mapping[0], iformat=mapping[1], rotations=mapping[2], translation=translation, scale=mapping[4], parameter=gap)
+        if self.bfield_mapping_1d_filename is not None:
+            self.osr.add_bfield_interpolated(
+                mapping=mapping.mapping,
+                iformat=mapping.format,
+                rotations=mapping.rotations,
+                translation=translation,
+                scale=mapping.scale,
+                parameter=gap
+            )
+        elif self.bfield_mapping_2d_filename is not None:
+            newfname = '.OSCARS_tmp_' + str(uuid.uuid4())
+            newfile = oscars.util.interpolate_file_list_2d (mapping=mapping, gap=gap, phase=phase, ofile=newfname)
+            self.osr.add_bfield_file(
+                ifile=newfname,
+                iformat=mapping.format,
+                rotations=mapping.rotations,
+                translation=translation,
+                scale=mapping.scale
+            )
+
+            if os.path.exists(newfname): os.remove(newfname)
+
 
         self.gap = gap
+        self.phase = phase
 
         return
 
@@ -639,13 +694,16 @@ class bl(oscars.lut.lut1d):
 
 
 
-    def power_density (self, gap=None, ret=None, show=None, **kwargs):
+    def power_density (self, gap=None, phase=None, ret=None, show=None, **kwargs):
         """Calculate the power_density
         
         Parameters
         ----------
-        gap : str
+        gap : foat
             Gap of device - optional
+
+        phase : float
+            Desired phase if phase mode allows
 
         All other parameters can be found in the function:
             oscars.sr.calculate_power_density_rectangle()
@@ -655,8 +713,8 @@ class bl(oscars.lut.lut1d):
         None
         """
 
-        if gap is not None:
-            self.set_gap(gap)
+        if gap is not None or phase is not None:
+            self.set_gap(gap, phase)
 
         if self.gap is None:
             raise RuntimeError('gap is not set.  try set_gap() first')
@@ -689,7 +747,8 @@ class bl(oscars.lut.lut1d):
 
 
     def summary (self, gap=None):
-        """Print some summary information and plots
+        """
+        Print some summary information and plots
         
         Parameters
         ----------
@@ -728,3 +787,116 @@ class bl(oscars.lut.lut1d):
             print('Estimated total power radiated:', round(self.osr.calculate_total_power(), 3), '[W]')
 
         return
+
+
+    def get_spectrum_files (self, pattern='spec*', directory=None):
+        """
+        Get the list of spectrum files that exists for this phase_mode.  Used in energy/harmonics calculations (Not so useful for general users)
+        
+        Parameters
+        ----------
+        pattern : str
+            files will be matched to this pattern using glob
+
+        directory : str
+            Alternative directiry to look at.  Typically should use the default.
+
+        Returns
+        -------
+        Sorted list of files
+        """
+        if directory is None:
+            directory = self.spectrum_path
+
+        files = glob.glob(os.path.join(directory, pattern))
+        files.sort()
+
+        return files
+
+
+    def get_spectrum_file_gap (self, filename):
+        """
+        Get spectrum gap from filename (Not so useful for general users)
+        
+        Parameters
+        ----------
+        filename : str
+            Name of file to parse
+
+
+        Returns
+        -------
+        float - gap
+        """
+
+        return float(os.path.splitext(os.path.basename(filename).split('_')[-1])[0])
+
+
+    def get_spectrum_file_phase (self, filename):
+        """
+        Get spectrum phase from filename (Not so useful for general users)
+        
+        Parameters
+        ----------
+        filename : str
+            Name of file to parse
+
+
+        Returns
+        -------
+        float - gap
+        """
+
+        return float(os.path.basename(f).split('_')[-3])
+
+
+    def get_filename (self, gap, phase=0.0):
+        """
+        Get common output name (Not so useful for general users)
+        
+        Parameters
+        ----------
+        gap : float
+            gap
+
+        phase : float
+            phase - default is 0.0
+
+        Returns
+        -------
+        str : filename formated output
+        """
+
+        return '{}_{}_{}_phase_{:+08.3f}_gap_{:07.3f}'.format(self.beamline, self.device, self.phase_mode, phase, gap)
+
+
+
+    def parse_filename (self, filename):
+        """
+        parse common output name (Not so useful for general users)
+        
+        Parameters
+        ----------
+        filename : str
+            Name of file to parse
+
+        Returns
+        -------
+        obj : with gap, phase, phase_mode, device, beamline
+        """
+
+        class fileinfo:
+
+            def __init__ (self, filename):
+                fields = os.path.basename(filename).split('_')[-7:]
+                self.gap = float(os.path.splitext(fields[-1])[0])
+                self.phase = float(fields[-3])
+                self.phase_mode = fields[-5]
+                self.device = fields[-6]
+                self.beamline = fields[-7]
+
+                del fields
+
+        a = fileinfo(filename)
+
+        return a
