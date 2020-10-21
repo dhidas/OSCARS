@@ -15,6 +15,7 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 
 class TTriangle3DContainer
 {
