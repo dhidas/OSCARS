@@ -57,8 +57,8 @@ install:
 
   # keep old version of pip until pip install wheel is fixed
   #- "pip install --disable-pip-version-check --user --upgrade pip==9.0.3"
-  #- c:\python35-x64\python.exe -m pip install --disable-pip-version-check --user --upgrade pip==9.0.3
-  - c:\python35-x64\python.exe -m pip install --disable-pip-version-check --user --upgrade
+  - c:\python35-x64\python.exe -m pip install --disable-pip-version-check --user --upgrade pip==9.0.3
+  - pip install pip -U --user
 
   #- "pip install wheel"
   - "%PYTHON%\\python.exe -m pip install --upgrade pip setuptools wheel"
