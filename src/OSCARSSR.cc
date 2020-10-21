@@ -874,9 +874,8 @@ void OSCARSSR::CalculateTrajectory (TParticleA& P)
   // This function uses the internal Trajectory member to store results
 
   // Check that CTStart is not after T0 of particle
-  if (this->GetCTStart() > P.GetT0()) {
-    std::cerr << "GetCTStart() P.GetT0(): " << this->GetCTStart() << " " << P.GetT0() << std::endl;
-    throw std::out_of_range("start time is greater than T0");
+  if (this->GetCTStart() > P.GetT0() || this->GetCTStop() < P.GetT0()) {
+    throw std::out_of_range("start time is greater than T0 or stop time is less than T0");
   }
 
   // Check that CTStart and CTStop are not the same (probably not defined if this is the case)

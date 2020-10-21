@@ -25,6 +25,7 @@
 #include "TField3D_Gaussian.h"
 #include "TField3D_UniformBox.h"
 #include "TField3D_IdealUndulator.h"
+#include "TField3D_IdealEPU.h"
 #include "TField3D_Halbach.h"
 #include "TField3D_Quadrupole.h"
 #include "TDriftBox.h"
@@ -1410,6 +1411,198 @@ static PyObject* OSCARSSR_AddMagneticFieldIdealUndulator (OSCARSSRObject* self, 
 
   // Add field
   self->obj->AddMagneticField( (TField*) new TField3D_IdealUndulator(Field, Period, NPeriods, Translation, Phase, Taper, Frequency, FrequencyPhase, TimeOffset, Name));
+
+  // Must return python object None in a special way
+  Py_INCREF(Py_None);
+  return Py_None;
+}
+
+
+
+
+
+
+
+const char* DOC_OSCARSSR_AddMagneticFieldIdealEPU = R"docstring(
+add_bfield_epu(bfieldA, bfieldB, period, nperiods [, phase, rotations, translation, taper, frequency, frequency_phase, time_offset, name])
+
+Adds an ideal sinusoidal EPU field with given maximum bfield amplitudes, period, and number of periods.  Optionally one can specify the phase offset (in [rad]), rotations and translation.  The number of periods given is the full number of fields not counting the terminating fields.
+
+Parameters
+----------
+bfieldA : list
+    A list representing the peak fieldA [Bx, By, Bz] in [T]
+
+bfieldB : list
+    A list representing the peak fieldB [Bx, By, Bz] in [T]
+
+period : list
+    Length of one period
+
+nperiods : int
+    Number of periods
+
+phase : float
+    Phase offset in [rad] which is split between fieldA and fieldB
+
+rotations : list, optional
+    3-element list representing rotations around x, y, and z axes: [:math:`\theta_x, \theta_y, \theta_z`]
+
+translation : list, optional
+    3-element list representing a translation in space [x, y, z]
+
+taper : float
+    The fractional change of the bfield per meter along the magnetic axis
+
+frequency : float
+    Frequency in [Hz] where the ampliture is multiplied by cos(2 pi frequency (t + time_offset) + frequency_phase).  Default is 0, for no frequency dependence
+
+frequency_phase: float
+    The phase offset for a time varying field.  Only used if frequency is non-zero.  See frequency input for more.
+
+time_offset: float
+    The time for a time varying field.  Only used if frequency is non-zero.  See frequency input for more.
+
+name : str
+    Name of this field
+
+Returns
+-------
+None
+
+Examples
+--------
+Add an idealized undulator with 41 periods having a period of 0.050 [m] with a maximum field of 1 [T] in the y-direction where the magnetic axis is along the z-axis
+
+    >>> osr.add_bfield_epu(bfieldA=[0, 1, 0], bfieldB=[1, 0, 0], period=[0, 0, 0.050], nperiods=41)
+)docstring";
+static PyObject* OSCARSSR_AddMagneticFieldIdealEPU (OSCARSSRObject* self, PyObject* args, PyObject* keywds)
+{
+  // Add a magnetic field for undulator
+
+  // Lists and variables
+  PyObject*   List_FieldA       = PyList_New(0);
+  PyObject*   List_FieldB       = PyList_New(0);
+  PyObject*   List_Period      = PyList_New(0);
+  PyObject*   List_Rotations   = PyList_New(0);
+  PyObject*   List_Translation = PyList_New(0);
+  int         NPeriods         = 0;
+  double      Phase            = 0;
+  double      Taper            = 0;
+  double      Frequency        = 0;
+  double      FrequencyPhase   = 0;
+  double      TimeOffset       = 0;
+  char const* Name             = "";
+
+  TVector3D FieldA(0, 0, 0);
+  TVector3D FieldB(0, 0, 0);
+  TVector3D Period(0, 0, 0);
+  TVector3D Rotations(0, 0, 0);
+  TVector3D Translation(0, 0, 0);
+
+  // Input variables and parsing
+  static const char *kwlist[] = {
+                                 "period",
+                                 "nperiods",
+                                 "bfieldA",
+                                 "bfieldB",
+                                 "phase",
+                                 "rotations",
+                                 "translation",
+                                 "taper",
+                                 "frequency",
+                                 "frequency_phase",
+                                 "time_offset",
+                                 "name",
+                                 NULL};
+
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "Oi|OOdOOdddds",
+                                   const_cast<char **>(kwlist),
+                                   &List_Period,
+                                   &NPeriods,
+                                   &List_FieldA,
+                                   &List_FieldB,
+                                   &Phase,
+                                   &List_Rotations,
+                                   &List_Translation,
+                                   &Taper,
+                                   &Frequency,
+                                   &FrequencyPhase,
+                                   &TimeOffset,
+                                   &Name
+                                   )) {
+    return NULL;
+  }
+
+
+  // Check that at least one field is defined
+  if (PyList_Size(List_FieldA) == 0 && PyList_Size(List_FieldB) == 0) {
+    PyErr_SetString(PyExc_ValueError, "Must define at least one of 'bfieldA', 'bfieldB'");
+    return NULL;
+  }
+
+  // Check Field
+  if (PyList_Size(List_FieldA) != 0) {
+    try {
+      FieldA = OSCARSPY::ListAsTVector3D(List_FieldA);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'bfieldA'");
+      return NULL;
+    }
+  }
+  if (PyList_Size(List_FieldB) != 0) {
+    try {
+      FieldB = OSCARSPY::ListAsTVector3D(List_FieldB);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'bfieldB'");
+      return NULL;
+    }
+  }
+
+  // Check Period
+  try {
+    Period = OSCARSPY::ListAsTVector3D(List_Period);
+  } catch (std::length_error e) {
+    PyErr_SetString(PyExc_ValueError, "Incorrect format in 'period'");
+    return NULL;
+  }
+
+  // Check for Rotations in the input
+  if (PyList_Size(List_Rotations) != 0) {
+    try {
+      Rotations = OSCARSPY::ListAsTVector3D(List_Rotations);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'rotations'");
+      return NULL;
+    }
+  }
+
+  // Check for Translation in the input
+  if (PyList_Size(List_Translation) != 0) {
+    try {
+      Translation = OSCARSPY::ListAsTVector3D(List_Translation);
+    } catch (std::length_error e) {
+      PyErr_SetString(PyExc_ValueError, "Incorrect format in 'translation'");
+      return NULL;
+    }
+  }
+
+  // Name check
+  if (std::string(Name).size() > 0 && Name[0] == '_') {
+    PyErr_SetString(PyExc_ValueError, "'name' cannot begin with '_'.  This is reserved for internal use.  Please pick a different name");
+    return NULL;
+  }
+
+
+  // Rotate field and sigma
+  // UPDATE: check this
+  FieldA.RotateSelfXYZ(Rotations);
+  FieldB.RotateSelfXYZ(Rotations);
+  Period.RotateSelfXYZ(Rotations);
+
+
+  // Add field
+  self->obj->AddMagneticField( (TField*) new TField3D_IdealEPU(FieldA, FieldB, Period, NPeriods, Translation, Phase, Taper, Frequency, FrequencyPhase, TimeOffset, Name));
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);
@@ -3469,7 +3662,7 @@ charge : float
     Charge of a *custom* particle.  This is only used if *type* = 'custom'.  Must be non-zero.
 
 ctstartstop : [float, float]
-    Initial start and stop times for the calculation.  Not technically a beam parameter here, but the ability to set it in this function.  It will default to [0, 1e-99] if not specified.  This is to accomodate input trajectories which have their own start and stop times.
+    Initial start and stop times for the calculation.  Not technically a beam parameter here, but the ability to set it in this function.  It will default to [-3, 3] if not specified.
 
 distribution : str
     Which particle beam distribution you want to use for non-zero emittance beams.
@@ -3864,7 +4057,7 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
       return NULL;
     }
   } else {
-    self->obj->SetCTStartStop(0, 1e-99);
+    self->obj->SetCTStartStop(-3, 3);
   }
 
   // Set the initial particle as ideal if this is the first beam
@@ -9188,6 +9381,7 @@ static PyMethodDef OSCARSSR_methods_fake[] = {
   {"add_bfield_gaussian",               (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldGaussian},
   {"add_bfield_uniform",                (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldUniform},
   {"add_bfield_undulator",              (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldIdealUndulator},
+  {"add_bfield_epu",                    (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldIdealEPU},
   //{"add_bfield_halbach",                (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldHalbach},
   {"add_bfield_quadrupole",             (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldQuadrupole},
   {"remove_bfield",                     (PyCFunction) OSCARSSR_Fake, METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_RemoveMagneticField},
@@ -9320,6 +9514,7 @@ static PyMethodDef OSCARSSR_methods[] = {
   {"add_bfield_gaussian",               (PyCFunction) OSCARSSR_AddMagneticFieldGaussian,        METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldGaussian},
   {"add_bfield_uniform",                (PyCFunction) OSCARSSR_AddMagneticFieldUniform,         METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldUniform},
   {"add_bfield_undulator",              (PyCFunction) OSCARSSR_AddMagneticFieldIdealUndulator,  METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldIdealUndulator},
+  {"add_bfield_epu",                    (PyCFunction) OSCARSSR_AddMagneticFieldIdealEPU,        METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldIdealEPU},
   //{"add_bfield_halbach",                (PyCFunction) OSCARSSR_AddMagneticFieldHalbach,         METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldHalbach},
   {"add_bfield_quadrupole",             (PyCFunction) OSCARSSR_AddMagneticFieldQuadrupole,      METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_AddMagneticFieldQuadrupole},
   {"remove_bfield",                     (PyCFunction) OSCARSSR_RemoveMagneticField,             METH_VARARGS | METH_KEYWORDS, DOC_OSCARSSR_RemoveMagneticField},

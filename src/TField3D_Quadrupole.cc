@@ -68,7 +68,8 @@ TVector3D TField3D_Quadrupole::GetF (TVector3D const& X, double const T) const
 
   P -= fTranslation;
 
-  if (fabs(P.GetZ()) > fWidth) {
+  // IF outside of the half width return 0
+  if (fabs(P.GetZ()) > fWidth/2) {
     return TVector3D(0, 0, 0);
   }
 
