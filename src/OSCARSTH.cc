@@ -146,7 +146,7 @@ double OSCARSTH::DipoleSpectrum (double const BField, double const BeamEnergy_Ge
 
   double const X = Gamma * Angle;
   double const Xi = y / 2 * pow(1 + X * X, 3/2);
-  double const C0 = 3.0 * TOSCARS::Alpha() / (4*TOSCARS::Pi2()) * 0.001 * Gamma * Gamma * Current / fParticleBeam.GetQ() * y * y * pow(1 + X * X, 2);
+  double const C0 = 3.0 * TOSCARS::Alpha() / (4*TOSCARS::Pi2()) * 0.001 * Gamma * Gamma * Current / fabs(fParticleBeam.GetQ()) * y * y * pow(1 + X * X, 2);
 
   return C0 * (pow(TOMATH::BesselK( 2. / 3., Xi), 2) + X * X / (1 + X * X) * pow(TOMATH::BesselK( 1. / 3., Xi), 2)) * 1e-6;
 }

@@ -10,6 +10,7 @@
 #include "TSpectrumContainer.h"
 
 #include "TOSCARS.h"
+#include "OSCARSPY.h"
 
 #include <iostream>
 #include <fstream>
@@ -369,7 +370,7 @@ void TSpectrumContainer::Clear ()
 
 
 
-void TSpectrumContainer::AverageFromFilesText (std::vector<std::string> const& Files, std::vector<double> const& Weights)
+void TSpectrumContainer::AverageFromFilesText (std::vector<std::string> const& Files, std::vector<double> const& Weights, size_t const NSkipLines)
 {
   // Average the inpput from all text files.  Text files must be the same points in energy
   // arranged in exactly the same format.  The energy points are taken from only the first file
@@ -401,6 +402,15 @@ void TSpectrumContainer::AverageFromFilesText (std::vector<std::string> const& F
     // Check that file is actually open
     if (!f[i].is_open()) {
       throw std::invalid_argument("Cannot open one or more files of input");
+    }
+  }
+
+  if (NSkipLines != 0) {
+    std::string line;
+    for (size_t i = 0; i != Files.size(); ++i) {
+      for (int iline = 0; iline != NSkipLines; ++iline) {
+        std::getline(f[i], line);
+      }
     }
   }
 

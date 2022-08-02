@@ -4,7 +4,7 @@
 #############################################################################
 
 import math
-from scipy import special
+from scipy import special, interpolate
 import numpy as np
 from pkg_resources import resource_stream
 
@@ -431,16 +431,19 @@ def interpBright(x,y,W,xmin,ymin,xstep,ystep,nx,ny):
     W00 = W[jx0,jy0]
     W01 = W[jx0,jy0+1]
     W10 = W[jx0+1,jy0]
-    #W11 = W[jx0+1,jy0+1]
+    W11 = W[jx0+1,jy0+1]
+    #return W00 +  djx*(W01-W00) + djy*(W10-W00) #+ djx*djy*W11
 
-    return W00 +  djx*(W01-W00) + djy*(W10-W00) #+ djx*djy*W11
+    A = W00 + djy*(W01-W00)
+    B = W10 + djy*(W11-W10)
+    return A + djx*(B - A)
 
 
 
 
 
 
-def srw_epu_brightness(oth, Kx_range, Ky_range, period, length, npoints=1000):
+def srw_epu_brightness(oth, Kx_range, Ky_range, period, length, npoints=1000, detuning=0):
     beam_energy_GeV = oth.get_beam_energy()
     beam_energy_sigma_rel = oth.get_beam_energy_sigma() / beam_energy_GeV
     current = oth.get_beam_current()
@@ -483,7 +486,7 @@ def srw_epu_brightness(oth, Kx_range, Ky_range, period, length, npoints=1000):
         lam_u, # undulator period in cm
         nPer,
         0, # epeak not used
-        0.0, # brillianceReport.detuning
+        detuning, # brillianceReport.detuning
         beam_energy_sigma_rel, # electronBeam.rmsSpread
         length, # undulator.length
         sigma_x[0] ** 2, # electronBeam.rmsSizeX
@@ -501,7 +504,7 @@ def srw_epu_brightness(oth, Kx_range, Ky_range, period, length, npoints=1000):
     return br
 
 
-def srw_und_brightness(oth, Kx_range, period, length, harmonic, npoints=1000):
+def srw_und_brightness(oth, Kx_range, period, length, harmonic, npoints=1000, detuning=0):
     beam_energy_GeV = oth.get_beam_energy()
     beam_energy_sigma_rel = oth.get_beam_energy_sigma() / beam_energy_GeV
     current = oth.get_beam_current()
@@ -544,7 +547,7 @@ def srw_und_brightness(oth, Kx_range, period, length, harmonic, npoints=1000):
             lam_u, # undulator period in cm
             nPer,
             0, # epeak not used
-            0.0, # brillianceReport.detuning
+            detuning, # brillianceReport.detuning
             beam_energy_sigma_rel, # electronBeam.rmsSpread
             length, # undulator.length
             sigma_x[0] ** 2, # electronBeam.rmsSizeX

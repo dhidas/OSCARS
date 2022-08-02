@@ -4043,6 +4043,10 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
     ThisBeam->SetT0(T0);
   }
 
+  if (Current != 0) {
+    ThisBeam->SetCurrent(Current);
+  }
+
   // Should set weight on input
   //self->obj->GetParticleBeam(Name).SetWeight(Weight);
 
@@ -8362,7 +8366,7 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
 
 
 const char* DOC_OSCARSSR_WriteSpectrum = R"docstring(
-write_spectrum([, ofile, bofile])
+write_spectrum([, ofile, bofile, header])
 
 Write spectrum to file.  Either ofile or bofile should be specified, or both, or neither if you really want
 
@@ -8374,6 +8378,9 @@ ofile : str
 bofile : str
     The binary output file name
 
+header: str
+    Any header lines to write to the text output file.  You must include your own comment char if you want one.
+
 Returns
 -------
 None
@@ -8384,16 +8391,19 @@ static PyObject* OSCARSSR_WriteSpectrum (OSCARSSRObject* self, PyObject* args, P
 
   char const* OutFileNameText = "";
   char const* OutFileNameBinary = "";
+  char const* Header = "";
 
 
   static const char *kwlist[] = {"ofile",
                                  "bofile",
+                                 "header",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|ss",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|sss",
                                    const_cast<char **>(kwlist),
                                    &OutFileNameText,
-                                   &OutFileNameBinary)) {
+                                   &OutFileNameBinary,
+                                   &Header)) {
     return NULL;
   }
 
@@ -8404,7 +8414,7 @@ static PyObject* OSCARSSR_WriteSpectrum (OSCARSSRObject* self, PyObject* args, P
   // Text output
   if (std::string(OutFileNameText) != "") {
     try {
-      Container.WriteToFileText(OutFileNameText);
+      Container.WriteToFileText(OutFileNameText, Header);
     } catch (std::ifstream::failure e) {
       PyErr_SetString(PyExc_ValueError, e.what());
       return NULL;
@@ -8434,7 +8444,7 @@ static PyObject* OSCARSSR_WriteSpectrum (OSCARSSRObject* self, PyObject* args, P
 
 
 const char* DOC_OSCARSSR_AverageSpectra = R"docstring(
-average_spectra([, ifiles, bifiles, ofile, bofile])
+average_spectra([, ifiles, bifiles, ofile, bofile, nskiplines])
 
 Average spectra from different files.  The input files must have the same format.
 
@@ -8452,6 +8462,9 @@ ofile : str
 bofile : str
     The binary output file name
 
+nskiplines: int
+    Number of lines to skip at start of text files
+
 Returns
 -------
 spectrum : list
@@ -8467,7 +8480,7 @@ static PyObject* OSCARSSR_AverageSpectra (OSCARSSRObject* self, PyObject* args, 
   char const* OutFileNameText         = "";
   char const* OutFileNameBinary       = "";
   PyObject*   List_Weights            = 0x0;
-
+  int         NSkipLines              = 0;
 
   static const char *kwlist[] = {"ifiles",
                                  "bifiles",
@@ -8475,16 +8488,18 @@ static PyObject* OSCARSSR_AverageSpectra (OSCARSSRObject* self, PyObject* args, 
                                  "ofile",
                                  "bofile",
                                  "weights",
+                                 "nskiplines",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|OOOssO",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "|OOOssOi",
                                    const_cast<char **>(kwlist),
                                    &List_InFileNamesText,
                                    &List_InFileNamesBinary,
                                    &List_InSpectra,
                                    &OutFileNameText,
                                    &OutFileNameBinary,
-                                   &List_Weights)) {
+                                   &List_Weights,
+                                   &NSkipLines)) {
     return NULL;
   }
 
@@ -8545,7 +8560,7 @@ static PyObject* OSCARSSR_AverageSpectra (OSCARSSRObject* self, PyObject* args, 
   // Either they are text files or binary files
   if (NFilesText > 0) {
     try {
-      Container.AverageFromFilesText(FileNames);
+      Container.AverageFromFilesText(FileNames, std::vector<double>(), NSkipLines);
     } catch (std::invalid_argument e) {
       PyErr_SetString(PyExc_ValueError, e.what());
       return NULL;
