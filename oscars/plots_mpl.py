@@ -287,6 +287,27 @@ def write_power_density_csv(V, ofile=''):
     return
 
 
+
+def write_power_density_csv3d(V, ofile=None):
+    """write histogram to csv with 3d coords"""
+
+
+    if ofile is None:
+        raise ValueError('Must specify an output file')
+
+    X = [item[0][0] for item in V]
+    Y = [item[0][1] for item in V]
+    Z = [item[0][1] for item in V]
+    P = [item[1]    for item in V]
+
+    N = len(V)
+
+    with open(ofile, 'w') as f:
+        for v in V:
+            f.write(f'{v[0][0]:+11.5e}, {v[0][1]:+11.5e}, {v[0][2]:+11.5e}, {v[1]:11.5e}\n')
+
+    return
+
 def plot_power_density_2d1d(V, x1=None, x2=None, title=None, xlabel='[$m$]', ylabel='[$W / mm^2$]', xlim=None, ylim=None, show=True, ofile='', figsize=None, ret=False):
     """Plot a 2D histogram with equal spacing"""
 

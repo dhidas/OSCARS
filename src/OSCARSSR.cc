@@ -3363,7 +3363,7 @@ void OSCARSSR::CalculatePowerDensityPointsSTL (TVector3D const& FarfieldOrigin,
 
 
   std::vector<bool> IsBlocked(iLast - iFirst + 1, false);
-  int const Mode = 2;
+  int const Mode = 1;
   if (Mode == 1) {
   for (size_t i = iFirst; i != iLast; ++i) {
 
