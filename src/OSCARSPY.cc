@@ -21,10 +21,11 @@ std::string GetVersionString ()
   // Get the version string based off of the compiler defines
   char ver[200];
   if (OSCARS_RELEASE == NULL) {
-    sprintf(ver, "%i.%i.%i", OSCARS_VMAJOR, OSCARS_VMINOR, OSCARS_REVISION);
+    sprintf(ver, "%i.%i.%i compiled on:%04d-%02d-%02dT%02d:%02d:%02d", OSCARS_VMAJOR, OSCARS_VMINOR, OSCARS_REVISION, BUILD_YEAR, BUILD_MONTH, BUILD_DAY, BUILD_HOUR, BUILD_MIN, BUILD_SEC);
   } else {
-    sprintf(ver, "%i.%i.%i.%s", OSCARS_VMAJOR, OSCARS_VMINOR, OSCARS_REVISION, OSCARS_RELEASE);
+    sprintf(ver, "%i.%i.%i.%s compiled on:%04d-%02d-%02dT%02d:%02d:%02d", OSCARS_VMAJOR, OSCARS_VMINOR, OSCARS_REVISION, OSCARS_RELEASE, BUILD_YEAR, BUILD_MONTH, BUILD_DAY, BUILD_HOUR, BUILD_MIN, BUILD_SEC);
   }
+
   return std::string(ver);
 }
 

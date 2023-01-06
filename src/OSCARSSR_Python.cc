@@ -4008,24 +4008,29 @@ static PyObject* OSCARSSR_AddParticleBeam (OSCARSSRObject* self, PyObject* args,
   ThisBeam->SetTwissLatticeReference(Lattice_Reference);
 
   // Set correct twiss parameters
-  switch (HasBAG) {
-    case 0x7:
-      ThisBeam->SetTwissParameters(Beta, Alpha, Gamma, Lattice_Reference, HasReferencePoint);
-      break;
-    case 0x6:
-      ThisBeam->SetTwissBetaAlpha(Beta, Alpha, Lattice_Reference, HasReferencePoint);
-      break;
-    case 0x5:
-      ThisBeam->SetTwissBetaGamma(Beta, Gamma, Lattice_Reference, HasReferencePoint);
-      break;
-    case 0x3:
-      ThisBeam->SetTwissAlphaGamma(Alpha, Gamma, Lattice_Reference, HasReferencePoint);
-      break;
-    case 0x4:
-      ThisBeam->SetTwissBetaAlpha(Beta, TVector2D(0, 0), Lattice_Reference, HasReferencePoint);
-      break;
-    default:
-      break;
+  try {
+    switch (HasBAG) {
+      case 0x7:
+        ThisBeam->SetTwissParameters(Beta, Alpha, Gamma, Lattice_Reference, HasReferencePoint);
+        break;
+      case 0x6:
+        ThisBeam->SetTwissBetaAlpha(Beta, Alpha, Lattice_Reference, HasReferencePoint);
+        break;
+      case 0x5:
+        ThisBeam->SetTwissBetaGamma(Beta, Gamma, Lattice_Reference, HasReferencePoint);
+        break;
+      case 0x3:
+        ThisBeam->SetTwissAlphaGamma(Alpha, Gamma, Lattice_Reference, HasReferencePoint);
+        break;
+      case 0x4:
+        ThisBeam->SetTwissBetaAlpha(Beta, TVector2D(0, 0), Lattice_Reference, HasReferencePoint);
+        break;
+      default:
+        break;
+    }
+  } catch (std::out_of_range e) {
+    PyErr_SetString(PyExc_ValueError, e.what());
+    return NULL;
   }
 
   if (List_Eta != 0x0) {
@@ -6569,13 +6574,15 @@ static PyObject* OSCARSSR_CalculatePowerDensityRectangle (OSCARSSRObject* self, 
   // The rectangular surface object we'll use
   TSurfacePoints_Rectangle Surface;
 
-  if (PyList_Size(List_NPoints) == 2) {
+  if (PyList_Size(List_NPoints) == 0) {
+    // Do nothing and use default
+  } else if (PyList_Size(List_NPoints) == 2) {
     // NPoints in [m]
     NX1 = PyLong_AsSsize_t(PyList_GetItem(List_NPoints, 0));
     NX2 = PyLong_AsSsize_t(PyList_GetItem(List_NPoints, 1));
   } else {
-    //PyErr_SetString(PyExc_ValueError, "'npoints' must be [int, int]");
-    //return NULL;
+    PyErr_SetString(PyExc_ValueError, "'npoints' must be [int, int]");
+    return NULL;
   }
 
 
@@ -7360,7 +7367,7 @@ static PyObject* OSCARSSR_CalculatePowerDensityLine (OSCARSSRObject* self, PyObj
 {
   // Calculate the spectrum given an observation point, and energy range
 
-  int         NPoints         = 0;
+  int         NPoints         = 51;
   PyObject*   List_x1       = PyList_New(0);
   PyObject*   List_x2         = PyList_New(0);
   int         NormalDirection = 0;
@@ -7511,12 +7518,22 @@ static PyObject* OSCARSSR_CalculatePowerDensityLine (OSCARSSRObject* self, PyObj
   // Write the output file if requested
   // Text output
   if (std::string(OutFileNameText) != "") {
-    PowerDensityContainer.WriteToFileText(OutFileNameText, Dim);
+    try {
+      PowerDensityContainer.WriteToFileText(OutFileNameText, Dim);
+    } catch (...) {
+      PyErr_SetString(PyExc_ValueError, "Error in writing output file");
+      return NULL;
+    }
   }
 
   // Binary output
   if (std::string(OutFileNameBinary) != "") {
-    PowerDensityContainer.WriteToFileBinary(OutFileNameBinary, Dim);
+    try {
+      PowerDensityContainer.WriteToFileBinary(OutFileNameBinary, Dim);
+    } catch (...) {
+      PyErr_SetString(PyExc_ValueError, "Error in writing output file");
+      return NULL;
+    }
   }
 
 
@@ -8081,7 +8098,9 @@ static PyObject* OSCARSSR_CalculateFluxRectangle (OSCARSSRObject* self, PyObject
   // The rectangular surface object we'll use
   TSurfacePoints_Rectangle Surface;
 
-  if (PyList_Size(List_NPoints) == 2) {
+  if (PyList_Size(List_NPoints) == 0) {
+    // Do nothing and use default
+  } else if (PyList_Size(List_NPoints) == 2) {
     // NPoints in [m]
     NX1 = PyLong_AsSsize_t(PyList_GetItem(List_NPoints, 0));
     NX2 = PyLong_AsSsize_t(PyList_GetItem(List_NPoints, 1));

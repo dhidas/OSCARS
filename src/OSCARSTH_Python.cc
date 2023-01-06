@@ -1741,6 +1741,10 @@ static PyObject* OSCARSTH_UndulatorCoherentFluxFraction (OSCARSTHObject* self, P
   } catch (std::invalid_argument e) {
     PyErr_SetString(PyExc_ValueError, e.what());
     return NULL;
+  } catch (const std::exception e)
+  {
+    // catch anything thrown within try block that derives from std::exception
+    PyErr_SetString(PyExc_ValueError, e.what());
   }
 
   // Don't need to hold on to this any longer

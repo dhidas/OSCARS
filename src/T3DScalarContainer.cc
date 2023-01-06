@@ -133,8 +133,44 @@ void T3DScalarContainer::AverageFromFilesText (std::vector<std::string> const& F
   // Keep track of which point we are on
   size_t ip = 0;
 
-  // Must be 2 or 3 D at the moment
-  if (Dimension == 2) {
+  // Must be 1, 2 or 3 D at the moment
+  if (Dimension == 1) {
+
+    // Loop over all points until done
+    while (NotDone) {
+
+      // For each point loop over files and average
+      for (size_t i = 0; i != f.size(); ++i) {
+
+        // Read data from current file
+        f[i] >> X >> V;
+
+        // If we hit an eof we are done.
+        if (f[i].fail()) {
+
+          // Change the done state to stop reading files
+          NotDone = false;
+
+          // This must be file index 0
+          if (i != 0) {
+            throw std::length_error("Inconsistent file format found in file " + Files[i]);
+          }
+
+          break;
+        }
+
+        // Add point to self
+        if (i == 0) {
+          this->AddPoint(TVector3D(X, 0, 0), V/N);
+        } else {
+          this->AddToPoint(ip, V/N);
+        }
+      }
+
+      // Increment point counter
+      ++ip;
+    }
+  } else if (Dimension == 2) {
 
     // Loop over all points until done
     while (NotDone) {
@@ -272,8 +308,48 @@ void T3DScalarContainer::AverageFromFilesBinary (std::vector<std::string> const&
   float c = 0;
   float d = 0;
 
-  // Must be 2 or 3 D at the moment
-  if (Dimension == 2) {
+  // Must be 1, 2 or 3 D at the moment
+  if (Dimension == 1) {
+
+    // Loop over all points until done
+    while (NotDone) {
+
+      // For each point loop over files and average
+      for (size_t i = 0; i != f.size(); ++i) {
+
+        // Read data from current file
+        f[i].read( (char*)  &a, sizeof(float));
+        f[i].read( (char*)  &d, sizeof(float));
+
+        X = (double) a;
+        V = (double) d;
+
+        // If we hit an eof we are done.
+        if (f[i].fail()) {
+
+          // Change the done state to stop reading files
+          NotDone = false;
+
+          // This must be file index 0
+          if (i != 0) {
+            throw std::logic_error("T3DScalarContainer::AverageFromFilesBinary index here must be 0.  Please report this.");
+          }
+
+          break;
+        }
+
+        // Add point to self
+        if (i == 0) {
+          this->AddPoint(TVector3D(X, 0, 0), V/N);
+        } else {
+          this->AddToPoint(ip, V/N);
+        }
+      }
+
+      // Increment point counter
+      ++ip;
+    }
+  } else if (Dimension == 2) {
 
     // Loop over all points until done
     while (NotDone) {
@@ -407,7 +483,9 @@ void T3DScalarContainer::WriteToFileText (std::string const& OutFileName,
   for (size_t i = 0; i != this->GetNPoints(); ++i) {
     TVector3D const& Obs = this->GetPoint(i).GetX();
 
-    if (Dimension == 2) {
+    if (Dimension == 1) {
+      of << Obs.GetX() << " " << this->GetPoint(i).GetV() << "\n";
+    } else if (Dimension == 2) {
       of << Obs.GetX() << " " << Obs.GetY() << " " << this->GetPoint(i).GetV() << "\n";
     } else if (Dimension == 3) {
       of << Obs.GetX() << " " << Obs.GetY() << " " << Obs.GetZ() << " " << this->GetPoint(i).GetV() << "\n";
@@ -440,7 +518,16 @@ void T3DScalarContainer::WriteToFileBinary (std::string const& OutFileName,
   float Z = 0;
   float V = 0;
 
-  if (Dimension == 2) {
+  if (Dimension == 1) {
+    for (size_t i = 0; i != this->GetNPoints(); ++i) {
+      TVector3D const& Obs = this->GetPoint(i).GetX();
+      X = (float) Obs.GetX();
+      V = (float) this->GetPoint(i).GetV();
+
+      of.write((char*) &X, sizeof(float));
+      of.write((char*) &V, sizeof(float));
+    }
+  } else if (Dimension == 2) {
     for (size_t i = 0; i != this->GetNPoints(); ++i) {
       TVector3D const& Obs = this->GetPoint(i).GetX();
       X = (float) Obs.GetX();
