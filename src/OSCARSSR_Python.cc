@@ -1316,6 +1316,7 @@ static PyObject* OSCARSSR_AddMagneticFieldIdealUndulator (OSCARSSRObject* self, 
   PyObject*   List_Rotations   = PyList_New(0);
   PyObject*   List_Translation = PyList_New(0);
   int         NPeriods         = 0;
+  int         NHalfPeriods     = 0;
   double      Phase            = 0;
   double      Taper            = 0;
   double      Frequency        = 0;
@@ -1332,6 +1333,7 @@ static PyObject* OSCARSSR_AddMagneticFieldIdealUndulator (OSCARSSRObject* self, 
   static const char *kwlist[] = {"bfield",
                                  "period",
                                  "nperiods",
+                                 "nhalfperiods",
                                  "phase",
                                  "rotations",
                                  "translation",
@@ -1342,11 +1344,12 @@ static PyObject* OSCARSSR_AddMagneticFieldIdealUndulator (OSCARSSRObject* self, 
                                  "name",
                                  NULL};
 
-  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OOi|dOOdddds",
+  if (!PyArg_ParseTupleAndKeywords(args, keywds, "OO|iidOOdddds",
                                    const_cast<char **>(kwlist),
                                    &List_Field,
                                    &List_Period,
                                    &NPeriods,
+                                   &NHalfPeriods,
                                    &Phase,
                                    &List_Rotations,
                                    &List_Translation,
@@ -1374,6 +1377,13 @@ static PyObject* OSCARSSR_AddMagneticFieldIdealUndulator (OSCARSSRObject* self, 
   } catch (std::length_error e) {
     PyErr_SetString(PyExc_ValueError, "Incorrect format in 'period'");
     return NULL;
+  }
+
+  // Check NPeriods and NHalfPeriods
+  if (NPeriods <= 0 && NHalfPeriods <= 0) {
+  } else if (NPeriods != 0 && NHalfPeriods != 0) {
+  } else if (NPeriods != 0) {
+    NHalfPeriods = NPeriods * 2;
   }
 
   // Check for Rotations in the input
@@ -1410,7 +1420,7 @@ static PyObject* OSCARSSR_AddMagneticFieldIdealUndulator (OSCARSSRObject* self, 
 
 
   // Add field
-  self->obj->AddMagneticField( (TField*) new TField3D_IdealUndulator(Field, Period, NPeriods, Translation, Phase, Taper, Frequency, FrequencyPhase, TimeOffset, Name));
+  self->obj->AddMagneticField( (TField*) new TField3D_IdealUndulator(Field, Period, NHalfPeriods, Translation, Phase, Taper, Frequency, FrequencyPhase, TimeOffset, Name));
 
   // Must return python object None in a special way
   Py_INCREF(Py_None);

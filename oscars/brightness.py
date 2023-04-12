@@ -164,12 +164,12 @@ class Synchrotron:
     def get_brightness_curves (self, energy_range_eV=None, odir='data'):
         self.curves = []
 
-        try:
-            self.curves = pickle.load(open( os.path.join(odir, self.name + '_brightness.dat'), 'rb'))
-            print('read from file', self.name, os.path.join(odir, self.name + '_brightness.dat'))
-            return
-        except:
-            pass
+        #try:
+        #    self.curves = pickle.load(open( os.path.join(odir, self.name + '_brightness.dat'), 'rb'))
+        #    print('read from file', self.name, os.path.join(odir, self.name + '_brightness.dat'))
+        #    return
+        #except:
+        #    pass
 
         oth = oscars.th.th()
         for d in self.devices:
@@ -814,7 +814,7 @@ def plot_brightness (experiments, title='Brightness', energy_range_eV=None, figs
     return plt
 
 
-def get_brightness_points (experiments, title='Brightness', energy_range_eV=None, figsize=None, xlim=None, ylim=None, ofile='', show=True, energy_eV=None, legendloc='', energy_points_eV=None):
+def get_brightness_points (experiments, title='Brightness', energy_range_eV=None, figsize=None, xlim=None, ylim=None, ofile='', show=True, energy_eV=None, legendloc='', energy_points_eV=None, odir=None):
 
 
 
@@ -832,7 +832,7 @@ def get_brightness_points (experiments, title='Brightness', energy_range_eV=None
 
         max_br_at_eV = 0
         print(exp.name)
-        exp.get_brightness_curves(energy_range_eV)
+        exp.get_brightness_curves(energy_range_eV, odir=odir)
         X = []
         Y = []
 

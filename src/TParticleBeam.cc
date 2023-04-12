@@ -169,7 +169,7 @@ void TParticleBeam::SetPredefinedBeam (std::string const& Beam)
     this->SetU0(TVector3D(0, 0, 1));
     this->SetB0(this->GetU0() * Beta);
     this->SetT0(0);
-    this->SetX0(TVector3D(0, 0, 0));
+    this->SetX0(0);
     this->SetEmittance(TVector2D(0.55e-9, 0.008e-9));
     this->SetTwissLatticeReference(TVector3D(0, 0, 0));
     this->SetTwissBetaAlpha(TVector2D(18, 3.1), TVector2D(0, 0));
@@ -741,11 +741,12 @@ TParticleA TParticleBeam::GetNewParticle ()
       // For sampling
       double const hSigX  = sqrt(fEmittance[0] *  fTwissBetaX0[0]);
       double const hSigXP = sqrt(fEmittance[0] * fTwissGammaX0[0]);
-      double const hRho   = sqrt(1 - pow(fEmittance[0] / (hSigX * hSigXP), 2));
+      double const hRho   = fTwissAlphaX0[0] == 0 ? 0 : sqrt(1 - pow(fEmittance[0] / (hSigX * hSigXP), 2));
+
 
       double const vSigX  = sqrt(fEmittance[1] *  fTwissBetaX0[1]);
       double const vSigXP = sqrt(fEmittance[1] * fTwissGammaX0[1]);
-      double const vRho   = sqrt(1 - pow(fEmittance[1] / (vSigX * vSigXP), 2));
+      double const vRho   = fTwissAlphaX0[1] == 0 ? 0 : sqrt(1 - pow(fEmittance[1] / (vSigX * vSigXP), 2));
 
 
       // Horizontal x and xp

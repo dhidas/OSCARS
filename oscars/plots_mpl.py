@@ -866,6 +866,24 @@ def total_power(pd):
     return dx * dy * sum(P) * 1e6
 
 
+def total_flux(pd):
+    """Calculate the total flux in a uniform grid.
+    
+    This will not work for a non-uniform grid.  Different NX and NY are ok."""
+    
+    X = [item[0][0] for item in pd]
+    Y = [item[0][1] for item in pd]
+    P = [item[1]    for item in pd]
+
+    NX = len(np.unique(X))
+    NY = len(np.unique(Y))
+    
+    dx = (max(X) - min(X)) / (NX - 1)
+    dy = (max(Y) - min(Y)) / (NY - 1)
+    
+    return dx * dy * sum(P) * 1e6
+
+
 
 
 def plot_electric_field_vs_time(efield, show=True, ofile='', ret=False):

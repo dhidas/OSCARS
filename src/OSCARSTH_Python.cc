@@ -2520,6 +2520,7 @@ static PyObject* OSCARSTH_WigglerSpectrum (OSCARSTHObject* self, PyObject* args,
     }
   } else if (PyList_Size(List_EnergyPoints_eV) != 0) {
     SpectrumContainer.Init(VEnergyPoints_eV);
+    self->obj->DipoleSpectrumEnergy(BField, SpectrumContainer, Angle);
   } else if (PyList_Size(List_AngleRange) != 0 && NPoints > 0) {
     TVector2D const AngleRange = OSCARSPY::ListAsTVector2D(List_AngleRange);
     SpectrumContainer.Init(NPoints, AngleRange[0], AngleRange[1]);
