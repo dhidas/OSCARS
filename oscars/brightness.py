@@ -19,6 +19,7 @@ class Undulator:
     beta = [0, 0]
     alpha = [0, 0]
     minimum = 0.1
+    detuning = 0
     npoints = 1000
     harmonic_range = [1, 51]
     eta = [0, 0]
@@ -26,7 +27,7 @@ class Undulator:
     linestyle = None
     calculation = 'SRW'
     
-    def __init__ (self, name, period, length, k_range, beta, minimum, npoints = 1000, harmonic_range = [1, 51], alpha=[0, 0], eta = [0, 0], color=None, linestyle=None):
+    def __init__ (self, name, period, length, k_range, beta, minimum, detuning = 0, npoints = 1000, harmonic_range = [1, 51], alpha=[0, 0], eta = [0, 0], color=None, linestyle=None):
         self.name = name
         self.period = period
         self.length = length
@@ -34,6 +35,7 @@ class Undulator:
         self.beta = beta
         self.alpha = alpha
         self.minimum = minimum
+        self.detuning = detuning
         self.npoints = npoints
         self.harmonic_range = harmonic_range
         self.eta = eta
@@ -228,7 +230,8 @@ class Synchrotron:
                             period=d.period,
                             length=d.length,
                             harmonic=i,
-                            npoints=d.npoints)
+                            npoints=d.npoints,
+                            detuning=d.detuning)
                         x = [b[0]*1000. for b in br]
                         y = [b[1] for b in br]
                         x.reverse()
@@ -1416,7 +1419,8 @@ def plot_brightness_all (experiments, energy_range_eV, title='Brightness', figsi
                             period=d.period,
                             length=d.length,
                             harmonic=i,
-                            npoints=d.npoints)
+                            npoints=d.npoints,
+                            detuning=d.detuning)
                         x = [b[0]*1000. for b in br]
                         y = [b[1] for b in br]
                         x.reverse()
