@@ -8508,6 +8508,7 @@ static PyObject* OSCARSSR_AverageSpectra (OSCARSSRObject* self, PyObject* args, 
   PyObject*   List_InSpectra          = 0x0;
   char const* OutFileNameText         = "";
   char const* OutFileNameBinary       = "";
+  char const* Comment                 = "";
   PyObject*   List_Weights            = 0x0;
   int         NSkipLines              = 0;
 
@@ -8516,6 +8517,7 @@ static PyObject* OSCARSSR_AverageSpectra (OSCARSSRObject* self, PyObject* args, 
                                  "spectra",
                                  "ofile",
                                  "bofile",
+                                 "comment",
                                  "weights",
                                  "nskiplines",
                                  NULL};
@@ -8527,8 +8529,27 @@ static PyObject* OSCARSSR_AverageSpectra (OSCARSSRObject* self, PyObject* args, 
                                    &List_InSpectra,
                                    &OutFileNameText,
                                    &OutFileNameBinary,
+                                   &Comment,
                                    &List_Weights,
                                    &NSkipLines)) {
+    return NULL;
+  }
+
+  // If lists are given, make sure they are lists!
+  if (List_InFileNamesText != 0x0 && PyList_Check(List_InFileNamesText) == false) {
+    PyErr_SetString(PyExc_TypeError, "ifiles must me a list (even if it is only one file).");
+    return NULL;
+  }
+  if (List_InFileNamesBinary != 0x0 && PyList_Check(List_InFileNamesBinary) == false) {
+    PyErr_SetString(PyExc_TypeError, "bifiles must me a list (even if it is only one file).");
+    return NULL;
+  }
+  if (List_InSpectra != 0x0 && PyList_Check(List_InSpectra) == false) {
+    PyErr_SetString(PyExc_TypeError, "spectra must me a list (even if it is only one).");
+    return NULL;
+  }
+  if (List_Weights != 0x0 && PyList_Check(List_Weights) == false) {
+    PyErr_SetString(PyExc_TypeError, "weights must me a list (even if it is only one).");
     return NULL;
   }
 
@@ -8619,7 +8640,7 @@ static PyObject* OSCARSSR_AverageSpectra (OSCARSSRObject* self, PyObject* args, 
   // Text output
   if (std::string(OutFileNameText) != "") {
     try {
-      Container.WriteToFileText(OutFileNameText);
+      Container.WriteToFileText(OutFileNameText, Comment);
     } catch (std::ifstream::failure e) {
       PyErr_SetString(PyExc_ValueError, e.what());
       return NULL;
@@ -8808,6 +8829,18 @@ static PyObject* OSCARSSR_AverageT3DScalars (OSCARSSRObject* self, PyObject* arg
                                    &Dim)) {
     return NULL;
   }
+
+
+  // If lists are given, make sure they are lists!
+  if (List_InFileNamesText != 0x0 && PyList_Check(List_InFileNamesText) == false) {
+    PyErr_SetString(PyExc_TypeError, "ifiles must me a list (even if it is only one file).");
+    return NULL;
+  }
+  if (List_InFileNamesBinary != 0x0 && PyList_Check(List_InFileNamesBinary) == false) {
+    PyErr_SetString(PyExc_TypeError, "bifiles must me a list (even if it is only one file).");
+    return NULL;
+  }
+
 
   // Grab the number of input files for both text and binary lists
   size_t const NFilesText = PyList_Size(List_InFileNamesText);

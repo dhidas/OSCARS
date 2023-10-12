@@ -15,6 +15,7 @@
 #include <iostream>
 #include <fstream>
 #include <stdexcept>
+#include <algorithm>
 
 
 
@@ -293,10 +294,13 @@ void TSpectrumContainer::WriteToFileText (std::string const FileName, std::strin
   if (!f.is_open()) {
     throw std::ifstream::failure("cannot open file for writing");
   }
+  std::string HeaderNoCRLF = Header;
+  std::replace(HeaderNoCRLF.begin(), HeaderNoCRLF.end(), '\n', ' ');
+  std::replace(HeaderNoCRLF.begin(), HeaderNoCRLF.end(), '\r', ' ');
 
   // If the header is specified, write one!
-  if (Header != "") {
-    f << Header << std::endl;
+  if (HeaderNoCRLF != "") {
+    f << "# " << HeaderNoCRLF << std::endl;
   }
 
   // Set in scientific mode for printing
