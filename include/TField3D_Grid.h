@@ -84,6 +84,7 @@ class TField3D_Grid : public TField
     void ReadFile_SRW       (std::string const& InFileName,
                              TVector3D   const& Rotations = TVector3D(0, 0, 0),
                              TVector3D   const& Translation = TVector3D(0, 0, 0),
+                             std::vector<double> const& Scaling = std::vector<double>(),
                              char        const  CommentChar = '#');
 
     void ReadFile_SPECTRA   (std::string const& InFileName,

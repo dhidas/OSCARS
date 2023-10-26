@@ -65,7 +65,7 @@ TField3D_Grid::TField3D_Grid (std::string         const& InFileName,
   } else if (format == "SPECTRA") {
     this->ReadFile_SPECTRA(InFileName, Rotations, Translation, CommentChar);
   } else if (format == "SRW") {
-    this->ReadFile_SRW(InFileName, Rotations, Translation, CommentChar);
+    this->ReadFile_SRW(InFileName, Rotations, Translation, Scaling, CommentChar);
   } else if (format == "BINARY") {
     this->ReadFile_Binary(InFileName, Rotations, Translation, Scaling);
   } else {
@@ -1368,6 +1368,7 @@ void TField3D_Grid::ReadFile_Binary_v1 (std::ifstream& fi,
 void TField3D_Grid::ReadFile_SRW (std::string const& InFileName,
                                   TVector3D   const& Rotations,
                                   TVector3D   const& Translation,
+                                  std::vector<double> const& Scaling,
                                   char        const  CommentChar)
 {
   // Read file with SRW field input format
@@ -1503,6 +1504,7 @@ void TField3D_Grid::ReadFile_SRW (std::string const& InFileName,
         S.str(L);
         S >> fx >> fy >> fz;
 
+        // dhidas
 
         // Check the stream did not hit an EOF
         if (S.fail() || fi.fail()) {
@@ -1512,6 +1514,9 @@ void TField3D_Grid::ReadFile_SRW (std::string const& InFileName,
 
         // Push data to storage
         TVector3D F(fx, fy, fz);
+        for (size_t iscale = 0; iscale != Scaling.size() && iscale < 3; ++iscale) {
+          F[iscale] *= Scaling[iscale];
+        }
         F.RotateSelfXYZ(Rotations);
 
         size_t const Index = this->GetIndex(ix, iy, iz);
