@@ -510,6 +510,7 @@ def srw_und_brightness(oth, Kx_range, period, length, harmonic, npoints=1000, de
     current = oth.get_beam_current()
     emittance = oth.get_emittance()
     beta = oth.get_twiss_beta()
+    alpha = oth.get_twiss_alpha()
 
 
     # print('Kx_range             ', Kx_range)
@@ -522,10 +523,12 @@ def srw_und_brightness(oth, Kx_range, period, length, harmonic, npoints=1000, de
     # print('current              ', current)
     # print('emittance            ', emittance)
     # print('beta                 ', beta)
+    # print('alpha                ', alpha)
 
+    gamma = [(1 + alpha[0]**2) / beta[0], (1 + alpha[1]**2) / beta[1]]
 
     sigma_x = [np.sqrt(emittance[0]*beta[0]), np.sqrt(emittance[1]*beta[1])]
-    sigma_xp = [np.sqrt(emittance[0]/beta[0]), np.sqrt(emittance[1]/beta[1])]
+    sigma_xp = [np.sqrt(emittance[0]*gamma[0]), np.sqrt(emittance[1]*gamma[1])]
 
 
     lam_u = period * 100.0 # undulator.period in cm

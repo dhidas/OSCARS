@@ -3748,6 +3748,32 @@ static PyObject* OSCARSTH_GetTwissBeta (OSCARSTHObject* self)
 
 
 
+const char* DOC_OSCARSTH_GetTwissAlpha = R"docstring(
+get_twiss_alpha()
+
+Get the twiss alpha parameters.
+
+Parameters
+----------
+None
+
+Returns
+-------
+alpha: [float, float]
+    twiss alpha for horizontal and vertical
+
+)docstring";
+static PyObject* OSCARSTH_GetTwissAlpha (OSCARSTHObject* self)
+{
+  // Get twiss alpha
+
+  TVector2D A0 = self->obj->GetParticleBeam().GetTwissAlpha();
+  return OSCARSPY::TVector2DAsList( A0 );
+}
+
+
+
+
 const char* DOC_OSCARSTH_GetBeamEnergy = R"docstring(
 get_beam_energy()
 
@@ -3886,6 +3912,7 @@ static PyMethodDef OSCARSTH_methods[] = {
 
   {"get_emittance",                              (PyCFunction) OSCARSTH_GetEmittance,                            METH_NOARGS,                                   DOC_OSCARSTH_GetEmittance},
   {"get_twiss_beta",                             (PyCFunction) OSCARSTH_GetTwissBeta,                            METH_NOARGS,                                   DOC_OSCARSTH_GetTwissBeta},
+  {"get_twiss_alpha",                            (PyCFunction) OSCARSTH_GetTwissAlpha,                           METH_NOARGS,                                   DOC_OSCARSTH_GetTwissAlpha},
   {"get_beam_energy",                            (PyCFunction) OSCARSTH_GetBeamEnergy,                           METH_NOARGS,                                   DOC_OSCARSTH_GetBeamEnergy},
   {"get_beam_energy_sigma",                      (PyCFunction) OSCARSTH_GetBeamEnergySigma,                      METH_NOARGS,                                   DOC_OSCARSTH_GetBeamEnergySigma},
   {"get_beam_current",                           (PyCFunction) OSCARSTH_GetBeamCurrent,                          METH_NOARGS, 						                      DOC_OSCARSTH_GetBeamCurrent},
@@ -3933,6 +3960,7 @@ static PyMethodDef OSCARSTH_methods_fake[] = {
 
   {"get_emittance",                              (PyCFunction) OSCARSTH_Fake, METH_NOARGS,                                   DOC_OSCARSTH_GetEmittance},
   {"get_twiss_beta",                             (PyCFunction) OSCARSTH_Fake, METH_NOARGS,                                   DOC_OSCARSTH_GetTwissBeta},
+  {"get_twiss_alpha",                            (PyCFunction) OSCARSTH_Fake, METH_NOARGS,                                   DOC_OSCARSTH_GetTwissAlpha},
   {"get_beam_energy",                            (PyCFunction) OSCARSTH_Fake, METH_NOARGS,                                   DOC_OSCARSTH_GetBeamEnergy},
   {"get_beam_energy_sigma",                      (PyCFunction) OSCARSTH_Fake, METH_NOARGS,                                   DOC_OSCARSTH_GetBeamEnergySigma},
   {"get_beam_current",                           (PyCFunction) OSCARSTH_Fake, METH_NOARGS,                                   DOC_OSCARSTH_GetBeamCurrent},
