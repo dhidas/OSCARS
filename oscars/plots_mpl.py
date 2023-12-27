@@ -30,23 +30,23 @@ def plot_trajectory_position(trajectory, show=True, ofile='', axis='Z', figsize=
     Z  = [item[1][2] for item in trajectory]
 
     if axis is 'X':
-        X1Label = 'X [m]'
-        X2Label = 'Y [m]'
-        X3Label = 'Z [m]'
+        X1Label = 'X (m)'
+        X2Label = 'Y (m)'
+        X3Label = 'Z (m)'
         X1 = X
         X2 = Y
         X3 = Z
     elif axis is 'Y':
-        X1Label = 'Y [m]'
-        X2Label = 'Z [m]'
-        X3Label = 'X [m]'
+        X1Label = 'Y (m)'
+        X2Label = 'Z (m)'
+        X3Label = 'X (m)'
         X1 = Y
         X2 = Z
         X3 = X
     elif axis is 'Z':
-        X1Label = 'Z [m]'
-        X2Label = 'X [m]'
-        X3Label = 'Y [m]'
+        X1Label = 'Z (m)'
+        X2Label = 'X (m)'
+        X3Label = 'Y (m)'
         X1 = Z
         X2 = X
         X3 = Y
@@ -118,19 +118,19 @@ def plot_trajectory_velocity(trajectory, show=True, ofile='', figsize=[18, 4.5],
     plt.figure(1, figsize=figsize)
     plt.subplot(131)
     plt.plot(T, VX)
-    plt.xlabel('T [s]')
+    plt.xlabel('T (s)')
     plt.ylabel('$\\beta_x$')
     plt.title('Particle $\\beta_x$')
 
     plt.subplot(132)
     plt.plot(T, VY)
-    plt.xlabel('T [s]')
+    plt.xlabel('T (s)')
     plt.ylabel('$\\beta_y$')
     plt.title('Particle $\\beta_y$')
 
     plt.subplot(133)
     plt.plot(T, VZ)
-    plt.xlabel('T [s]')
+    plt.xlabel('T (s)')
     plt.ylabel('$\\beta_z$')
     plt.title('Particle $\\beta_z$')
 
@@ -176,19 +176,19 @@ def plot_trajectory_betaprime(trajectory, show=True, ofile='', figsize=[18, 4.5]
     plt.figure(1, figsize=figsize)
     plt.subplot(131)
     plt.plot(T, VX)
-    plt.xlabel('T [s]')
+    plt.xlabel('T (s)')
     plt.ylabel('$\\beta_x$')
     plt.title('Particle $\\beta^\\prime_x$')
 
     plt.subplot(132)
     plt.plot(T, VY)
-    plt.xlabel('T [s]')
+    plt.xlabel('T (s)')
     plt.ylabel('$\\beta_y$')
     plt.title('Particle $\\beta^\\prime_y$')
 
     plt.subplot(133)
     plt.plot(T, VZ)
-    plt.xlabel('T [s]')
+    plt.xlabel('T (s)')
     plt.ylabel('$\\beta_z$')
     plt.title('Particle $\\beta^\\prime_z$')
 
@@ -206,7 +206,7 @@ def plot_trajectory_betaprime(trajectory, show=True, ofile='', figsize=[18, 4.5]
     return
     
     
-def plot_power_density(V, title=None, xlabel='X1 Axis [$m$]', ylabel='X2 Axis [$m$]', show=True, ofile='', figsize=None, ret=False, x1=None, x2=None):
+def plot_power_density(V, title=None, xlabel='X1 Axis ($m$)', ylabel='X2 Axis ($m$)', show=True, ofile='', figsize=None, ret=False, x1=None, x2=None):
     """Plot a 2D histogram with equal spacing"""
      
     if x1 is not None or x2 is not None:
@@ -230,7 +230,7 @@ def plot_power_density(V, title=None, xlabel='X1 Axis [$m$]', ylabel='X2 Axis [$
     plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 
     if title is None:
-        title = 'Power Density [$W / mm^2$]'
+        title = 'Power Density ($W / mm^2$)'
 
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
@@ -308,7 +308,7 @@ def write_power_density_csv3d(V, ofile=None):
 
     return
 
-def plot_power_density_2d1d(V, x1=None, x2=None, title=None, xlabel='[$m$]', ylabel='[$W / mm^2$]', xlim=None, ylim=None, show=True, ofile='', figsize=None, ret=False):
+def plot_power_density_2d1d(V, x1=None, x2=None, title=None, xlabel='($m$)', ylabel='($W / mm^2$)', xlim=None, ylim=None, show=True, ofile='', figsize=None, ret=False):
     """Plot a 2D histogram with equal spacing"""
 
     if x1 is not None and x2 is not None:
@@ -340,7 +340,7 @@ def plot_power_density_2d1d(V, x1=None, x2=None, title=None, xlabel='[$m$]', yla
 
     if x1 is not None:
         if xlabel is None:
-            xlabel = 'x1 [m]'
+            xlabel = 'x1 (m)'
         title_position = 'x1 = ' + str(round(x1, 4))
         if x1 in XValues:
             x1_index0 = XValues.index(x1)
@@ -359,7 +359,7 @@ def plot_power_density_2d1d(V, x1=None, x2=None, title=None, xlabel='[$m$]', yla
             
     elif x2 is not None:
         if xlabel is None:
-            xlabel = 'x2 [m]'
+            xlabel = 'x2 (m)'
         title_position = 'x2 = ' + str(round(x2, 4))
         if x2 in YValues:
             x2_index0 = YValues.index(x2)
@@ -387,7 +387,7 @@ def plot_power_density_2d1d(V, x1=None, x2=None, title=None, xlabel='[$m$]', yla
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     if title is None:
-        title = 'Power Density [$W / mm^2$]'
+        title = 'Power Density ($W / mm^2$)'
         plt.title(title + ' at ' + title_position)
     else:
         plt.title(title)
@@ -406,7 +406,7 @@ def plot_power_density_2d1d(V, x1=None, x2=None, title=None, xlabel='[$m$]', yla
     return
 
 
-def plot_power_density_1d(V, title='Power Density [$W / mm^2$]', xlabel='[$m$]', ylabel='[$W / mm^2$]', xlim=None, ylim=None, show=True, ofile='', figsize=None, ret=False):
+def plot_power_density_1d(V, title='Power Density ($W / mm^2$)', xlabel='($m$)', ylabel='($W / mm^2$)', xlim=None, ylim=None, show=True, ofile='', figsize=None, ret=False):
     """Plot a 1D power density"""
 
     X = [item[0][0] for item in V]
@@ -510,10 +510,10 @@ def plot_power_density_fancy (V, x1=0, x2=0, title='Power Density', ofile=None):
     x_hist.plot(YP2, XC2)
     x_hist.invert_yaxis()
 
-    x_hist.set_xlabel('x [m]')
-    x_hist.set_ylabel('[w/mm$^2$]')
-    y_hist.set_ylabel('y [m]')
-    y_hist.set_xlabel('[w/mm$^2$]')
+    x_hist.set_xlabel('x (m)')
+    x_hist.set_ylabel('(W/mm$^2$)')
+    y_hist.set_ylabel('y (m)')
+    y_hist.set_xlabel('(W/mm$^2$)')
     
     if ofile is not None:
         plt.savefig(ofile)
@@ -527,7 +527,7 @@ def plot_power_density_fancy (V, x1=0, x2=0, title='Power Density', ofile=None):
 
 
 
-def plot_flux(V, title='Flux [$\gamma / mm^2 / 0.1\%bw / s$]', xlabel='X1 Axis [$m$]', ylabel='X2 Axis [$m$]', clim=None, show=True, ofile='', figsize=None, ylim=None, xlim=None, colorbar=True, ret=False, nticks_cb=None):
+def plot_flux(V, title='Flux ($photons / mm^2 / s / 0.1\%bw$)', xlabel='X1 Axis ($m$)', ylabel='X2 Axis ($m$)', clim=None, show=True, ofile='', figsize=None, ylim=None, xlim=None, colorbar=True, ret=False, nticks_cb=None):
     """Plot a 2D histogram with equal spacing"""
         
     X = [item[0][0] for item in V]
@@ -578,7 +578,7 @@ def plot_flux(V, title='Flux [$\gamma / mm^2 / 0.1\%bw / s$]', xlabel='X1 Axis [
     return
 
 
-def plot_spectrum(S, log=False, loglog=False, show=True, ofile='', title='Spectrum', xlabel='Energy [eV]', ylabel='$\gamma / mm^2 / 0.1\%bw / s$', figsize=None, ylim=None, xlim=None, transparent=True, ret=False, xticks=None, axhlines=None, axvlines=None, **kwargs):
+def plot_spectrum(S, log=False, loglog=False, show=True, ofile='', title='Spectrum', xlabel='Energy (eV)', ylabel='($photons / mm^2 / s / 0.1\%bw$)', figsize=None, ylim=None, xlim=None, transparent=True, ret=False, xticks=None, axhlines=None, axvlines=None, **kwargs):
     """Plot the spectrum"""
 
     # Size and limits
@@ -622,7 +622,7 @@ def plot_spectrum(S, log=False, loglog=False, show=True, ofile='', title='Spectr
 
 
 
-def plot_spectra(spectra, label=None, legend=None, colors=None, show=True, ofile='', title='', loc=None, log=False, loglog=False, xlabel='Energy [eV]', ylabel='[$\gamma / mm^2 / 0.1\%bw / s$]', figsize=None, ylim=None, xlim=None, ret=False, axis=None, transparent=True, xticks=None, xvlines=None, **kwargs):
+def plot_spectra(spectra, label=None, legend=None, colors=None, show=True, ofile='', title='', loc=None, log=False, loglog=False, xlabel='Energy (eV)', ylabel='($photons/ mm^2 / s / 0.1\%bw$)', figsize=None, ylim=None, xlim=None, ret=False, axis=None, transparent=True, xticks=None, xvlines=None, **kwargs):
 
 
     # Size and limits
@@ -732,20 +732,20 @@ def plot_bfield(osr, mymin=-1, mymax=1, t=0, name='', ylim=None, show=True, ofil
     plt.figure(1, figsize=(18, 4.5))
     plt.subplot(131)
     plt.plot(P, Bx)
-    plt.xlabel(axis + ' [m]')
-    plt.ylabel('Bx [T]')
+    plt.xlabel(axis + ' (m)')
+    plt.ylabel('Bx (T)')
     plt.ylim(ylim)
 
     plt.subplot(132)
     plt.plot(P, By)
-    plt.xlabel(axis + ' [m]')
-    plt.ylabel('By [T]')
+    plt.xlabel(axis + ' (m)')
+    plt.ylabel('By (T)')
     plt.ylim(ylim)
 
     plt.subplot(133)
     plt.plot(P, Bz)
-    plt.xlabel(axis + ' [m]')
-    plt.ylabel('Bz [T]')
+    plt.xlabel(axis + ' (m)')
+    plt.ylabel('Bz (T)')
     plt.ylim(ylim)
 
     if ofile != '':
@@ -815,20 +815,20 @@ def plot_efield(osr, mymin=-1, mymax=1, t=0, name='', ylim=None, show=True, ofil
     plt.figure(1, figsize=(18, 4.5))
     plt.subplot(131)
     plt.plot(P, Bx)
-    plt.xlabel(axis + ' [m]')
-    plt.ylabel('Ex [V/m]')
+    plt.xlabel(axis + ' (m)')
+    plt.ylabel('Ex (V/m)')
     plt.ylim(ylim)
 
     plt.subplot(132)
     plt.plot(P, By)
-    plt.xlabel(axis + ' [m]')
-    plt.ylabel('Ey [V/m]')
+    plt.xlabel(axis + ' (m)')
+    plt.ylabel('Ey (V/m)')
     plt.ylim(ylim)
 
     plt.subplot(133)
     plt.plot(P, Bz)
-    plt.xlabel(axis + ' [m]')
-    plt.ylabel('Ez [V/m]')
+    plt.xlabel(axis + ' (m)')
+    plt.ylabel('Ez (V/m)')
     plt.ylim(ylim)
 
     if ofile != '':
@@ -897,21 +897,21 @@ def plot_electric_field_vs_time(efield, show=True, ofile='', ret=False):
     plt.figure(1, figsize=(18, 9))
     plt.subplot(131)
     plt.plot(T, Ex)
-    plt.xlabel('T [s]')
+    plt.xlabel('T (s)')
     plt.ylabel('Ex')
     plt.title('Electric Field (Ex)')
 
     plt.figure(1, figsize=(18, 9))
     plt.subplot(132)
     plt.plot(T, Ey)
-    plt.xlabel('T [s]')
+    plt.xlabel('T (s)')
     plt.ylabel('Ey')
     plt.title('Electric Field (Ey)')
 
     plt.figure(1, figsize=(18, 9))
     plt.subplot(133)
     plt.plot(T, Ez)
-    plt.xlabel('T [s]')
+    plt.xlabel('T (s)')
     plt.ylabel('Ez')
     plt.title('Electric Field (Ez)')
 
@@ -968,8 +968,8 @@ def plot_undulator_flux_onaxis(oth, period, nperiods, harmonics, minimum=0, bfie
 
     plt.legend(title='Harmonics')
 
-    plt.xlabel('Energy [eV]')
-    plt.ylabel('[$\gamma / mrad^2 / 0.1\%bw / s$]')
+    plt.xlabel('Energy (eV)')
+    plt.ylabel('($photons / mrad^2 / s / 0.1\%bw$)')
     plt.title(title)
     
     if ofile is not None:
@@ -1029,8 +1029,8 @@ def plot_undulator_brightness(oth, period, nperiods, harmonics, minimum=0, bfiel
 
     plt.legend(title='Harmonics')
 
-    plt.xlabel('Energy [eV]')
-    plt.ylabel('[$\gamma / mm^2 / mrad^2 / 0.1\%bw / s$]')
+    plt.xlabel('Energy (eV)')
+    plt.ylabel('($photons / mm^2 / mrad^2 / s / 0.1\%bw$)')
     plt.title(title)
     
     if ofile is not None:
@@ -1050,7 +1050,7 @@ def plot_undulator_brightness(oth, period, nperiods, harmonics, minimum=0, bfiel
 
 
 
-def plot_flux_spectrum(F, S, energy=None, title='Flux [$\gamma / mm^2 / 0.1\%bw / s]$', xlabel='X1 Axis [$m$]', ylabel='X2 Axis [$m$]', show=True, ofile='', figsize=[10, 3], ylim=None, xlim=None, colorbar=True, ret=False):
+def plot_flux_spectrum(F, S, energy=None, title='Flux ($photons / mm^2 / s / 0.1\%bw$)', xlabel='X1 Axis ($m$)', ylabel='X2 Axis ($m$)', show=True, ofile='', figsize=[10, 3], ylim=None, xlim=None, colorbar=True, ret=False):
     """Plot a 2D histogram with equal spacing"""
         
     X = [item[0][0] for item in F]
@@ -1083,8 +1083,8 @@ def plot_flux_spectrum(F, S, energy=None, title='Flux [$\gamma / mm^2 / 0.1\%bw 
     X2 = [item[0] for item in S]
     Y2 = [item[1] for item in S]
     plt.plot(X2, Y2)
-    plt.xlabel('Energy [eV]')
-    plt.ylabel('$\gamma / mm^2 / 0.1\%bw / s$')
+    plt.xlabel('Energy (eV)')
+    plt.ylabel('($photons / mm^2 / s / 0.1\%bw$)')
     plt.title('Spectrum')
 
     if energy is not None:
