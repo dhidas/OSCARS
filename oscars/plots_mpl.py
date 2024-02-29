@@ -1105,3 +1105,61 @@ def plot_flux_spectrum(F, S, energy=None, title='Flux ($photons / mm^2 / s / 0.1
     return
 
 
+
+
+def get_projection (V, axis=0, scale=1, **kwargs):
+    """
+    Get the projection (integrated) on 1d of a 2d flux or power density map.  This assumes units of mm^{-2}.  'scale' is not
+    related to this, but rather to be used if one wishes to changes the units of the axis for better viewing (scale=1e3 to m to mm).
+
+    Arguments:
+        V: The 2D flux or power density distribution
+        axis: 0 for x, 1 for y
+        scale: scale the result by something other than 1 (default)
+
+    Return:
+        projection in units of mm^{-1}
+    """
+
+    X = [item[0][0] for item in V]
+    Y = [item[0][1] for item in V]
+    P = [item[1]    for item in V]
+
+    NX = len(np.unique(X))
+    NY = len(np.unique(Y))
+
+    dx = (max(X) - min(X)) / (NX - 1)
+    dy = (max(Y) - min(Y)) / (NY - 1)
+
+    ZP = []
+    if axis == 0:
+        for ix in range(NX):
+            ZP.append([
+                V[ix * NY][0][0]*scale,
+                sum([V[ix * NY +iy][1]*dy*1e3 for iy in range(NY)])
+            ])
+    elif axis == 1:
+        for iy in range(NY):
+            ZP.append([
+                V[iy][0][1]*scale,
+                sum([V[ix * NY +iy][1]*dx*1e3 for ix in range(NX)])
+            ])
+
+    return ZP
+
+
+def find_spectrum_max (spec):
+    """
+    find the maximum of a spectrum.
+    
+    Arguments:
+        spec: spectrum
+    
+    Return:
+        [index, eV, flux]
+    """
+    
+    i = np.argmax([x[1] for x in spec])
+    
+    return [i, spec[i][0], spec[i][1]]
+
